@@ -35,7 +35,7 @@ const CATEGORIES = [
 const schema = z.object({
   title:        z.string().min(1, 'Введите название замечания'),
   description:  z.string().optional(),
-  category:     z.string().default('OTHER'),
+  category:     z.string(),
   normativeRef: z.string().optional(),
   deadline:     z.string().optional(),
 });
