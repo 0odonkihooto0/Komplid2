@@ -16,7 +16,7 @@ import {
   useGanttTasksForViewer,
   useAllGprLinks,
 } from '@/components/modules/tim/useModelViewer';
-import type { GanttTaskViewer } from '@/components/modules/tim/useModelViewer';
+import type { GanttTaskViewer, BimElementLink } from '@/components/modules/tim/useModelViewer';
 import { useCollisions } from '@/components/modules/tim/useCollisions';
 import type { ViewerScene } from '@/components/modules/tim/ifcSceneSetup';
 
@@ -151,6 +151,34 @@ export default function TimModelViewerPage({ params }: Props) {
     [viewerScene, allGprLinks]
   );
 
+  // ─── «Выделить на модели» по документу/замечанию ───────────────────────────
+  const handleFollowDoc = useCallback(
+    async (entityType: string, entityId: string) => {
+      if (!viewerScene) return;
+      try {
+        const res = await fetch(
+          `/api/projects/${objectId}/bim/links?entityType=${encodeURIComponent(entityType)}&entityId=${encodeURIComponent(entityId)}`
+        );
+        const json: { success: boolean; data: BimElementLink[] } = await res.json();
+        if (!json.success) return;
+
+        const guidToExpressId = buildGuidToExpressId(viewerScene);
+        viewerScene.materials.forEach(mat => mat.color.set(DEFAULT_COLOR));
+        for (const link of json.data) {
+          const guid = link.element?.ifcGuid;
+          if (!guid) continue;
+          const expressId = guidToExpressId.get(guid);
+          if (expressId === undefined) continue;
+          const mat = viewerScene.materials.get(expressId);
+          if (mat) mat.color.set(FOLLOW_COLOR);
+        }
+      } catch {
+        // Ошибка сети — не ломаем UI
+      }
+    },
+    [viewerScene, objectId]
+  );
+
   const handleToggleCollisions = useCallback(() => {
     setShowCollisions(v => !v);
     setShowCompare(false);
@@ -241,6 +269,7 @@ export default function TimModelViewerPage({ params }: Props) {
             selectedVersionId={selectedVersionId}
             onVersionChange={setSelectedVersionId}
             onFollowWork={handleFollowWork}
+            onFollowDoc={handleFollowDoc}
           />
         )}
 

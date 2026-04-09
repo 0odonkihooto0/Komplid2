@@ -41,9 +41,13 @@ export interface BimModelDetail {
 
 export interface BimElementLink {
   id: string;
-  entityType: 'GanttTask' | 'ExecutionDoc' | 'Defect';
+  entityType: 'GanttTask' | 'ExecutionDoc' | 'Ks2Act' | 'Defect';
   entityId: string;
   createdAt: string;
+  /** Читаемое имя сущности (номер + название или только название) */
+  entityLabel?: string;
+  /** Статус сущности для отображения Badge */
+  entityStatus?: string;
   /** Присутствует только при запросах с include element (allGprLinks, entityId-фильтр) */
   element?: { id: string; ifcGuid: string; ifcType: string; name: string | null };
 }
@@ -88,8 +92,37 @@ export interface BimElementDetail {
 export interface CreateLinkPayload {
   elementId: string;
   modelId: string;
-  entityType: 'GanttTask' | 'ExecutionDoc' | 'Defect';
+  entityType: 'GanttTask' | 'ExecutionDoc' | 'Ks2Act' | 'Defect';
   entityId: string;
+}
+
+/** Документ (ExecutionDoc или Ks2Act) для диалога поиска */
+export interface DocSearchItem {
+  id: string;
+  entityType: 'ExecutionDoc' | 'Ks2Act';
+  number: string | null;
+  title: string | null;
+  status: string;
+  contractId: string;
+}
+
+/** Дефект для диалога поиска */
+export interface DefectSearchItem {
+  id: string;
+  title: string;
+  status: string;
+  category: string | null;
+}
+
+/** Данные для создания нового замечания и привязки к ТИМ-элементу */
+export interface CreateDefectPayload {
+  elementId: string;
+  modelId: string;
+  title: string;
+  description?: string;
+  category?: string;
+  normativeRef?: string;
+  deadline?: string;
 }
 
 interface ApiResponse<T> {
@@ -308,6 +341,77 @@ export function useDeleteLink(projectId: string, modelId: string, elementId: str
       // Инвалидируем кэш всех связей модели для обновления цветов Timeline
       queryClient.invalidateQueries({ queryKey: ['all-gpr-links', projectId] });
       toast({ title: 'Привязка удалена' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Ошибка', description: error.message, variant: 'destructive' });
+    },
+  });
+}
+
+// ─── Поиск документов для диалога привязки ─────────────────────────────────
+
+/** Поиск ExecutionDoc и Ks2Act по объекту (для диалога добавления связи) */
+export function useSearchDocs(projectId: string, search: string, enabled: boolean) {
+  return useQuery<DocSearchItem[]>({
+    queryKey: ['bim-search-docs', projectId, search],
+    queryFn: () =>
+      apiFetch<DocSearchItem[]>(
+        `/api/projects/${projectId}/execution-docs?search=${encodeURIComponent(search)}&limit=50`
+      ),
+    enabled,
+    staleTime: 15_000,
+  });
+}
+
+/** Поиск Defect по объекту (для диалога добавления связи).
+ *  API дефектов не поддерживает text-search — загружаем все, фильтруем на клиенте. */
+export function useSearchDefects(projectId: string, enabled: boolean) {
+  return useQuery<{ data: DefectSearchItem[] }>({
+    queryKey: ['bim-search-defects', projectId],
+    queryFn: () =>
+      apiFetch<{ data: DefectSearchItem[] }>(
+        `/api/projects/${projectId}/defects?limit=50`
+      ),
+    enabled,
+    staleTime: 30_000,
+  });
+}
+
+/** Создать новое замечание (Defect) и сразу привязать к ТИМ-элементу */
+export function useCreateDefectAndLink(projectId: string) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({
+      elementId, modelId, title, description, category, normativeRef, deadline,
+    }: CreateDefectPayload) => {
+      // Шаг 1: создать Defect
+      const defect = await apiFetch<{ id: string }>(
+        `/api/projects/${projectId}/defects`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, description, category, normativeRef, deadline }),
+        }
+      );
+      // Шаг 2: создать привязку к ТИМ-элементу
+      await apiFetch<{ id: string }>(
+        `/api/projects/${projectId}/bim/links`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ elementId, modelId, entityType: 'Defect', entityId: defect.id }),
+        }
+      );
+      return defect;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['bim-element-detail', projectId, variables.modelId, variables.elementId],
+      });
+      queryClient.invalidateQueries({ queryKey: ['bim-issues', projectId] });
+      toast({ title: 'Замечание создано и привязано к элементу' });
     },
     onError: (error: Error) => {
       toast({ title: 'Ошибка', description: error.message, variant: 'destructive' });
