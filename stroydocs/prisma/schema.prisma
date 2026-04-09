@@ -91,6 +91,16 @@ enum ProblemIssueStatus {
   CLOSED
 }
 
+enum FundingRecordType {
+  ALLOCATED // Выделено
+  DELIVERED // Освоено
+}
+
+enum IndicatorSource {
+  MANUAL // Вручную
+  AUTO   // Автоматически
+}
+
 // === Модели Фазы 1 ===
 
 /// Организация (компания-участник строительства)
@@ -134,6 +144,11 @@ model Organization {
 
   // Модуль 12 — Отчёты
   reportTemplates ReportTemplate[]
+
+  // Модуль «Информация» — ЦУС
+  ownedLandPlots                 LandPlot[]           @relation("LandPlotOwner")
+  tenantedLandPlots              LandPlot[]           @relation("LandPlotTenant")
+  responsibleTechnicalConditions TechnicalCondition[] @relation("TechnicalConditionOrg")
 
   @@map("organizations")
 }
@@ -257,6 +272,9 @@ model User {
   // Проблемные вопросы
   problemIssuesAuthored ProblemIssue[] @relation("ProblemIssueAuthor")
 
+  // Модуль «Информация» — ЦУС
+  authoredCameras VideoCamera[] @relation("CameraAuthor")
+
   @@index([organizationId])
   @@map("users")
 }
@@ -378,6 +396,15 @@ model BuildingObject {
   // Проблемные вопросы (ЦУС стр. 30)
   problemIssues ProblemIssue[]
 
+  // Модуль «Информация» — ЦУС
+  landPlots           LandPlot[]
+  technicalConditions TechnicalCondition[]
+  fundingRecords      FundingRecord[]
+  limitRisks          LimitRisk[]
+  videoCameras        VideoCamera[]
+  projectCoordinates  ProjectCoordinate[]
+  projectIndicators   ProjectIndicator[]
+
   @@index([organizationId])
   @@index([parentId])
   @@index([region])
@@ -431,6 +458,9 @@ model Contract {
 
   // Модуль 9 — Журналы
   specialJournals SpecialJournal[]
+
+  // Модуль «Информация» — ЦУС
+  limitRisks LimitRisk[]
 
   @@index([projectId])
   @@index([parentId])
@@ -3784,4 +3814,183 @@ model ProblemIssue {
   @@index([projectId])
   @@index([projectId, status])
   @@map("problem_issues")
+}
+
+// === Модуль «Информация» — ЦУС ===
+
+/// Земельный участок объекта строительства
+model LandPlot {
+  id              String  @id @default(uuid())
+  cadastralNumber String // Кадастровый номер
+  address         String? // Адрес
+  area            Float?  // Площадь (кв.м)
+  landCategory    String? // Категория земель
+  permittedUse    String? // Вид разрешённого использования
+  cadastralValue  Float?  // Кадастровая стоимость (руб.)
+  status          String? // Статус участка
+  ownershipForm   String? // Форма собственности
+
+  hasEncumbrances      Boolean @default(false) // Обременения
+  encumbranceInfo      String?
+  hasRestrictions      Boolean @default(false) // Ограничения использования
+  restrictionInfo      String?
+  hasDemolitionObjects Boolean @default(false) // Объекты сноса
+  demolitionInfo       String?
+
+  inspectionDate DateTime? // Дата обследования
+  egrnNumber     String?   // Номер выписки ЕГРН
+
+  hasPlacementPossibility Boolean   @default(false) // Возможность размещения
+  placementInfo           String?
+  surveyInfo              String?   // Инженерные изыскания
+  gpzuNumber              String?   // Номер ГПЗУ
+  gpzuDate                DateTime? // Дата ГПЗУ
+  gpzuS3Key               String?   // S3-ключ файла ГПЗУ
+
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  ownerOrgId String?
+  ownerOrg   Organization? @relation("LandPlotOwner", fields: [ownerOrgId], references: [id])
+
+  tenantOrgId String?
+  tenantOrg   Organization? @relation("LandPlotTenant", fields: [tenantOrgId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@map("land_plots")
+}
+
+/// Технические условия на подключение к инженерным сетям
+model TechnicalCondition {
+  id                     String    @id @default(uuid())
+  type                   String // Водоснабжение, Электроснабжение, Газоснабжение, Теплоснабжение, Канализация, Связь
+  connectionAvailability String?   // Наличие возможности подключения
+  issueDate              DateTime? // Дата выдачи
+  number                 String?   // Номер ТУ
+  expirationDate         DateTime? // Срок действия
+  issuingAuthority       String?   // Выдавший орган
+  connectionConditions   String?   // Условия подключения
+
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  responsibleOrgId String?
+  responsibleOrg   Organization? @relation("TechnicalConditionOrg", fields: [responsibleOrgId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@map("technical_conditions")
+}
+
+/// Запись финансирования объекта (план/факт по годам и источникам)
+model FundingRecord {
+  id             String            @id @default(uuid())
+  year           Int // Год финансирования
+  recordType     FundingRecordType // ALLOCATED (выделено) / DELIVERED (освоено)
+  totalAmount    Float // Итого (руб.)
+  federalBudget  Float             @default(0) // Федеральный бюджет
+  regionalBudget Float             @default(0) // Региональный бюджет
+  localBudget    Float             @default(0) // Местный бюджет
+  ownFunds       Float             @default(0) // Собственные средства
+  extraBudget    Float             @default(0) // Внебюджетные средства
+
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@map("funding_records")
+}
+
+/// Риск неосвоения лимитов финансирования
+model LimitRisk {
+  id                 String    @id @default(uuid())
+  year               Int // Год
+  status             String    @default("Активно")
+  totalAmount        Float // Сумма под риском (руб.)
+  federalBudget      Float     @default(0)
+  regionalBudget     Float     @default(0)
+  localBudget        Float     @default(0)
+  extraBudget        Float     @default(0)
+  ownFunds           Float     @default(0)
+  riskReason         String // Причина риска
+  resolutionProposal String?   // Предложение по устранению
+  completionDate     DateTime? // Ожидаемая дата устранения
+
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  contractId String?
+  contract   Contract? @relation(fields: [contractId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@map("limit_risks")
+}
+
+/// Камера видеонаблюдения на объекте
+model VideoCamera {
+  id                String  @id @default(uuid())
+  cameraNumber      String? // Номер камеры
+  locationName      String? // Место установки
+  operationalStatus String  @default("Работает") // Работает / Не работает / На обслуживании
+  cameraModel       String? // Модель камеры
+  rtspUrl           String? // RTSP-поток
+  httpUrl           String // HTTP URL трансляции
+  failureReason     String? // Причина неисправности
+
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("CameraAuthor", fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@map("video_cameras")
+}
+
+/// Координата точки контура объекта на карте
+model ProjectCoordinate {
+  id                String @id @default(uuid())
+  latitude          Float // Широта
+  longitude         Float // Долгота
+  constructionPhase Int?   // Очередь строительства
+
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@map("project_coordinates")
+}
+
+/// Показатель объекта (настраиваемые поля ЦУС по группам)
+model ProjectIndicator {
+  id              String          @id @default(uuid())
+  groupName       String // Группа: Общая информация, Контракты ПИР, Договоры СМР, ...
+  indicatorName   String // Наименование показателя
+  value           String?         // Значение
+  comment         String?         // Комментарий
+  maxValue        String?         // Плановое/максимальное значение
+  sourceType      IndicatorSource @default(MANUAL)
+  autoSourceField String?         // Поле-источник при AUTO (например: "contract.totalAmount")
+
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId, groupName])
+  @@map("project_indicators")
 }
