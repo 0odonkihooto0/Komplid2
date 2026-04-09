@@ -81,6 +81,11 @@ export function PassportView({ projectId }: PassportViewProps) {
     return <p className="text-muted-foreground">Объект не найден</p>;
   }
 
+  const coords =
+    project.latitude != null && project.longitude != null
+      ? `${project.latitude}, ${project.longitude}`
+      : null;
+
   return (
     <div className="space-y-6">
       {/* Заголовок */}
@@ -112,10 +117,14 @@ export function PassportView({ projectId }: PassportViewProps) {
               <CardTitle className="text-base">Основные сведения</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-4">
+              <InfoRow label="Тип строительства" value={project.constructionType} />
+              <InfoRow label="Регион" value={project.region} />
               <InfoRow label="Кадастровый номер" value={project.cadastralNumber} />
               <InfoRow label="Площадь" value={project.area != null ? `${project.area} м²` : null} />
               <InfoRow label="Этажность" value={project.floors} />
               <InfoRow label="Класс ответственности" value={project.responsibilityClass} />
+              <InfoRow label="Стройка" value={project.stroyka} />
+              <InfoRow label="Координаты (ш, д)" value={coords} />
               <InfoRow label="Описание" value={project.description} />
             </CardContent>
           </Card>
@@ -155,6 +164,19 @@ export function PassportView({ projectId }: PassportViewProps) {
                   startDate={project.plannedStartDate}
                   endDate={project.plannedEndDate}
                 />
+              )}
+              <InfoRow
+                label="Начало (факт)"
+                value={project.actualStartDate ? formatDate(project.actualStartDate) : null}
+              />
+              <InfoRow
+                label="Окончание (факт)"
+                value={project.actualEndDate ? formatDate(project.actualEndDate) : null}
+              />
+              {project.fillDatesFromGpr && (
+                <p className="text-xs text-muted-foreground">
+                  Даты заполняются из актуальной версии ГПР
+                </p>
               )}
             </CardContent>
           </Card>

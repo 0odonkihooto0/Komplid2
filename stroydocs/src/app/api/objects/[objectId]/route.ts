@@ -58,7 +58,7 @@ export async function PUT(
     }
 
     // Преобразуем строки дат в объекты Date для полей паспорта
-    const { permitDate, plannedStartDate, plannedEndDate, ...rest } = parsed.data;
+    const { permitDate, plannedStartDate, plannedEndDate, actualStartDate, actualEndDate, ...rest } = parsed.data;
     const project = await db.buildingObject.update({
       where: { id: params.objectId },
       data: {
@@ -66,6 +66,8 @@ export async function PUT(
         ...(permitDate !== undefined && { permitDate: permitDate ? new Date(permitDate) : null }),
         ...(plannedStartDate !== undefined && { plannedStartDate: plannedStartDate ? new Date(plannedStartDate) : null }),
         ...(plannedEndDate !== undefined && { plannedEndDate: plannedEndDate ? new Date(plannedEndDate) : null }),
+        ...(actualStartDate !== undefined && { actualStartDate: actualStartDate ? new Date(actualStartDate) : null }),
+        ...(actualEndDate !== undefined && { actualEndDate: actualEndDate ? new Date(actualEndDate) : null }),
       },
     });
 

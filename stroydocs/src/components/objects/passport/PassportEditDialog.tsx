@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -15,6 +15,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { CONSTRUCTION_TYPE_OPTIONS, RF_SUBJECTS } from '@/utils/constants';
 import type { PassportProject, PassportUpdateData } from './usePassport';
 
 const editSchema = z.object({
@@ -23,8 +31,8 @@ const editSchema = z.object({
   generalContractor:   z.string().optional(),
   customer:            z.string().optional(),
   cadastralNumber:     z.string().max(50).optional(),
-  area:                z.string().optional(),   // числовая строка из input, конвертируем в submit
-  floors:              z.string().optional(),   // числовая строка из input, конвертируем в submit
+  area:                z.string().optional(),
+  floors:              z.string().optional(),
   responsibilityClass: z.string().optional(),
   permitNumber:        z.string().optional(),
   permitDate:          z.string().optional(),
@@ -33,6 +41,15 @@ const editSchema = z.object({
   chiefEngineer:       z.string().optional(),
   plannedStartDate:    z.string().optional(),
   plannedEndDate:      z.string().optional(),
+  // Расширенные реквизиты
+  constructionType:    z.string().optional(),
+  region:              z.string().optional(),
+  stroyka:             z.string().optional(),
+  latitude:            z.string().optional(),
+  longitude:           z.string().optional(),
+  actualStartDate:     z.string().optional(),
+  actualEndDate:       z.string().optional(),
+  fillDatesFromGpr:    z.boolean().optional(),
 });
 
 type EditForm = z.infer<typeof editSchema>;
@@ -67,6 +84,7 @@ export function PassportEditDialog({
 }: PassportEditDialogProps) {
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -93,6 +111,14 @@ export function PassportEditDialog({
         chiefEngineer:       project.chiefEngineer ?? '',
         plannedStartDate:    toDateInput(project.plannedStartDate),
         plannedEndDate:      toDateInput(project.plannedEndDate),
+        constructionType:    project.constructionType ?? '',
+        region:              project.region ?? '',
+        stroyka:             project.stroyka ?? '',
+        latitude:            project.latitude != null ? String(project.latitude) : '',
+        longitude:           project.longitude != null ? String(project.longitude) : '',
+        actualStartDate:     toDateInput(project.actualStartDate),
+        actualEndDate:       toDateInput(project.actualEndDate),
+        fillDatesFromGpr:    project.fillDatesFromGpr ?? false,
       });
     }
   }, [open, project, reset]);
@@ -114,6 +140,14 @@ export function PassportEditDialog({
       chiefEngineer:       data.chiefEngineer || null,
       plannedStartDate:    toIso(data.plannedStartDate),
       plannedEndDate:      toIso(data.plannedEndDate),
+      constructionType:    data.constructionType || null,
+      region:              data.region || null,
+      stroyka:             data.stroyka || null,
+      latitude:            data.latitude ? parseFloat(data.latitude) : null,
+      longitude:           data.longitude ? parseFloat(data.longitude) : null,
+      actualStartDate:     toIso(data.actualStartDate),
+      actualEndDate:       toIso(data.actualEndDate),
+      fillDatesFromGpr:    data.fillDatesFromGpr ?? false,
     });
   }
 
@@ -151,6 +185,61 @@ export function PassportEditDialog({
 
           <Separator />
 
+          {/* Тип и регион */}
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-muted-foreground">Тип и регион</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Тип строительства</Label>
+                <Controller
+                  control={control}
+                  name="constructionType"
+                  render={({ field }) => (
+                    <Select value={field.value ?? ''} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Выберите тип" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CONSTRUCTION_TYPE_OPTIONS.map((opt) => (
+                          <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Регион</Label>
+                <Controller
+                  control={control}
+                  name="region"
+                  render={({ field }) => (
+                    <Select value={field.value ?? ''} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Выберите регион" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {RF_SUBJECTS.map((subj) => (
+                          <SelectItem key={subj} value={subj}>{subj}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+              <div className="col-span-2 space-y-1">
+                <Label htmlFor="stroyka">Стройка</Label>
+                <Input
+                  id="stroyka"
+                  placeholder="Используется в реквизитах КС-2, КС-3"
+                  {...register('stroyka')}
+                />
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
           {/* Объект */}
           <div className="space-y-3">
             <p className="text-sm font-medium text-muted-foreground">Характеристики объекта</p>
@@ -172,6 +261,14 @@ export function PassportEditDialog({
                 <Label htmlFor="floors">Этажность</Label>
                 <Input id="floors" type="number" {...register('floors')} />
                 {errors.floors && <p className="text-xs text-destructive">{errors.floors.message}</p>}
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="latitude">Широта</Label>
+                <Input id="latitude" type="number" step="0.000001" placeholder="55.751244" {...register('latitude')} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="longitude">Долгота</Label>
+                <Input id="longitude" type="number" step="0.000001" placeholder="37.618423" {...register('longitude')} />
               </div>
             </div>
           </div>
@@ -218,6 +315,32 @@ export function PassportEditDialog({
               <div className="space-y-1">
                 <Label htmlFor="plannedEndDate">Окончание (план)</Label>
                 <Input id="plannedEndDate" type="date" {...register('plannedEndDate')} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="actualStartDate">Начало (факт)</Label>
+                <Input id="actualStartDate" type="date" {...register('actualStartDate')} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="actualEndDate">Окончание (факт)</Label>
+                <Input id="actualEndDate" type="date" {...register('actualEndDate')} />
+              </div>
+              <div className="col-span-2 flex items-center gap-2 pt-1">
+                <Controller
+                  control={control}
+                  name="fillDatesFromGpr"
+                  render={({ field }) => (
+                    <input
+                      id="fillDatesFromGpr"
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-300"
+                      checked={field.value ?? false}
+                      onChange={(e) => field.onChange(e.target.checked)}
+                    />
+                  )}
+                />
+                <Label htmlFor="fillDatesFromGpr" className="cursor-pointer font-normal">
+                  Заполнять даты из актуальной версии ГПР
+                </Label>
               </div>
             </div>
           </div>
