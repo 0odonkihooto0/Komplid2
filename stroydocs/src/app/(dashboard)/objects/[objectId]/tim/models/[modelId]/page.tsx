@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { IfcViewer } from '@/components/modules/tim/IfcViewer';
+import { ModelStructurePanel } from '@/components/modules/tim/ModelStructurePanel';
 import { ElementPropertiesPanel } from '@/components/modules/tim/ElementPropertiesPanel';
 import { TimelineSlider } from '@/components/modules/tim/TimelineSlider';
 import { CollisionDetector } from '@/components/modules/tim/CollisionDetector';
@@ -112,6 +113,16 @@ export default function TimModelViewerPage({ params }: Props) {
 
       {/* Основная рабочая область */}
       <div className="flex min-h-0 flex-1">
+        {/* Левая панель: структура модели */}
+        <ModelStructurePanel
+          projectId={objectId}
+          modelId={modelId}
+          model={model}
+          viewerScene={viewerScene}
+          selectedGuid={selectedGuid}
+          onElementSelect={setSelectedGuid}
+        />
+
         {/* 3D вьюер */}
         <div className="relative flex-1">
           <IfcViewer

@@ -143,7 +143,7 @@ function buildIfcPropertiesMap(ifcApi: IfcAPIType, modelId: number, vs: ViewerSc
   }
 
   // Собрать результат: GUID → { [psetName]: { [propName]: value } }
-  for (const [expressID, guid] of vs.guidMap) {
+  for (const [expressID, guid] of Array.from(vs.guidMap)) {
     const psetIDs = elemToPsets.get(expressID);
     if (!psetIDs?.length) continue;
     const result: Record<string, Record<string, unknown>> = {};
