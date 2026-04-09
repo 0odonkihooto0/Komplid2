@@ -1,7 +1,9 @@
-import { TasksView } from '@/components/objects/tasks/TasksView';
+import { redirect } from 'next/navigation';
 
-export const dynamic = 'force-dynamic';
-
-export default function TasksPage({ params }: { params: { objectId: string } }) {
-  return <TasksView projectId={params.objectId} />;
+export default function TasksPage({
+  params,
+}: {
+  params: { objectId: string };
+}) {
+  redirect(`/objects/${params.objectId}/info/tasks`);
 }
