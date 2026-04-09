@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Maximize2, Grid3X3, AlertTriangle, GitCompare } from 'lucide-react';
+import { Home, Maximize2, Grid3X3, AlertTriangle, GitCompare, Scissors, Ruler } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -22,6 +22,12 @@ interface ViewerToolbarProps {
   collisionsActive?: boolean;
   /** Сравнение активно — кнопка сравнения нажата */
   compareActive?: boolean;
+  /** Режим разрезов */
+  onClipping?: () => void;
+  clippingActive?: boolean;
+  /** Режим измерений */
+  onMeasure?: () => void;
+  measureActive?: boolean;
 }
 
 export function ViewerToolbar({
@@ -33,6 +39,10 @@ export function ViewerToolbar({
   onCompare,
   collisionsActive,
   compareActive,
+  onClipping,
+  clippingActive,
+  onMeasure,
+  measureActive,
 }: ViewerToolbarProps) {
   return (
     <TooltipProvider>
@@ -78,6 +88,38 @@ export function ViewerToolbar({
           </TooltipTrigger>
           <TooltipContent side="right">Каркасный режим</TooltipContent>
         </Tooltip>
+
+        {onClipping && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={clippingActive ? 'default' : 'secondary'}
+                size="icon"
+                className="h-8 w-8 shadow-md"
+                onClick={onClipping}
+              >
+                <Scissors className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Разрезы</TooltipContent>
+          </Tooltip>
+        )}
+
+        {onMeasure && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={measureActive ? 'default' : 'secondary'}
+                size="icon"
+                className="h-8 w-8 shadow-md"
+                onClick={onMeasure}
+              >
+                <Ruler className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Измерения</TooltipContent>
+          </Tooltip>
+        )}
 
         {onCollisions && (
           <Tooltip>
