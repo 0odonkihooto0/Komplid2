@@ -5,6 +5,7 @@
 
 import type * as THREE_NS from 'three';
 import type { OrbitControls as OrbitControlsType } from 'three/addons/controls/OrbitControls.js';
+import type { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import type { IfcAPI as IfcAPIType } from 'web-ifc';
 
 const DEFAULT_COLOR = '#9CA3AF';
@@ -23,6 +24,8 @@ export interface ViewerScene {
   materials: Map<number, THREE_NS.MeshLambertMaterial>;
   /** IFC PropertySets: GUID → { [psetName]: { [propName]: value } } */
   ifcProperties: Map<string, Record<string, Record<string, unknown>>>;
+  /** CSS2DRenderer для текстовых меток измерений */
+  css2dRenderer: CSS2DRenderer;
   /** ID текущего animation frame — обновляется каждый кадр */
   frameId: number;
   wireframe: boolean;
@@ -31,6 +34,7 @@ export interface ViewerScene {
 export async function initScene(container: HTMLDivElement): Promise<ViewerScene> {
   const THREE = await import('three');
   const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
+  const { CSS2DRenderer } = await import('three/addons/renderers/CSS2DRenderer.js');
 
   const { clientWidth: w, clientHeight: h } = container;
 
@@ -46,6 +50,15 @@ export async function initScene(container: HTMLDivElement): Promise<ViewerScene>
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   container.appendChild(renderer.domElement);
 
+  // CSS2DRenderer — поверх canvas для текстовых меток измерений
+  const css2dRenderer = new CSS2DRenderer();
+  css2dRenderer.setSize(w || 800, h || 600);
+  css2dRenderer.domElement.style.position = 'absolute';
+  css2dRenderer.domElement.style.top = '0px';
+  css2dRenderer.domElement.style.left = '0px';
+  css2dRenderer.domElement.style.pointerEvents = 'none';
+  container.appendChild(css2dRenderer.domElement);
+
   const camera = new THREE.PerspectiveCamera(60, (w || 800) / (h || 600), 0.01, 100000);
   camera.position.set(30, 30, 30);
 
@@ -60,7 +73,7 @@ export async function initScene(container: HTMLDivElement): Promise<ViewerScene>
 
   // Собираем vs первым, чтобы animate мог обновлять vs.frameId напрямую
   const vs: ViewerScene = {
-    scene, camera, renderer, controls, raycaster,
+    scene, camera, renderer, css2dRenderer, controls, raycaster,
     meshMap, guidMap, materials, ifcProperties, frameId: 0, wireframe: false,
   };
 
@@ -68,6 +81,7 @@ export async function initScene(container: HTMLDivElement): Promise<ViewerScene>
     vs.frameId = requestAnimationFrame(animate);
     controls.update();
     renderer.render(scene, camera);
+    css2dRenderer.render(scene, camera);
   }
   animate();
 

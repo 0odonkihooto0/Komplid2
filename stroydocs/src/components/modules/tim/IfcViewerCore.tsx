@@ -4,6 +4,9 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Vector2 } from 'three';
 import { Loader2 } from 'lucide-react';
 import { ViewerToolbar } from './ViewerToolbar';
+import { ClippingPanel } from './ClippingPanel';
+import { useClippingPlanes } from './useClippingPlanes';
+import { useMeasurements } from './useMeasurements';
 import { initScene, loadIfcModel } from './ifcSceneSetup';
 import type { ViewerScene } from './ifcSceneSetup';
 
@@ -36,7 +39,7 @@ export function IfcViewerCore({
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<ViewerScene | null>(null);
-  // Стабильный ref для коллбека — не вызывает пересоздание viewer
+  // Стабильные рефы для коллбеков — не вызывают пересоздание viewer
   const onSelectedRef = useRef(onElementSelected);
   onSelectedRef.current = onElementSelected;
   const onSceneReadyRef = useRef(onSceneReady);
@@ -45,6 +48,13 @@ export function IfcViewerCore({
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [wireframe, setWireframe] = useState(false);
+
+  // ─── Разрезы и измерения ─────────────────────────────────────────────────────
+  const clipping = useClippingPlanes(sceneRef);
+  const measure = useMeasurements(sceneRef);
+  // Стабильный реф чтобы onClick внутри useEffect видел актуальный handleMeasureClick
+  const measureRef = useRef(measure);
+  measureRef.current = measure;
 
   // ─── Toolbar-коллбеки ────────────────────────────────────────────────────────
   const handleReset = useCallback(() => {
@@ -112,25 +122,30 @@ export function IfcViewerCore({
       setLoading(false);
     });
 
-    // Клик → raycasting → выбор элемента
+    // Клик: сначала пробуем режим измерений, потом обычный выбор элемента
     function onClick(e: MouseEvent) {
       const s = sceneRef.current;
       if (!s || !containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-      s.raycaster.setFromCamera(new Vector2(x, y), s.camera);
-      const meshes = Array.from(s.meshMap.keys()).filter(
-        (o): o is import('three').Object3D => typeof o === 'object' && o !== null && 'isObject3D' in o
-      );
-      const hits = s.raycaster.intersectObjects(meshes);
-      if (!hits.length) { onSelectedRef.current(null); return; }
-      const expressID = s.meshMap.get(hits[0].object);
-      const guid = expressID !== undefined ? s.guidMap.get(expressID) ?? null : null;
-      onSelectedRef.current(guid);
-      // Подсветить выбранный элемент
-      s.materials.forEach((mat, id) => {
-        mat.color.set(id === expressID ? SELECTED_COLOR : DEFAULT_COLOR);
+
+      void measureRef.current.handleMeasureClick(e, rect).then(consumed => {
+        if (consumed) return;
+        // Обычный режим — raycasting для выбора элемента
+        const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        s.raycaster.setFromCamera(new Vector2(x, y), s.camera);
+        const meshes = Array.from(s.meshMap.keys()).filter(
+          (o): o is import('three').Object3D => typeof o === 'object' && o !== null && 'isObject3D' in o
+        );
+        const hits = s.raycaster.intersectObjects(meshes);
+        if (!hits.length) { onSelectedRef.current(null); return; }
+        const expressID = s.meshMap.get(hits[0].object);
+        const guid = expressID !== undefined ? s.guidMap.get(expressID) ?? null : null;
+        onSelectedRef.current(guid);
+        // Подсветить выбранный элемент
+        s.materials.forEach((mat, id) => {
+          mat.color.set(id === expressID ? SELECTED_COLOR : DEFAULT_COLOR);
+        });
       });
     }
 
@@ -141,6 +156,7 @@ export function IfcViewerCore({
       s.camera.aspect = w / h;
       s.camera.updateProjectionMatrix();
       s.renderer.setSize(w, h);
+      s.css2dRenderer.setSize(w, h);
     }
 
     container.addEventListener('click', onClick);
@@ -155,6 +171,8 @@ export function IfcViewerCore({
         cancelAnimationFrame(s.frameId);
         s.renderer.dispose();
         if (container.contains(s.renderer.domElement)) container.removeChild(s.renderer.domElement);
+        // Убрать CSS2DRenderer overlay
+        if (container.contains(s.css2dRenderer.domElement)) container.removeChild(s.css2dRenderer.domElement);
       }
       sceneRef.current = null;
     };
@@ -175,16 +193,50 @@ export function IfcViewerCore({
   return (
     <div className="relative h-full w-full">
       <div ref={containerRef} className="h-full w-full" />
+
       <ViewerToolbar
         wireframe={wireframe}
         onReset={handleReset}
         onFit={handleFit}
         onWireframe={handleWireframe}
+        onClipping={clipping.toggle}
+        clippingActive={clipping.active}
+        onMeasure={measure.toggleActive}
+        measureActive={measure.active}
         onCollisions={onCollisions}
         onCompare={onCompare}
         collisionsActive={collisionsActive}
         compareActive={compareActive}
       />
+
+      {/* Панель управления разрезом */}
+      {clipping.active && (
+        <ClippingPanel
+          axis={clipping.axis}
+          value={clipping.value}
+          onAxisChange={clipping.handleAxisChange}
+          onValueChange={clipping.handleValueChange}
+          onClear={clipping.clear}
+        />
+      )}
+
+      {/* Кнопка удаления всех измерений */}
+      {measure.active && measure.measurements.length > 0 && (
+        <button
+          onClick={measure.clearAll}
+          className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-md border border-border bg-background/95 px-3 py-1.5 text-xs shadow-md backdrop-blur-sm hover:bg-accent"
+        >
+          Удалить все измерения ({measure.measurements.length})
+        </button>
+      )}
+
+      {/* Подсказка при активном режиме измерений без точек */}
+      {measure.active && measure.measurements.length === 0 && (
+        <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-md border border-border bg-background/95 px-3 py-1.5 text-xs shadow-md backdrop-blur-sm">
+          Кликните на модель для выбора первой точки
+        </div>
+      )}
+
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
