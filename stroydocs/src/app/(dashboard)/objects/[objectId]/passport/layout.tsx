@@ -5,9 +5,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 const PASSPORT_TABS = [
-  { label: 'Задачи',             href: 'tasks' },
-  { label: 'Проблемные вопросы', href: 'problems' },
-  { label: 'Фотогалерея',        href: 'photos' },
+  { label: 'Задачи',                href: 'tasks' },
+  { label: 'Строительный контроль', href: 'sk' },
+  { label: 'Проблемные вопросы',    href: 'problems' },
+  { label: 'Фотогалерея',           href: 'photos' },
 ];
 
 export default function PassportLayout({
