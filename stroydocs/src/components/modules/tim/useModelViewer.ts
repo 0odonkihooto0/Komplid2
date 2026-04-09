@@ -44,6 +44,32 @@ export interface BimElementLink {
   entityType: 'GanttTask' | 'ExecutionDoc' | 'Defect';
   entityId: string;
   createdAt: string;
+  /** Присутствует только при запросах с include element (allGprLinks, entityId-фильтр) */
+  element?: { id: string; ifcGuid: string; ifcType: string; name: string | null };
+}
+
+/** Версия ГПР (сводные данные из /api/projects/[id]/gantt-versions) */
+export interface GanttVersionSummary {
+  id: string;
+  name: string;
+  isBaseline: boolean;
+  isActive: boolean;
+  planStart: string | null;
+  planEnd: string | null;
+  taskCount: number;
+}
+
+/** Задача ГПР для просмотра в TIM (подмножество полей GanttTask) */
+export interface GanttTaskViewer {
+  id: string;
+  name: string;
+  level: number;
+  sortOrder: number;
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'DELAYED' | 'ON_HOLD';
+  planStart: string;
+  planEnd: string;
+  factEnd: string | null;
+  progress: number;
 }
 
 export interface BimElementDetail {
@@ -152,6 +178,8 @@ export function useCreateLink(projectId: string) {
       queryClient.invalidateQueries({
         queryKey: ['bim-element-detail', projectId, variables.modelId, variables.elementId],
       });
+      // Инвалидируем кэш всех связей модели для обновления цветов Timeline
+      queryClient.invalidateQueries({ queryKey: ['all-gpr-links', projectId] });
       toast({ title: 'Привязка создана' });
     },
     onError: (error: Error) => {
@@ -226,6 +254,42 @@ export function useUploadVersion(projectId: string, modelId: string) {
   });
 }
 
+// ─── ГПР хуки для TIM-вьюера ────────────────────────────────────────────────
+
+/** Версии ГПР текущего объекта (для Select в GprLinkPanel и динамических дат Timeline) */
+export function useGanttVersionsForViewer(projectId: string) {
+  return useQuery<GanttVersionSummary[]>({
+    queryKey: ['gantt-versions-viewer', projectId],
+    queryFn: () => apiFetch<GanttVersionSummary[]>(`/api/projects/${projectId}/gantt-versions`),
+    staleTime: 60_000,
+  });
+}
+
+/** Задачи выбранной версии ГПР (для списка позиций в GprLinkPanel) */
+export function useGanttTasksForViewer(projectId: string, versionId: string | null) {
+  return useQuery<{ tasks: GanttTaskViewer[]; dependencies: unknown[] }>({
+    queryKey: ['gantt-tasks-viewer', projectId, versionId],
+    enabled: !!versionId,
+    queryFn: () =>
+      apiFetch<{ tasks: GanttTaskViewer[]; dependencies: unknown[] }>(
+        `/api/projects/${projectId}/gantt-versions/${versionId}/tasks`
+      ),
+    staleTime: 30_000,
+  });
+}
+
+/** Все GPR-связи модели (для цветовой индикации по временной шкале) */
+export function useAllGprLinks(projectId: string, modelId: string) {
+  return useQuery<BimElementLink[]>({
+    queryKey: ['all-gpr-links', projectId, modelId],
+    queryFn: () =>
+      apiFetch<BimElementLink[]>(
+        `/api/projects/${projectId}/bim/links?entityType=GanttTask&modelId=${modelId}`
+      ),
+    staleTime: 30_000,
+  });
+}
+
 /** Удалить привязку по linkId */
 export function useDeleteLink(projectId: string, modelId: string, elementId: string | null) {
   const queryClient = useQueryClient();
@@ -241,6 +305,8 @@ export function useDeleteLink(projectId: string, modelId: string, elementId: str
       queryClient.invalidateQueries({
         queryKey: ['bim-element-detail', projectId, modelId, elementId],
       });
+      // Инвалидируем кэш всех связей модели для обновления цветов Timeline
+      queryClient.invalidateQueries({ queryKey: ['all-gpr-links', projectId] });
       toast({ title: 'Привязка удалена' });
     },
     onError: (error: Error) => {
