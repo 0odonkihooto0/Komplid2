@@ -21,6 +21,15 @@ const passportFields = z.object({
   chiefEngineer:       z.string().max(200).optional(),
   plannedStartDate:    z.string().datetime({ offset: true }).optional().nullable(),
   plannedEndDate:      z.string().datetime({ offset: true }).optional().nullable(),
+  // Расширенные реквизиты
+  constructionType:    z.string().max(100).optional().nullable(),
+  region:              z.string().max(200).optional().nullable(),
+  stroyka:             z.string().max(500).optional().nullable(),
+  latitude:            z.number().min(-90).max(90).optional().nullable(),
+  longitude:           z.number().min(-180).max(180).optional().nullable(),
+  actualStartDate:     z.string().datetime({ offset: true }).optional().nullable(),
+  actualEndDate:       z.string().datetime({ offset: true }).optional().nullable(),
+  fillDatesFromGpr:    z.boolean().optional(),
 });
 
 export const updateProjectSchema = createProjectSchema.partial().extend({

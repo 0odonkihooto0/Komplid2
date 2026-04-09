@@ -27,6 +27,15 @@ export interface PassportProject {
   chiefEngineer: string | null;
   plannedStartDate: string | null;
   plannedEndDate: string | null;
+  // Расширенные реквизиты
+  constructionType: string | null;
+  region: string | null;
+  stroyka: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  actualStartDate: string | null;
+  actualEndDate: string | null;
+  fillDatesFromGpr: boolean;
 }
 
 export interface PassportUpdateData {
@@ -45,6 +54,14 @@ export interface PassportUpdateData {
   chiefEngineer?: string | null;
   plannedStartDate?: string | null;
   plannedEndDate?: string | null;
+  constructionType?: string | null;
+  region?: string | null;
+  stroyka?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  actualStartDate?: string | null;
+  actualEndDate?: string | null;
+  fillDatesFromGpr?: boolean;
 }
 
 export function usePassport(projectId: string) {
