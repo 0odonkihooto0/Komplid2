@@ -21,6 +21,8 @@ export interface ViewerScene {
   guidMap: Map<number, string>;
   /** expressID → материал (для перекраски) */
   materials: Map<number, THREE_NS.MeshLambertMaterial>;
+  /** IFC PropertySets: GUID → { [psetName]: { [propName]: value } } */
+  ifcProperties: Map<string, Record<string, Record<string, unknown>>>;
   /** ID текущего animation frame — обновляется каждый кадр */
   frameId: number;
   wireframe: boolean;
@@ -54,11 +56,12 @@ export async function initScene(container: HTMLDivElement): Promise<ViewerScene>
   const meshMap = new Map<object, number>();
   const guidMap = new Map<number, string>();
   const materials = new Map<number, THREE_NS.MeshLambertMaterial>();
+  const ifcProperties = new Map<string, Record<string, Record<string, unknown>>>();
 
   // Собираем vs первым, чтобы animate мог обновлять vs.frameId напрямую
   const vs: ViewerScene = {
     scene, camera, renderer, controls, raycaster,
-    meshMap, guidMap, materials, frameId: 0, wireframe: false,
+    meshMap, guidMap, materials, ifcProperties, frameId: 0, wireframe: false,
   };
 
   function animate() {
@@ -69,6 +72,91 @@ export async function initScene(container: HTMLDivElement): Promise<ViewerScene>
   animate();
 
   return vs;
+}
+
+/** Извлечь строковое значение из IFC-поля { type, value } */
+function extractIfcStr(field: unknown): string | null {
+  if (!field || typeof field !== 'object') return null;
+  const f = field as Record<string, unknown>;
+  return typeof f.value === 'string' ? f.value : null;
+}
+
+/**
+ * Сканирует все линии IFC-модели для построения карты PropertySets.
+ * Ищет IfcRelDefinesByProperties → IfcPropertySet / IfcElementQuantity → IfcPropertySingleValue.
+ * Результат записывается в vs.ifcProperties: GUID → { [psetName]: { [propName]: value } }.
+ */
+function buildIfcPropertiesMap(ifcApi: IfcAPIType, modelId: number, vs: ViewerScene): void {
+  const allLines = ifcApi.GetAllLines(modelId);
+
+  // psetExpressID → { name, props }
+  const rawPsets = new Map<number, { name: string; props: Record<string, unknown> }>();
+  // elementExpressID → psetExpressID[]
+  const elemToPsets = new Map<number, number[]>();
+
+  for (const lineID of Array.from(allLines)) {
+    let line: Record<string, unknown> | null = null;
+    try {
+      line = ifcApi.GetLine(modelId, lineID, false) as Record<string, unknown>;
+    } catch {
+      continue;
+    }
+    if (!line) continue;
+
+    // IfcPropertySet (HasProperties) или IfcElementQuantity (Quantities)
+    const propsArr = Array.isArray(line.HasProperties) ? line.HasProperties
+      : Array.isArray(line.Quantities) ? line.Quantities : null;
+    if (propsArr) {
+      const psetName = extractIfcStr(line.Name) ?? `Pset_${lineID}`;
+      const props: Record<string, unknown> = {};
+      for (const ref of propsArr as Array<{ value?: unknown }>) {
+        const propID = typeof ref?.value === 'number' ? ref.value : null;
+        if (propID == null) continue;
+        try {
+          const p = ifcApi.GetLine(modelId, propID, false) as Record<string, unknown>;
+          const propName = extractIfcStr(p?.Name);
+          // NominalValue (PropertySingleValue) или *Value (IfcQuantity*)
+          const valObj = p?.NominalValue
+            ?? p?.LengthValue ?? p?.AreaValue ?? p?.VolumeValue
+            ?? p?.CountValue ?? p?.WeightValue ?? p?.TimeValue;
+          const val = valObj && typeof valObj === 'object'
+            ? (valObj as Record<string, unknown>).value ?? null : null;
+          if (propName) props[propName] = val ?? null;
+        } catch { /* пропустить нечитаемые свойства */ }
+      }
+      rawPsets.set(lineID, { name: psetName, props });
+    }
+
+    // IfcRelDefinesByProperties: RelatedObjects → элементы, RelatingPropertyDefinition → PropertySet
+    if (Array.isArray(line.RelatedObjects) && line.RelatingPropertyDefinition != null) {
+      const psetRef = line.RelatingPropertyDefinition as Record<string, unknown>;
+      const psetID = typeof psetRef?.value === 'number' ? psetRef.value : null;
+      if (psetID == null) continue;
+      for (const objRef of line.RelatedObjects as Array<{ value?: unknown }>) {
+        const elemID = typeof objRef?.value === 'number' ? objRef.value : null;
+        if (elemID == null) continue;
+        const arr = elemToPsets.get(elemID) ?? [];
+        arr.push(psetID);
+        elemToPsets.set(elemID, arr);
+      }
+    }
+  }
+
+  // Собрать результат: GUID → { [psetName]: { [propName]: value } }
+  for (const [expressID, guid] of vs.guidMap) {
+    const psetIDs = elemToPsets.get(expressID);
+    if (!psetIDs?.length) continue;
+    const result: Record<string, Record<string, unknown>> = {};
+    for (const psetID of psetIDs) {
+      const pset = rawPsets.get(psetID);
+      if (pset && Object.keys(pset.props).length > 0) {
+        result[pset.name] = pset.props;
+      }
+    }
+    if (Object.keys(result).length > 0) {
+      vs.ifcProperties.set(guid, result);
+    }
+  }
 }
 
 export async function loadIfcModel(
@@ -124,6 +212,9 @@ export async function loadIfcModel(
       geom.delete();
     }
   }
+
+  // Извлечь IFC PropertySets для всех элементов перед закрытием модели
+  buildIfcPropertiesMap(ifcApi, modelId, vs);
 
   ifcApi.CloseModel(modelId);
 }
