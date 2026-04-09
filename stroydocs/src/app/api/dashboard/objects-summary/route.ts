@@ -1,16 +1,25 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { errorResponse } from '@/utils/api';
 
 // GET /api/dashboard/objects-summary
 // Возвращает список строительных объектов организации с % готовности ИД
-export async function GET() {
+// Поддерживает фильтрацию по objectIds (через запятую)
+export async function GET(req: NextRequest) {
   try {
     const session = await getSessionOrThrow();
 
+    const objectIdsParam = req.nextUrl.searchParams.get('objectIds');
+    const objectIds = objectIdsParam
+      ? objectIdsParam.split(',').filter(Boolean)
+      : [];
+
     const objects = await db.buildingObject.findMany({
-      where: { organizationId: session.user.organizationId },
+      where: {
+        organizationId: session.user.organizationId,
+        ...(objectIds.length > 0 && { id: { in: objectIds } }),
+      },
       orderBy: { createdAt: 'desc' },
       include: {
         contracts: {

@@ -31,11 +31,20 @@ const statusVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
   ARCHIVED: 'outline',
 };
 
-export function ObjectsWidget() {
+interface ObjectsWidgetProps {
+  objectIds?: string[];
+}
+
+export function ObjectsWidget({ objectIds }: ObjectsWidgetProps) {
   const { data, isLoading } = useQuery<ObjectSummary[]>({
-    queryKey: ['dashboard-objects-summary'],
+    queryKey: ['dashboard-objects-summary', objectIds],
     queryFn: async () => {
-      const res = await fetch('/api/dashboard/objects-summary');
+      const params = new URLSearchParams();
+      if (objectIds && objectIds.length > 0) {
+        params.set('objectIds', objectIds.join(','));
+      }
+      const qs = params.size > 0 ? `?${params.toString()}` : '';
+      const res = await fetch(`/api/dashboard/objects-summary${qs}`);
       if (!res.ok) return [];
       return res.json();
     },
