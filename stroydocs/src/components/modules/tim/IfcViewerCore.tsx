@@ -156,9 +156,15 @@ export function IfcViewerCore({
         const expressID = s.meshMap.get(hits[0].object);
         const guid = expressID !== undefined ? s.guidMap.get(expressID) ?? null : null;
         onSelectedRef.current(guid);
-        // Подсветить выбранный элемент
+        // Подсветить выбранный элемент, восстановить оригинальный IFC-цвет для остальных
         s.materials.forEach((mat, id) => {
-          mat.color.set(id === expressID ? SELECTED_COLOR : DEFAULT_COLOR);
+          if (id === expressID) {
+            mat.color.set(SELECTED_COLOR);
+          } else {
+            const orig = s.originalColors.get(id);
+            if (orig) mat.color.setRGB(orig[0], orig[1], orig[2]);
+            else mat.color.set(DEFAULT_COLOR);
+          }
         });
       });
     }
@@ -207,7 +213,12 @@ export function IfcViewerCore({
     s.materials.forEach((mat, expressID) => {
       const guid = s.guidMap.get(expressID);
       const color = guid !== undefined ? elementColors.get(guid) : undefined;
-      mat.color.set(color ?? DEFAULT_COLOR);
+      if (color) {
+        mat.color.set(color);
+      } else {
+        const orig = s.originalColors.get(expressID);
+        if (orig) mat.color.setRGB(orig[0], orig[1], orig[2]);
+      }
     });
   }, [elementColors]);
 

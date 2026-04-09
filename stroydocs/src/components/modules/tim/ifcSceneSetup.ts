@@ -8,8 +8,6 @@ import type { OrbitControls as OrbitControlsType } from 'three/addons/controls/O
 import type { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import type { IfcAPI as IfcAPIType } from 'web-ifc';
 
-const DEFAULT_COLOR = '#9CA3AF';
-
 export interface ViewerScene {
   scene: THREE_NS.Scene;
   camera: THREE_NS.PerspectiveCamera;
@@ -22,6 +20,8 @@ export interface ViewerScene {
   guidMap: Map<number, string>;
   /** expressID → материал (для перекраски) */
   materials: Map<number, THREE_NS.MeshLambertMaterial>;
+  /** expressID → оригинальный IFC-цвет [R, G, B] (0.0–1.0) для восстановления после выбора */
+  originalColors: Map<number, [number, number, number]>;
   /** IFC PropertySets: GUID → { [psetName]: { [propName]: value } } */
   ifcProperties: Map<string, Record<string, Record<string, unknown>>>;
   /** IFC слои: имя слоя → множество expressID элементов */
@@ -42,7 +42,8 @@ export async function initScene(container: HTMLDivElement): Promise<ViewerScene>
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#111827');
-  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 0.4));
   const dir = new THREE.DirectionalLight(0xffffff, 0.8);
   dir.position.set(10, 20, 10);
   scene.add(dir);
@@ -71,13 +72,14 @@ export async function initScene(container: HTMLDivElement): Promise<ViewerScene>
   const meshMap = new Map<object, number>();
   const guidMap = new Map<number, string>();
   const materials = new Map<number, THREE_NS.MeshLambertMaterial>();
+  const originalColors = new Map<number, [number, number, number]>();
   const ifcProperties = new Map<string, Record<string, Record<string, unknown>>>();
   const layers = new Map<string, Set<number>>();
 
   // Собираем vs первым, чтобы animate мог обновлять vs.frameId напрямую
   const vs: ViewerScene = {
     scene, camera, renderer, css2dRenderer, controls, raycaster,
-    meshMap, guidMap, materials, ifcProperties, layers, frameId: 0, wireframe: false,
+    meshMap, guidMap, materials, originalColors, ifcProperties, layers, frameId: 0, wireframe: false,
   };
 
   function animate() {
@@ -276,12 +278,14 @@ export async function loadIfcModel(
       bufGeom.setIndex(new THREE.BufferAttribute(new Uint32Array(idxs), 1));
 
       const mat = new THREE.MeshLambertMaterial({
-        color: new THREE.Color(DEFAULT_COLOR),
+        color: new THREE.Color(placed.color.x, placed.color.y, placed.color.z),
         transparent: placed.color.w < 1,
         opacity: placed.color.w,
+        depthWrite: placed.color.w >= 1,
         side: THREE.DoubleSide,
       });
       vs.materials.set(expressID, mat);
+      vs.originalColors.set(expressID, [placed.color.x, placed.color.y, placed.color.z]);
 
       const mesh = new THREE.Mesh(bufGeom, mat);
       mesh.applyMatrix4(new THREE.Matrix4().fromArray(placed.flatTransformation));
