@@ -11,13 +11,15 @@ interface Props {
   modelId: string;
   projectId: string;
   ifcGuid: string;
+  /** IFC PropertySets извлечённые клиентски из web-ifc (fallback когда DB properties = null) */
+  ifcProperties?: Record<string, Record<string, unknown>> | null;
   onClose: () => void;
 }
 
 /** Таблица IFC PropertySets */
 function PropertiesTab({ properties }: { properties: Record<string, Record<string, unknown>> | null }) {
   if (!properties || Object.keys(properties).length === 0) {
-    return <p className="text-xs text-muted-foreground">Свойства не загружены (IFC-файл не распарсен)</p>;
+    return <p className="text-xs text-muted-foreground">Свойства не загружены (IFC-файл не распознан)</p>;
   }
   return (
     <div className="space-y-3">
@@ -40,7 +42,7 @@ function PropertiesTab({ properties }: { properties: Record<string, Record<strin
   );
 }
 
-export function ElementPropertiesPanel({ modelId, projectId, ifcGuid, onClose }: Props) {
+export function ElementPropertiesPanel({ modelId, projectId, ifcGuid, ifcProperties, onClose }: Props) {
   const { data: elemRef, isLoading: loadingRef } = useElementByGuid(projectId, modelId, ifcGuid);
   const { data: element, isLoading: loadingDetail } = useElementDetail(
     projectId,
@@ -97,13 +99,27 @@ export function ElementPropertiesPanel({ modelId, projectId, ifcGuid, onClose }:
                     )}
                   </div>
                   <div className="border-t pt-2">
-                    <PropertiesTab properties={element.properties} />
+                    {/* Показывать properties из БД если есть, иначе из IFC (клиентский fallback) */}
+                    <PropertiesTab
+                      properties={
+                        (element.properties as Record<string, Record<string, unknown>> | null)
+                        ?? ifcProperties
+                        ?? null
+                      }
+                    />
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-muted-foreground">
-                  Элемент не найден в базе данных. Возможно, IFC-файл ещё не распарсен.
-                </p>
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    Элемент не найден в базе данных. Возможно, IFC-файл ещё не распарсен.
+                  </p>
+                  {ifcProperties && Object.keys(ifcProperties).length > 0 && (
+                    <div className="mt-2 border-t pt-2">
+                      <PropertiesTab properties={ifcProperties} />
+                    </div>
+                  )}
+                </>
               )}
             </TabsContent>
 

@@ -131,6 +131,7 @@ export default function TimModelViewerPage({ params }: Props) {
             modelId={modelId}
             projectId={objectId}
             ifcGuid={selectedGuid}
+            ifcProperties={viewerScene?.ifcProperties.get(selectedGuid) ?? null}
             onClose={() => setSelectedGuid(null)}
           />
         )}
