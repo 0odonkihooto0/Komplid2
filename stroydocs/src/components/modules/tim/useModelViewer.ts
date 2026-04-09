@@ -160,6 +160,72 @@ export function useCreateLink(projectId: string) {
   });
 }
 
+// ─── Upload version ──────────────────────────────────────────────────────────
+
+export interface UploadVersionInput {
+  file: File;
+  name: string;
+  comment?: string | null;
+  setAsCurrent: boolean;
+}
+
+interface PresignedUrlResponse {
+  presignedUrl: string;
+  s3Key: string;
+}
+
+/** Загрузить новую версию существующей модели */
+export function useUploadVersion(projectId: string, modelId: string) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ file, name, comment, setAsCurrent }: UploadVersionInput) => {
+      // Шаг 1 — получить presigned URL
+      const presignedRes = await apiFetch<PresignedUrlResponse>(
+        `/api/projects/${projectId}/bim/models/presigned-url`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileName: file.name, mimeType: 'application/octet-stream' }),
+        }
+      );
+
+      // Шаг 2 — загрузить файл в S3
+      const uploadRes = await fetch(presignedRes.presignedUrl, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': 'application/octet-stream' },
+      });
+      if (!uploadRes.ok) throw new Error('Ошибка загрузки файла в S3');
+
+      // Шаг 3 — создать запись версии
+      return apiFetch<{ id: string }>(
+        `/api/projects/${projectId}/bim/models/${modelId}/upload-version`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            comment: comment ?? null,
+            s3Key: presignedRes.s3Key,
+            fileName: file.name,
+            fileSize: file.size,
+            setAsCurrent,
+          }),
+        }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bim-model-detail', projectId, modelId] });
+      toast({ title: 'Версия загружена', description: 'Новая версия модели добавлена' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Ошибка загрузки', description: error.message, variant: 'destructive' });
+    },
+  });
+}
+
 /** Удалить привязку по linkId */
 export function useDeleteLink(projectId: string, modelId: string, elementId: string | null) {
   const queryClient = useQueryClient();
