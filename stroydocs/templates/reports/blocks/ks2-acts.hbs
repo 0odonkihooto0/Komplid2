@@ -1,0 +1,35 @@
+{{#if rows.length}}
+<table>
+  <thead>
+    <tr>
+      <th style="width:4%">№</th>
+      <th style="width:8%">№ акта</th>
+      <th style="width:14%">Период начало</th>
+      <th style="width:14%">Период конец</th>
+      <th style="width:20%">Договор</th>
+      <th style="width:12%">Статус</th>
+      <th style="width:14%">Сумма, руб.</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each rows}}
+    <tr>
+      <td class="text-center">{{addOne @index}}</td>
+      <td class="text-center">{{this.number}}</td>
+      <td class="text-center">{{formatDate this.periodStart}}</td>
+      <td class="text-center">{{formatDate this.periodEnd}}</td>
+      <td>{{this.contractNumber}}</td>
+      <td class="text-center">{{this.status}}</td>
+      <td class="text-right">{{formatNumber this.totalAmount}}</td>
+    </tr>
+    {{/each}}
+    <tr class="total-row">
+      <td colspan="6" class="text-right">Итого:</td>
+      <td class="text-right">{{formatNumber totalAmount}}</td>
+    </tr>
+  </tbody>
+</table>
+<p style="margin-top:6px;font-size:11px;">Всего актов: <strong>{{total}}</strong></p>
+{{else}}
+<p class="empty">Нет актов КС-2 за выбранный период.</p>
+{{/if}}

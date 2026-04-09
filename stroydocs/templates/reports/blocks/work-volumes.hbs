@@ -1,0 +1,32 @@
+{{#if rows.length}}
+<table>
+  <thead>
+    <tr>
+      <th style="width:4%">№</th>
+      <th style="width:14%">Дата</th>
+      <th style="width:32%">Наименование работы</th>
+      <th style="width:8%">Ед. изм.</th>
+      <th style="width:24%">Место выполнения</th>
+      <th style="width:18%">Примечание</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each rows}}
+    <tr>
+      <td class="text-center">{{addOne @index}}</td>
+      <td class="text-center">{{formatDate this.date}}</td>
+      <td>{{this.workName}}</td>
+      <td class="text-center">{{this.unit}}</td>
+      <td>{{this.location}}</td>
+      <td>{{this.description}}</td>
+    </tr>
+    {{/each}}
+    <tr class="total-row">
+      <td colspan="5" class="text-right">Итого записей:</td>
+      <td class="text-center">{{total}}</td>
+    </tr>
+  </tbody>
+</table>
+{{else}}
+<p class="empty">Нет записей о работах за выбранный период.</p>
+{{/if}}

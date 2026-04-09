@@ -1,0 +1,31 @@
+import { z } from 'zod';
+
+export const createProjectSchema = z.object({
+  name: z.string().min(2, 'Введите название проекта'),
+  address: z.string().optional(),
+  description: z.string().optional(),
+  generalContractor: z.string().optional(),
+  customer: z.string().optional(),
+});
+
+// Поля паспорта объекта (Модуль 2)
+const passportFields = z.object({
+  cadastralNumber:     z.string().max(50).optional(),
+  area:                z.number().positive().optional(),
+  floors:              z.number().int().positive().optional(),
+  responsibilityClass: z.string().max(10).optional(),
+  permitNumber:        z.string().max(100).optional(),
+  permitDate:          z.string().datetime({ offset: true }).optional().nullable(),
+  permitAuthority:     z.string().max(300).optional(),
+  designOrg:           z.string().max(300).optional(),
+  chiefEngineer:       z.string().max(200).optional(),
+  plannedStartDate:    z.string().datetime({ offset: true }).optional().nullable(),
+  plannedEndDate:      z.string().datetime({ offset: true }).optional().nullable(),
+});
+
+export const updateProjectSchema = createProjectSchema.partial().extend({
+  status: z.enum(['ACTIVE', 'COMPLETED', 'ARCHIVED']).optional(),
+}).and(passportFields);
+
+export type CreateProjectInput = z.infer<typeof createProjectSchema>;
+export type UpdateProjectInput = z.infer<typeof updateProjectSchema>;

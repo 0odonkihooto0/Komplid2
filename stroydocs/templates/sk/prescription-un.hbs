@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: 'Times New Roman', serif; font-size: 11pt; margin: 0; padding: 20mm 15mm 20mm 25mm; }
+  h1, h2 { text-align: center; }
+  h1 { font-size: 13pt; text-transform: uppercase; margin-bottom: 4pt; }
+  h2 { font-size: 11pt; font-weight: normal; margin-bottom: 12pt; }
+  .form-label { text-align: right; font-size: 9pt; color: #555; margin-bottom: 8pt; }
+  .doc-header { border: 1px solid #000; padding: 6pt 10pt; margin-bottom: 10pt; }
+  .meta-table { border: none; width: 100%; margin-bottom: 4pt; }
+  .meta-table td { border: none; padding: 2pt 4pt; }
+  table { width: 100%; border-collapse: collapse; margin: 8pt 0; font-size: 10pt; }
+  th, td { border: 1px solid #000; padding: 3pt 5pt; text-align: left; vertical-align: top; }
+  th { background-color: #f0f0f0; font-weight: bold; text-align: center; }
+  .text-center { text-align: center; }
+  .deadline-block { margin: 10pt 0; padding: 6pt 10pt; border: 1px solid #dc2626; border-radius: 4pt; background: #fef2f2; }
+  .signatures { margin-top: 20pt; }
+  .sig-row { display: flex; gap: 20pt; margin-top: 16pt; }
+  .sig-block { flex: 1; }
+  .sig-line { border-bottom: 1px solid #000; margin: 18pt 0 4pt; }
+  .small { font-size: 9pt; color: #555; }
+  .footer { margin-top: 10pt; font-size: 9pt; color: #555; text-align: right; }
+</style>
+</head>
+<body>
+
+<div class="form-label">Строительный контроль — Предписание --УН (Устранение недостатков)</div>
+
+<div class="doc-header">
+  <table class="meta-table">
+    <tr><td><strong>Объект:</strong> {{objectName}}{{#if objectAddress}}, {{objectAddress}}{{/if}}</td></tr>
+    <tr><td><strong>Проверяющий (инспектор СК):</strong> {{inspectorName}}</td></tr>
+    <tr><td><strong>Ответственный за устранение:</strong> {{responsibleName}}</td></tr>
+    <tr><td><strong>Дата выдачи:</strong> {{issuedAt}}</td></tr>
+  </table>
+</div>
+
+<h1>ПРЕДПИСАНИЕ --УН № {{number}}</h1>
+<h2>об устранении выявленных нарушений</h2>
+
+{{#if deadline}}
+<div class="deadline-block">
+  <strong>Срок исполнения:</strong> {{deadline}}
+</div>
+{{/if}}
+
+<p>
+  В ходе проверки выявлены следующие нарушения, подлежащие устранению
+  ответственным представителем в установленный срок:
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:5%">№</th>
+      <th style="width:50%">Описание нарушения</th>
+      <th style="width:25%">Категория</th>
+      <th style="width:20%">Срок устранения</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each defects}}
+    <tr>
+      <td class="text-center">{{this.number}}</td>
+      <td>{{this.description}}</td>
+      <td>{{this.category}}</td>
+      <td class="text-center">{{this.deadline}}</td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+
+<div class="signatures">
+  <div class="sig-row">
+    <div class="sig-block">
+      <strong>Инспектор строительного контроля</strong>
+      <div class="sig-line"></div>
+      <span class="small">{{inspectorName}}</span>
+    </div>
+    <div class="sig-block">
+      <strong>Ответственный за устранение</strong>
+      <div class="sig-line"></div>
+      <span class="small">{{responsibleName}}</span>
+    </div>
+  </div>
+</div>
+
+<div class="footer">Сформировано: {{generatedAt}}</div>
+
+</body>
+</html>

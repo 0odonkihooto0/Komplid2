@@ -1,0 +1,8 @@
+node_modules
+.next
+.env*
+.git
+docker-compose*.yml
+README.md
+vitest.config.ts
+coverage

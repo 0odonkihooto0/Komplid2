@@ -1,0 +1,33 @@
+{{#if total}}
+<table class="kv-table" style="margin-bottom:10px;">
+  <tbody>
+    <tr><td>Всего документов ИД</td><td>{{total}}</td></tr>
+    <tr><td>Готовность</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="progress-bar-wrap" style="flex:1;">
+            <div class="progress-bar-fill" style="width:{{readiness}}%;"></div>
+          </div>
+          <span style="font-weight:bold;min-width:36px;">{{readiness}}%</span>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr><th>Статус</th><th style="width:20%">Количество</th></tr>
+  </thead>
+  <tbody>
+    {{#each byStatus}}
+    <tr>
+      <td>{{@key}}</td>
+      <td class="text-center">{{this}}</td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+{{else}}
+<p class="empty">Нет данных по исполнительной документации.</p>
+{{/if}}

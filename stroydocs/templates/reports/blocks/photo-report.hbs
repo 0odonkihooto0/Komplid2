@@ -1,0 +1,14 @@
+{{#if photos.length}}
+<p style="margin-bottom:6px;font-size:11px;">Всего фотографий: <strong>{{total}}</strong></p>
+<ol class="photo-list">
+  {{#each photos}}
+  <li>
+    <strong>{{this.fileName}}</strong>
+    {{#if this.takenAt}} — {{formatDate this.takenAt}}{{/if}}
+    {{#if this.category}} [{{this.category}}]{{/if}}
+  </li>
+  {{/each}}
+</ol>
+{{else}}
+<p class="empty">Нет фотографий за выбранный период.</p>
+{{/if}}

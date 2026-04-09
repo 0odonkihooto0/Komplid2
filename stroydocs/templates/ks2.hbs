@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: 'Times New Roman', serif; font-size: 11pt; margin: 0; padding: 20mm 15mm 20mm 25mm; }
+  h1, h2, h3 { text-align: center; }
+  h1 { font-size: 13pt; text-transform: uppercase; margin-bottom: 4pt; }
+  h2 { font-size: 12pt; margin-bottom: 12pt; }
+  .form-number { text-align: right; font-size: 10pt; margin-bottom: 8pt; }
+  .doc-header { border: 1px solid #000; padding: 6pt 10pt; margin-bottom: 8pt; }
+  table { width: 100%; border-collapse: collapse; margin: 8pt 0; font-size: 10pt; }
+  th, td { border: 1px solid #000; padding: 3pt 5pt; text-align: left; vertical-align: top; }
+  th { background-color: #f0f0f0; font-weight: bold; text-align: center; }
+  .text-right { text-align: right; }
+  .text-center { text-align: center; }
+  .total-row { font-weight: bold; background-color: #f9f9f9; }
+  .meta-table { border: none; margin-bottom: 8pt; }
+  .meta-table td { border: none; padding: 2pt 4pt; }
+  .signatures { margin-top: 16pt; }
+  .sig-row { display: flex; gap: 20pt; margin-bottom: 12pt; }
+  .sig-block { flex: 1; }
+  .sig-line { border-bottom: 1px solid #000; margin: 20pt 0 4pt; }
+  .small { font-size: 9pt; color: #555; }
+</style>
+</head>
+<body>
+
+<div class="form-number">Унифицированная форма № КС-2<br>Утверждена постановлением Госкомстата<br>России от 11.11.99 № 100</div>
+
+<div class="doc-header">
+  <table class="meta-table">
+    <tr><td><strong>Организация:</strong> {{contractorName}}</td></tr>
+    <tr><td><strong>Объект:</strong> {{projectName}}, {{projectAddress}}</td></tr>
+    <tr><td><strong>Договор подряда № {{contractNumber}}</strong></td></tr>
+  </table>
+</div>
+
+<h1>АКТ № {{number}}</h1>
+<h2>о приёмке выполненных работ</h2>
+
+<p class="text-center">
+  Отчётный период: с <strong>{{periodStart}}</strong> по <strong>{{periodEnd}}</strong>
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:4%">№</th>
+      <th style="width:35%">Наименование работ</th>
+      <th style="width:7%">Номер позиции по смете</th>
+      <th style="width:7%">Ед. изм.</th>
+      <th style="width:8%">Кол-во</th>
+      <th style="width:12%">Цена за ед., руб.</th>
+      <th style="width:12%">Стоимость, руб.</th>
+      <th style="width:9%">в т.ч. ФОТ, руб.</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each items}}
+    <tr>
+      <td class="text-center">{{addOne @index}}</td>
+      <td>{{this.name}}</td>
+      <td class="text-center">—</td>
+      <td class="text-center">{{this.unit}}</td>
+      <td class="text-right">{{this.volume}}</td>
+      <td class="text-right">{{this.unitPrice}}</td>
+      <td class="text-right">{{this.totalPrice}}</td>
+      <td class="text-right">{{this.laborCost}}</td>
+    </tr>
+    {{/each}}
+    <tr class="total-row">
+      <td colspan="6" class="text-right"><strong>ИТОГО:</strong></td>
+      <td class="text-right"><strong>{{totalAmount}}</strong></td>
+      <td class="text-right"><strong>{{laborCost}}</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+  <strong>Итого по настоящему акту:</strong> {{totalAmount}} руб. ({{totalAmountWords}})
+</p>
+
+<div class="signatures">
+  <div class="sig-row">
+    {{#each participants}}
+    <div class="sig-block">
+      <strong>{{this.role}}</strong><br>
+      {{this.organizationName}}<br>
+      <span class="small">{{this.representativeName}}, {{this.position}}</span>
+      <div class="sig-line"></div>
+      <span class="small">(подпись)</span>
+    </div>
+    {{/each}}
+  </div>
+</div>
+
+</body>
+</html>

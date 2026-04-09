@@ -1,0 +1,38 @@
+{{#if total}}
+<table class="kv-table" style="margin-bottom:10px;">
+  <tbody>
+    <tr><td>Всего дефектов</td><td>{{total}}</td></tr>
+    <tr>
+      <td>Просроченные</td>
+      <td>{{#if overdue}}<span class="overdue">{{overdue}}</span>{{else}}0{{/if}}</td>
+    </tr>
+  </tbody>
+</table>
+
+<div style="display:flex;gap:16px;flex-wrap:wrap;">
+  <div style="flex:1;min-width:200px;">
+    <p style="font-weight:bold;margin-bottom:4px;">По статусам:</p>
+    <table>
+      <thead><tr><th>Статус</th><th style="width:25%">Кол-во</th></tr></thead>
+      <tbody>
+        {{#each byStatus}}
+        <tr><td>{{@key}}</td><td class="text-center">{{this}}</td></tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  <div style="flex:1;min-width:200px;">
+    <p style="font-weight:bold;margin-bottom:4px;">По категориям:</p>
+    <table>
+      <thead><tr><th>Категория</th><th style="width:25%">Кол-во</th></tr></thead>
+      <tbody>
+        {{#each byCategory}}
+        <tr><td>{{@key}}</td><td class="text-center">{{this}}</td></tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</div>
+{{else}}
+<p class="empty">Нет данных по дефектам.</p>
+{{/if}}

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: 'Times New Roman', serif; font-size: 11pt; margin: 0; padding: 20mm 15mm 20mm 25mm; }
+  h1, h2 { text-align: center; }
+  h1 { font-size: 13pt; text-transform: uppercase; margin-bottom: 4pt; }
+  h2 { font-size: 12pt; margin-bottom: 12pt; }
+  .form-number { text-align: right; font-size: 10pt; margin-bottom: 8pt; }
+  .doc-header { border: 1px solid #000; padding: 6pt 10pt; margin-bottom: 8pt; }
+  table { width: 100%; border-collapse: collapse; margin: 8pt 0; font-size: 10pt; }
+  th, td { border: 1px solid #000; padding: 3pt 5pt; vertical-align: top; }
+  th { background-color: #f0f0f0; font-weight: bold; text-align: center; }
+  .text-right { text-align: right; }
+  .text-center { text-align: center; }
+  .total-row { font-weight: bold; background-color: #f9f9f9; }
+  .meta-table { border: none; margin-bottom: 8pt; }
+  .meta-table td { border: none; padding: 2pt 4pt; }
+  .signatures { margin-top: 16pt; }
+  .sig-row { display: flex; gap: 20pt; margin-bottom: 12pt; }
+  .sig-block { flex: 1; }
+  .sig-line { border-bottom: 1px solid #000; margin: 20pt 0 4pt; }
+  .small { font-size: 9pt; color: #555; }
+</style>
+</head>
+<body>
+
+<div class="form-number">Унифицированная форма № КС-3<br>Утверждена постановлением Госкомстата<br>России от 11.11.99 № 100</div>
+
+<div class="doc-header">
+  <table class="meta-table">
+    <tr><td><strong>Организация:</strong> {{contractorName}}</td></tr>
+    <tr><td><strong>Объект:</strong> {{projectName}}, {{projectAddress}}</td></tr>
+    <tr><td><strong>Договор подряда № {{contractNumber}}</strong></td></tr>
+  </table>
+</div>
+
+<h1>СПРАВКА № {{ks2Number}}</h1>
+<h2>о стоимости выполненных работ и затрат</h2>
+
+<p class="text-center">
+  Отчётный период: с <strong>{{periodStart}}</strong> по <strong>{{periodEnd}}</strong>
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>№ п/п</th>
+      <th>Наименование пусковых комплексов, этапов, объектов, видов выполненных работ</th>
+      <th>Код</th>
+      <th>Стоимость с начала проведения строительства, руб.</th>
+      <th>Стоимость с начала года, руб.</th>
+      <th>В том числе за отчётный период, руб.</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="text-center">1</td>
+      <td>Выполненные строительно-монтажные работы по договору № {{contractNumber}}</td>
+      <td class="text-center">—</td>
+      <td class="text-right">{{totalAmount}}</td>
+      <td class="text-right">{{totalAmount}}</td>
+      <td class="text-right">{{totalAmount}}</td>
+    </tr>
+    <tr class="total-row">
+      <td colspan="3" class="text-right"><strong>ИТОГО:</strong></td>
+      <td class="text-right"><strong>{{totalAmount}}</strong></td>
+      <td class="text-right"><strong>{{totalAmount}}</strong></td>
+      <td class="text-right"><strong>{{totalAmount}}</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+  <strong>Итого по справке:</strong> {{totalAmount}} руб. ({{totalAmountWords}})
+</p>
+
+<div class="signatures">
+  <div class="sig-row">
+    {{#each participants}}
+    <div class="sig-block">
+      <strong>{{this.role}}</strong><br>
+      {{this.organizationName}}<br>
+      <span class="small">{{this.representativeName}}, {{this.position}}</span>
+      <div class="sig-line"></div>
+      <span class="small">(подпись)</span>
+    </div>
+    {{/each}}
+  </div>
+</div>
+
+</body>
+</html>

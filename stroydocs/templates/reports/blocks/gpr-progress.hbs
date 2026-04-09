@@ -1,0 +1,48 @@
+{{#if tasks.length}}
+<table class="kv-table" style="margin-bottom:10px;">
+  <tbody>
+    <tr><td>Всего задач ГПР</td><td>{{total}}</td></tr>
+    <tr><td>Средний прогресс</td><td><strong>{{avgProgress}}%</strong></td></tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:4%">№</th>
+      <th style="width:28%">Наименование задачи</th>
+      <th style="width:12%">План начало</th>
+      <th style="width:12%">План конец</th>
+      <th style="width:12%">Факт начало</th>
+      <th style="width:12%">Факт конец</th>
+      <th style="width:8%">Прогресс</th>
+      <th style="width:12%">Откл. (дни)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each tasks}}
+    <tr{{#if this.isCritical}} class="critical"{{/if}}>
+      <td class="text-center">{{addOne @index}}</td>
+      <td>{{this.name}}{{#if this.isCritical}} <span style="color:#b91c1c;font-size:9px;">[КП]</span>{{/if}}</td>
+      <td class="text-center">{{formatDate this.planStart}}</td>
+      <td class="text-center">{{formatDate this.planEnd}}</td>
+      <td class="text-center">{{formatDate this.factStart}}</td>
+      <td class="text-center">{{formatDate this.factEnd}}</td>
+      <td class="text-center">{{this.progress}}%</td>
+      <td class="text-center">
+        {{#if this.deviationDays}}
+          {{#if (gt this.deviationDays 0)}}
+            <span class="overdue">+{{this.deviationDays}}</span>
+          {{else}}
+            <span style="color:#15803d;">{{this.deviationDays}}</span>
+          {{/if}}
+        {{else}}—{{/if}}
+      </td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+<p style="font-size:10px;color:#666;margin-top:4px;">[КП] — критический путь</p>
+{{else}}
+<p class="empty">Нет задач ГПР.</p>
+{{/if}}

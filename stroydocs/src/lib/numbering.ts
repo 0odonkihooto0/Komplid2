@@ -1,0 +1,293 @@
+import { db } from '@/lib/db';
+import type { Prisma } from '@prisma/client';
+
+/**
+ * Авто-нумерация деловой переписки.
+ * Формат: ИСХ-{год}-{порядковый номер} / ВХ-{год}-{порядковый номер}
+ * Пример: ИСХ-2025-001, ВХ-2025-042
+ *
+ * Для защиты от race condition при параллельных запросах используется
+ * pg_advisory_xact_lock — транзакционный advisory lock по ключу проекта+направления+года.
+ */
+export async function getNextCorrespondenceNumber(
+  projectId: string,
+  direction: 'OUTGOING' | 'INCOMING'
+): Promise<string> {
+  const prefix = direction === 'OUTGOING' ? 'ИСХ' : 'ВХ';
+  const year = new Date().getFullYear();
+  const lockKey = `corr:${projectId}:${direction}:${year}`;
+  const pattern = `${prefix}-${year}-%`;
+
+  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+    // Захватить транзакционный advisory lock — блокирует конкурентные запросы
+    // до завершения транзакции, исключая дублирование номеров
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
+
+    const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
+      SELECT MAX(number) AS max_num
+      FROM correspondences
+      WHERE project_id = ${projectId}
+        AND number LIKE ${pattern}
+    `;
+
+    const lastSeq = results[0]?.max_num
+      ? parseInt(results[0].max_num.split('-').at(-1) ?? '0', 10)
+      : 0;
+
+    return `${prefix}-${year}-${String(lastSeq + 1).padStart(3, '0')}`;
+  });
+}
+
+/**
+ * Авто-нумерация RFI (Request for Information).
+ * Формат: RFI-{год}-{порядковый номер}
+ * Пример: RFI-2025-001
+ */
+export async function getNextRFINumber(projectId: string): Promise<string> {
+  const year = new Date().getFullYear();
+  const lockKey = `rfi:${projectId}:${year}`;
+  const pattern = `RFI-${year}-%`;
+
+  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
+
+    const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
+      SELECT MAX(number) AS max_num
+      FROM rfis
+      WHERE project_id = ${projectId}
+        AND number LIKE ${pattern}
+    `;
+
+    const lastSeq = results[0]?.max_num
+      ? parseInt(results[0].max_num.split('-').at(-1) ?? '0', 10)
+      : 0;
+
+    return `RFI-${year}-${String(lastSeq + 1).padStart(3, '0')}`;
+  });
+}
+
+/**
+ * Авто-нумерация СЭД-документов.
+ * Формат: СЭД-{год}-{порядковый номер}
+ * Пример: СЭД-2025-001
+ */
+export async function getNextSEDNumber(projectId: string): Promise<string> {
+  const year = new Date().getFullYear();
+  const lockKey = `sed:${projectId}:${year}`;
+  const pattern = `СЭД-${year}-%`;
+
+  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
+
+    const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
+      SELECT MAX(number) AS max_num
+      FROM sed_documents
+      WHERE project_id = ${projectId}
+        AND number LIKE ${pattern}
+    `;
+
+    const lastSeq = results[0]?.max_num
+      ? parseInt(results[0].max_num.split('-').at(-1) ?? '0', 10)
+      : 0;
+
+    return `СЭД-${year}-${String(lastSeq + 1).padStart(3, '0')}`;
+  });
+}
+
+/**
+ * Авто-нумерация задания на ПИР (ЗП — проектирование, ЗИ — изыскания).
+ * Формат: ЗП-{год}-{NNN} / ЗИ-{год}-{NNN}
+ */
+export async function getNextDesignTaskNumber(
+  projectId: string,
+  taskType: 'DESIGN' | 'SURVEY'
+): Promise<string> {
+  const prefix = taskType === 'DESIGN' ? 'ЗП' : 'ЗИ';
+  const year = new Date().getFullYear();
+  const lockKey = `design-task:${projectId}:${taskType}:${year}`;
+  const pattern = `${prefix}-${year}-%`;
+
+  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
+
+    const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
+      SELECT MAX(number) AS max_num
+      FROM design_tasks
+      WHERE "projectId" = ${projectId}
+        AND number LIKE ${pattern}
+    `;
+
+    const lastSeq = results[0]?.max_num
+      ? parseInt(results[0].max_num.split('-').at(-1) ?? '0', 10)
+      : 0;
+
+    return `${prefix}-${year}-${String(lastSeq + 1).padStart(3, '0')}`;
+  });
+}
+
+/**
+ * Авто-нумерация документов ПИР.
+ * Формат: ПД-{год}-{NNN}
+ */
+export async function getNextDesignDocNumber(projectId: string): Promise<string> {
+  const year = new Date().getFullYear();
+  const lockKey = `design-doc:${projectId}:${year}`;
+  const pattern = `ПД-${year}-%`;
+
+  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
+
+    const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
+      SELECT MAX(number) AS max_num
+      FROM design_documents
+      WHERE project_id = ${projectId}
+        AND number LIKE ${pattern}
+    `;
+
+    const lastSeq = results[0]?.max_num
+      ? parseInt(results[0].max_num.split('-').at(-1) ?? '0', 10)
+      : 0;
+
+    return `ПД-${year}-${String(lastSeq + 1).padStart(3, '0')}`;
+  });
+}
+
+/**
+ * Авто-нумерация реестров ПИР.
+ * Формат: РЕЕ-{год}-{NNN}
+ */
+export async function getNextPIRRegistryNumber(projectId: string): Promise<string> {
+  const year = new Date().getFullYear();
+  const lockKey = `pir-registry:${projectId}:${year}`;
+  const pattern = `РЕЕ-${year}-%`;
+
+  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
+
+    const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
+      SELECT MAX(number) AS max_num
+      FROM pir_registries
+      WHERE project_id = ${projectId}
+        AND number LIKE ${pattern}
+    `;
+
+    const lastSeq = results[0]?.max_num
+      ? parseInt(results[0].max_num.split('-').at(-1) ?? '0', 10)
+      : 0;
+
+    return `РЕЕ-${year}-${String(lastSeq + 1).padStart(3, '0')}`;
+  });
+}
+
+/**
+ * Авто-нумерация актов закрытия ПИР.
+ * Формат: АКТ-{год}-{NNN}
+ */
+export async function getNextPIRClosureNumber(projectId: string): Promise<string> {
+  const year = new Date().getFullYear();
+  const lockKey = `pir-closure:${projectId}:${year}`;
+  const pattern = `АКТ-${year}-%`;
+
+  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
+
+    const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
+      SELECT MAX(number) AS max_num
+      FROM pir_closure_acts
+      WHERE project_id = ${projectId}
+        AND number LIKE ${pattern}
+    `;
+
+    const lastSeq = results[0]?.max_num
+      ? parseInt(results[0].max_num.split('-').at(-1) ?? '0', 10)
+      : 0;
+
+    return `АКТ-${year}-${String(lastSeq + 1).padStart(3, '0')}`;
+  });
+}
+
+/**
+ * Порядковый номер замечания к заданию ПИР (в рамках задания).
+ */
+export async function getNextTaskCommentNumber(taskId: string): Promise<number> {
+  const lockKey = `task-comment:${taskId}`;
+
+  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
+
+    const results = await tx.$queryRaw<Array<{ cnt: bigint }>>`
+      SELECT COUNT(*) AS cnt
+      FROM design_task_comments
+      WHERE "taskId" = ${taskId}
+    `;
+
+    return Number(results[0]?.cnt ?? 0) + 1;
+  });
+}
+
+/**
+ * Порядковый номер замечания к документу ПИР (в рамках документа).
+ */
+export async function getNextDocCommentNumber(docId: string): Promise<number> {
+  const lockKey = `doc-comment:${docId}`;
+
+  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
+
+    const results = await tx.$queryRaw<Array<{ cnt: bigint }>>`
+      SELECT COUNT(*) AS cnt
+      FROM design_doc_comments
+      WHERE doc_id = ${docId}
+    `;
+
+    return Number(results[0]?.cnt ?? 0) + 1;
+  });
+}
+
+/**
+ * Префиксы авто-нумерации специальных журналов.
+ */
+const JOURNAL_PREFIXES: Record<string, string> = {
+  CONCRETE_WORKS: 'ЖБР',
+  WELDING_WORKS: 'ЖСР',
+  AUTHOR_SUPERVISION: 'ЖАН',
+  MOUNTING_WORKS: 'ЖМК',
+  ANTICORROSION: 'ЖАК',
+  GEODETIC: 'ЖГР',
+  EARTHWORKS: 'ЖЗР',
+  PILE_DRIVING: 'ЖПС',
+  CABLE_LAYING: 'ЖПК',
+  FIRE_SAFETY: 'ЖПБ',
+  CUSTOM: 'Ж',
+};
+
+/**
+ * Авто-нумерация специальных журналов.
+ * Формат: {PREFIX}-{NNN}
+ * Пример: ЖБР-001, ЖСР-002
+ */
+export async function getNextJournalNumber(
+  projectId: string,
+  type: string
+): Promise<string> {
+  const prefix = JOURNAL_PREFIXES[type] || 'Ж';
+  const lockKey = `journal:${projectId}:${type}`;
+  const pattern = `${prefix}-%`;
+
+  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
+
+    const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
+      SELECT MAX(number) AS max_num
+      FROM special_journals
+      WHERE project_id = ${projectId}
+        AND number LIKE ${pattern}
+    `;
+
+    const lastSeq = results[0]?.max_num
+      ? parseInt(results[0].max_num.split('-').at(-1) ?? '0', 10)
+      : 0;
+
+    return `${prefix}-${String(lastSeq + 1).padStart(3, '0')}`;
+  });
+}

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 12pt;
+      line-height: 1.5;
+      padding: 20mm 15mm 20mm 25mm;
+      color: #000;
+    }
+    h1 { font-size: 14pt; text-align: center; margin-bottom: 10px; }
+    h2 { font-size: 12pt; text-align: center; margin-bottom: 8px; font-weight: normal; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .section { margin-bottom: 15px; }
+    .section-title { font-weight: bold; margin-bottom: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+    th, td { border: 1px solid #000; padding: 4px 8px; text-align: left; font-size: 11pt; }
+    th { background: #f0f0f0; font-weight: bold; }
+    .signatures { margin-top: 40px; }
+    p { margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>ОБЩИЙ ЖУРНАЛ РАБОТ</h1>
+    <h2>№ {{number}} от {{date}}</h2>
+  </div>
+
+  <div class="section">
+    <p><strong>Объект капитального строительства:</strong> {{projectName}}</p>
+    <p><strong>Адрес объекта:</strong> {{projectAddress}}</p>
+    <p><strong>Договор №:</strong> {{contractNumber}}</p>
+  </div>
+
+  <div class="section">
+    <p class="section-title">Участники строительства:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Роль</th>
+          <th>Организация</th>
+          <th>Представитель</th>
+          <th>Должность</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each participants}}
+        <tr>
+          <td>{{this.role}}</td>
+          <td>{{this.organizationName}}</td>
+          <td>{{this.representativeName}}</td>
+          <td>{{this.position}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <p class="section-title">Записи о выполненных работах:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>№</th>
+          <th>Дата</th>
+          <th>Наименование работ</th>
+          <th>Место</th>
+          <th>Норматив</th>
+          <th>Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each records}}
+        <tr>
+          <td>{{addOne @index}}</td>
+          <td>{{this.date}}</td>
+          <td>{{this.workName}}</td>
+          <td>{{this.location}}</td>
+          <td>{{this.normative}}</td>
+          <td>{{this.status}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="signatures">
+    <p class="section-title">Подписи представителей:</p>
+    {{#each participants}}
+    <div style="margin-bottom: 25px; display: flex; justify-content: space-between;">
+      <span>{{this.role}}: {{this.representativeName}}</span>
+      <span>________________</span>
+    </div>
+    {{/each}}
+  </div>
+</body>
+</html>

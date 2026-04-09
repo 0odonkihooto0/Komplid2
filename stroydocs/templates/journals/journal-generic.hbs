@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 11pt;
+    line-height: 1.4;
+    padding: 15mm 15mm 15mm 20mm;
+    color: #000;
+  }
+  h1 { font-size: 14pt; text-align: center; margin-bottom: 4pt; text-transform: uppercase; }
+  h2 { font-size: 11pt; text-align: center; margin-bottom: 6pt; font-weight: normal; }
+  .header { text-align: center; margin-bottom: 15px; }
+  .meta { margin-bottom: 12px; }
+  .meta p { margin: 2pt 0; font-size: 10pt; }
+  .normative { font-size: 9pt; text-align: center; color: #555; margin-bottom: 10px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+  th, td { border: 1px solid #000; padding: 3pt 5pt; vertical-align: top; font-size: 10pt; }
+  th { background: #f0f0f0; font-weight: bold; text-align: center; }
+  .text-center { text-align: center; }
+  .signatures { margin-top: 30px; }
+  .signatures p { margin-bottom: 20px; font-size: 10pt; }
+  .footer { margin-top: 20px; font-size: 8pt; color: #888; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>{{title}}</h1>
+  <h2>№ {{number}}</h2>
+</div>
+
+{{#if normativeRef}}
+<p class="normative">{{normativeRef}}</p>
+{{/if}}
+
+<div class="meta">
+  <p><strong>Объект:</strong> {{projectName}}</p>
+  <p><strong>Адрес:</strong> {{projectAddress}}</p>
+  {{#if contractNumber}}<p><strong>Договор №:</strong> {{contractNumber}}</p>{{/if}}
+  <p><strong>Ответственный:</strong> {{responsibleName}}</p>
+  <p><strong>Период:</strong> {{openedAt}}{{#if closedAt}} — {{closedAt}}{{/if}}</p>
+  <p><strong>Статус:</strong> {{statusLabel}}</p>
+  <p><strong>Дата формирования:</strong> {{generatedAt}}</p>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:5%">№</th>
+      <th style="width:10%">Дата</th>
+      <th style="width:30%">Описание работ</th>
+      <th style="width:15%">Место</th>
+      <th style="width:15%">Нормативная документация</th>
+      <th style="width:10%">Погода</th>
+      <th style="width:5%">°C</th>
+      <th style="width:10%">Статус</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each entries}}
+    <tr>
+      <td class="text-center">{{this.entryNumber}}</td>
+      <td class="text-center">{{this.date}}</td>
+      <td>{{this.description}}</td>
+      <td>{{this.location}}</td>
+      <td>{{this.normativeRef}}</td>
+      <td>{{this.weather}}</td>
+      <td class="text-center">{{this.temperature}}</td>
+      <td class="text-center">{{this.statusLabel}}</td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+
+{{#if entries.length}}
+<p style="font-size:9pt;">Всего записей: {{entries.length}}</p>
+{{else}}
+<p style="font-size:10pt; text-align:center; padding:10px;">Записи отсутствуют</p>
+{{/if}}
+
+<div class="signatures">
+  <p>Ответственный: {{responsibleName}} ________________</p>
+</div>
+
+<div class="footer">
+  <p>Сформировано автоматически системой StroyDocs</p>
+</div>
+
+</body>
+</html>

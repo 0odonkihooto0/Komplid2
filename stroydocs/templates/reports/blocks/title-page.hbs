@@ -1,0 +1,10 @@
+<table class="kv-table">
+  <tbody>
+    <tr><td>Объект строительства</td><td>{{objectName}}</td></tr>
+    <tr><td>Адрес</td><td>{{address}}</td></tr>
+    {{#if generalContractor}}<tr><td>Генеральный подрядчик</td><td>{{generalContractor}}</td></tr>{{/if}}
+    {{#if customer}}<tr><td>Заказчик</td><td>{{customer}}</td></tr>{{/if}}
+    {{#if permitNumber}}<tr><td>Разрешение на строительство</td><td>{{permitNumber}}</td></tr>{{/if}}
+    <tr><td>Период отчёта</td><td>{{formatDate periodStart}} — {{formatDate periodEnd}}</td></tr>
+  </tbody>
+</table>

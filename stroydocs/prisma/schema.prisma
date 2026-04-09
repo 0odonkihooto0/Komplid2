@@ -1,0 +1,3741 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// === Перечисления ===
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  WORKER
+  CONTROLLER
+  CUSTOMER
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+}
+
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum ContractType {
+  MAIN
+  SUBCONTRACT
+}
+
+enum ContractStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  TERMINATED
+}
+
+enum ParticipantRole {
+  DEVELOPER
+  CONTRACTOR
+  SUPERVISION
+  SUBCONTRACTOR
+}
+
+enum FundingType {
+  BUDGET // Бюджет
+  EXTRA_BUDGET // Внебюджет
+  CREDIT // Кредит
+  OWN // Собственные средства
+}
+
+enum TaskStatus {
+  OPEN // Открыта
+  IN_PROGRESS // В работе
+  DONE // Выполнена
+  CANCELLED // Отменена
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TaskSource {
+  MANUAL // Создана вручную
+  DEFECT // Создана из дефекта
+  COMMENT // Создана из замечания
+}
+
+// === Модели Фазы 1 ===
+
+/// Организация (компания-участник строительства)
+model Organization {
+  id        String  @id @default(uuid())
+  name      String // Название организации
+  inn       String  @unique // ИНН
+  ogrn      String? @unique // ОГРН
+  sroName   String? // Название СРО
+  sroNumber String? // Номер СРО
+  sroInn    String? // ИНН СРО
+  address   String? // Юридический адрес
+  phone     String? // Телефон
+  email     String? // Email организации
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users                   User[]
+  buildingObjects         BuildingObject[]
+  invitations             Invitation[]
+  contractParticipations  ContractParticipant[]
+  documentTemplates       DocumentTemplate[]
+  activityLogs            ActivityLog[]
+  correspondencesSent     Correspondence[]      @relation("CorrespondenceSender")
+  correspondencesReceived Correspondence[]      @relation("CorrespondenceReceiver")
+  sedDocumentsSent        SEDDocument[]         @relation("SEDSender")
+  contractCategories      ContractCategory[]
+
+  // Модуль 5 — ПИР
+  designTasksAsCustomer DesignTask[]     @relation("DesignTaskCustomer")
+  pirRegistriesSent     PIRRegistry[]    @relation("PIRRegistrySender")
+  pirRegistriesReceived PIRRegistry[]    @relation("PIRRegistryReceiver")
+  responsibleDesignDocs DesignDocument[] @relation("DesignDocOrg")
+
+  // Модуль 8 — Ресурсы
+  supplierRequests MaterialRequest[]      @relation("RequestSupplier")
+  supplierOrders   SupplierOrder[]        @relation("OrderSupplier")
+  customerOrders   SupplierOrder[]        @relation("OrderCustomer")
+  nomenclature     MaterialNomenclature[]
+
+  // Модуль 12 — Отчёты
+  reportTemplates ReportTemplate[]
+
+  @@map("organizations")
+}
+
+/// Пользователь системы
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String // Хэш пароля (bcrypt)
+  firstName    String // Имя
+  lastName     String // Фамилия
+  middleName   String? // Отчество
+  phone        String? // Телефон
+  position     String? // Должность
+  role         UserRole @default(WORKER)
+  isActive     Boolean  @default(true)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invitationsSent         Invitation[]
+  photos                  Photo[]
+  executionDocsCreated    ExecutionDoc[]           @relation("ExecutionDocCreator")
+  executionDocsEdited     ExecutionDoc[]           @relation("ExecutionDocEditor")
+  signatures              Signature[]
+  docCommentsAuthored     DocComment[]             @relation("CommentAuthor")
+  docCommentsResolved     DocComment[]             @relation("CommentResolver")
+  archiveUploads          ArchiveDocument[]
+  estimateImports         EstimateImport[]
+  inputControlRecords     InputControlRecord[]
+  approvalStepsDecided    ApprovalStep[]           @relation("ApprovalStepDecider")
+  ks2ActsCreated          Ks2Act[]                 @relation("Ks2ActCreator")
+  activityLogs            ActivityLog[]
+  ganttVersionsCreated    GanttVersion[]
+  defectsAuthored         Defect[]                 @relation("DefectAuthor")
+  defectsAssigned         Defect[]                 @relation("DefectAssignee")
+  defectComments          DefectComment[]
+  dashboardWidgets        DashboardWidget[]
+  dailyLogs               DailyLog[]
+  changeOrders            ChangeOrder[]
+  portalTokensCreated     ProjectPortalToken[]
+  notifications           Notification[]
+  tasksAssigned           Task[]                   @relation("TaskAssignee")
+  tasksCreated            Task[]                   @relation("TaskCreator")
+  correspondencesAuthored Correspondence[]         @relation("CorrespondenceAuthor")
+  rfisAuthored            RFI[]                    @relation("RFIAuthor")
+  rfisAssigned            RFI[]                    @relation("RFIAssignee")
+  rfisAnswered            RFI[]                    @relation("RFIAnswerer")
+  sedDocumentsAuthored    SEDDocument[]            @relation("SEDAuthor")
+  chatMessages            ChatMessage[]            @relation("ChatAuthor")
+  projectDocsUploaded     ProjectDocument[]        @relation("ProjectDocUploader")
+  docVersionsUploaded     ProjectDocumentVersion[] @relation("DocVersionUploader")
+  eventsOrganized         ProjectEvent[]           @relation("EventOrganizer")
+  paymentsCreated         ContractPayment[]        @relation("PaymentCreator")
+
+  // Модуль 5 — ПИР
+  designTasksApproved         DesignTask[]        @relation("DesignTaskApprover")
+  designTasksAgreed           DesignTask[]        @relation("DesignTaskAgreer")
+  designTasksAsCustomerPerson DesignTask[]        @relation("DesignTaskCustomerPerson")
+  designTasksAuthored         DesignTask[]        @relation("DesignTaskAuthor")
+  designTaskCommentsAuthored  DesignTaskComment[] @relation("DesignCommentAuthor")
+  designTaskCommentsAssigned  DesignTaskComment[] @relation("DesignCommentAssignee")
+  designTaskCommentsResponded DesignTaskComment[] @relation("DesignCommentResponder")
+  designDocsAuthored          DesignDocument[]    @relation("DesignDocAuthor")
+  designDocsAsResponsible     DesignDocument[]    @relation("DesignDocResponsible")
+  designDocCommentsAuthored   DesignDocComment[]  @relation("DesignDocCommentAuthor")
+  designDocCommentsAssigned   DesignDocComment[]  @relation("DesignDocCommentAssignee")
+  designDocCommentsResponded  DesignDocComment[]  @relation("DesignDocCommentResponder")
+  pirRegistriesAuthored       PIRRegistry[]       @relation("PIRRegistryAuthor")
+  pirRegistriesSent           PIRRegistry[]       @relation("PIRRegistrySenderPerson")
+  pirRegistriesReceived       PIRRegistry[]       @relation("PIRRegistryReceiverPerson")
+  pirClosureActsAuthored      PIRClosureAct[]     @relation("PIRActAuthor")
+
+  // Модуль 6 — Сметы
+  estimateVersionsCreated  EstimateVersion[]  @relation("EstimateVersionCreator")
+  estimateContractsCreated EstimateContract[] @relation("EstimateContractCreator")
+
+  // Модуль 7 — ГПР
+  ganttDailyPlans       GanttDailyPlan[]   @relation("GanttDailyPlanCreator")
+  ganttTaskExecDocLinks GanttTaskExecDoc[] @relation("GanttTaskExecDocCreator")
+
+  // Модуль 8 — Ресурсы
+  requestsManaged     MaterialRequest[]   @relation("RequestManager")
+  requestsResponsible MaterialRequest[]   @relation("RequestResponsible")
+  requestsApproved    MaterialRequest[]   @relation("RequestApprover")
+  requestsCreated     MaterialRequest[]   @relation("RequestCreator")
+  ordersCreated       SupplierOrder[]     @relation("OrderCreator")
+  movementsCreated    WarehouseMovement[] @relation("MovementCreator")
+
+  // Модуль 9 — Журналы
+  journalsResponsible    SpecialJournal[]      @relation("JournalResponsible")
+  journalsCreated        SpecialJournal[]      @relation("JournalCreator")
+  journalEntries         SpecialJournalEntry[] @relation("JournalEntryAuthor")
+  journalRemarksAuthored JournalEntryRemark[]  @relation("RemarkAuthor")
+  journalRemarksResolved JournalEntryRemark[]  @relation("RemarkResolver")
+
+  // Модуль 10 — ИД
+  closurePackagesCreated IdClosurePackage[] @relation("ClosurePackageCreator")
+
+  // Модуль 11 — Строительный контроль
+  inspectionsAsInspector   Inspection[]           @relation("InspectionInspector")
+  inspectionsAsResponsible Inspection[]           @relation("InspectionResponsible")
+  inspectionsCreated       Inspection[]           @relation("InspectionCreator")
+  inspectionActsIssued     InspectionAct[]        @relation("InspectionActIssuer")
+  prescriptionsIssued      Prescription[]         @relation("PrescriptionIssuer")
+  prescriptionsResponsible Prescription[]         @relation("PrescriptionResponsible")
+  remediationActsIssued    DefectRemediationAct[] @relation("RemediationActIssuer")
+  briefingsConducted       SafetyBriefing[]       @relation("BriefingConductor")
+
+  // Модуль 13 — ТИМ
+  bimModelsUploaded   BimModel[]        @relation("BimModelUploader")
+  bimVersionsUploaded BimModelVersion[] @relation("BimVersionUploader")
+  bimAccess           BimAccess[]       @relation("BimAccessUser")
+
+  // Модуль 12 — Отчёты
+  reportsAuthored Report[] @relation("ReportAuthor")
+
+  @@index([organizationId])
+  @@map("users")
+}
+
+/// Приглашение сотрудника в организацию
+model Invitation {
+  id     String           @id @default(uuid())
+  email  String // Email приглашённого
+  token  String           @unique // Токен для ссылки приглашения
+  role   UserRole         @default(WORKER)
+  status InvitationStatus @default(PENDING)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  invitedById String
+  invitedBy   User   @relation(fields: [invitedById], references: [id])
+
+  expiresAt DateTime // Срок действия приглашения
+  createdAt DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([invitedById])
+  @@map("invitations")
+}
+
+/// Объект строительства (центр модульной навигации, URL /objects/[id])
+model BuildingObject {
+  id                String        @id @default(uuid())
+  name              String // Название объекта
+  address           String? // Адрес объекта
+  description       String? // Описание
+  generalContractor String? // Генподрядчик
+  customer          String? // Заказчик
+  status            ProjectStatus @default(ACTIVE)
+
+  // Паспорт объекта (Модуль 2)
+  cadastralNumber     String? // Кадастровый номер
+  area                Float? // Площадь застройки (м²)
+  floors              Int? // Количество этажей
+  responsibilityClass String? // Класс ответственности (КС-1 / КС-2 / КС-3)
+  permitNumber        String? // Номер разрешения на строительство
+  permitDate          DateTime? // Дата выдачи разрешения
+  permitAuthority     String? // Орган, выдавший разрешение
+  designOrg           String? // Проектная организация
+  chiefEngineer       String? // ГИП (главный инженер проекта)
+  plannedStartDate    DateTime? // Плановая дата начала
+  plannedEndDate      DateTime? // Плановая дата окончания
+
+  // Расширенные реквизиты объекта
+  constructionType String?   // Тип строительства (Новое строительство / Реконструкция / Капитальный ремонт)
+  region           String?   // Регион (Субъект РФ)
+  stroyka          String?   // Стройка (для реквизитов КС-2, КС-3)
+  shortName        String?   // Краткое наименование
+  latitude         Float?    // Широта
+  longitude        Float?    // Долгота
+  actualStartDate  DateTime? // Фактическая дата начала
+  actualEndDate    DateTime? // Фактическая дата окончания
+  fillDatesFromGpr Boolean   @default(false) // Заполнять даты из ГПР
+  parentId         String?   // ID родительского объекта (иерархия объектов)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contracts       Contract[]
+  defects         Defect[]
+  portalTokens    ProjectPortalToken[]
+  fundingSources  FundingSource[]
+  tasks           Task[]
+  correspondences Correspondence[]
+  rfis            RFI[]
+  sedDocuments    SEDDocument[]
+  chatMessages    ChatMessage[]
+  folders         ProjectFolder[]
+  events          ProjectEvent[]
+
+  // Модуль 5 — ПИР
+  designTasks    DesignTask[]
+  designDocs     DesignDocument[]
+  pirRegistries  PIRRegistry[]
+  pirClosureActs PIRClosureAct[]
+
+  // Модуль 7 — ГПР
+  ganttStages   GanttStage[]
+  ganttVersions GanttVersion[] @relation("ObjectGanttVersions")
+
+  // Модуль 8 — Ресурсы
+  materialRequests   MaterialRequest[]
+  supplierOrders     SupplierOrder[]
+  warehouses         Warehouse[]
+  warehouseMovements WarehouseMovement[]
+
+  // Модуль 9 — Журналы
+  specialJournals SpecialJournal[]
+
+  // Модуль 10 — ИД
+  closurePackages IdClosurePackage[]
+
+  // Модуль 11 — Строительный контроль
+  inspections     Inspection[]
+  safetyBriefings SafetyBriefing[]
+
+  // Модуль 13 — ТИМ
+  bimSections BimSection[]
+  bimModels   BimModel[]
+  bimAccess   BimAccess[]
+
+  // Модуль 12 — Отчёты
+  reports          Report[]
+  reportCategories ReportCategory[]
+
+  // Иерархия объектов
+  parent   BuildingObject?  @relation("ObjectHierarchy", fields: [parentId], references: [id])
+  children BuildingObject[] @relation("ObjectHierarchy")
+
+  @@index([organizationId])
+  @@index([parentId])
+  @@index([region])
+  @@map("building_objects")
+}
+
+/// Договор (или субдоговор)
+model Contract {
+  id          String         @id @default(uuid())
+  number      String // Номер договора
+  name        String // Наименование
+  type        ContractType   @default(MAIN)
+  status      ContractStatus @default(DRAFT)
+  startDate   DateTime? // Дата начала
+  endDate     DateTime? // Дата окончания
+  totalAmount Float? // Общая сумма договора
+
+  categoryId     String?
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Самоссылка для субдоговоров
+  parentId     String?
+  parent       Contract?  @relation("ContractHierarchy", fields: [parentId], references: [id])
+  subContracts Contract[] @relation("ContractHierarchy")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participants      ContractParticipant[]
+  workItems         WorkItem[]
+  materials         Material[]
+  workRecords       WorkRecord[]
+  executionDocs     ExecutionDoc[]
+  archiveDocuments  ArchiveDocument[]
+  estimateImports   EstimateImport[]
+  ks2Acts           Ks2Act[]
+  ks3Certificates   Ks3Certificate[]
+  idRegistries      IdRegistry[]
+  ganttVersions     GanttVersion[]
+  ganttTasks        GanttTask[]
+  defects           Defect[]
+  dailyLogs         DailyLog[]
+  changeOrders      ChangeOrder[]
+  chatMessages      ChatMessage[]
+  category          ContractCategory?     @relation(fields: [categoryId], references: [id])
+  payments          ContractPayment[]
+  events            ProjectEvent[]
+  estimateVersions  EstimateVersion[]
+  estimateContracts EstimateContract[]
+
+  // Модуль 9 — Журналы
+  specialJournals SpecialJournal[]
+
+  @@index([projectId])
+  @@index([parentId])
+  @@map("contracts")
+}
+
+/// Участник договора (связь организация-договор-роль)
+model ContractParticipant {
+  id                 String          @id @default(uuid())
+  role               ParticipantRole // Роль участника
+  appointmentOrder   String? // Номер приказа о назначении
+  appointmentDate    DateTime? // Дата приказа
+  representativeName String? // ФИО представителя
+  position           String? // Должность представителя
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([contractId, organizationId, role])
+  @@index([contractId])
+  @@index([organizationId])
+  @@map("contract_participants")
+}
+
+// === Модели Фазы 2 — Производство работ ===
+
+/// Перечисление типов сопроводительных документов материалов
+enum MaterialDocumentType {
+  PASSPORT // Паспорт качества
+  CERTIFICATE // Сертификат соответствия
+  PROTOCOL // Протокол испытаний
+}
+
+/// Перечисление единиц измерения
+enum MeasurementUnit {
+  PIECE // шт
+  KG // кг
+  TON // т
+  M // м
+  M2 // м²
+  M3 // м³
+  L // л
+  SET // компл
+}
+
+/// Статус записи о работе
+enum WorkRecordStatus {
+  DRAFT // Черновик
+  IN_PROGRESS // В работе
+  COMPLETED // Выполнено
+  ACCEPTED // Принято
+  REJECTED // Отклонено
+}
+
+/// Узел классификатора строительной информации (КСИ)
+model KsiNode {
+  id          String    @id @default(uuid())
+  code        String    @unique // Код узла КСИ (например "CEn.01.001")
+  name        String // Наименование
+  description String? // Описание элемента из справочника КСИ
+  tableCode   String? // Код классификационной таблицы (например "ОКС / CEn")
+  externalId  String? // ID в системе Минстроя (для синхронизации)
+  parentId    String? // Ссылка на родительский узел
+  parent      KsiNode?  @relation("KsiTree", fields: [parentId], references: [id])
+  children    KsiNode[] @relation("KsiTree")
+  level       Int       @default(0) // Уровень вложенности (0 = корень)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workItems            WorkItem[]
+  suggestedImportItems EstimateImportItem[] @relation("SuggestedKsi")
+  estimateItems        EstimateItem[]
+
+  @@index([tableCode])
+  @@index([parentId])
+  @@map("ksi_nodes")
+}
+
+/// Вид работ (привязка к КСИ и договору)
+model WorkItem {
+  id            String  @id @default(uuid())
+  projectCipher String // Шифр проекта
+  name          String // Наименование работы
+  description   String? // Описание
+  unit          String? // Единица измерения (из сметы)
+  volume        Float? // Объём/количество (из сметы)
+  normatives    String? // Нормативы через запятую (СП, ГОСТ, СНиП — из AI-парсинга)
+
+  ksiNodeId String? // Необязательная привязка к классификатору КСИ
+  ksiNode   KsiNode? @relation(fields: [ksiNodeId], references: [id])
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workRecords         WorkRecord[]
+  estimateImportItems EstimateImportItem[]
+  ks2Items            Ks2Item[]
+  materials           Material[]
+  ganttTasks          GanttTask[]
+  estimateItems       EstimateItem[]       @relation("EstimateItemWork")
+
+  @@index([contractId])
+  @@index([ksiNodeId])
+  @@map("work_items")
+}
+
+/// Материал (привязка к договору, учёт остатков)
+model Material {
+  id               String          @id @default(uuid())
+  name             String // Наименование материала
+  supplier         String? // Поставщик
+  invoiceNumber    String? // Номер накладной
+  invoiceDate      DateTime? // Дата накладной
+  unit             MeasurementUnit @default(PIECE) // Единица измерения
+  quantityReceived Float // Получено (по накладной)
+  quantityUsed     Float           @default(0) // Использовано (списано)
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  // Опциональная привязка к виду работ (заполняется при импорте из сметы)
+  workItemId String?
+  workItem   WorkItem? @relation(fields: [workItemId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documents MaterialDocument[]
+  writeoffs MaterialWriteoff[]
+  batches   MaterialBatch[]
+
+  // Модуль 8 — Ресурсы
+  requestItems MaterialRequestItem[]
+
+  @@index([contractId])
+  @@index([workItemId])
+  @@map("materials")
+}
+
+/// Сопроводительный документ материала (паспорт, сертификат — хранится в S3)
+model MaterialDocument {
+  id       String               @id @default(uuid())
+  type     MaterialDocumentType // Тип документа
+  fileName String // Оригинальное имя файла
+  s3Key    String // Ключ в S3-хранилище
+  mimeType String // MIME-тип (application/pdf и т.д.)
+  size     Int // Размер файла в байтах
+
+  materialId String
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  uploadedAt DateTime @default(now())
+
+  @@index([materialId])
+  @@map("material_documents")
+}
+
+/// Партия материала (партионный учёт)
+model MaterialBatch {
+  id              String   @id @default(uuid())
+  batchNumber     String // Номер партии
+  quantity        Float // Количество в партии
+  arrivalDate     DateTime // Дата поступления
+  storageLocation String? // Место хранения
+
+  materialId String
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  inputControlRecords InputControlRecord[]
+
+  // Модуль 8 — Ресурсы
+  movementLines WarehouseMovementLine[]
+
+  @@index([materialId])
+  @@map("material_batches")
+}
+
+/// Запись журнала входного контроля (ЖВК)
+model InputControlRecord {
+  id     String             @id @default(uuid())
+  date   DateTime // Дата проверки
+  result InputControlResult // Результат входного контроля
+  notes  String? // Примечания
+
+  batchId String
+  batch   MaterialBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  inspectorId String
+  inspector   User   @relation(fields: [inspectorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  acts InputControlAct[]
+
+  @@index([batchId])
+  @@index([inspectorId])
+  @@map("input_control_records")
+}
+
+/// Акт входного контроля (АВК)
+model InputControlAct {
+  id       String                @id @default(uuid())
+  s3Key    String // Ключ файла в S3
+  fileName String // Имя файла
+  mimeType String // MIME-тип
+  size     Int // Размер в байтах
+  status   InputControlActStatus @default(DRAFT)
+
+  recordId String
+  record   InputControlRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([recordId])
+  @@map("input_control_acts")
+}
+
+/// Запись о выполненной работе
+model WorkRecord {
+  id          String           @id @default(uuid())
+  date        DateTime // Дата выполнения (окончания)
+  startDate   DateTime? // Дата начала работ
+  location    String // Место проведения работ
+  description String? // Описание выполненных работ
+  normative   String? // Норматив (ГОСТ, СП, СНиП)
+  status      WorkRecordStatus @default(DRAFT)
+
+  workItemId String
+  workItem   WorkItem @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  writeoffs     MaterialWriteoff[]
+  executionDocs ExecutionDoc[]
+
+  @@index([contractId])
+  @@index([workItemId])
+  @@index([date]) // Сортировка по дате — частый запрос при 1000+ записей
+  @@map("work_records")
+}
+
+/// Списание материала (привязка к записи о работе)
+model MaterialWriteoff {
+  id       String @id @default(uuid())
+  quantity Float // Количество списанного материала
+
+  workRecordId String
+  workRecord   WorkRecord @relation(fields: [workRecordId], references: [id], onDelete: Cascade)
+
+  materialId String
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([workRecordId, materialId]) // Один материал — одно списание на запись
+  @@index([workRecordId])
+  @@index([materialId])
+  @@map("material_writeoffs")
+}
+
+// === Модели Фазы 2 — Фото-отчёты ===
+
+// === Перечисления Фазы 3 — Исполнительная документация ===
+
+/// Тип исполнительного документа
+enum ExecutionDocType {
+  AOSR // Акт освидетельствования скрытых работ
+  OZR // Общий журнал работ
+  TECHNICAL_READINESS_ACT // Акт технической готовности
+}
+
+/// Статус исполнительного документа
+enum ExecutionDocStatus {
+  DRAFT // Черновик
+  IN_REVIEW // На проверке
+  SIGNED // Подписано
+  REJECTED // Отклонено
+}
+
+/// Тип подписи
+enum SignatureType {
+  DETACHED // Открепленная
+  EMBEDDED // Встроенная
+}
+
+/// Статус замечания
+enum DocCommentStatus {
+  OPEN // Открыто
+  RESOLVED // Устранено
+}
+
+/// Классификация ИД по ГОСТ Р 70108-2025
+enum IdCategory {
+  ACCOUNTING_JOURNAL // Журналы учёта (ЭОЖР, ЭСЖР)
+  INSPECTION_ACT     // Акты освидетельствования (АОСР, АВК)
+  OTHER_ID           // Иная исполнительная документация
+}
+
+/// Категория архивного документа
+enum ArchiveCategory {
+  PERMITS // Разрешительная документация
+  WORKING_PROJECT // Рабочий проект
+  EXECUTION_DRAWINGS // Исполнительные схемы
+  CERTIFICATES // Сертификаты и протоколы
+  STANDARDS // Нормативка (ГОСТы, СП, СНиПы)
+  LABORATORY // Лаборатории (протоколы испытаний)
+}
+
+// === Перечисления Фазы 3.5 — Парсинг смет ===
+
+/// Формат файла сметы
+enum EstimateFormat {
+  XML_GRAND_SMETA // XML Гранд-Смета
+  XML_RIK // XML РИК
+  EXCEL // .xlsx
+  PDF // .pdf
+}
+
+/// Статус импорта сметы
+enum EstimateImportStatus {
+  UPLOADING // Файл загружается в S3
+  PARSING // Идёт парсинг / извлечение текста
+  AI_PROCESSING // YandexGPT обрабатывает данные
+  PREVIEW // Готово к предпросмотру
+  CONFIRMED // Пользователь подтвердил импорт
+  FAILED // Ошибка
+}
+
+/// Статус позиции импорта сметы
+enum EstimateItemStatus {
+  RECOGNIZED // Успешно распознано
+  MAPPED // Привязано к КСИ
+  UNMATCHED // Не удалось привязать к КСИ
+  SKIPPED // Пользователь пропустил
+  CONFIRMED // Подтверждено и записано в WorkItem
+}
+
+/// Тип позиции сметы: работа или материал
+enum EstimateItemType {
+  WORK // Работа (например: Монтаж, Укладка, Устройство)
+  MATERIAL // Материал (например: Бетон, Арматура, Труба)
+}
+
+/// Результат входного контроля
+enum InputControlResult {
+  CONFORMING // Соответствует
+  NON_CONFORMING // Не соответствует
+  CONDITIONAL // Условно допущен
+}
+
+/// Статус акта входного контроля
+enum InputControlActStatus {
+  DRAFT // Черновик
+  APPROVED // Утверждён
+  REJECTED // Отклонён
+}
+
+/// Категория фото
+enum PhotoCategory {
+  CONFIRMING // Подтверждающие
+  VIOLATION // Фиксирующие нарушение
+}
+
+/// Тип сущности для полиморфной привязки фото
+enum PhotoEntityType {
+  WORK_RECORD
+  MATERIAL
+  REMARK
+  WORK_ITEM
+  CONTRACT
+  DEFECT
+  DAILY_LOG
+}
+
+// === Перечисления Фазы 5 — Дефектовка ===
+
+/// Статус дефекта стройконтроля
+enum DefectStatus {
+  OPEN // Открыт
+  IN_PROGRESS // В работе
+  RESOLVED // Устранён подрядчиком
+  CONFIRMED // Подтверждён стройконтролем
+  REJECTED // Отклонён (некорректно зафиксирован)
+}
+
+/// Категория дефекта
+enum DefectCategory {
+  QUALITY_VIOLATION // (ОТ) Нарушение правил охраны труда
+  TECHNOLOGY_VIOLATION // (Т) Нарушение технологии работ
+  FIRE_SAFETY // Пожарная безопасность
+  ECOLOGY // Экология и природоохрана
+  DOCUMENTATION // Нарушения в документации
+  OTHER // Прочее
+}
+
+/// Статус проверки строительного контроля
+enum InspectionStatus {
+  ACTIVE // Проверка в процессе
+  COMPLETED // Проверка завершена
+}
+
+/// Тип предписания
+enum PrescriptionType {
+  DEFECT_ELIMINATION // Устранение недостатков
+  WORK_SUSPENSION // Приостановка работ
+}
+
+/// Статус предписания
+enum PrescriptionStatus {
+  ACTIVE // Предписание активно
+  CLOSED // Предписание закрыто
+}
+
+/// Статус акта устранения недостатков
+enum RemediationActStatus {
+  DRAFT // Черновик
+  PENDING_REVIEW // На рассмотрении
+  ACCEPTED // Принят
+  REJECTED // Отклонён
+}
+
+/// Тип инструктажа по ОТиТБ
+enum SafetyBriefingType {
+  INTRODUCTORY // Вводный
+  PRIMARY // Первичный
+  TARGETED // Целевой
+  REPEATED // Повторный
+  UNSCHEDULED // Внеплановый
+}
+
+/// Фото-отчёт (полиморфная привязка к любой сущности)
+model Photo {
+  id          String          @id @default(uuid())
+  s3Key       String // Ключ в S3-хранилище
+  fileName    String // Оригинальное имя файла
+  mimeType    String // MIME-тип
+  size        Int // Размер файла в байтах
+  entityType  PhotoEntityType // Тип связанной сущности
+  entityId    String // ID связанной сущности
+  gpsLat      Float? // GPS широта
+  gpsLng      Float? // GPS долгота
+  takenAt     DateTime? // Дата съёмки
+  annotations Json? // Аннотации (fabric.js JSON)
+  category    PhotoCategory? // Категория фото
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([authorId])
+  @@map("photos")
+}
+
+// === Перечисления Фазы 3 — Workflow согласования ===
+
+/// Статус маршрута согласования
+enum ApprovalRouteStatus {
+  PENDING // На согласовании
+  APPROVED // Согласован
+  REJECTED // Отклонён
+  RESET // Сброшен
+}
+
+/// Статус шага согласования
+enum ApprovalStepStatus {
+  WAITING // Ожидает решения
+  APPROVED // Согласовано
+  REJECTED // Отклонено
+}
+
+/// Статус акта КС-2 / КС-3
+enum Ks2Status {
+  DRAFT // Черновик
+  IN_REVIEW // На согласовании
+  APPROVED // Утверждён
+  REJECTED // Отклонён
+}
+
+// === Модели Фазы 3 — Исполнительная документация ===
+
+/// Исполнительный документ (АОСР, ОЖР, акт технической готовности)
+model ExecutionDoc {
+  id          String             @id @default(uuid())
+  type        ExecutionDocType // Тип документа
+  status      ExecutionDocStatus @default(DRAFT)
+  number      String // Порядковый номер акта
+  title       String // Наименование
+  s3Key       String? // Ключ PDF в S3 (заполняется после генерации)
+  fileName    String? // Имя файла PDF
+  generatedAt DateTime? // Когда PDF сгенерирован
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  // Для АОСР — связь с записью о работе
+  workRecordId String?
+  workRecord   WorkRecord? @relation(fields: [workRecordId], references: [id])
+
+  createdById String
+  createdBy   User   @relation("ExecutionDocCreator", fields: [createdById], references: [id])
+
+  // Поля ручного редактирования (Фаза 3.6)
+  overrideFields Json? // Пользовательские правки полей поверх автоподстановки из БД
+  overrideHtml   String? // Полный HTML тела документа после редактирования в TipTap
+  lastEditedAt   DateTime? // Дата последней ручной правки
+  lastEditedById String?
+  lastEditedBy   User?     @relation("ExecutionDocEditor", fields: [lastEditedById], references: [id])
+
+  // Модуль 10 — QR, режим хранения, классификация
+  qrToken       String?      @unique // UUID для QR-кода (ссылка на публичную страницу)
+  qrCodeS3Key   String?              // Ключ PNG QR-кода в S3
+  storageMode   Boolean      @default(false) // Режим хранения (запрет редактирования)
+  storageModeAt DateTime?            // Дата перевода в хранение
+  idCategory    IdCategory?          // Классификация по ГОСТ Р 70108-2025
+
+  // Штамп производства работ на PDF
+  stampType  String? // Тип штампа: "work_permit" | "certified_copy" | "qr_stamp"
+  stampX     Float?  // X-координата штампа (в пунктах от левого края)
+  stampY     Float?  // Y-координата штампа
+  stampPage  Int?    // Номер страницы для штампа
+  stampS3Key String? // Ключ PDF с наложенным штампом
+
+  // XML-экспорт по схемам Минстроя
+  xmlExportedAt DateTime? // Дата последнего XML-экспорта
+  xmlS3Key      String?   // Ключ XML-файла в S3
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  signatures    Signature[]
+  comments      DocComment[]
+  approvalRoute ApprovalRoute?
+  ganttLinks    GanttTaskExecDoc[]
+
+  // Модуль 9 — Журналы
+  journalEntries SpecialJournalEntry[] @relation("JournalEntryDoc")
+
+  @@index([contractId])
+  @@index([workRecordId])
+  @@index([createdById])
+  @@index([lastEditedById])
+  @@index([status]) // Фильтрация по статусу — частый запрос
+  @@map("execution_docs")
+}
+
+/// Маршрут согласования (полиморфный: ExecutionDoc | Correspondence | SEDDocument | Ks2Act)
+model ApprovalRoute {
+  id             String              @id @default(uuid())
+  status         ApprovalRouteStatus @default(PENDING)
+  currentStepIdx Int                 @default(0)
+  documentType   String? // ExecutionDoc | Correspondence | SEDDocument | Ks2Act
+
+  executionDocId String?       @unique
+  executionDoc   ExecutionDoc? @relation(fields: [executionDocId], references: [id], onDelete: Cascade)
+
+  // Back-relations для Модуля 3 (FK хранится на стороне документа)
+  correspondence Correspondence? @relation("CorrespondenceApproval")
+  sedDocument    SEDDocument?    @relation("SEDApproval")
+
+  // Back-relations для Модуля 5 ПИР (FK хранится на стороне документа)
+  designTask    DesignTask?     @relation("DesignTaskApproval")
+  designDoc     DesignDocument? @relation("DesignDocApproval")
+  pirClosureAct PIRClosureAct?  @relation("PIRActApproval")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  steps ApprovalStep[]
+
+  // Модуль 8 — Ресурсы
+  materialRequest MaterialRequest?
+
+  // Модуль 9 — Журналы
+  specialJournalId String?         @unique
+  specialJournal   SpecialJournal? @relation("JournalApproval", fields: [specialJournalId], references: [id], onDelete: Cascade)
+
+  // Модуль 11 — Строительный контроль
+  inspectionAct  InspectionAct?        @relation("InspectionActApproval")
+  prescriptionAR Prescription?         @relation("PrescriptionApproval")
+  remediationAct DefectRemediationAct? @relation("RemediationActApproval")
+
+  // Модуль 12 — Отчёты
+  report Report? @relation("ReportApproval")
+
+  @@map("approval_routes")
+}
+
+/// Шаг маршрута согласования
+model ApprovalStep {
+  id        String             @id @default(uuid())
+  stepIndex Int // Порядковый индекс (0, 1, 2, ...)
+  role      ParticipantRole // Ожидаемая роль участника
+  status    ApprovalStepStatus @default(WAITING)
+  comment   String? // Комментарий к решению
+
+  // Пользователь, принявший решение (опционально — может быть пустым до решения)
+  userId String?
+  user   User?   @relation("ApprovalStepDecider", fields: [userId], references: [id])
+
+  decidedAt DateTime?
+
+  routeId String
+  route   ApprovalRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([routeId])
+  @@index([userId])
+  @@map("approval_steps")
+}
+
+/// Подпись на исполнительном документе
+model Signature {
+  id            String        @id @default(uuid())
+  signatureType SignatureType // Тип подписи
+  s3Key         String? // Ключ файла подписи в S3 (Фаза 4 — КриптоПро)
+  signedAt      DateTime      @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  executionDocId String
+  executionDoc   ExecutionDoc @relation(fields: [executionDocId], references: [id], onDelete: Cascade)
+
+  @@unique([executionDocId, userId])
+  @@index([userId])
+  @@index([executionDocId])
+  @@map("signatures")
+}
+
+/// Замечание / комментарий к исполнительному документу
+model DocComment {
+  id         String           @id @default(uuid())
+  text       String // Текст замечания
+  pageNumber Int? // Номер страницы (если привязано к месту в PDF)
+  positionX  Float? // X-координата на странице (0-1)
+  positionY  Float? // Y-координата на странице (0-1)
+  status     DocCommentStatus @default(OPEN)
+
+  executionDocId String
+  executionDoc   ExecutionDoc @relation(fields: [executionDocId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("CommentAuthor", fields: [authorId], references: [id])
+
+  resolvedById String?
+  resolvedBy   User?     @relation("CommentResolver", fields: [resolvedById], references: [id])
+  resolvedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([executionDocId])
+  @@index([authorId])
+  @@index([resolvedById])
+  @@map("doc_comments")
+}
+
+/// Архивный документ (Документарий)
+model ArchiveDocument {
+  id       String          @id @default(uuid())
+  category ArchiveCategory // Категория документа
+  fileName String // Оригинальное имя файла
+  s3Key    String // Ключ в S3
+  mimeType String // MIME-тип
+  size     Int // Размер в байтах
+
+  // Для рабочего проекта
+  sheetNumber String? // Номер листа
+  cipher      String? // Шифр
+  issueDate   DateTime? // Дата выдачи
+
+  // Штамп "Копия верна"
+  certifiedCopy   Boolean @default(false)
+  certifiedByName String? // ФИО заверившего
+  certifiedByPos  String? // Должность заверившего
+  certifiedS3Key  String? // S3-ключ PDF со штампом
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  uploadedById String
+  uploadedBy   User   @relation(fields: [uploadedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([contractId])
+  @@index([uploadedById])
+  @@map("archive_documents")
+}
+
+// === Модели Фазы 3 — КС-2, КС-3, Реестр ИД ===
+
+/// Акт о приёмке выполненных работ (КС-2)
+model Ks2Act {
+  id           String    @id @default(uuid())
+  number       String // Номер акта
+  periodStart  DateTime // Начало отчётного периода
+  periodEnd    DateTime // Конец отчётного периода
+  status       Ks2Status @default(DRAFT)
+  totalAmount  Float     @default(0) // Итоговая сумма
+  laborCost    Float     @default(0) // ФОТ
+  materialCost Float     @default(0) // Материалы
+  s3Key        String? // PDF в S3
+  fileName     String? // Имя файла PDF
+  generatedAt  DateTime? // Когда PDF сгенерирован
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation("Ks2ActCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items          Ks2Item[]
+  ks3Certificate Ks3Certificate?
+
+  @@index([contractId])
+  @@index([createdById])
+  @@map("ks2_acts")
+}
+
+/// Позиция акта КС-2
+model Ks2Item {
+  id           String @id @default(uuid())
+  sortOrder    Int // Порядковый номер
+  name         String // Наименование работы
+  unit         String // Единица измерения
+  volume       Float // Объём работ
+  unitPrice    Float // Цена за единицу
+  totalPrice   Float // Сумма (volume * unitPrice)
+  laborCost    Float  @default(0) // ФОТ по позиции
+  materialCost Float  @default(0) // Материалы по позиции
+
+  ks2ActId String
+  ks2Act   Ks2Act @relation(fields: [ks2ActId], references: [id], onDelete: Cascade)
+
+  // Необязательная привязка к виду работ
+  workItemId String?
+  workItem   WorkItem? @relation(fields: [workItemId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([ks2ActId])
+  @@index([workItemId])
+  @@map("ks2_items")
+}
+
+/// Справка о стоимости выполненных работ (КС-3)
+model Ks3Certificate {
+  id          String    @id @default(uuid())
+  totalAmount Float // Итоговая стоимость
+  status      Ks2Status @default(DRAFT)
+  s3Key       String? // PDF в S3
+  fileName    String? // Имя файла PDF
+  generatedAt DateTime? // Когда PDF сгенерирован
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  ks2ActId String @unique
+  ks2Act   Ks2Act @relation(fields: [ks2ActId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([contractId])
+  @@map("ks3_certificates")
+}
+
+/// Реестр исполнительной документации (ИД)
+model IdRegistry {
+  id          String    @id @default(uuid())
+  name        String // Название реестра
+  sheetCount  Int       @default(0) // Количество листов
+  s3Key       String? // PDF в S3
+  fileName    String? // Имя файла PDF
+  generatedAt DateTime? // Когда PDF сгенерирован
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([contractId])
+  @@map("id_registries")
+}
+
+// === Модели Фазы 3.5 — Парсинг смет ===
+
+/// Импорт сметы (загруженный файл и результат парсинга)
+model EstimateImport {
+  id           String               @id @default(uuid())
+  fileName     String // Оригинальное имя файла
+  fileS3Key    String // Ключ файла в S3
+  fileHash     String? // SHA-256 хэш файла (для кэширования)
+  mimeType     String // MIME-тип
+  size         Int // Размер в байтах
+  format       EstimateFormat? // Определённый формат (заполняется после детекции)
+  status       EstimateImportStatus @default(UPLOADING)
+  errorMessage String? // Сообщение об ошибке (если FAILED)
+  parsedAt     DateTime? // Когда завершился парсинг
+  confirmedAt  DateTime? // Когда пользователь подтвердил
+  itemsTotal   Int                  @default(0) // Всего позиций
+  itemsMapped  Int                  @default(0) // Привязано к КСИ
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items    EstimateImportItem[]
+  versions EstimateVersion[]
+
+  @@index([contractId])
+  @@index([createdById])
+  @@map("estimate_imports")
+}
+
+/// Позиция импорта сметы (распознанная строка из файла)
+model EstimateImportItem {
+  id            String             @id @default(uuid())
+  sortOrder     Int // Порядковый номер из сметы
+  rawName       String // Исходное наименование из сметы
+  rawUnit       String? // Исходная единица измерения
+  volume        Float? // Объём
+  price         Float? // Цена за единицу
+  total         Float? // Сумма (volume * price)
+  status        EstimateItemStatus @default(RECOGNIZED)
+  itemType      EstimateItemType   @default(WORK) // Тип: работа или материал
+  normativeRefs String[] // Рекомендуемые нормативы (СП, ГОСТ, СНиП) — от AI
+
+  // Привязка к КСИ (может быть null до маппинга)
+  suggestedKsiNodeId String?
+  suggestedKsiNode   KsiNode? @relation("SuggestedKsi", fields: [suggestedKsiNodeId], references: [id])
+
+  // После подтверждения — ссылка на созданный WorkItem
+  workItemId String?
+  workItem   WorkItem? @relation(fields: [workItemId], references: [id])
+
+  // Иерархия материал → родительская работа
+  parentItemId String?
+  parentItem   EstimateImportItem?  @relation("ItemParent", fields: [parentItemId], references: [id], onDelete: SetNull)
+  childItems   EstimateImportItem[] @relation("ItemParent")
+
+  importId String
+  import   EstimateImport @relation(fields: [importId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  estimateItem EstimateItem?
+
+  @@index([importId])
+  @@index([suggestedKsiNodeId])
+  @@index([workItemId])
+  @@index([parentItemId])
+  @@map("estimate_import_items")
+}
+
+// === Модели Фазы 3.6 — Справочник шаблонов документов ===
+
+/// Категория шаблона документа
+enum DocTemplateCategory {
+  AOSR // Акт освидетельствования скрытых работ
+  OZR // Общий журнал работ
+  KS2 // Акт о приёмке выполненных работ (КС-2)
+  KS3 // Справка о стоимости (КС-3)
+  AVK // Акт входного контроля
+  ZHVK // Журнал входного контроля
+  TECH_READINESS // Акт технической готовности
+  OTHER // Прочие
+}
+
+/// Шаблон документа (.docx с плейсхолдерами docxtemplater)
+model DocumentTemplate {
+  id          String              @id @default(cuid())
+  name        String // Название шаблона
+  category    DocTemplateCategory // Тип документа
+  format      String              @default("docx") // docx | pdf
+  localPath   String? // Относительный путь от корня проекта (templates/docx/aosr.docx)
+  s3Key       String? // Ключ в Timeweb S3 (если загружен в облако)
+  description String? // Описание и требования к заполнению
+  version     String              @default("1.0")
+  isActive    Boolean             @default(true) // Актуальная версия
+  isPublic    Boolean             @default(false) // Опубликован на Tilda-лендинге (SEO)
+
+  // Если null — системный шаблон (доступен всем организациям)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([organizationId])
+  @@map("document_templates")
+}
+
+/// Лог действий пользователей (для ленты уведомлений)
+model ActivityLog {
+  id         String  @id @default(uuid())
+  action     String // "created_doc", "signed_doc", "rejected_doc", "created_contract", "created_work_record"
+  entityType String // "ExecutionDoc", "Contract", "WorkRecord"
+  entityId   String
+  entityName String? // Читаемое название сущности
+  isRead     Boolean @default(false)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@map("activity_logs")
+}
+
+/// Персональное уведомление пользователя (согласование, напоминания, статусы)
+model Notification {
+  id         String    @id @default(uuid())
+  type       String // approval_required | doc_signed | doc_rejected | inspection_reminder | defect_overdue
+  title      String // Краткий заголовок уведомления
+  body       String // Текст уведомления
+  readAt     DateTime? // Дата прочтения (null = непрочитано)
+  entityType String? // Тип связанной сущности: ExecutionDoc | Contract | WorkRecord
+  entityId   String? // ID связанной сущности
+  entityName String? // Читаемое название для отображения
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Фаза 4.5 — График производства работ (Диаграмма Ганта)
+// ─────────────────────────────────────────────────────────────────
+
+/// Тип зависимости между задачами Ганта
+enum GanttDependencyType {
+  FS // Finish-to-Start: предшественник должен завершиться до начала
+  SS // Start-to-Start: оба начинаются одновременно
+  FF // Finish-to-Finish: оба завершаются одновременно
+  SF // Start-to-Finish: начало предшественника определяет завершение
+}
+
+/// Статус задачи в графике
+enum GanttTaskStatus {
+  NOT_STARTED // Не начата
+  IN_PROGRESS // В работе
+  COMPLETED // Завершена
+  DELAYED // Задержка
+  ON_HOLD // Приостановлена
+}
+
+/// Версия графика производства работ
+model GanttVersion {
+  id         String  @id @default(uuid())
+  name       String // Например: "Начальная версия", "Актуальная версия"
+  isBaseline Boolean @default(false) // Базовый (исходный) график
+  isActive   Boolean @default(true) // Активная версия (показывается по умолчанию)
+
+  // Контракт (обязателен для контрактных версий, null для объектных версий Модуля 7)
+  contractId String?
+  contract   Contract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
+
+  // Привязка к стадии и объекту (Модуль 7 — ГПР)
+  stageId     String?
+  stage       GanttStage?     @relation(fields: [stageId], references: [id])
+  isDirective Boolean         @default(false) // Директивная версия
+  projectId   String?
+  project     BuildingObject? @relation("ObjectGanttVersions", fields: [projectId], references: [id])
+  description String?
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tasks GanttTask[]
+
+  @@index([contractId])
+  @@index([contractId, isActive])
+  @@index([projectId])
+  @@map("gantt_versions")
+}
+
+/// Задача графика производства работ
+model GanttTask {
+  id        String          @id @default(uuid())
+  name      String // Наименование задачи
+  sortOrder Int             @default(0) // Порядок отображения
+  level     Int             @default(0) // Уровень вложенности (0 = раздел, 1 = работа)
+  status    GanttTaskStatus @default(NOT_STARTED)
+
+  // Плановые даты
+  planStart DateTime
+  planEnd   DateTime
+
+  // Фактические даты (заполняются по мере выполнения)
+  factStart DateTime?
+  factEnd   DateTime?
+
+  // Прогресс выполнения (0–100)
+  progress Float @default(0)
+
+  // Критический путь
+  isCritical Boolean @default(false)
+
+  // Версия графика (привязка)
+  versionId String
+  version   GanttVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  // Иерархия: подзадача → родительская задача
+  parentId String?
+  parent   GanttTask?  @relation("GanttTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children GanttTask[] @relation("GanttTree")
+
+  // Связь с видом работ (необязательная)
+  workItemId String?
+  workItem   WorkItem? @relation(fields: [workItemId], references: [id], onDelete: SetNull)
+
+  // Контракт (обязателен для контрактных задач, null для объектных задач Модуля 7)
+  contractId String?
+  contract   Contract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
+
+  // Модуль 7 — ГПР: расширенные поля
+  directiveStart           DateTime? // Директивная дата начала (из базовой версии, не изменяется)
+  directiveEnd             DateTime? // Директивная дата окончания
+  volume                   Float? // Объём работ
+  volumeUnit               String? // Единица измерения объёма
+  amount                   Float? // Стоимость (из сметы)
+  isMilestone              Boolean       @default(false) // Веха (нулевая продолжительность)
+  calendarType             String? // STANDARD / CUSTOM — тип производственного календаря
+  linkedExecutionDocsCount Int           @default(0) // Количество связанных актов ИД
+  estimateItemId           String?
+  estimateItem             EstimateItem? @relation(fields: [estimateItemId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Зависимости
+  predecessorDeps GanttDependency[] @relation("PredecessorTask")
+  successorDeps   GanttDependency[] @relation("SuccessorTask")
+
+  // Суточные планы
+  dailyPlans GanttDailyPlan[]
+
+  // Связанные исполнительные документы
+  execDocs GanttTaskExecDoc[]
+
+  // Модуль 8 — Ресурсы
+  requestItems MaterialRequestItem[]
+
+  @@index([contractId])
+  @@index([versionId])
+  @@index([versionId, sortOrder])
+  @@index([parentId])
+  @@index([workItemId])
+  @@index([estimateItemId])
+  @@map("gantt_tasks")
+}
+
+/// Связь задачи ГПР с исполнительным документом
+model GanttTaskExecDoc {
+  ganttTaskId String
+  execDocId   String
+  ganttTask   GanttTask    @relation(fields: [ganttTaskId], references: [id], onDelete: Cascade)
+  execDoc     ExecutionDoc @relation(fields: [execDocId], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+  createdById String
+  createdBy   User         @relation("GanttTaskExecDocCreator", fields: [createdById], references: [id])
+
+  @@id([ganttTaskId, execDocId])
+  @@index([execDocId])
+  @@map("gantt_task_exec_docs")
+}
+
+/// Зависимость между задачами графика
+model GanttDependency {
+  id      String              @id @default(uuid())
+  type    GanttDependencyType @default(FS)
+  lagDays Int                 @default(0) // Задержка в днях (отрицательная = опережение)
+
+  predecessorId String
+  predecessor   GanttTask @relation("PredecessorTask", fields: [predecessorId], references: [id], onDelete: Cascade)
+
+  successorId String
+  successor   GanttTask @relation("SuccessorTask", fields: [successorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([predecessorId, successorId])
+  @@index([predecessorId])
+  @@index([successorId])
+  @@map("gantt_dependencies")
+}
+
+/// Стадия реализации проекта (ГПР: СМР, ПИР, Монтаж, Пусконаладка)
+model GanttStage {
+  id        String  @id @default(uuid())
+  name      String // Наименование стадии
+  order     Int     @default(0) // Порядок отображения
+  isCurrent Boolean @default(false) // Текущая активная стадия
+
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions GanttVersion[]
+
+  @@index([projectId])
+  @@map("gantt_stages")
+}
+
+/// Суточный план по задаче ГПР
+model GanttDailyPlan {
+  id       String   @id @default(uuid())
+  planDate DateTime // Дата суточного плана
+
+  taskId String
+  task   GanttTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  // Ресурсы на день
+  workers   Int? // Количество рабочих
+  machinery String? // Техника (текстовое описание)
+  volume    Float? // Объём работ на день
+  unit      String? // Единица измерения
+  notes     String?
+
+  createdById String
+  createdBy   User   @relation("GanttDailyPlanCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+  @@index([planDate])
+  @@map("gantt_daily_plans")
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Фаза 5 — Аналитика, строительный контроль, дашборд
+// ─────────────────────────────────────────────────────────────────
+
+/// Дефект стройконтроля
+model Defect {
+  id           String         @id @default(uuid())
+  title        String // Краткое описание дефекта
+  description  String? // Подробное описание
+  category     DefectCategory @default(OTHER)
+  status       DefectStatus   @default(OPEN)
+  normativeRef String? // Ссылка на норматив (ГОСТ, СП, СНиП)
+  deadline     DateTime? // Срок устранения
+  resolvedAt   DateTime? // Фактическая дата устранения
+  annotations  Json? // Аннотации на чертеже/фото (fabric.js JSON)
+  gpsLat       Float? // GPS широта
+  gpsLng       Float? // GPS долгота
+
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Необязательная привязка к конкретному договору
+  contractId String?
+  contract   Contract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
+
+  authorId String
+  author   User   @relation("DefectAuthor", fields: [authorId], references: [id])
+
+  // Ответственный за устранение
+  assigneeId String?
+  assignee   User?   @relation("DefectAssignee", fields: [assigneeId], references: [id])
+
+  // Модуль 11 — Строительный контроль
+  requiresSuspension Boolean      @default(false) // Требует приостановки работ
+  inspectionId       String?
+  inspection         Inspection?  @relation(fields: [inspectionId], references: [id])
+  prescriptionId     String?
+  prescription       Prescription? @relation(fields: [prescriptionId], references: [id])
+  deputyInspectorId  String? // ID заместителя инспектора
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  comments        DefectComment[]
+  annotationItems DefectAnnotation[]
+
+  @@index([projectId])
+  @@index([projectId, status])
+  @@index([contractId])
+  @@index([authorId])
+  @@index([assigneeId])
+  @@index([deadline])
+  @@index([inspectionId])
+  @@map("defects")
+}
+
+/// Комментарий / история изменения статуса дефекта
+model DefectComment {
+  id           String        @id @default(uuid())
+  text         String // Текст комментария
+  statusChange DefectStatus? // Если комментарий сопровождал смену статуса
+
+  defectId String
+  defect   Defect @relation(fields: [defectId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([defectId])
+  @@index([authorId])
+  @@map("defect_comments")
+}
+
+/// Аннотация на фото/чертеже дефекта
+model DefectAnnotation {
+  id   String @id @default(uuid())
+  type String // 'arrow' | 'circle' | 'text' | 'rectangle'
+  x    Float
+  y    Float
+  data Json // дополнительные параметры (цвет, размер, текст и т.д.)
+
+  defectId String
+  defect   Defect @relation(fields: [defectId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([defectId])
+  @@map("defect_annotations")
+}
+
+/// Виджет дашборда (настраиваемый пользователем)
+model DashboardWidget {
+  id        String  @id @default(uuid())
+  type      String // Тип виджета: id_readiness | smr_progress | defects_monitor | contracts_status | id_quality
+  title     String // Заголовок виджета
+  position  Int     @default(0) // Позиция в сетке (порядковый номер)
+  colSpan   Int     @default(1) // Ширина в колонках (1 или 2 из 3)
+  isVisible Boolean @default(true)
+  config    Json? // Конфигурация виджета (например, projectId для фильтрации)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("dashboard_widgets")
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Ежедневный журнал производства работ (Daily Log)
+// ─────────────────────────────────────────────────────────────────
+
+/// Ежедневный журнал: прораб фиксирует прогресс, погоду, количество рабочих
+model DailyLog {
+  id           String   @id @default(uuid())
+  date         DateTime @db.Date // Дата записи (без времени)
+  weather      String? // Погода: "ясно" | "облачно" | "дождь" | "снег" | "мороз"
+  temperature  Int? // Температура воздуха °C
+  workersCount Int? // Количество рабочих на объекте
+  notes        String? // Произвольные заметки дня
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([contractId, date]) // Один отчёт в день на договор
+  @@index([contractId])
+  @@index([date])
+  @@map("daily_logs")
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Портал заказчика (публичный доступ по ссылке)
+// ─────────────────────────────────────────────────────────────────
+
+/// Токен публичного доступа к порталу заказчика
+model ProjectPortalToken {
+  id        String    @id @default(uuid())
+  token     String    @unique @default(uuid()) // UUID-токен для ссылки
+  expiresAt DateTime? // Необязательный срок действия
+
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@map("project_portal_tokens")
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Дополнительные работы (Change Orders)
+// ─────────────────────────────────────────────────────────────────
+
+enum ChangeOrderStatus {
+  DRAFT // Черновик
+  SENT // Отправлен заказчику на согласование
+  APPROVED // Утверждён
+  REJECTED // Отклонён
+}
+
+/// Дополнительное соглашение / изменение объёма работ по договору
+model ChangeOrder {
+  id          String            @id @default(uuid())
+  number      String // Номер доп. соглашения
+  title       String // Краткое наименование
+  description String? // Подробное описание изменений
+  amount      Float // Сумма изменения (положительная — доп. работы, отрицательная — сокращение)
+  status      ChangeOrderStatus @default(DRAFT)
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  approvedAt DateTime? // Дата утверждения
+  approvedBy String? // ФИО утвердившего (внешняя сторона)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([contractId])
+  @@map("change_orders")
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Модуль 2 — Паспорт объекта
+// ─────────────────────────────────────────────────────────────────
+
+/// Источник финансирования объекта
+model FundingSource {
+  id     String      @id @default(uuid())
+  type   FundingType
+  name   String // Название источника
+  amount Float // Сумма (руб.)
+  period String? // Период (например "2024 Q1")
+  notes  String?
+
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@map("funding_sources")
+}
+
+/// Задача по объекту
+model Task {
+  id          String       @id @default(uuid())
+  title       String // Название задачи
+  description String? // Описание
+  status      TaskStatus   @default(OPEN)
+  priority    TaskPriority @default(MEDIUM)
+  deadline    DateTime? // Срок исполнения
+  sourceType  TaskSource   @default(MANUAL)
+
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  contractId String? // Опционально — привязка к договору
+  defectId   String? // Если создана из дефекта
+
+  assigneeId String?
+  assignee   User?   @relation("TaskAssignee", fields: [assigneeId], references: [id])
+
+  createdById String
+  createdBy   User   @relation("TaskCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([assigneeId])
+  @@map("tasks")
+}
+
+// === Модели Модуля 3 — Информация и СЭД ===
+
+enum CorrespondenceDir {
+  OUTGOING // Исходящее
+  INCOMING // Входящее
+}
+
+enum CorrespondenceStatus {
+  DRAFT // Черновик
+  SENT // Отправлено
+  READ // Прочитано адресатом
+  IN_APPROVAL // На согласовании
+  APPROVED // Согласовано
+  REJECTED // Отклонено
+  ARCHIVED // В архиве
+}
+
+enum RFIStatus {
+  OPEN // Открыт
+  IN_REVIEW // На рассмотрении
+  ANSWERED // Ответ дан
+  CLOSED // Закрыт
+  CANCELLED // Отменён
+}
+
+enum RFIPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum SEDDocType {
+  LETTER // Письмо
+  ORDER // Приказ
+  PROTOCOL // Протокол
+  ACT // Акт
+  MEMO // Докладная записка
+  NOTIFICATION // Уведомление
+  OTHER // Иное
+}
+
+enum SEDStatus {
+  DRAFT // Черновик
+  ACTIVE // Активный
+  IN_APPROVAL // На согласовании
+  REQUIRES_ACTION // Требует действия
+  APPROVED // Согласован / Подписан
+  REJECTED // Отклонён
+  ARCHIVED // Архив
+}
+
+/// Официальное письмо (Деловая переписка)
+model Correspondence {
+  id        String               @id @default(uuid())
+  number    String // Авто-нумерация: ИСХ-2025-001 / ВХ-2025-001
+  direction CorrespondenceDir // OUTGOING / INCOMING
+  subject   String // Тема письма
+  body      String? // Текст письма (plain text или HTML)
+  status    CorrespondenceStatus @default(DRAFT)
+  isRead    Boolean              @default(false)
+  sentAt    DateTime? // Дата отправки
+  tags      String[] // Теги для поиска (PostgreSQL array)
+
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Отправитель / получатель — организации
+  senderOrgId   String
+  senderOrg     Organization @relation("CorrespondenceSender", fields: [senderOrgId], references: [id])
+  receiverOrgId String
+  receiverOrg   Organization @relation("CorrespondenceReceiver", fields: [receiverOrgId], references: [id])
+
+  // Физ. лицо-отправитель внутри организации
+  authorId String
+  author   User   @relation("CorrespondenceAuthor", fields: [authorId], references: [id])
+
+  // Маршрут согласования (FK на стороне Correspondence)
+  approvalRouteId String?        @unique
+  approvalRoute   ApprovalRoute? @relation("CorrespondenceApproval", fields: [approvalRouteId], references: [id])
+
+  // Полнотекстовый поиск (управляется через raw SQL миграцию)
+  searchVector Unsupported("tsvector")?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attachments CorrespondenceAttachment[]
+
+  @@index([projectId])
+  @@index([direction])
+  @@index([status])
+  @@map("correspondences")
+}
+
+/// Вложение к письму
+model CorrespondenceAttachment {
+  id        String   @id @default(uuid())
+  fileName  String
+  s3Key     String
+  mimeType  String
+  size      Int
+  createdAt DateTime @default(now())
+
+  correspondenceId String
+  correspondence   Correspondence @relation(fields: [correspondenceId], references: [id], onDelete: Cascade)
+
+  @@index([correspondenceId])
+  @@map("correspondence_attachments")
+}
+
+/// Запрос на разъяснение (RFI — Request for Information)
+model RFI {
+  id          String      @id @default(uuid())
+  number      String // RFI-2025-001
+  title       String // Краткое описание вопроса
+  description String // Полное описание
+  status      RFIStatus   @default(OPEN)
+  priority    RFIPriority @default(MEDIUM)
+  deadline    DateTime? // Срок ответа
+
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Кто задал вопрос
+  authorId String
+  author   User   @relation("RFIAuthor", fields: [authorId], references: [id])
+
+  // Кто должен ответить
+  assigneeId String?
+  assignee   User?   @relation("RFIAssignee", fields: [assigneeId], references: [id])
+
+  // Привязка к документу (опционально)
+  linkedDocId   String?
+  linkedDocType String? // ExecutionDoc | ArchiveDocument | Contract
+
+  response     String? // Текст ответа
+  answeredAt   DateTime? // Когда дан ответ
+  answeredById String?
+  answeredBy   User?     @relation("RFIAnswerer", fields: [answeredById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Полнотекстовый поиск (управляется через raw SQL миграцию)
+  searchVector Unsupported("tsvector")?
+
+  attachments RFIAttachment[]
+
+  @@index([projectId])
+  @@index([assigneeId])
+  @@index([status])
+  @@map("rfis")
+}
+
+/// Вложение к RFI
+model RFIAttachment {
+  id        String   @id @default(uuid())
+  fileName  String
+  s3Key     String
+  mimeType  String
+  size      Int
+  createdAt DateTime @default(now())
+
+  rfiId String
+  rfi   RFI    @relation(fields: [rfiId], references: [id], onDelete: Cascade)
+
+  @@index([rfiId])
+  @@map("rfi_attachments")
+}
+
+/// Документ СЭД (официальный документооборот произвольного типа)
+model SEDDocument {
+  id      String     @id @default(uuid())
+  number  String // Авто-нумерация: СЭД-2025-001
+  docType SEDDocType // Тип: письмо, приказ, протокол, акт, справка...
+  title   String // Заголовок
+  body    String? // Текст
+  status  SEDStatus  @default(DRAFT)
+  tags    String[]
+
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Отправитель и получатели
+  senderOrgId    String
+  senderOrg      Organization @relation("SEDSender", fields: [senderOrgId], references: [id])
+  receiverOrgIds String[] // Несколько получателей (массив ID)
+
+  authorId String
+  author   User   @relation("SEDAuthor", fields: [authorId], references: [id])
+
+  // Маршрут согласования (FK на стороне SEDDocument)
+  approvalRouteId String?        @unique
+  approvalRoute   ApprovalRoute? @relation("SEDApproval", fields: [approvalRouteId], references: [id])
+
+  // Полнотекстовый поиск (управляется через raw SQL миграцию)
+  searchVector Unsupported("tsvector")?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attachments SEDAttachment[]
+
+  @@index([projectId])
+  @@index([status])
+  @@index([docType])
+  @@map("sed_documents")
+}
+
+/// Вложение к СЭД-документу
+model SEDAttachment {
+  id        String   @id @default(uuid())
+  fileName  String
+  s3Key     String
+  mimeType  String
+  size      Int
+  createdAt DateTime @default(now())
+
+  sedDocId String
+  sedDoc   SEDDocument @relation(fields: [sedDocId], references: [id], onDelete: Cascade)
+
+  @@index([sedDocId])
+  @@map("sed_attachments")
+}
+
+/// Сообщение чата по объекту / договору
+model ChatMessage {
+  id   String @id @default(uuid())
+  text String
+
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  contractId String? // Опционально: привязка к договору
+  contract   Contract? @relation(fields: [contractId], references: [id])
+
+  authorId String
+  author   User   @relation("ChatAuthor", fields: [authorId], references: [id])
+
+  // Прикреплённый объект системы (документ, дефект, материал…)
+  attachmentType String? // ExecutionDoc | Defect | Material | Photo
+  attachmentId   String?
+
+  // Ответ на другое сообщение
+  replyToId String?
+  replyTo   ChatMessage?  @relation("MessageReply", fields: [replyToId], references: [id])
+  replies   ChatMessage[] @relation("MessageReply")
+
+  isEdited  Boolean   @default(false)
+  editedAt  DateTime?
+  deletedAt DateTime? // Soft delete
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId, createdAt])
+  @@index([contractId, createdAt])
+  @@map("chat_messages")
+}
+
+// ─────────────────────────────────────────────
+// МОДУЛЬ 4 — Управление проектом
+// ─────────────────────────────────────────────
+
+/// Категория / вид контракта (пользовательский справочник)
+model ContractCategory {
+  id            String  @id @default(uuid())
+  name          String
+  trackPayments Boolean @default(true)
+  order         Int     @default(0)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  contracts Contract[]
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId])
+  @@map("contract_categories")
+}
+
+enum ContractPaymentType {
+  PLAN // Плановый платёж
+  FACT // Фактический платёж
+}
+
+/// Плановый или фактический платёж по контракту
+model ContractPayment {
+  id          String              @id @default(uuid())
+  paymentType ContractPaymentType
+  amount      Float
+  paymentDate DateTime
+  budgetType  String? // Вид бюджета (федеральный, региональный…)
+  description String?
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation("PaymentCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([contractId])
+  @@index([paymentDate])
+  @@map("contract_payments")
+}
+
+/// Папка в файловом хранилище объекта
+model ProjectFolder {
+  id     String  @id @default(uuid())
+  name   String
+  order  Int     @default(0)
+  pinTop Boolean @default(false)
+
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  parentId String?
+  parent   ProjectFolder?  @relation("FolderTree", fields: [parentId], references: [id])
+  children ProjectFolder[] @relation("FolderTree")
+
+  documents ProjectDocument[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([parentId])
+  @@map("project_folders")
+}
+
+/// Документ в файловом хранилище объекта
+model ProjectDocument {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  version     Int     @default(1)
+  isActual    Boolean @default(true)
+
+  // Файл (актуальная версия)
+  s3Key    String
+  fileName String
+  mimeType String
+  fileSize Int
+
+  // QR-код для проверки актуальности на площадке
+  qrCodeS3Key String?
+  qrToken     String? @unique
+
+  folderId String
+  folder   ProjectFolder @relation(fields: [folderId], references: [id])
+
+  uploadedById String
+  uploadedBy   User   @relation("ProjectDocUploader", fields: [uploadedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions ProjectDocumentVersion[]
+
+  @@index([folderId])
+  @@index([qrToken])
+  @@map("project_documents")
+}
+
+/// История версий документа
+model ProjectDocumentVersion {
+  id       String  @id @default(uuid())
+  version  Int
+  s3Key    String
+  fileName String
+  fileSize Int
+  comment  String?
+
+  uploadedById String
+  uploadedBy   User   @relation("DocVersionUploader", fields: [uploadedById], references: [id])
+
+  documentId String
+  document   ProjectDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([documentId])
+  @@map("project_document_versions")
+}
+
+enum ProjectEventType {
+  MEETING // Совещание
+  GSN_INSPECTION // Проверка ГСН
+  ACCEPTANCE // Приёмка работ
+  AUDIT // Аудит
+  COMMISSIONING // Ввод в эксплуатацию
+  OTHER // Иное
+}
+
+enum ProjectEventStatus {
+  PLANNED // Запланировано
+  IN_PROGRESS // Проводится
+  COMPLETED // Состоялось
+  CANCELLED // Отменено
+  POSTPONED // Перенесено
+}
+
+/// Мероприятие / событие по объекту
+model ProjectEvent {
+  id          String             @id @default(uuid())
+  title       String
+  description String?
+  eventType   ProjectEventType
+  status      ProjectEventStatus @default(PLANNED)
+  scheduledAt DateTime
+  location    String?
+  notifyDays  Int                @default(3) // Уведомить за N дней
+
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  contractId String?
+  contract   Contract? @relation(fields: [contractId], references: [id])
+
+  organizerId String
+  organizer   User   @relation("EventOrganizer", fields: [organizerId], references: [id])
+
+  participantIds String[] // JSON-массив userId участников
+
+  protocolS3Key    String?
+  protocolFileName String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([scheduledAt])
+  @@map("project_events")
+}
+
+// ─────────────────────────────────────────────
+// МОДУЛЬ 5 — ПИР (Проектно-Изыскательские Работы)
+// ─────────────────────────────────────────────
+
+enum DesignTaskType {
+  DESIGN // Задание на проектирование
+  SURVEY // Задание на инженерные изыскания
+}
+
+enum DesignTaskStatus {
+  DRAFT // Создан
+  IN_PROGRESS // В работе
+  SENT_FOR_REVIEW // Отправлен на проверку
+  WITH_COMMENTS // Работа с замечаниями
+  REVIEW_PASSED // Проверка пройдена
+  IN_APPROVAL // На согласовании
+  APPROVED // Согласовано в производство работ
+  CANCELLED // Аннулирован
+}
+
+enum DesignDocType {
+  DESIGN_PD // Проектная документация (ПД)
+  WORKING_RD // Рабочая документация (РД)
+  SURVEY // Результаты изысканий
+  REPEATED_USE // Повторного применения
+}
+
+enum DesignDocStatus {
+  CREATED // Создан
+  IN_PROGRESS // В работе
+  SENT_FOR_REVIEW // Отправлен на проверку
+  WITH_COMMENTS // Работа с замечаниями
+  REVIEW_PASSED // Проверка пройдена
+  IN_APPROVAL // На согласовании
+  APPROVED // Согласовано в производство
+  CANCELLED // Аннулирован
+}
+
+enum DesignCommentStatus {
+  ACTIVE // Активно (незакрытое)
+  ANSWERED // Ответ дан (ожидает принятия)
+  CLOSED // Закрыто
+}
+
+enum ExpertiseStatus {
+  NOT_SUBMITTED // Не подано
+  IN_PROCESS // На экспертизе
+  APPROVED_POSITIVE // Положительное заключение
+  APPROVED_NEGATIVE // Отрицательное заключение
+  REVISION_REQUIRED // На доработку
+}
+
+enum PIRClosureStatus {
+  DRAFT // Черновик
+  CONDUCTED // Проведён
+  IN_APPROVAL // На согласовании
+  SIGNED // Подписан
+}
+
+/// Задание на проектирование (ЗП) или изыскания (ЗИ)
+model DesignTask {
+  id       String           @id @default(uuid())
+  number   String // Номер документа
+  docDate  DateTime         @default(now()) // Дата документа
+  taskType DesignTaskType   @default(DESIGN) // DESIGN / SURVEY
+  status   DesignTaskStatus @default(DRAFT)
+
+  // Утверждающее и согласующее лицо
+  approvedById String?
+  approvedBy   User?   @relation("DesignTaskApprover", fields: [approvedById], references: [id])
+  agreedById   String?
+  agreedBy     User?   @relation("DesignTaskAgreer", fields: [agreedById], references: [id])
+
+  // Заказчик (для задания на изыскания)
+  customerOrgId    String?
+  customerOrg      Organization? @relation("DesignTaskCustomer", fields: [customerOrgId], references: [id])
+  customerPersonId String?
+  customerPerson   User?         @relation("DesignTaskCustomerPerson", fields: [customerPersonId], references: [id])
+
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("DesignTaskAuthor", fields: [authorId], references: [id])
+
+  s3Keys String[] // Массив ключей файлов в S3
+
+  // Маршрут согласования (переиспользуем ApprovalRoute)
+  approvalRouteId String?        @unique
+  approvalRoute   ApprovalRoute? @relation("DesignTaskApproval", fields: [approvalRouteId], references: [id])
+
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parameters DesignTaskParam[]
+  comments   DesignTaskComment[]
+
+  @@index([projectId])
+  @@index([taskType])
+  @@map("design_tasks")
+}
+
+/// Параметр задания на ПИР (из предустановленного справочника)
+model DesignTaskParam {
+  id         String  @id @default(uuid())
+  paramKey   String // Ключ параметра (из справочника)
+  paramName  String // Название параметра
+  value      String? // Значение параметра
+  order      Int // Порядок в списке
+  hasComment Boolean @default(false) // Есть замечание к этому параметру
+
+  taskId String
+  task   DesignTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("design_task_params")
+}
+
+/// Замечание к заданию на ПИР
+model DesignTaskComment {
+  id          String              @id @default(uuid())
+  number      Int // Авто-инкремент в рамках задания
+  description String // Текст замечания
+  deadline    DateTime? // Срок устранения
+  status      DesignCommentStatus @default(ACTIVE)
+  paramKey    String? // Если замечание к конкретному параметру
+
+  taskId String
+  task   DesignTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("DesignCommentAuthor", fields: [authorId], references: [id])
+
+  assigneeId String?
+  assignee   User?   @relation("DesignCommentAssignee", fields: [assigneeId], references: [id])
+
+  // Ответ на замечание
+  response      String?
+  respondedAt   DateTime?
+  respondedById String?
+  respondedBy   User?     @relation("DesignCommentResponder", fields: [respondedById], references: [id])
+
+  s3Keys String[] // Вложения к замечанию
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([taskId])
+  @@map("design_task_comments")
+}
+
+/// Документ ПИР (рабочий проект, изыскания, ПД)
+model DesignDocument {
+  id                String          @id @default(uuid())
+  number            String // Шифр/номер документа
+  name              String // Наименование
+  docType           DesignDocType // Тип документации
+  category          String? // Категория (раздел ПД)
+  version           Int             @default(1)
+  status            DesignDocStatus @default(CREATED)
+  responsibleOrgId  String?
+  responsibleOrg    Organization?   @relation("DesignDocOrg", fields: [responsibleOrgId], references: [id])
+  responsibleUserId String?
+  responsibleUser   User?           @relation("DesignDocResponsible", fields: [responsibleUserId], references: [id])
+  notes             String?
+
+  // Связь с исполнительной документацией (чертёж → АОСР)
+  linkedExecDocIds String[] // Массив ID ExecutionDoc
+
+  // QR-код на чертеже (механика из Модуля 4)
+  qrToken     String? @unique
+  qrCodeS3Key String?
+
+  // Экспертиза
+  expertiseStatus  ExpertiseStatus?
+  expertiseDate    DateTime?
+  expertiseComment String?
+
+  // Файлы документа
+  s3Keys       String[] // Все прикреплённые файлы
+  currentS3Key String? // Актуальный файл
+
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("DesignDocAuthor", fields: [authorId], references: [id])
+
+  // Маршрут согласования
+  approvalRouteId String?        @unique
+  approvalRoute   ApprovalRoute? @relation("DesignDocApproval", fields: [approvalRouteId], references: [id])
+
+  // Версионирование: связь с предыдущей версией
+  parentDocId String?
+  parentDoc   DesignDocument?  @relation("DesignDocVersion", fields: [parentDocId], references: [id])
+  versions    DesignDocument[] @relation("DesignDocVersion")
+
+  isDeleted Boolean @default(false) // Помечен на удаление (soft delete)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  comments      DesignDocComment[]
+  registryItems PIRRegistryItem[]
+
+  @@index([projectId])
+  @@index([docType])
+  @@index([status])
+  @@index([qrToken])
+  @@map("design_documents")
+}
+
+/// Замечание к документу ПИР
+model DesignDocComment {
+  id                String              @id @default(uuid())
+  number            Int
+  text              String
+  commentType       String? // Тип замечания
+  urgency           String? // Срочность
+  deadline          DateTime?
+  status            DesignCommentStatus @default(ACTIVE)
+  requiresAttention Boolean             @default(false)
+
+  docId String
+  doc   DesignDocument @relation(fields: [docId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("DesignDocCommentAuthor", fields: [authorId], references: [id])
+
+  assigneeId String?
+  assignee   User?   @relation("DesignDocCommentAssignee", fields: [assigneeId], references: [id])
+
+  response      String?
+  respondedAt   DateTime?
+  respondedById String?
+  respondedBy   User?     @relation("DesignDocCommentResponder", fields: [respondedById], references: [id])
+
+  s3Keys String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([docId])
+  @@map("design_doc_comments")
+}
+
+/// Реестр документации ПИР
+model PIRRegistry {
+  id               String  @id @default(uuid())
+  number           String // Номер реестра
+  senderOrgId      String? // Кто сдал комплект
+  receiverOrgId    String? // Кто принял комплект
+  senderPersonId   String?
+  receiverPersonId String?
+  notes            String?
+
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("PIRRegistryAuthor", fields: [authorId], references: [id])
+
+  senderOrg      Organization? @relation("PIRRegistrySender", fields: [senderOrgId], references: [id])
+  receiverOrg    Organization? @relation("PIRRegistryReceiver", fields: [receiverOrgId], references: [id])
+  senderPerson   User?         @relation("PIRRegistrySenderPerson", fields: [senderPersonId], references: [id])
+  receiverPerson User?         @relation("PIRRegistryReceiverPerson", fields: [receiverPersonId], references: [id])
+
+  // Экспертиза реестра
+  expertiseStatus  ExpertiseStatus?
+  expertiseDate    DateTime?
+  expertiseS3Keys  String[]
+  expertiseComment String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items PIRRegistryItem[]
+
+  @@index([projectId])
+  @@map("pir_registries")
+}
+
+/// Документ в реестре ПИР
+model PIRRegistryItem {
+  id         String         @id @default(uuid())
+  registryId String
+  registry   PIRRegistry    @relation(fields: [registryId], references: [id], onDelete: Cascade)
+  docId      String
+  doc        DesignDocument @relation(fields: [docId], references: [id])
+  order      Int            @default(0)
+
+  @@index([registryId])
+  @@map("pir_registry_items")
+}
+
+/// Акт закрытия ПИР (привязан к версии ГПР стадии ПИР)
+model PIRClosureAct {
+  id     String           @id @default(uuid())
+  number String
+  status PIRClosureStatus @default(DRAFT)
+
+  periodStart DateTime
+  periodEnd   DateTime
+
+  // Версия ГПР для закрытия (ссылка на будущую модель GanttVersion)
+  ganttVersionId String?
+
+  // Автозаполняемые реквизиты из Модуля 3 (Участники)
+  contractorOrgId String?
+  customerOrgId   String?
+
+  totalAmount Float?
+
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("PIRActAuthor", fields: [authorId], references: [id])
+
+  // Маршрут согласования
+  approvalRouteId String?        @unique
+  approvalRoute   ApprovalRoute? @relation("PIRActApproval", fields: [approvalRouteId], references: [id])
+
+  s3Key     String? // PDF-печатная форма
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items PIRClosureItem[]
+
+  @@index([projectId])
+  @@map("pir_closure_acts")
+}
+
+/// Позиция акта закрытия ПИР (из ГПР)
+model PIRClosureItem {
+  id       String        @id @default(uuid())
+  actId    String
+  act      PIRClosureAct @relation(fields: [actId], references: [id], onDelete: Cascade)
+  workName String // Наименование работы из ГПР
+  unit     String? // Единица измерения
+  volume   Float? // Объём
+  amount   Float? // Стоимость
+
+  @@index([actId])
+  @@map("pir_closure_items")
+}
+
+// === Модуль 6 — Сметы (версионирование, иерархия, смета контракта) ===
+
+enum EstimateVersionType {
+  BASELINE // Базовая (исходная, не редактируется)
+  ACTUAL // Актуальная (рабочая)
+  CORRECTIVE // Корректировочная (изменения к базовой)
+}
+
+/// Версия сметы (Базовая / Актуальная / Корректировочная)
+model EstimateVersion {
+  id          String              @id @default(uuid())
+  name        String // Название версии
+  versionType EstimateVersionType @default(ACTUAL)
+  isBaseline  Boolean             @default(false) // Базовая версия (неизменяемая)
+  isActual    Boolean             @default(true) // Актуальная (для расчётов ГПР/КС-2)
+  period      String? // Период (например "2024 Q1")
+  notes       String?
+
+  // Исходный импорт из которого создана версия
+  sourceImportId String?
+  sourceImport   EstimateImport? @relation(fields: [sourceImportId], references: [id])
+
+  // Родительская версия (для корректировочных)
+  parentVersionId String?
+  parentVersion   EstimateVersion?  @relation("VersionTree", fields: [parentVersionId], references: [id])
+  childVersions   EstimateVersion[] @relation("VersionTree")
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation("EstimateVersionCreator", fields: [createdById], references: [id])
+
+  totalAmount Float? // Итоговая сумма (кэш)
+  totalLabor  Float? // Итого ФОТ
+  totalMat    Float? // Итого материалы
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  chapters         EstimateChapter[]
+  contractVersions EstimateContractVersion[]
+
+  @@index([contractId])
+  @@index([parentVersionId])
+  @@map("estimate_versions")
+}
+
+/// Глава / Раздел сметы (иерархия)
+model EstimateChapter {
+  id    String  @id @default(uuid())
+  code  String? // Код главы (например "1", "1.1")
+  name  String // Наименование
+  order Int     @default(0) // Порядок отображения
+  level Int     @default(0) // Уровень вложенности (0=глава, 1=раздел)
+
+  versionId String
+  version   EstimateVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  // Самоссылка для подразделов
+  parentId String?
+  parent   EstimateChapter?  @relation("ChapterTree", fields: [parentId], references: [id])
+  children EstimateChapter[] @relation("ChapterTree")
+
+  // Итоги по главе (кэш)
+  totalAmount Float?
+  totalLabor  Float?
+  totalMat    Float?
+
+  items EstimateItem[]
+
+  @@index([versionId])
+  @@index([parentId])
+  @@map("estimate_chapters")
+}
+
+/// Позиция сметы (строка в главе)
+model EstimateItem {
+  id            String           @id @default(uuid())
+  sortOrder     Int // Порядок в главе
+  itemType      EstimateItemType @default(WORK) // WORK / MATERIAL
+  code          String? // Код позиции (из ГЭСН / нормы)
+  name          String // Наименование
+  unit          String? // Единица измерения
+  volume        Float? // Объём / количество
+  unitPrice     Float? // Цена за единицу
+  totalPrice    Float? // Итого (volume × unitPrice)
+  laborCost     Float? // Стоимость труда (ФОТ)
+  materialCost  Float? // Стоимость материалов
+  machineryCost Float? // Стоимость машин/механизмов
+
+  // Коэффициенты
+  priceIndex Float? @default(1.0) // Индекс пересчёта цен
+  overhead   Float? // Накладные расходы
+  profit     Float? // Сметная прибыль
+
+  // Привязка к справочникам
+  ksiNodeId String?
+  ksiNode   KsiNode? @relation(fields: [ksiNodeId], references: [id])
+
+  // Привязка к WorkItem (для автозаполнения КС-2)
+  workItemId String?
+  workItem   WorkItem? @relation("EstimateItemWork", fields: [workItemId], references: [id])
+
+  // Привязка к оригинальной строке импорта
+  importItemId String?             @unique
+  importItem   EstimateImportItem? @relation(fields: [importItemId], references: [id])
+
+  chapterId String
+  chapter   EstimateChapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  isEdited  Boolean @default(false) // Ручная правка (отличается от оригинала)
+  isDeleted Boolean @default(false) // Soft delete
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Привязка к задачам ГПР (Модуль 7)
+  ganttTasks GanttTask[]
+
+  @@index([chapterId])
+  @@index([ksiNodeId])
+  @@index([workItemId])
+  @@map("estimate_items")
+}
+
+/// Смета контракта (сводная из нескольких версий смет)
+model EstimateContract {
+  id          String @id @default(uuid())
+  name        String // Название (например "Смета контракта ДГП-001")
+  totalAmount Float? // Итоговая сумма
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation("EstimateContractCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions EstimateContractVersion[]
+
+  @@index([contractId])
+  @@map("estimate_contracts")
+}
+
+/// Связь сметы контракта с версией сметы
+model EstimateContractVersion {
+  id                 String           @id @default(uuid())
+  estimateContractId String
+  estimateContract   EstimateContract @relation(fields: [estimateContractId], references: [id], onDelete: Cascade)
+  estimateVersionId  String
+  estimateVersion    EstimateVersion  @relation(fields: [estimateVersionId], references: [id])
+  order              Int              @default(0)
+
+  @@index([estimateContractId])
+  @@index([estimateVersionId])
+  @@map("estimate_contract_versions")
+}
+
+// ─────────────────────────────────────────────
+// МОДУЛЬ 8 — Ресурсы (Склад, Закупки, Логистика)
+// ─────────────────────────────────────────────
+
+// ─────────────────────────────────────────────
+// СПРАВОЧНИК НОМЕНКЛАТУРЫ
+// ─────────────────────────────────────────────
+
+/// Справочник номенклатуры материалов (связующее звено между всеми документами)
+model MaterialNomenclature {
+  id         String  @id @default(uuid())
+  name       String // Наименование
+  unit       String? // Единица измерения
+  category   String? // Категория (металл, бетон, кирпич...)
+  vendorCode String? // Артикул
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  requestItems   MaterialRequestItem[]
+  orderItems     SupplierOrderItem[]
+  warehouseItems WarehouseItem[]
+  movementLines  WarehouseMovementLine[]
+
+  @@index([organizationId])
+  @@map("material_nomenclature")
+}
+
+// ─────────────────────────────────────────────
+// ЛИМИТНО-РАЗДЕЛИТЕЛЬНАЯ ВЕДОМОСТЬ И ЗАЯВКИ
+// ─────────────────────────────────────────────
+
+enum MaterialRequestStatus {
+  DRAFT // Черновик (ЛРВ)
+  SUBMITTED // Подана
+  APPROVED // Согласована
+  IN_PROGRESS // В закупке
+  DELIVERED // Поставлена
+  CANCELLED // Отменена
+}
+
+/// Лимитно-разделительная ведомость (ЛРВ) / заявка на материал
+model MaterialRequest {
+  id           String                @id @default(uuid())
+  number       String // Номер (авто или вручную)
+  status       MaterialRequestStatus @default(DRAFT)
+  deliveryDate DateTime? // Срок поставки
+  notes        String?
+
+  // Поставщик
+  supplierOrgId String?
+  supplierOrg   Organization? @relation("RequestSupplier", fields: [supplierOrgId], references: [id])
+
+  // Менеджер МТС и ответственный на объекте
+  managerId     String?
+  manager       User?   @relation("RequestManager", fields: [managerId], references: [id])
+  responsibleId String?
+  responsible   User?   @relation("RequestResponsible", fields: [responsibleId], references: [id])
+
+  // Руководитель (кто согласовал)
+  approvedById String?
+  approvedBy   User?   @relation("RequestApprover", fields: [approvedById], references: [id])
+
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation("RequestCreator", fields: [createdById], references: [id])
+
+  // Маршрут согласования
+  approvalRouteId String?        @unique
+  approvalRoute   ApprovalRoute? @relation(fields: [approvalRouteId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items  MaterialRequestItem[]
+  orders SupplierOrder[] // Заказы созданные из этой заявки
+
+  @@index([projectId])
+  @@map("material_requests")
+}
+
+/// Позиция заявки на материал
+model MaterialRequestItem {
+  id              String  @id @default(uuid())
+  quantity        Float // Количество (заявленное)
+  quantityOrdered Float   @default(0) // Заказано
+  unit            String?
+  unitPrice       Float? // Закупочная цена
+  notes           String?
+  status          String? // Не обработана / В работе / Поставлена
+
+  nomenclatureId String?
+  nomenclature   MaterialNomenclature? @relation(fields: [nomenclatureId], references: [id])
+
+  // Привязка к Material (существующий учёт)
+  materialId String?
+  material   Material? @relation(fields: [materialId], references: [id])
+
+  // Привязка к позиции ГПР
+  ganttTaskId String?
+  ganttTask   GanttTask? @relation(fields: [ganttTaskId], references: [id])
+
+  requestId String
+  request   MaterialRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+  @@index([nomenclatureId])
+  @@map("material_request_items")
+}
+
+// ─────────────────────────────────────────────
+// ЗАКАЗЫ ПОСТАВЩИКУ
+// ─────────────────────────────────────────────
+
+enum SupplierOrderStatus {
+  DRAFT // Черновик
+  SENT // Отправлен поставщику
+  CONFIRMED // Подтверждён поставщиком
+  DELIVERED // Поставлен (частично или полностью)
+  COMPLETED // Закрыт
+  CANCELLED // Отменён
+}
+
+/// Заказ поставщику (создаётся из заявки)
+model SupplierOrder {
+  id           String              @id @default(uuid())
+  number       String
+  status       SupplierOrderStatus @default(DRAFT)
+  orderDate    DateTime            @default(now())
+  deliveryDate DateTime?
+  totalAmount  Float?
+  notes        String?
+
+  // Поставщик (Исполнитель)
+  supplierOrgId String?
+  supplierOrg   Organization? @relation("OrderSupplier", fields: [supplierOrgId], references: [id])
+
+  // Заказчик
+  customerOrgId String?
+  customerOrg   Organization? @relation("OrderCustomer", fields: [customerOrgId], references: [id])
+
+  // Склад получатель
+  warehouseId String?
+  warehouse   Warehouse? @relation(fields: [warehouseId], references: [id])
+
+  // Откуда создан
+  requestId String?
+  request   MaterialRequest? @relation(fields: [requestId], references: [id])
+
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation("OrderCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items     SupplierOrderItem[]
+  movements WarehouseMovement[] // Поступления по этому заказу
+
+  @@index([projectId])
+  @@index([requestId])
+  @@map("supplier_orders")
+}
+
+/// Позиция заказа поставщику
+model SupplierOrderItem {
+  id         String  @id @default(uuid())
+  quantity   Float
+  unit       String?
+  unitPrice  Float?
+  totalPrice Float?
+
+  nomenclatureId String?
+  nomenclature   MaterialNomenclature? @relation(fields: [nomenclatureId], references: [id])
+
+  orderId String
+  order   SupplierOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("supplier_order_items")
+}
+
+// ─────────────────────────────────────────────
+// СКЛАД
+// ─────────────────────────────────────────────
+
+/// Склад объекта (место хранения материалов)
+model Warehouse {
+  id        String  @id @default(uuid())
+  name      String // Название склада
+  location  String? // Местоположение
+  isDefault Boolean @default(false) // Основной склад объекта
+
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  items             WarehouseItem[]
+  orders            SupplierOrder[]
+  outgoingMovements WarehouseMovement[] @relation("MovementFrom")
+  incomingMovements WarehouseMovement[] @relation("MovementTo")
+
+  @@index([projectId])
+  @@map("warehouses")
+}
+
+/// Остатки на складе (по номенклатуре)
+model WarehouseItem {
+  id          String  @id @default(uuid())
+  quantity    Float   @default(0) // Текущий остаток
+  reservedQty Float   @default(0) // Зарезервировано
+  unit        String?
+
+  warehouseId String
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  nomenclatureId String
+  nomenclature   MaterialNomenclature @relation(fields: [nomenclatureId], references: [id])
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([warehouseId, nomenclatureId])
+  @@index([warehouseId])
+  @@map("warehouse_items")
+}
+
+enum WarehouseMovementType {
+  RECEIPT // Поступление (приход от поставщика)
+  SHIPMENT // Отгрузка
+  TRANSFER // Перемещение между складами
+  WRITEOFF // Списание в производство
+  RETURN // Возврат поставщику
+}
+
+enum WarehouseMovStatus {
+  DRAFT // Черновик
+  CONDUCTED // Проведён (влияет на остатки)
+  CANCELLED // Отменён
+}
+
+/// Складское движение (Поступление / Отгрузка / Перемещение / Списание)
+model WarehouseMovement {
+  id           String                @id @default(uuid())
+  number       String
+  movementType WarehouseMovementType
+  status       WarehouseMovStatus    @default(DRAFT)
+  movementDate DateTime              @default(now())
+  notes        String?
+
+  // Склад-источник (для перемещения и отгрузки)
+  fromWarehouseId String?
+  fromWarehouse   Warehouse? @relation("MovementFrom", fields: [fromWarehouseId], references: [id])
+
+  // Склад-назначение (для поступления и перемещения)
+  toWarehouseId String?
+  toWarehouse   Warehouse? @relation("MovementTo", fields: [toWarehouseId], references: [id])
+
+  // Заказ-основание
+  orderId String?
+  order   SupplierOrder? @relation(fields: [orderId], references: [id])
+
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation("MovementCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lines WarehouseMovementLine[]
+
+  @@index([projectId])
+  @@index([movementType])
+  @@map("warehouse_movements")
+}
+
+/// Строка складского движения
+model WarehouseMovementLine {
+  id         String  @id @default(uuid())
+  quantity   Float
+  unit       String?
+  unitPrice  Float?
+  totalPrice Float?
+  notes      String?
+
+  movementId String
+  movement   WarehouseMovement @relation(fields: [movementId], references: [id], onDelete: Cascade)
+
+  nomenclatureId String?
+  nomenclature   MaterialNomenclature? @relation(fields: [nomenclatureId], references: [id])
+
+  // Привязка к партии материала (для автоматического заполнения ЖВК)
+  materialBatchId String?
+  materialBatch   MaterialBatch? @relation(fields: [materialBatchId], references: [id])
+
+  @@index([movementId])
+  @@map("warehouse_movement_lines")
+}
+
+// ─────────────────────────────────────────────
+// МОДУЛЬ 9 — СПЕЦИАЛЬНЫЕ ЖУРНАЛЫ
+// ─────────────────────────────────────────────
+
+/// Тип специального журнала
+enum SpecialJournalType {
+  CONCRETE_WORKS // Журнал бетонных работ (СП 70.13330.2012, Прил. Ф)
+  WELDING_WORKS // Журнал сварочных работ (СП 70.13330.2012, Прил. Б)
+  AUTHOR_SUPERVISION // Журнал авторского надзора (СП 246.1325800.2023, Прил. Б)
+  MOUNTING_WORKS // Журнал монтажа строительных конструкций (СП 70.13330.2012, Прил. А)
+  ANTICORROSION // Журнал антикоррозионных работ (СП 72.13330.2016, Прил. Г)
+  GEODETIC // Оперативный журнал геодезических работ (Форма Ф-5)
+  EARTHWORKS // Журнал производства земляных работ (СП 392.1325800.2018, Форма 5.1)
+  PILE_DRIVING // Журнал погружения свай (СП 392.1325800.2018, Форма 4.1)
+  CABLE_LAYING // Журнал прокладки кабелей (И 1.13-07, Форма 18)
+  FIRE_SAFETY // Журнал инструктажа по пожарной безопасности
+  CUSTOM // Произвольный
+}
+
+/// Статус журнала
+enum JournalStatus {
+  ACTIVE // Записи разрешены
+  STORAGE // Режим хранения — редактирование запрещено (ГОСТ Р 70108-2025)
+  CLOSED // Закрыт
+}
+
+/// Статус записи журнала
+enum JournalEntryStatus {
+  DRAFT // Черновик
+  SUBMITTED // На проверке
+  APPROVED // Утверждена
+  REJECTED // Отклонена
+}
+
+/// Специальный журнал работ (Модуль 9)
+model SpecialJournal {
+  id           String             @id @default(uuid())
+  type         SpecialJournalType
+  number       String // Авто: "ЖБР-001", "ЖСР-001"
+  title        String
+  status       JournalStatus      @default(ACTIVE)
+  normativeRef String? // Ссылка на ГОСТ/СП
+  openedAt     DateTime           @default(now())
+  closedAt     DateTime?
+
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  contractId String?
+  contract   Contract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
+
+  responsibleId String
+  responsible   User   @relation("JournalResponsible", fields: [responsibleId], references: [id])
+
+  createdById String
+  createdBy   User   @relation("JournalCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  entries       SpecialJournalEntry[]
+  approvalRoute ApprovalRoute?        @relation("JournalApproval")
+
+  @@index([projectId])
+  @@index([projectId, type])
+  @@index([contractId])
+  @@index([status])
+  @@map("special_journals")
+}
+
+/// Запись в специальном журнале (Модуль 9)
+model SpecialJournalEntry {
+  id          String             @id @default(uuid())
+  entryNumber Int // Порядковый номер
+  date        DateTime
+  status      JournalEntryStatus @default(DRAFT)
+
+  description  String // Описание работ
+  location     String? // Ось, этаж, секция
+  normativeRef String? // Проектная документация
+  weather      String? // Погода
+  temperature  Int? // Температура °C
+
+  // Специфичные поля по типу журнала (JSON)
+  data Json?
+
+  // Дата освидетельствования (для уведомлений за ≥3 рабочих дня)
+  inspectionDate             DateTime?
+  inspectionNotificationSent Boolean   @default(false)
+
+  // Привязка к ИД
+  executionDocId String?
+  executionDoc   ExecutionDoc? @relation("JournalEntryDoc", fields: [executionDocId], references: [id], onDelete: SetNull)
+
+  journalId String
+  journal   SpecialJournal @relation(fields: [journalId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("JournalEntryAuthor", fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  remarks JournalEntryRemark[]
+
+  @@unique([journalId, entryNumber])
+  @@index([journalId, date])
+  @@index([journalId, status])
+  @@index([inspectionDate])
+  @@map("special_journal_entries")
+}
+
+/// Замечание к записи журнала (Модуль 9)
+model JournalEntryRemark {
+  id         String    @id @default(uuid())
+  text       String
+  status     String    @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED
+  deadline   DateTime?
+  resolvedAt DateTime?
+  resolution String?
+
+  entryId String
+  entry   SpecialJournalEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("RemarkAuthor", fields: [authorId], references: [id])
+
+  resolvedById String?
+  resolvedBy   User?   @relation("RemarkResolver", fields: [resolvedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([entryId])
+  @@index([status])
+  @@map("journal_entry_remarks")
+}
+
+// === Модели Модуля 10 — Расширение ИД ===
+
+/// Закрывающий пакет ИД для сдачи объекта
+model IdClosurePackage {
+  id     String  @id @default(uuid())
+  number String  // Номер пакета
+  name   String  // Наименование
+  status String  @default("DRAFT") // DRAFT | ASSEMBLED | EXPORTED | ACCEPTED
+  notes  String?
+
+  // Состав пакета (массив ID документов)
+  executionDocIds String[] // Список ExecutionDoc.id
+  registryIds     String[] // Список IdRegistry.id
+  archiveDocIds   String[] // Список ArchiveDocument.id
+
+  // Итоговый PDF-пакет
+  s3Key      String?
+  fileName   String?
+  exportedAt DateTime?
+
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User @relation("ClosurePackageCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@map("id_closure_packages")
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Модуль 11 — Строительный контроль (СК)
+// ─────────────────────────────────────────────────────────────────
+
+/// Проверка строительного контроля
+model Inspection {
+  id          String           @id @default(uuid())
+  number      String // Номер проверки
+  status      InspectionStatus @default(ACTIVE)
+  startedAt   DateTime         @default(now()) // Дата начала проверки
+  completedAt DateTime? // Дата завершения проверки
+  comment     String? // Комментарий
+
+  // Проверяющий (инспектор СК)
+  inspectorId    String
+  inspector      User   @relation("InspectionInspector", fields: [inspectorId], references: [id])
+  inspectorOrgId String? // ID организации инспектора
+
+  // Ответственный за объект проверки
+  responsibleId    String?
+  responsible      User?   @relation("InspectionResponsible", fields: [responsibleId], references: [id])
+  responsibleOrgId String? // ID организации ответственного
+
+  contractorPresent Boolean? // Присутствие подрядчика при проверке
+  attentionUserId   String? // ID пользователя для уведомления
+  ganttTaskIds      String[] // Привязка к позициям ГПР
+
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User @relation("InspectionCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  defects         Defect[]
+  inspectionActs  InspectionAct[]
+  prescriptions   Prescription[]
+  remediationActs DefectRemediationAct[]
+
+  @@index([projectId])
+  @@index([status])
+  @@map("inspections")
+}
+
+/// Акт проверки строительного контроля
+model InspectionAct {
+  id       String   @id @default(uuid())
+  number   String // Номер акта
+  issuedAt DateTime @default(now()) // Дата составления
+  s3Key    String? // Ключ PDF в S3
+  fileName String? // Имя файла
+
+  inspectionId String
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+
+  issuedById String
+  issuedBy   User @relation("InspectionActIssuer", fields: [issuedById], references: [id])
+
+  approvalRouteId String?        @unique
+  approvalRoute   ApprovalRoute? @relation("InspectionActApproval", fields: [approvalRouteId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([inspectionId])
+  @@map("inspection_acts")
+}
+
+/// Предписание строительного контроля
+model Prescription {
+  id       String             @id @default(uuid())
+  number   String // Номер предписания
+  type     PrescriptionType // Тип: устранение недостатков / приостановка работ
+  status   PrescriptionStatus @default(ACTIVE)
+  issuedAt DateTime           @default(now()) // Дата выдачи
+  deadline DateTime? // Срок исполнения
+  closedAt DateTime? // Дата закрытия
+  s3Key    String? // Ключ PDF в S3
+  fileName String? // Имя файла
+
+  inspectionId String
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+
+  issuedById String
+  issuedBy   User @relation("PrescriptionIssuer", fields: [issuedById], references: [id])
+
+  responsibleId String?
+  responsible   User? @relation("PrescriptionResponsible", fields: [responsibleId], references: [id])
+
+  approvalRouteId String?        @unique
+  approvalRoute   ApprovalRoute? @relation("PrescriptionApproval", fields: [approvalRouteId], references: [id])
+
+  defects         Defect[]
+  remediationActs DefectRemediationAct[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([inspectionId])
+  @@index([status])
+  @@map("prescriptions")
+}
+
+/// Акт устранения недостатков
+model DefectRemediationAct {
+  id       String               @id @default(uuid())
+  number   String // Номер акта
+  status   RemediationActStatus @default(DRAFT)
+  issuedAt DateTime             @default(now()) // Дата составления
+  s3Key    String? // Ключ PDF в S3
+  fileName String? // Имя файла
+
+  inspectionId String
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+
+  prescriptionId String
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+
+  defectIds          String[] // ID устраняемых дефектов
+  remediationDetails Json? // Детали устранения
+
+  issuedById String
+  issuedBy   User @relation("RemediationActIssuer", fields: [issuedById], references: [id])
+
+  approvalRouteId String?        @unique
+  approvalRoute   ApprovalRoute? @relation("RemediationActApproval", fields: [approvalRouteId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([inspectionId])
+  @@index([prescriptionId])
+  @@map("defect_remediation_acts")
+}
+
+/// Инструктаж по ОТиТБ
+model SafetyBriefing {
+  id    String             @id @default(uuid())
+  type  SafetyBriefingType // Тип инструктажа
+  date  DateTime // Дата проведения
+  topic String // Тема инструктажа
+  notes String? // Примечания
+
+  conductedById String
+  conductedBy   User @relation("BriefingConductor", fields: [conductedById], references: [id])
+
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  participants Json? // Список участников [{userId, fullName, signed}]
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@map("safety_briefings")
+}
+
+// ============================================================
+// Модуль 13 — ТИМ (Технологии информационного моделирования)
+// ============================================================
+
+enum BimModelStatus {
+  PROCESSING  // Загрузка/обработка
+  READY       // Готова к просмотру
+  ERROR       // Ошибка обработки
+}
+
+enum BimModelStage {
+  OTR          // Обоснование технических решений
+  PROJECT      // Проектная документация (П)
+  WORKING      // Рабочая документация (Р)
+  CONSTRUCTION // В производство работ
+}
+
+enum BimAccessLevel {
+  VIEW   // Просмотр
+  ADD    // Добавление
+  EDIT   // Редактирование
+  DELETE // Удаление
+}
+
+/// Раздел ТИМ-моделей (иерархическое дерево, ЦУС стр. 298)
+model BimSection {
+  id    String @id @default(uuid())
+  name  String
+  order Int    @default(0)
+
+  parentId String?
+  parent   BimSection?  @relation("BimSectionTree", fields: [parentId], references: [id])
+  children BimSection[] @relation("BimSectionTree")
+
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  models BimModel[]
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@index([parentId])
+  @@map("bim_sections")
+}
+
+/// ТИМ-модель (IFC-файл, ЦУС стр. 298-299)
+model BimModel {
+  id        String         @id @default(uuid())
+  name      String
+  comment   String?
+  status    BimModelStatus @default(PROCESSING)
+  stage     BimModelStage?
+  isCurrent Boolean        @default(true) // Актуальная версия
+
+  sectionId String
+  section   BimSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  uploadedById String
+  uploadedBy   User @relation("BimModelUploader", fields: [uploadedById], references: [id])
+
+  // S3
+  s3Key    String  // Ключ IFC-файла в Timeweb S3
+  fileName String  // Оригинальное имя файла
+  fileSize Int?    // Размер в байтах
+  ifcVersion String? // "IFC2X3" | "IFC4"
+
+  // Метаданные из парсинга
+  elementCount Int?  // Количество элементов
+  metadata     Json? // Доп. данные из IFC (проект, автор, ПО)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions     BimModelVersion[]
+  elements     BimElement[]
+  elementLinks BimElementLink[]
+
+  @@index([projectId])
+  @@index([sectionId])
+  @@index([projectId, isCurrent])
+  @@map("bim_models")
+}
+
+/// Версия модели (ЦУС стр. 297 — «Версии модели»)
+model BimModelVersion {
+  id        String  @id @default(uuid())
+  version   Int     // 1, 2, 3...
+  name      String  // "Версия 1", "Версия 2"
+  comment   String?
+  isCurrent Boolean @default(false)
+
+  modelId String
+  model   BimModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  s3Key    String
+  fileName String
+  fileSize Int?
+
+  uploadedById String
+  uploadedBy   User @relation("BimVersionUploader", fields: [uploadedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([modelId])
+  @@map("bim_model_versions")
+}
+
+/// Элемент ТИМ-модели (парсится из IFC, ЦУС стр. 304 — Информация/Параметры)
+model BimElement {
+  id          String  @id @default(uuid())
+  ifcGuid     String  // IFC GlobalId (22 символа)
+  ifcType     String  // IfcWall, IfcSlab, IfcColumn и т.д.
+  name        String?
+  description String?
+  layer       String? // Слой IFC
+  level       String? // Этаж / уровень
+  properties  Json?   // IFC PropertySets (Pset_QuantityTakeOff и т.д.)
+
+  modelId String
+  model   BimModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  links BimElementLink[]
+
+  @@unique([modelId, ifcGuid])
+  @@index([modelId])
+  @@index([ifcGuid])
+  @@map("bim_elements")
+}
+
+/// Связь элемента модели с сущностями системы (ЦУС стр. 305-307)
+model BimElementLink {
+  id String @id @default(uuid())
+
+  elementId String
+  element   BimElement @relation(fields: [elementId], references: [id], onDelete: Cascade)
+
+  modelId String
+  model   BimModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  // Полиморфная связь (как Photo)
+  entityType String // "GanttTask" | "ExecutionDoc" | "Defect"
+  entityId   String
+
+  createdAt DateTime @default(now())
+
+  @@unique([elementId, entityType, entityId])
+  @@index([elementId])
+  @@index([entityType, entityId])
+  @@index([modelId])
+  @@map("bim_element_links")
+}
+
+/// Настройки доступа к ЦИМ (ЦУС стр. 298)
+model BimAccess {
+  id    String         @id @default(uuid())
+  level BimAccessLevel
+
+  userId String
+  user   User @relation("BimAccessUser", fields: [userId], references: [id])
+
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  stage  BimModelStage?
+  status String?        // Согласована | Утверждена | На согласовании | На проверке | На доработке
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@index([userId])
+  @@map("bim_access")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Модуль 12 — Отчёты (ЦУС стр. 290–296)
+// ─────────────────────────────────────────────────────────────
+
+enum ReportStatus {
+  DRAFT       // Черновик
+  GENERATED   // Сформирован
+  SIGNED      // Подписан
+}
+
+enum ReportBlockType {
+  TITLE_PAGE        // 0. Титульный лист
+  WORK_VOLUMES      // 1. Объём работ подрядной организации
+  KS2_ACTS          // 2. Акты приёмки выполненных работ (КС-2)
+  ID_STATUS         // 3. Статус исполнительной документации
+  DEFECTS_SUMMARY   // 4. Сводка по недостаткам СК
+  GPR_PROGRESS      // 5. Ход выполнения ГПР
+  PHOTO_REPORT      // 6. Фото-отчёт
+  FUNDING_STATUS    // 7. Финансирование
+  DAILY_LOG_SUMMARY // 8. Сводка дневника прораба
+  FREE_TEXT         // 9. Произвольный текст
+  CUSTOM_TABLE      // 10. Произвольная таблица
+}
+
+/// Категория отчётов (иерархическое дерево, ЦУС стр. 290)
+model ReportCategory {
+  id    String @id @default(uuid())
+  name  String
+  order Int    @default(0)
+
+  parentId String?
+  parent   ReportCategory?  @relation("ReportCategoryTree", fields: [parentId], references: [id])
+  children ReportCategory[] @relation("ReportCategoryTree")
+
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  reports Report[]
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@map("report_categories")
+}
+
+/// Отчёт (ЦУС стр. 291)
+model Report {
+  id     String       @id @default(uuid())
+  number Int
+  name   String
+  status ReportStatus @default(DRAFT)
+
+  periodStart DateTime?
+  periodEnd   DateTime?
+
+  categoryId String?
+  category   ReportCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  templateId String?
+  template   ReportTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User @relation("ReportAuthor", fields: [authorId], references: [id])
+
+  pdfS3Key  String?
+  xlsxS3Key String?
+  fileName  String?
+
+  approvalRouteId String?        @unique
+  approvalRoute   ApprovalRoute? @relation("ReportApproval", fields: [approvalRouteId], references: [id])
+
+  s3Keys String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  blocks ReportBlock[]
+
+  @@index([projectId])
+  @@index([categoryId])
+  @@index([authorId])
+  @@map("reports")
+}
+
+/// Блок отчёта — элемент конструктора (ЦУС стр. 291–293)
+model ReportBlock {
+  id           String          @id @default(uuid())
+  order        Int
+  type         ReportBlockType
+  title        String
+  content      Json?
+  isAutoFilled Boolean         @default(false)
+  s3Keys       String[]        @default([])
+
+  reportId String
+  report   Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([reportId])
+  @@map("report_blocks")
+}
+
+/// Шаблон отчёта (ЦУС стр. 293 — «Создать отчёт из шаблона»)
+model ReportTemplate {
+  id               String  @id @default(uuid())
+  name             String
+  description      String?
+  blockDefinitions Json    // [{order, type, title}]
+  isSystem         Boolean @default(false)
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  reports Report[]
+
+  @@index([organizationId])
+  @@map("report_templates")
+}
+
+/// Тематический отчёт — предустановленная отчётная форма (ЦУС стр. 294–296)
+model ThematicReportConfig {
+  id               String  @id @default(uuid())
+  slug             String  @unique
+  name             String
+  category         String
+  availableColumns Json
+  defaultColumns   Json
+  dataSource       String
+  isActive         Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  @@map("thematic_report_configs")
+}

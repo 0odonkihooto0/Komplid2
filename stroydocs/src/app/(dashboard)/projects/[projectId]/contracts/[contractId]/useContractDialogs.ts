@@ -1,0 +1,37 @@
+'use client';
+
+import { useState, useTransition } from 'react';
+
+/** Состояние всех диалогов и активной вкладки страницы договора */
+export function useContractDialogs() {
+  const [activeTab, setActiveTab] = useState('participants');
+  const [, startTransition] = useTransition();
+
+  const [addParticipantOpen, setAddParticipantOpen] = useState(false);
+  const [createWorkItemOpen, setCreateWorkItemOpen] = useState(false);
+  const [createMaterialOpen, setCreateMaterialOpen] = useState(false);
+  const [createWorkRecordOpen, setCreateWorkRecordOpen] = useState(false);
+  const [createDocOpen, setCreateDocOpen] = useState(false);
+  const [uploadArchiveOpen, setUploadArchiveOpen] = useState(false);
+  const [importEstimateOpen, setImportEstimateOpen] = useState(false);
+  const [createInputControlOpen, setCreateInputControlOpen] = useState(false);
+  const [createKs2Open, setCreateKs2Open] = useState(false);
+  const [batchAosrOpen, setBatchAosrOpen] = useState(false);
+
+  const switchTab = (tab: string) => startTransition(() => setActiveTab(tab));
+
+  return {
+    activeTab,
+    setActiveTab: switchTab,
+    addParticipantOpen, setAddParticipantOpen,
+    createWorkItemOpen, setCreateWorkItemOpen,
+    createMaterialOpen, setCreateMaterialOpen,
+    createWorkRecordOpen, setCreateWorkRecordOpen,
+    createDocOpen, setCreateDocOpen,
+    uploadArchiveOpen, setUploadArchiveOpen,
+    importEstimateOpen, setImportEstimateOpen,
+    createInputControlOpen, setCreateInputControlOpen,
+    createKs2Open, setCreateKs2Open,
+    batchAosrOpen, setBatchAosrOpen,
+  };
+}

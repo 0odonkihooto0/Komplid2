@@ -1,0 +1,13 @@
+# Env файлы в корне (для docker compose)
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# node_modules на случай случайного npm install в корне
+node_modules/
+
+# Локальный docker-compose
+stroydocs/docker-compose.local.yml

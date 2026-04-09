@@ -1,0 +1,7 @@
+{{#if html}}
+  {{{html}}}
+{{else if text}}
+  <p style="white-space:pre-wrap;line-height:1.6;">{{text}}</p>
+{{else}}
+  <p class="empty">Блок не заполнен.</p>
+{{/if}}
