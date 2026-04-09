@@ -24,6 +24,8 @@ export interface ViewerScene {
   materials: Map<number, THREE_NS.MeshLambertMaterial>;
   /** IFC PropertySets: GUID → { [psetName]: { [propName]: value } } */
   ifcProperties: Map<string, Record<string, Record<string, unknown>>>;
+  /** IFC слои: имя слоя → множество expressID элементов */
+  layers: Map<string, Set<number>>;
   /** CSS2DRenderer для текстовых меток измерений */
   css2dRenderer: CSS2DRenderer;
   /** ID текущего animation frame — обновляется каждый кадр */
@@ -70,11 +72,12 @@ export async function initScene(container: HTMLDivElement): Promise<ViewerScene>
   const guidMap = new Map<number, string>();
   const materials = new Map<number, THREE_NS.MeshLambertMaterial>();
   const ifcProperties = new Map<string, Record<string, Record<string, unknown>>>();
+  const layers = new Map<string, Set<number>>();
 
   // Собираем vs первым, чтобы animate мог обновлять vs.frameId напрямую
   const vs: ViewerScene = {
     scene, camera, renderer, css2dRenderer, controls, raycaster,
-    meshMap, guidMap, materials, ifcProperties, frameId: 0, wireframe: false,
+    meshMap, guidMap, materials, ifcProperties, layers, frameId: 0, wireframe: false,
   };
 
   function animate() {
@@ -173,6 +176,67 @@ function buildIfcPropertiesMap(ifcApi: IfcAPIType, modelId: number, vs: ViewerSc
   }
 }
 
+/**
+ * Сканирует IfcPresentationLayerAssignment для построения карты слоёв.
+ * Результат записывается в vs.layers: layerName → Set<expressID>.
+ */
+function buildLayerMap(ifcApi: IfcAPIType, modelId: number, vs: ViewerScene): void {
+  // Шаг 1: shapeRepId → layerName из IfcPresentationLayerAssignment
+  const shapeToLayer = new Map<number, string>();
+  const allLines = ifcApi.GetAllLines(modelId);
+
+  for (const lineID of Array.from(allLines)) {
+    let line: Record<string, unknown> | null = null;
+    try {
+      line = ifcApi.GetLine(modelId, lineID, false) as Record<string, unknown>;
+    } catch { continue; }
+    if (!line) continue;
+
+    // IfcPresentationLayerAssignment детектируем по наличию AssignedItems[] + Name
+    if (!Array.isArray(line.AssignedItems) || !line.Name) continue;
+    const layerName = extractIfcStr(line.Name);
+    if (!layerName) continue;
+
+    for (const item of line.AssignedItems as Array<{ value?: unknown }>) {
+      const itemId = typeof item?.value === 'number' ? item.value : null;
+      if (itemId !== null) shapeToLayer.set(itemId, layerName);
+    }
+  }
+
+  if (shapeToLayer.size === 0) return;
+
+  // Шаг 2: для каждого продукта из guidMap ищем его shape representations
+  for (const [expressID] of Array.from(vs.guidMap)) {
+    let product: Record<string, unknown> | null = null;
+    try {
+      product = ifcApi.GetLine(modelId, expressID, false) as Record<string, unknown>;
+    } catch { continue; }
+    if (!product?.Representation) continue;
+
+    const repRef = product.Representation as Record<string, unknown>;
+    const repId = typeof repRef?.value === 'number' ? repRef.value : null;
+    if (repId === null) continue;
+
+    let productRep: Record<string, unknown> | null = null;
+    try {
+      productRep = ifcApi.GetLine(modelId, repId, false) as Record<string, unknown>;
+    } catch { continue; }
+    if (!Array.isArray(productRep?.Representations)) continue;
+
+    for (const shapeRef of productRep.Representations as Array<{ value?: unknown }>) {
+      const shapeId = typeof shapeRef?.value === 'number' ? shapeRef.value : null;
+      if (shapeId === null) continue;
+      const layerName = shapeToLayer.get(shapeId);
+      if (!layerName) continue;
+
+      let layerSet = vs.layers.get(layerName);
+      if (!layerSet) { layerSet = new Set<number>(); vs.layers.set(layerName, layerSet); }
+      layerSet.add(expressID);
+      break; // первый найденный слой достаточен
+    }
+  }
+}
+
 export async function loadIfcModel(
   ifcApi: IfcAPIType,
   buffer: Uint8Array,
@@ -227,8 +291,9 @@ export async function loadIfcModel(
     }
   }
 
-  // Извлечь IFC PropertySets для всех элементов перед закрытием модели
+  // Извлечь IFC PropertySets и слои для всех элементов перед закрытием модели
   buildIfcPropertiesMap(ifcApi, modelId, vs);
+  buildLayerMap(ifcApi, modelId, vs);
 
   ifcApi.CloseModel(modelId);
 }

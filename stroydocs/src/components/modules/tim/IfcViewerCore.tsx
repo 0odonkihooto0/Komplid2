@@ -5,8 +5,12 @@ import { Vector2 } from 'three';
 import { Loader2 } from 'lucide-react';
 import { ViewerToolbar } from './ViewerToolbar';
 import { ClippingPanel } from './ClippingPanel';
+import { LayerPanel } from './LayerPanel';
+import { ViewerContextMenu } from './ViewerContextMenu';
 import { useClippingPlanes } from './useClippingPlanes';
 import { useMeasurements } from './useMeasurements';
+import { useLayerManager } from './useLayerManager';
+import { useViewerExport } from './useViewerExport';
 import { initScene, loadIfcModel } from './ifcSceneSetup';
 import type { ViewerScene } from './ifcSceneSetup';
 
@@ -48,10 +52,17 @@ export function IfcViewerCore({
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [wireframe, setWireframe] = useState(false);
+  const [layersOpen, setLayersOpen] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
-  // ─── Разрезы и измерения ─────────────────────────────────────────────────────
+  // ─── Разрезы, измерения, слои ────────────────────────────────────────────────
   const clipping = useClippingPlanes(sceneRef);
   const measure = useMeasurements(sceneRef);
+  const layerManager = useLayerManager(sceneRef);
+  const { downloadIfc, screenshot } = useViewerExport(sceneRef, downloadUrl);
+  // Стабильный реф для initializeLayers — не добавляем в зависимости useEffect
+  const initLayersRef = useRef(layerManager.initializeLayers);
+  initLayersRef.current = layerManager.initializeLayers;
   // Стабильный реф чтобы onClick внутри useEffect видел актуальный handleMeasureClick
   const measureRef = useRef(measure);
   measureRef.current = measure;
@@ -109,7 +120,10 @@ export function IfcViewerCore({
         await ifcApi.Init();
         await loadIfcModel(ifcApi, buffer, vs);
         // Уведомить внешний код что сцена и элементы готовы
-        if (!cancelled) onSceneReadyRef.current?.(vs);
+        if (!cancelled) {
+          onSceneReadyRef.current?.(vs);
+          initLayersRef.current();
+        }
       } catch (err) {
         if (!cancelled) setLoadError(err instanceof Error ? err.message : 'Ошибка загрузки IFC');
       }
@@ -159,12 +173,19 @@ export function IfcViewerCore({
       s.css2dRenderer.setSize(w, h);
     }
 
+    function onContextMenu(e: MouseEvent) {
+      e.preventDefault();
+      setContextMenu({ x: e.clientX, y: e.clientY });
+    }
+
     container.addEventListener('click', onClick);
+    container.addEventListener('contextmenu', onContextMenu);
     window.addEventListener('resize', onResize);
 
     return () => {
       cancelled = true;
       container.removeEventListener('click', onClick);
+      container.removeEventListener('contextmenu', onContextMenu);
       window.removeEventListener('resize', onResize);
       const s = sceneRef.current;
       if (s) {
@@ -207,7 +228,32 @@ export function IfcViewerCore({
         onCompare={onCompare}
         collisionsActive={collisionsActive}
         compareActive={compareActive}
+        onLayers={layerManager.layerVisibility.size > 0 ? () => setLayersOpen(v => !v) : undefined}
+        layersActive={layersOpen}
+        onDownloadIfc={downloadIfc}
+        onScreenshot={() => screenshot('png')}
       />
+
+      {/* Панель слоёв */}
+      {layersOpen && (
+        <LayerPanel
+          layers={layerManager.layerVisibility}
+          onToggle={layerManager.setLayerVisible}
+          onShowAll={layerManager.showAll}
+          onHideAll={layerManager.hideAll}
+        />
+      )}
+
+      {/* Контекстное меню правого клика */}
+      {contextMenu && (
+        <ViewerContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onSavePng={() => { screenshot('png'); setContextMenu(null); }}
+          onSaveJpg={() => { screenshot('jpeg'); setContextMenu(null); }}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
 
       {/* Панель управления разрезом */}
       {clipping.active && (
