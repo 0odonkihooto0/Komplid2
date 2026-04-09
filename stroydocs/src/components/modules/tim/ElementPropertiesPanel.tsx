@@ -14,6 +14,11 @@ interface Props {
   /** IFC PropertySets извлечённые клиентски из web-ifc (fallback когда DB properties = null) */
   ifcProperties?: Record<string, Record<string, unknown>> | null;
   onClose: () => void;
+  /** Выбранная версия ГПР (пробрасывается в GprLinkPanel) */
+  selectedVersionId: string | null;
+  onVersionChange: (id: string | null) => void;
+  /** Callback «Следовать за работой»: подсветить все элементы привязанные к задаче */
+  onFollowWork: (taskId: string) => void;
 }
 
 /** Таблица IFC PropertySets */
@@ -42,7 +47,16 @@ function PropertiesTab({ properties }: { properties: Record<string, Record<strin
   );
 }
 
-export function ElementPropertiesPanel({ modelId, projectId, ifcGuid, ifcProperties, onClose }: Props) {
+export function ElementPropertiesPanel({
+  modelId,
+  projectId,
+  ifcGuid,
+  ifcProperties,
+  onClose,
+  selectedVersionId,
+  onVersionChange,
+  onFollowWork,
+}: Props) {
   const { data: elemRef, isLoading: loadingRef } = useElementByGuid(projectId, modelId, ifcGuid);
   const { data: element, isLoading: loadingDetail } = useElementDetail(
     projectId,
@@ -130,6 +144,9 @@ export function ElementPropertiesPanel({ modelId, projectId, ifcGuid, ifcPropert
                   modelId={modelId}
                   projectId={projectId}
                   links={element.links}
+                  selectedVersionId={selectedVersionId}
+                  onVersionChange={onVersionChange}
+                  onFollowWork={onFollowWork}
                 />
               ) : (
                 <p className="text-xs text-muted-foreground">Элемент не найден в БД</p>
