@@ -10,6 +10,9 @@ import { StatusBadge } from '@/components/shared/StatusBadge';
 import { formatDate } from '@/utils/format';
 import { PROJECT_STATUS_LABELS } from '@/utils/constants';
 import { usePassport } from './usePassport';
+import { usePassportWidgets } from './usePassportWidgets';
+import { PirWidget } from './PirWidget';
+import { SmrWidget } from './SmrWidget';
 import { PassportEditDialog } from './PassportEditDialog';
 import type { PassportUpdateData } from './usePassport';
 
@@ -50,6 +53,7 @@ interface PassportViewProps {
 
 export function PassportView({ projectId }: PassportViewProps) {
   const { project, isLoading, updateMutation } = usePassport(projectId);
+  const { data: widgetsData, isLoading: widgetsLoading } = usePassportWidgets(projectId);
   const [editOpen, setEditOpen] = useState(false);
 
   function handleUpdate(data: PassportUpdateData) {
@@ -106,6 +110,21 @@ export function PassportView({ projectId }: PassportViewProps) {
           <Pencil className="mr-2 h-4 w-4" />
           Редактировать
         </Button>
+      </div>
+
+      {/* KPI-виджеты ПИР и СМР */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {widgetsLoading ? (
+          <>
+            <Skeleton className="h-44 w-full rounded-lg" />
+            <Skeleton className="h-44 w-full rounded-lg" />
+          </>
+        ) : widgetsData ? (
+          <>
+            <PirWidget data={widgetsData.pir} />
+            <SmrWidget data={widgetsData.smr} />
+          </>
+        ) : null}
       </div>
 
       {/* Двухколоночный grid */}
