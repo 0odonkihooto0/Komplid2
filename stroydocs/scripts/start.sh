@@ -39,7 +39,8 @@ for m in \
   20260406000000_backfill_id_category \
   20260406120000_add_module11_sk \
   20260407000000_add_module13_tim \
-  20260407120000_add_module12_reports
+  20260407120000_add_module12_reports \
+  20260408000000_add_object_fields_audit
 do
   node node_modules/prisma/build/index.js migrate resolve --applied "$m" 2>/dev/null || true
 done

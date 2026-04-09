@@ -76,6 +76,21 @@ enum TaskSource {
   COMMENT // Создана из замечания
 }
 
+enum ProblemIssueType {
+  CORRECTION_PSD // Корректировка ПСД
+  LAND_LEGAL // Земельно-правовые
+  PRODUCTION // Производственные
+  ORG_LEGAL // Организационно-правовые
+  CONTRACT_WORK // Договорная работа
+  FINANCIAL // Финансовые
+  OTHER // Прочие
+}
+
+enum ProblemIssueStatus {
+  ACTIVE
+  CLOSED
+}
+
 // === Модели Фазы 1 ===
 
 /// Организация (компания-участник строительства)
@@ -239,6 +254,9 @@ model User {
   // Модуль 12 — Отчёты
   reportsAuthored Report[] @relation("ReportAuthor")
 
+  // Проблемные вопросы
+  problemIssuesAuthored ProblemIssue[] @relation("ProblemIssueAuthor")
+
   @@index([organizationId])
   @@map("users")
 }
@@ -356,6 +374,9 @@ model BuildingObject {
   // Иерархия объектов
   parent   BuildingObject?  @relation("ObjectHierarchy", fields: [parentId], references: [id])
   children BuildingObject[] @relation("ObjectHierarchy")
+
+  // Проблемные вопросы (ЦУС стр. 30)
+  problemIssues ProblemIssue[]
 
   @@index([organizationId])
   @@index([parentId])
@@ -3738,4 +3759,29 @@ model ThematicReportConfig {
   createdAt DateTime @default(now())
 
   @@map("thematic_report_configs")
+}
+
+/// Проблемный вопрос по объекту строительства (ЦУС стр. 30)
+model ProblemIssue {
+  id          String             @id @default(uuid())
+  type        ProblemIssueType
+  status      ProblemIssueStatus @default(ACTIVE)
+  description String
+  resolution  String? // Пути решения
+  responsible String? // Ответственный
+  deadline    DateTime?
+  closedAt    DateTime?
+
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User @relation("ProblemIssueAuthor", fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([projectId, status])
+  @@map("problem_issues")
 }
