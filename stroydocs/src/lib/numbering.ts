@@ -245,6 +245,38 @@ export async function getNextDocCommentNumber(docId: string): Promise<number> {
 }
 
 /**
+ * Авто-нумерация карточек документооборота СЭД.
+ * Формат: ДО-{год}-{NNN}
+ * Пример: ДО-2025-001
+ *
+ * Нумерация в рамках проекта через JOIN на sed_documents
+ * (sed_workflows не хранит projectId напрямую).
+ */
+export async function getNextSEDWorkflowNumber(projectId: string): Promise<string> {
+  const year = new Date().getFullYear();
+  const lockKey = `sed-workflow:${projectId}:${year}`;
+  const pattern = `ДО-${year}-%`;
+
+  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
+
+    const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
+      SELECT MAX(sw.number) AS max_num
+      FROM sed_workflows sw
+      JOIN sed_documents sd ON sw.document_id = sd.id
+      WHERE sd.project_id = ${projectId}
+        AND sw.number LIKE ${pattern}
+    `;
+
+    const lastSeq = results[0]?.max_num
+      ? parseInt(results[0].max_num.split('-').at(-1) ?? '0', 10)
+      : 0;
+
+    return `ДО-${year}-${String(lastSeq + 1).padStart(3, '0')}`;
+  });
+}
+
+/**
  * Префиксы авто-нумерации специальных журналов.
  */
 const JOURNAL_PREFIXES: Record<string, string> = {

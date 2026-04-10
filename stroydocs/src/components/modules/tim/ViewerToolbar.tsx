@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Maximize2, Grid3X3, AlertTriangle, GitCompare } from 'lucide-react';
+import { Home, Maximize2, Grid3X3, AlertTriangle, GitCompare, Scissors, Ruler, Layers, Download, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -22,6 +22,19 @@ interface ViewerToolbarProps {
   collisionsActive?: boolean;
   /** Сравнение активно — кнопка сравнения нажата */
   compareActive?: boolean;
+  /** Режим разрезов */
+  onClipping?: () => void;
+  clippingActive?: boolean;
+  /** Режим измерений */
+  onMeasure?: () => void;
+  measureActive?: boolean;
+  /** Управление слоями */
+  onLayers?: () => void;
+  layersActive?: boolean;
+  /** Скачать IFC-файл */
+  onDownloadIfc?: () => void;
+  /** Скриншот PNG */
+  onScreenshot?: () => void;
 }
 
 export function ViewerToolbar({
@@ -33,6 +46,14 @@ export function ViewerToolbar({
   onCompare,
   collisionsActive,
   compareActive,
+  onClipping,
+  clippingActive,
+  onMeasure,
+  measureActive,
+  onLayers,
+  layersActive,
+  onDownloadIfc,
+  onScreenshot,
 }: ViewerToolbarProps) {
   return (
     <TooltipProvider>
@@ -79,6 +100,38 @@ export function ViewerToolbar({
           <TooltipContent side="right">Каркасный режим</TooltipContent>
         </Tooltip>
 
+        {onClipping && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={clippingActive ? 'default' : 'secondary'}
+                size="icon"
+                className="h-8 w-8 shadow-md"
+                onClick={onClipping}
+              >
+                <Scissors className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Разрезы</TooltipContent>
+          </Tooltip>
+        )}
+
+        {onMeasure && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={measureActive ? 'default' : 'secondary'}
+                size="icon"
+                className="h-8 w-8 shadow-md"
+                onClick={onMeasure}
+              >
+                <Ruler className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Измерения</TooltipContent>
+          </Tooltip>
+        )}
+
         {onCollisions && (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -108,6 +161,54 @@ export function ViewerToolbar({
               </Button>
             </TooltipTrigger>
             <TooltipContent side="right">Сравнение версий</TooltipContent>
+          </Tooltip>
+        )}
+
+        {onLayers && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={layersActive ? 'default' : 'secondary'}
+                size="icon"
+                className="h-8 w-8 shadow-md"
+                onClick={onLayers}
+              >
+                <Layers className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Слои</TooltipContent>
+          </Tooltip>
+        )}
+
+        {onDownloadIfc && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="secondary"
+                size="icon"
+                className="h-8 w-8 shadow-md"
+                onClick={onDownloadIfc}
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Скачать IFC</TooltipContent>
+          </Tooltip>
+        )}
+
+        {onScreenshot && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="secondary"
+                size="icon"
+                className="h-8 w-8 shadow-md"
+                onClick={onScreenshot}
+              >
+                <Camera className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Скриншот PNG</TooltipContent>
           </Tooltip>
         )}
       </div>

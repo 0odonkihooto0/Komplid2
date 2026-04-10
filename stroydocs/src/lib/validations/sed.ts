@@ -27,3 +27,30 @@ export const addSEDAttachmentSchema = z.object({
 export type CreateSEDInput = z.infer<typeof createSEDSchema>;
 export type UpdateSEDInput = z.infer<typeof updateSEDSchema>;
 export type AddSEDAttachmentInput = z.infer<typeof addSEDAttachmentSchema>;
+
+export const createSEDFolderSchema = z.object({
+  name: z.string().min(1, 'Введите название папки').max(200),
+  parentId: z.string().uuid().optional(),
+  order: z.number().int().optional(),
+});
+
+export const updateSEDFolderSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  parentId: z.string().uuid().nullable().optional(),
+  order: z.number().int().optional(),
+});
+
+export const addSEDLinkSchema = z.object({
+  entityType: z.string().min(1).max(100),
+  entityId: z.string().uuid(),
+});
+
+export const markReadSchema = z.object({
+  documentIds: z.array(z.string().uuid()).min(1).max(100),
+  isRead: z.boolean(),
+});
+
+export type CreateSEDFolderInput = z.infer<typeof createSEDFolderSchema>;
+export type UpdateSEDFolderInput = z.infer<typeof updateSEDFolderSchema>;
+export type AddSEDLinkInput = z.infer<typeof addSEDLinkSchema>;
+export type MarkReadInput = z.infer<typeof markReadSchema>;

@@ -5,9 +5,8 @@
 
 import type * as THREE_NS from 'three';
 import type { OrbitControls as OrbitControlsType } from 'three/addons/controls/OrbitControls.js';
+import type { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import type { IfcAPI as IfcAPIType } from 'web-ifc';
-
-const DEFAULT_COLOR = '#9CA3AF';
 
 export interface ViewerScene {
   scene: THREE_NS.Scene;
@@ -21,8 +20,14 @@ export interface ViewerScene {
   guidMap: Map<number, string>;
   /** expressID → материал (для перекраски) */
   materials: Map<number, THREE_NS.MeshLambertMaterial>;
+  /** expressID → оригинальный IFC-цвет [R, G, B] (0.0–1.0) для восстановления после выбора */
+  originalColors: Map<number, [number, number, number]>;
   /** IFC PropertySets: GUID → { [psetName]: { [propName]: value } } */
   ifcProperties: Map<string, Record<string, Record<string, unknown>>>;
+  /** IFC слои: имя слоя → множество expressID элементов */
+  layers: Map<string, Set<number>>;
+  /** CSS2DRenderer для текстовых меток измерений */
+  css2dRenderer: CSS2DRenderer;
   /** ID текущего animation frame — обновляется каждый кадр */
   frameId: number;
   wireframe: boolean;
@@ -31,12 +36,14 @@ export interface ViewerScene {
 export async function initScene(container: HTMLDivElement): Promise<ViewerScene> {
   const THREE = await import('three');
   const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
+  const { CSS2DRenderer } = await import('three/addons/renderers/CSS2DRenderer.js');
 
   const { clientWidth: w, clientHeight: h } = container;
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#111827');
-  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 0.4));
   const dir = new THREE.DirectionalLight(0xffffff, 0.8);
   dir.position.set(10, 20, 10);
   scene.add(dir);
@@ -45,6 +52,15 @@ export async function initScene(container: HTMLDivElement): Promise<ViewerScene>
   renderer.setSize(w || 800, h || 600);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   container.appendChild(renderer.domElement);
+
+  // CSS2DRenderer — поверх canvas для текстовых меток измерений
+  const css2dRenderer = new CSS2DRenderer();
+  css2dRenderer.setSize(w || 800, h || 600);
+  css2dRenderer.domElement.style.position = 'absolute';
+  css2dRenderer.domElement.style.top = '0px';
+  css2dRenderer.domElement.style.left = '0px';
+  css2dRenderer.domElement.style.pointerEvents = 'none';
+  container.appendChild(css2dRenderer.domElement);
 
   const camera = new THREE.PerspectiveCamera(60, (w || 800) / (h || 600), 0.01, 100000);
   camera.position.set(30, 30, 30);
@@ -56,18 +72,21 @@ export async function initScene(container: HTMLDivElement): Promise<ViewerScene>
   const meshMap = new Map<object, number>();
   const guidMap = new Map<number, string>();
   const materials = new Map<number, THREE_NS.MeshLambertMaterial>();
+  const originalColors = new Map<number, [number, number, number]>();
   const ifcProperties = new Map<string, Record<string, Record<string, unknown>>>();
+  const layers = new Map<string, Set<number>>();
 
   // Собираем vs первым, чтобы animate мог обновлять vs.frameId напрямую
   const vs: ViewerScene = {
-    scene, camera, renderer, controls, raycaster,
-    meshMap, guidMap, materials, ifcProperties, frameId: 0, wireframe: false,
+    scene, camera, renderer, css2dRenderer, controls, raycaster,
+    meshMap, guidMap, materials, originalColors, ifcProperties, layers, frameId: 0, wireframe: false,
   };
 
   function animate() {
     vs.frameId = requestAnimationFrame(animate);
     controls.update();
     renderer.render(scene, camera);
+    css2dRenderer.render(scene, camera);
   }
   animate();
 
@@ -143,7 +162,7 @@ function buildIfcPropertiesMap(ifcApi: IfcAPIType, modelId: number, vs: ViewerSc
   }
 
   // Собрать результат: GUID → { [psetName]: { [propName]: value } }
-  for (const [expressID, guid] of vs.guidMap) {
+  for (const [expressID, guid] of Array.from(vs.guidMap)) {
     const psetIDs = elemToPsets.get(expressID);
     if (!psetIDs?.length) continue;
     const result: Record<string, Record<string, unknown>> = {};
@@ -155,6 +174,67 @@ function buildIfcPropertiesMap(ifcApi: IfcAPIType, modelId: number, vs: ViewerSc
     }
     if (Object.keys(result).length > 0) {
       vs.ifcProperties.set(guid, result);
+    }
+  }
+}
+
+/**
+ * Сканирует IfcPresentationLayerAssignment для построения карты слоёв.
+ * Результат записывается в vs.layers: layerName → Set<expressID>.
+ */
+function buildLayerMap(ifcApi: IfcAPIType, modelId: number, vs: ViewerScene): void {
+  // Шаг 1: shapeRepId → layerName из IfcPresentationLayerAssignment
+  const shapeToLayer = new Map<number, string>();
+  const allLines = ifcApi.GetAllLines(modelId);
+
+  for (const lineID of Array.from(allLines)) {
+    let line: Record<string, unknown> | null = null;
+    try {
+      line = ifcApi.GetLine(modelId, lineID, false) as Record<string, unknown>;
+    } catch { continue; }
+    if (!line) continue;
+
+    // IfcPresentationLayerAssignment детектируем по наличию AssignedItems[] + Name
+    if (!Array.isArray(line.AssignedItems) || !line.Name) continue;
+    const layerName = extractIfcStr(line.Name);
+    if (!layerName) continue;
+
+    for (const item of line.AssignedItems as Array<{ value?: unknown }>) {
+      const itemId = typeof item?.value === 'number' ? item.value : null;
+      if (itemId !== null) shapeToLayer.set(itemId, layerName);
+    }
+  }
+
+  if (shapeToLayer.size === 0) return;
+
+  // Шаг 2: для каждого продукта из guidMap ищем его shape representations
+  for (const [expressID] of Array.from(vs.guidMap)) {
+    let product: Record<string, unknown> | null = null;
+    try {
+      product = ifcApi.GetLine(modelId, expressID, false) as Record<string, unknown>;
+    } catch { continue; }
+    if (!product?.Representation) continue;
+
+    const repRef = product.Representation as Record<string, unknown>;
+    const repId = typeof repRef?.value === 'number' ? repRef.value : null;
+    if (repId === null) continue;
+
+    let productRep: Record<string, unknown> | null = null;
+    try {
+      productRep = ifcApi.GetLine(modelId, repId, false) as Record<string, unknown>;
+    } catch { continue; }
+    if (!Array.isArray(productRep?.Representations)) continue;
+
+    for (const shapeRef of productRep.Representations as Array<{ value?: unknown }>) {
+      const shapeId = typeof shapeRef?.value === 'number' ? shapeRef.value : null;
+      if (shapeId === null) continue;
+      const layerName = shapeToLayer.get(shapeId);
+      if (!layerName) continue;
+
+      let layerSet = vs.layers.get(layerName);
+      if (!layerSet) { layerSet = new Set<number>(); vs.layers.set(layerName, layerSet); }
+      layerSet.add(expressID);
+      break; // первый найденный слой достаточен
     }
   }
 }
@@ -198,12 +278,14 @@ export async function loadIfcModel(
       bufGeom.setIndex(new THREE.BufferAttribute(new Uint32Array(idxs), 1));
 
       const mat = new THREE.MeshLambertMaterial({
-        color: new THREE.Color(DEFAULT_COLOR),
+        color: new THREE.Color(placed.color.x, placed.color.y, placed.color.z),
         transparent: placed.color.w < 1,
         opacity: placed.color.w,
+        depthWrite: placed.color.w >= 1,
         side: THREE.DoubleSide,
       });
       vs.materials.set(expressID, mat);
+      vs.originalColors.set(expressID, [placed.color.x, placed.color.y, placed.color.z]);
 
       const mesh = new THREE.Mesh(bufGeom, mat);
       mesh.applyMatrix4(new THREE.Matrix4().fromArray(placed.flatTransformation));
@@ -213,8 +295,9 @@ export async function loadIfcModel(
     }
   }
 
-  // Извлечь IFC PropertySets для всех элементов перед закрытием модели
+  // Извлечь IFC PropertySets и слои для всех элементов перед закрытием модели
   buildIfcPropertiesMap(ifcApi, modelId, vs);
+  buildLayerMap(ifcApi, modelId, vs);
 
   ifcApi.CloseModel(modelId);
 }
