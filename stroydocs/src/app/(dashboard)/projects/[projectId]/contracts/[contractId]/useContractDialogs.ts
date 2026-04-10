@@ -17,6 +17,10 @@ export function useContractDialogs() {
   const [createInputControlOpen, setCreateInputControlOpen] = useState(false);
   const [createKs2Open, setCreateKs2Open] = useState(false);
   const [batchAosrOpen, setBatchAosrOpen] = useState(false);
+  const [addObligationOpen, setAddObligationOpen] = useState(false);
+  const [linkContractOpen, setLinkContractOpen] = useState(false);
+  const [addDetailInfoOpen, setAddDetailInfoOpen] = useState(false);
+  const [linkEstimateOpen, setLinkEstimateOpen] = useState(false);
 
   const switchTab = (tab: string) => startTransition(() => setActiveTab(tab));
 
@@ -33,5 +37,9 @@ export function useContractDialogs() {
     createInputControlOpen, setCreateInputControlOpen,
     createKs2Open, setCreateKs2Open,
     batchAosrOpen, setBatchAosrOpen,
+    addObligationOpen, setAddObligationOpen,
+    linkContractOpen, setLinkContractOpen,
+    addDetailInfoOpen, setAddDetailInfoOpen,
+    linkEstimateOpen, setLinkEstimateOpen,
   };
 }

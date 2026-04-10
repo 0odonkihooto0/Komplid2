@@ -43,6 +43,10 @@ export async function GET(
           include: { _count: { select: { subContracts: true } } },
         },
         parent: { select: { id: true, number: true, name: true } },
+        parentContract: { select: { id: true, number: true, name: true } },
+        childContracts: {
+          include: { _count: { select: { subContracts: true } } },
+        },
       },
     });
 

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useContract } from '@/components/modules/contracts/useContract';
 import { ContractKpiBar } from '@/components/modules/contracts/ContractKpiBar';
+import { ContractSummaryBar } from '@/components/modules/contracts/ContractSummaryBar';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Breadcrumb } from '@/components/shared/Breadcrumb';
@@ -82,6 +83,8 @@ export function ContractDetailContent({ projectId, contractId }: Props) {
         contractId={contractId}
         onTabChange={setActiveTab}
       />
+
+      <ContractSummaryBar projectId={projectId} contractId={contractId} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <ContractTabsList

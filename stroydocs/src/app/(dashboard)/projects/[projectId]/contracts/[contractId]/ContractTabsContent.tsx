@@ -32,6 +32,10 @@ import { AosrRegistryTable } from '@/components/modules/execution-docs/AosrRegis
 import { GanttContent } from './gantt/GanttContent';
 import { DailyLogTab } from '@/components/modules/daily-logs/DailyLogTab';
 import { ChangeOrdersTab } from '@/components/modules/change-orders/ChangeOrdersTab';
+import { ObligationsTab } from '@/components/modules/contracts/ObligationsTab';
+import { LinkedContractsTab } from '@/components/modules/contracts/LinkedContractsTab';
+import { DetailInfoTab } from '@/components/modules/contracts/DetailInfoTab';
+import { LocalEstimatesTab } from '@/components/modules/contracts/LocalEstimatesTab';
 import { CONTRACT_STATUS_LABELS } from '@/utils/constants';
 import type { ContractDetail } from '@/components/modules/contracts/useContract';
 import type { useContractDialogs } from './useContractDialogs';
@@ -57,6 +61,10 @@ export function ContractTabsContent({
   createInputControlOpen, setCreateInputControlOpen,
   createKs2Open, setCreateKs2Open,
   batchAosrOpen, setBatchAosrOpen,
+  addObligationOpen, setAddObligationOpen,
+  linkContractOpen, setLinkContractOpen,
+  addDetailInfoOpen, setAddDetailInfoOpen,
+  linkEstimateOpen, setLinkEstimateOpen,
 }: Props) {
   return (
     <>
@@ -198,6 +206,41 @@ export function ContractTabsContent({
       </TabsContent>
       <TabsContent value="change-orders" className="mt-4">
         {activeTab === 'change-orders' && <ChangeOrdersTab projectId={projectId} contractId={contractId} />}
+      </TabsContent>
+
+      <TabsContent value="obligations" className="mt-4">
+        <ObligationsTab
+          projectId={projectId}
+          contractId={contractId}
+          addObligationOpen={addObligationOpen}
+          setAddObligationOpen={setAddObligationOpen}
+        />
+      </TabsContent>
+      <TabsContent value="linked-contracts" className="mt-4">
+        <LinkedContractsTab
+          projectId={projectId}
+          contractId={contractId}
+          childContracts={contract.childContracts}
+          parentContract={contract.parentContract}
+          linkContractOpen={linkContractOpen}
+          setLinkContractOpen={setLinkContractOpen}
+        />
+      </TabsContent>
+      <TabsContent value="detail-info" className="mt-4">
+        <DetailInfoTab
+          projectId={projectId}
+          contractId={contractId}
+          addDetailInfoOpen={addDetailInfoOpen}
+          setAddDetailInfoOpen={setAddDetailInfoOpen}
+        />
+      </TabsContent>
+      <TabsContent value="local-estimates" className="mt-4">
+        <LocalEstimatesTab
+          projectId={projectId}
+          contractId={contractId}
+          linkEstimateOpen={linkEstimateOpen}
+          setLinkEstimateOpen={setLinkEstimateOpen}
+        />
       </TabsContent>
     </>
   );
