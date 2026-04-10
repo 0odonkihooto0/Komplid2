@@ -1,11 +1,9 @@
-import { PassportView } from '@/components/objects/passport/PassportView';
+import { redirect } from 'next/navigation';
 
-export const dynamic = 'force-dynamic';
-
-export default function ObjectPassportPage({
+export default function PassportPage({
   params,
 }: {
   params: { objectId: string };
 }) {
-  return <PassportView projectId={params.objectId} />;
+  redirect(`/objects/${params.objectId}/info/general`);
 }

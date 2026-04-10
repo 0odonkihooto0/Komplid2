@@ -1,11 +1,9 @@
-import { PhotosContent } from '@/components/objects/photos/PhotosContent';
-
-export const dynamic = 'force-dynamic';
+import { redirect } from 'next/navigation';
 
 export default function PhotosPage({
   params,
 }: {
   params: { objectId: string };
 }) {
-  return <PhotosContent objectId={params.objectId} />;
+  redirect(`/objects/${params.objectId}/info/photos`);
 }
