@@ -540,13 +540,72 @@
 
 ## МОДУЛЬ 13 — ТИМ
 
-> **Ориентир:** 4–6 недель (после основных модулей)
+> **Аналог:** ЦУС → Модуль «ТИМ» (3D-вьюер, управление моделями)
+> **Статус:** 🔄 В работе
 
-- ✅ Загрузка IFC-модели, 3D-вьюер в браузере
-- ✅ Привязка АОСР к элементу модели (ИД ↔ IFC GUID)
-- ✅ Цветовая индикация: серый / зелёный / красный по статусу ИД
-- ✅ nanoCAD BIM, Renga, Pilot-BIM
-- ✅ `BimModel`, `BimElementLink`
+### 3D-вьюер ✅
+- ✅ Загрузка IFC-файла из Timeweb S3 (pre-signed URL → web-ifc WASM → Three.js)
+- ✅ Three.js WebGLRenderer + OrbitControls (вращение, зум, pan)
+- ✅ Раскраска по expressID: серый / синий (выбранный) / красный / зелёный (ГПР)
+- ✅ Каркасный режим (wireframe toggle)
+- ✅ Разрезы (horizontal / vertical clipping plane, ClippingPanel)
+- ✅ Инструмент измерений (расстояния, CSS2DRenderer метки)
+- ✅ Кнопка «Сбросить камеру» / «По размеру модели»
+- ✅ **Управление слоями** (IfcPresentationLayerAssignment): панель с чекбоксами, «Показать все» / «Скрыть все», toggle `mesh.visible`
+- ✅ **Скачивание IFC** из S3 (кнопка Download в toolbar)
+- ✅ **Скриншот PNG** (canvas.toDataURL → скачивание файла)
+- ✅ **Контекстное меню правого клика**: «Сохранить как PNG» / «Сохранить как JPG»
+
+### Управление моделями ✅
+- ✅ Дерево разделов (SectionTree) — иерархия, создание/удаление разделов
+- ✅ Загрузка IFC-файлов (.ifc, .ifczip, .ifcxml) через presigned S3 URL
+- ✅ Версионирование моделей (BimModelVersion, upload-version API)
+- ✅ Фоновый парсинг (BullMQ worker → parse-ifc.worker.ts → BimElement в БД)
+- ✅ Статусы модели: PROCESSING → READY / ERROR (ModelStatusBadge)
+- ✅ IFC-версия (IFC2X3 / IFC4), количество элементов
+
+### Панель структуры модели ✅
+- ✅ Иерархическое дерево элементов по уровням (ModelStructureTree)
+- ✅ Toggle видимости элемента / уровня в 3D
+- ✅ Поиск по элементам
+- ✅ Выбор элемента из дерева → подсветка в вьюере
+
+### Панель свойств элемента ✅
+- ✅ IFC PropertySets (извлекаются через web-ifc, ifcProperties Map)
+- ✅ Привязка к задачам ГПР (GprLinkPanel, LinkSearchDialog)
+- ✅ Привязка к ИД (ExecutionDoc / Ks2Act) и Замечаниям (DefectCreateDialog)
+- ✅ Вкладка «Связи» — список всех привязок элемента с возможностью удаления
+- ✅ «Выделить на модели» — подсветка элементов привязанной задачи / документа
+
+### Временна́я шкала ГПР ✅
+- ✅ TimelineSlider — бегунок по датам выбранной версии ГПР
+- ✅ Цветовая индикация по дате: зелёный (работа завершена) / красный (ещё нет)
+- ✅ Синхронизация с выбранной версией ГПР
+
+### Обнаружение коллизий ✅
+- ✅ AABB-проверка всех пар элементов модели (useCollisions)
+- ✅ Список коллизий с подсветкой пары в 3D (CollisionDetector)
+
+### Сравнение версий ✅
+- ✅ Выбор двух версий модели, визуальное diff в 3D (VersionCompare, VersionDiffViewer)
+
+### Замечания (BIM Issues) ✅
+- ✅ Реестр замечаний привязанных к IFC-элементам (BimIssuesRegistry)
+- ✅ Создание замечания прямо из 3D-вьюера (DefectCreateDialog)
+
+### Доступ ✅
+- ✅ Управление доступом к модели (BimAccessSettings, useBimAccess)
+
+### Не реализовано
+- ⬜ BCF-экспорт/импорт замечаний
+- ⬜ Федерированные модели (несколько IFC одновременно)
+- ⬜ Поддержка nanoCAD BIM / Renga native форматов
+- ⬜ Offline-просмотр (PWA-кэш IFC)
+
+**База данных (Модуль 13)**
+- ✅ `BimModel`, `BimModelVersion`, `BimSection`
+- ✅ `BimElement` (ifcGuid, ifcType, name, layer, level, properties Json)
+- ✅ `BimElementLink` (expressID → GanttTask / ExecutionDoc / Ks2Act / Defect)
 
 ---
 
