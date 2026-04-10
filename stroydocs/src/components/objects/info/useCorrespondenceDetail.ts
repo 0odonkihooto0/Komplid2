@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { useToast } from '@/hooks/useToast';
 import type { CorrespondenceStatus } from './useCorrespondenceList';
 
@@ -44,6 +46,7 @@ export function useCorrespondenceDetail(objectId: string, corrId: string) {
   const queryClient = useQueryClient();
   const router = useRouter();
   const { toast } = useToast();
+  const { data: session } = useSession();
 
   const detailKey = ['correspondence-detail', corrId];
   const listKey = ['correspondence', objectId];
@@ -63,6 +66,24 @@ export function useCorrespondenceDetail(objectId: string, corrId: string) {
     queryClient.invalidateQueries({ queryKey: detailKey });
     queryClient.invalidateQueries({ queryKey: listKey });
   };
+
+  // Авто-прочтение: если текущий пользователь из организации-получателя и статус SENT
+  useEffect(() => {
+    if (!correspondence || !session?.user) return;
+    if (
+      correspondence.status === 'SENT' &&
+      correspondence.receiverOrg?.id === session.user.organizationId
+    ) {
+      fetch(`/api/objects/${objectId}/correspondence/${corrId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'READ' }),
+      })
+        .then(() => invalidate())
+        .catch(() => { /* авто-прочтение некритично, ошибку не показываем */ });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [correspondence?.id, correspondence?.status, session?.user?.organizationId]);
 
   const sendMutation = useMutation({
     mutationFn: async () => {

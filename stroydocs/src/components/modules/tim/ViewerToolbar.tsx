@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Maximize2, Grid3X3, AlertTriangle, GitCompare, Scissors, Ruler } from 'lucide-react';
+import { Home, Maximize2, Grid3X3, AlertTriangle, GitCompare, Scissors, Ruler, Layers, Download, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -28,6 +28,13 @@ interface ViewerToolbarProps {
   /** Режим измерений */
   onMeasure?: () => void;
   measureActive?: boolean;
+  /** Управление слоями */
+  onLayers?: () => void;
+  layersActive?: boolean;
+  /** Скачать IFC-файл */
+  onDownloadIfc?: () => void;
+  /** Скриншот PNG */
+  onScreenshot?: () => void;
 }
 
 export function ViewerToolbar({
@@ -43,6 +50,10 @@ export function ViewerToolbar({
   clippingActive,
   onMeasure,
   measureActive,
+  onLayers,
+  layersActive,
+  onDownloadIfc,
+  onScreenshot,
 }: ViewerToolbarProps) {
   return (
     <TooltipProvider>
@@ -150,6 +161,54 @@ export function ViewerToolbar({
               </Button>
             </TooltipTrigger>
             <TooltipContent side="right">Сравнение версий</TooltipContent>
+          </Tooltip>
+        )}
+
+        {onLayers && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={layersActive ? 'default' : 'secondary'}
+                size="icon"
+                className="h-8 w-8 shadow-md"
+                onClick={onLayers}
+              >
+                <Layers className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Слои</TooltipContent>
+          </Tooltip>
+        )}
+
+        {onDownloadIfc && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="secondary"
+                size="icon"
+                className="h-8 w-8 shadow-md"
+                onClick={onDownloadIfc}
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Скачать IFC</TooltipContent>
+          </Tooltip>
+        )}
+
+        {onScreenshot && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="secondary"
+                size="icon"
+                className="h-8 w-8 shadow-md"
+                onClick={onScreenshot}
+              >
+                <Camera className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Скриншот PNG</TooltipContent>
           </Tooltip>
         )}
       </div>

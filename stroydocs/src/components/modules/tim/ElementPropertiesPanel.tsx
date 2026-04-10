@@ -19,6 +19,8 @@ interface Props {
   onVersionChange: (id: string | null) => void;
   /** Callback «Следовать за работой»: подсветить все элементы привязанные к задаче */
   onFollowWork: (taskId: string) => void;
+  /** Callback «Выделить на модели»: подсветить все элементы привязанные к документу/замечанию */
+  onFollowDoc: (entityType: string, entityId: string) => void;
 }
 
 /** Таблица IFC PropertySets */
@@ -56,6 +58,7 @@ export function ElementPropertiesPanel({
   selectedVersionId,
   onVersionChange,
   onFollowWork,
+  onFollowDoc,
 }: Props) {
   const { data: elemRef, isLoading: loadingRef } = useElementByGuid(projectId, modelId, ifcGuid);
   const { data: element, isLoading: loadingDetail } = useElementDetail(
@@ -160,6 +163,7 @@ export function ElementPropertiesPanel({
                   modelId={modelId}
                   projectId={projectId}
                   links={element.links}
+                  onFollowDoc={onFollowDoc}
                 />
               ) : (
                 <p className="text-xs text-muted-foreground">Элемент не найден в БД</p>
