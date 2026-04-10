@@ -21,6 +21,9 @@ export function useContractDialogs() {
   const [linkContractOpen, setLinkContractOpen] = useState(false);
   const [addDetailInfoOpen, setAddDetailInfoOpen] = useState(false);
   const [linkEstimateOpen, setLinkEstimateOpen] = useState(false);
+  const [createFinancialTableOpen, setCreateFinancialTableOpen] = useState(false);
+  const [addDocLinkZnpOpen, setAddDocLinkZnpOpen] = useState(false);
+  const [addDocLinkZniiOpen, setAddDocLinkZniiOpen] = useState(false);
 
   const switchTab = (tab: string) => startTransition(() => setActiveTab(tab));
 
@@ -41,5 +44,8 @@ export function useContractDialogs() {
     linkContractOpen, setLinkContractOpen,
     addDetailInfoOpen, setAddDetailInfoOpen,
     linkEstimateOpen, setLinkEstimateOpen,
+    createFinancialTableOpen, setCreateFinancialTableOpen,
+    addDocLinkZnpOpen, setAddDocLinkZnpOpen,
+    addDocLinkZniiOpen, setAddDocLinkZniiOpen,
   };
 }

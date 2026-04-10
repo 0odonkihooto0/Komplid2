@@ -40,6 +40,9 @@ import { ObligationsTab } from '@/components/modules/contracts/ObligationsTab';
 import { LinkedContractsTab } from '@/components/modules/contracts/LinkedContractsTab';
 import { DetailInfoTab } from '@/components/modules/contracts/DetailInfoTab';
 import { LocalEstimatesTab } from '@/components/modules/contracts/LocalEstimatesTab';
+import { FinancialTablesTab } from '@/components/modules/contracts/FinancialTablesTab';
+import { ContractDocLinksTab } from '@/components/modules/contracts/ContractDocLinksTab';
+import { ContractInfoTab } from '@/components/modules/contracts/ContractInfoTab';
 import { CONTRACT_STATUS_LABELS } from '@/utils/constants';
 import type { ContractDetail } from '@/components/modules/contracts/useContract';
 import type { useContractDialogs } from './useContractDialogs';
@@ -69,6 +72,9 @@ export function ContractTabsContent({
   linkContractOpen, setLinkContractOpen,
   addDetailInfoOpen, setAddDetailInfoOpen,
   linkEstimateOpen, setLinkEstimateOpen,
+  createFinancialTableOpen, setCreateFinancialTableOpen,
+  addDocLinkZnpOpen, setAddDocLinkZnpOpen,
+  addDocLinkZniiOpen, setAddDocLinkZniiOpen,
 }: Props) {
   return (
     <>
@@ -268,6 +274,46 @@ export function ContractTabsContent({
           contractId={contractId}
           linkEstimateOpen={linkEstimateOpen}
           setLinkEstimateOpen={setLinkEstimateOpen}
+        />
+      </TabsContent>
+      <TabsContent value="financial-tables" className="mt-4">
+        {activeTab === 'financial-tables' && (
+          <FinancialTablesTab
+            projectId={projectId}
+            contractId={contractId}
+            createOpen={createFinancialTableOpen}
+            setCreateOpen={setCreateFinancialTableOpen}
+          />
+        )}
+      </TabsContent>
+      <TabsContent value="znp" className="mt-4">
+        {activeTab === 'znp' && (
+          <ContractDocLinksTab
+            projectId={projectId}
+            contractId={contractId}
+            linkType="ZNP"
+            addOpen={addDocLinkZnpOpen}
+            setAddOpen={setAddDocLinkZnpOpen}
+          />
+        )}
+      </TabsContent>
+      <TabsContent value="znii" className="mt-4">
+        {activeTab === 'znii' && (
+          <ContractDocLinksTab
+            projectId={projectId}
+            contractId={contractId}
+            linkType="ZNII"
+            addOpen={addDocLinkZniiOpen}
+            setAddOpen={setAddDocLinkZniiOpen}
+          />
+        )}
+      </TabsContent>
+      <TabsContent value="contract-info" className="mt-4">
+        <ContractInfoTab
+          projectId={projectId}
+          contractId={contractId}
+          addDetailInfoOpen={addDetailInfoOpen}
+          setAddDetailInfoOpen={setAddDetailInfoOpen}
         />
       </TabsContent>
     </>
