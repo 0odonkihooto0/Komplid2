@@ -55,7 +55,7 @@ export async function GET(req: NextRequest, { params }: Params) {
       db.sEDWorkflow.count({ where: { documentId: params.docId } }),
     ]);
 
-    return successResponse(workflows, { total, page, limit });
+    return successResponse(workflows, { total, page, pageSize: limit, totalPages: Math.ceil(total / limit) });
   } catch (error) {
     if (error instanceof NextResponse) return error;
     logger.error({ err: error }, 'Ошибка получения списка ДО');
