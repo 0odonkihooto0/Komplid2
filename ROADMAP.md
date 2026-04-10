@@ -157,6 +157,11 @@
 ### Вкладка «Показатели»
 - ✅ KPI: количество договоров, записей о работах, ИД, сумма КС-2 (IndicatorsView)
 - ✅ Дефицит ИД: прогресс-бар готовности ИД по договорам (IndicatorsView)
+- ✅ Конфигурируемые показатели по 8 группам ЦУС — аккордеон (ProjectIndicatorsView)
+- ✅ CRUD показателей: AddIndicatorDialog / EditIndicatorDialog (React Hook Form + Zod)
+- ✅ Автозаполнение «Контракты ПИР» из Contract (name ILIKE '%ПИР%', status ACTIVE/COMPLETED)
+- ✅ Автозаполнение «ТУ для строительства» из TechnicalCondition
+- ✅ Прикрепление файлов к показателям (fileKeys String[] → Timeweb S3)
 - ⬜ Дефицит ИД детализация: «Бетонные работы — выполнено 80%, ИД 30%, нехватает АОСР: 12 шт.»
 
 ### Вкладка «Финансирование»
@@ -182,6 +187,8 @@
 - ⬜ `ObjectPassport` отдельная модель (поля cadastralNumber, area и др. добавлены в Project напрямую)
 - ✅ `FundingSource` (projectId, type, amount, period) — модель в schema.prisma
 - ✅ `Task` (projectId, contractId, assigneeId, title, status, deadline, priority) — модель в schema.prisma
+- ✅ `ProjectIndicator` (groupName, indicatorName, value, comment, maxValue, fileKeys[], sourceType, projectId) — конфигурируемые показатели ЦУС
+- ✅ `IndicatorSource` enum (MANUAL / AUTO)
 
 ---
 
