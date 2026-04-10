@@ -146,13 +146,28 @@
 
 > **Аналог:** ЦУС → Паспорт объекта (вкладки: Паспорт, Показатели, Финансирование, Контракты, Задачи, Фото)
 > **Ориентир:** 2–3 недели
+> **Реструктуризация 2026-04-10:** вкладки Паспорт, Показатели, Финансирование, Задачи, Фотогалерея объединены в Модуль 3 «Информация» (URL `/objects/[id]/info/*`). Компоненты остались прежними — только навигация изменена.
 
 ### Вкладка «Паспорт»
 - ✅ Название, адрес, участники
 - ✅ Кадастровый номер, площадь, класс ответственности (PassportView + поля в Project)
 - ✅ Разрешение на строительство (№, дата, орган выдачи) (PassportView — permitNumber, permitDate, permitAuthority)
+- ✅ Секция «Карта и координаты» — react-leaflet карта (OSM tiles), мультиточечные маркеры из ProjectCoordinate (очередь строительства), Nominatim geocoding по адресу объекта, контекстное меню маркера (Изменить / Удалить), диалог добавления/редактирования точки
+- ✅ Секция «График реализации» — полоса стадий (Экспертиза, Обследование, Изыскания, ПД, СМР, Ввод) с Badge + div-прогресс-бар плана СМР по плановым датам паспорта
+- ✅ Кнопки действий в шапке: «Печатная форма» (POST /info-report/generate-pdf, заглушка 501), «Сводный отчёт» (placeholder), «История загрузок» (placeholder)
+- ✅ Виджет «ПИР»: общая сумма ПИР-контрактов (по имени категории), освоение (акты закрытия ПИР SIGNED), % выполнения, дата плана, отклонение ▲/▼ в рублях (PirWidget + GET /api/objects/[objectId]/passport/widgets)
+- ✅ Виджет «СМР»: общая сумма контрактов, освоение (КС-2 APPROVED), % выполнения, даты начала/окончания, отклонение ▲/▼ в рублях (SmrWidget + usePassportWidgets)
+- ✅ Тип строительства (Select: Новое строительство / Реконструкция / Капитальный ремонт / Техническое перевооружение)
+- ✅ Регион (Select из 85 субъектов РФ по ОКТМО, `RF_SUBJECTS` в constants.ts)
+- ✅ Стройка (Input, используется в реквизитах КС-2, КС-3)
+- ✅ Широта / Долгота (number inputs, отображаются в PassportView как «ш, д»)
+- ✅ Фактические даты начала / окончания строительства (actualStartDate, actualEndDate)
+- ✅ Чекбокс «Заполнять даты из актуальной версии ГПР» (fillDatesFromGpr)
 - ⬜ Автопроверка контрагентов по ИНН через API ФНС/ЕГРЮЛ (кэш Redis 24ч)
-- ⬜ Связанные объекты (суб-объекты)
+- ✅ Тип строительства, краткое наименование, стройка (реквизиты КС-2/КС-3) — поля constructionType, shortName, stroyka
+- ✅ Регион (субъект РФ), геолокация (latitude/longitude) — поля region, latitude, longitude; @@index([region])
+- ✅ Фактические даты начала/окончания, опция «заполнять даты из ГПР» — actualStartDate, actualEndDate, fillDatesFromGpr
+- ✅ Связанные объекты / суб-объекты — иерархия через parentId/children (ObjectHierarchy, @@index([parentId]))
 
 ### Вкладка «Показатели»
 - ✅ KPI: количество договоров, записей о работах, ИД, сумма КС-2 (IndicatorsView)
@@ -163,6 +178,15 @@
 - ✅ Реестр источников (бюджет, внебюджет, кредиты) — FundingView с CRUD
 - ⬜ UI для FundingRecord (план/факт по годам с разбивкой: фед/рег/мест/собств/внебюдж)
 - ⬜ UI для рисков неосвоения лимитов (LimitRisk)
+- ✅ Риски неосвоения лимитов — отдельная вкладка info/limit-risks
+
+### Вкладка «Риски неосвоения лимитов» ✅
+- ✅ Таблица (DataTable): год, статус, сумма, 5 бюджетных полей (фед./рег./местный/внебюдж./собств.), причина риска, предложения по исключению, контракт, возможная дата завершения освоения
+- ✅ Диалог добавления / редактирования (единый): Select года, 5 числовых input бюджетов, auto-totalAmount, Textarea причины (required), Textarea предложений, Select контракта из договоров объекта, Input type=date дата завершения
+- ✅ API GET/POST `/api/projects/[projectId]/limit-risks` — список с `include contract`, создание, расчёт totalAmount на сервере
+- ✅ API PATCH/DELETE `/api/projects/[projectId]/limit-risks/[id]` — partial update с пересчётом totalAmount, удаление
+- ✅ Кнопка печати (window.print()) рядом с «+ Добавить»
+- ✅ Prisma-модель `LimitRisk` (уже была в схеме) — подключена
 
 ### Вкладка «Контракты»
 - ✅ Список договоров (переиспользуется)
@@ -171,30 +195,92 @@
 - ✅ Задачи по объекту (ответственный, срок, статус) — TasksView с полным CRUD
 - ⬜ Создание задачи из замечания СК (автосвязь)
 
+### Вкладка «Строительный контроль» ✅ (2026-04-10)
+- ✅ Read-only реестр недостатков из модуля СК (PassportSkView)
+- ✅ Левая панель (200px): счётчики по статусам — Всего / Открыто / В работе / Устранено / Подтверждено
+- ✅ TanStack Table: №, Кем выдано, Описание недостатка, Срок устранения, Контроль устранения, Статус (Badge), Мероприятия по устранению
+- ✅ Данные из GET /api/projects/[pid]/defects (переиспользование существующего API Модуля 11)
+- ✅ Маршрут: `/objects/[objectId]/passport/sk` → `passport/sk/page.tsx`
+### Вкладка «Проблемные вопросы» ✅
+- ✅ Реестр проблемных вопросов (CRUD) по 7 типам (ГОСТ Р 70108-2025 / ЦУС стр. 30)
+- ✅ Типы: Корректировка ПСД, Земельно-правовые, Производственные, Организационно-правовые, Договорная работа, Финансовые, Прочие
+- ✅ Статусы: Актуальный (ACTIVE) / Закрыт (CLOSED), дата закрытия автофиксируется
+- ✅ Двухпанельный UI: сводка по типам (Закрытые | Актуальные) + TanStack DataTable
+- ✅ Колонки таблицы: Тип, Статус, Дата, Проблемный вопрос, Исполнитель, Проверено
+- ✅ Диалог создания: Select тип, Textarea описание, Input исполнитель, DatePicker срок
+- ✅ API: GET/POST `/api/projects/[projectId]/problem-issues/` + PATCH/DELETE `…/[id]/`
+### Вкладка «Проблемные вопросы» ✅ (2026-04-09)
+- ✅ Реестр проблемных вопросов по объекту (ЦУС стр. 30)
+- ✅ 7 типов: Корректировка ПСД, Земельно-правовые, Производственные, Орг.-правовые, Договорная работа, Финансовые, Прочие
+- ✅ Статусы: ACTIVE / CLOSED с автоматической фиксацией `closedAt`
+- ✅ Поля: описание, пути решения, ответственный, срок, автор
+- ✅ API: GET (с фильтром ?status= и пагинацией), POST, PATCH, DELETE
+- ✅ Multi-tenancy: проверка organizationId через BuildingObject
+
 ### Вкладка «Фотогалерея»
 - ✅ Фотоотчёты с GPS (переиспользуется)
 - ⬜ Хронологическая лента, сравнение «было / стало»
 
+### Печатная форма (информационный отчёт)
+- ✅ Handlebars-шаблон `templates/info-report.hbs` (A4 портрет: стадии, ПИР, СМР, финансирование, проблемы, ситуация на объекте)
+- ✅ Генератор `src/lib/info-report-pdf-generator.ts` (Puppeteer + Promise-кэш шаблона)
+- ✅ API `POST /api/projects/[projectId]/info-report/generate-pdf` → pre-signed URL (Timeweb S3)
+
 ### Инфраструктура (Модуль 2)
 - ✅ loading.tsx + error.tsx для всех 13 вкладок (/objects/[objectId]/*)
 - ✅ Мобильный layout — адаптивный sidebar с гамбургер-меню (ObjectModuleSidebar)
+- ✅ ObjectModuleSidebar обновлён: Паспорт/Показатели/Финансирование/Задачи/Фото убраны как отдельные пункты → единый «Информация» (2026-04-10)
+- ✅ Tab-навигация паспорта: `passport/layout.tsx` (Задачи / Проблемные вопросы / Фотогалерея)
 
 **База данных (Модуль 2)**
-- ⬜ `ObjectPassport` отдельная модель (поля cadastralNumber, area и др. добавлены в Project напрямую)
+- ⬜ `ObjectPassport` отдельная модель (поля cadastralNumber, area и др. добавлены в BuildingObject напрямую)
+- ✅ `BuildingObject` расширен: `constructionType`, `region`, `stroyka`, `shortName`, `latitude`, `longitude`, `actualStartDate`, `actualEndDate`, `fillDatesFromGpr`, `parentId` + самосвязь `ObjectHierarchy` — миграция `add_object_fields_audit`
 - ✅ `FundingSource` (projectId, type, amount, period) — модель в schema.prisma
 - ✅ `FundingRecord` (projectId, year, recordType ALLOCATED/DELIVERED, federal/regional/local/own/extraBudget)
 - ✅ `LimitRisk` (projectId, contractId?, year, totalAmount, бюджеты по источникам, riskReason, resolutionProposal)
 - ✅ enum `FundingRecordType` (ALLOCATED, DELIVERED)
 - ✅ `Task` (projectId, contractId, assigneeId, title, status, deadline, priority) — модель в schema.prisma
+- ✅ `ProjectCoordinate` (projectId, latitude, longitude, constructionPhase?) — миграция 20260409120000_add_info_module_models
+- ✅ `ProblemIssue` (projectId, type, status, description, resolution, responsible, deadline, closedAt, authorId) + enum `ProblemIssueType` (7 значений) + `ProblemIssueStatus`
+- ✅ `ProblemIssue` (projectId, type, status, description, resolution, responsible, deadline, closedAt, authorId) — миграция `20260409000000_add_problem_issues`
+- ✅ `ProblemIssueType` enum (7 значений), `ProblemIssueStatus` enum (ACTIVE / CLOSED)
+- ✅ Расширенные реквизиты `BuildingObject`: constructionType, region, stroyka, shortName, latitude, longitude, actualStartDate, actualEndDate, fillDatesFromGpr, parentId — миграция `20260408000000_add_object_fields_audit`
 
 ---
 
 ## МОДУЛЬ 3 — Информация и СЭД
 
-> **Аналог:** ЦУС → Модуль «Информация» + Модуль «СЭД»
+> **Аналог:** ЦУС → Модуль «Информация» (12 вкладок) + Модуль «СЭД»
 > **Ориентир:** 2–3 недели
 
-### Вкладка «Участники»
+### Вкладка «Участники» ✅ (2026-04-10)
+- ✅ Двухколоночный layout: юрлица / физлица (прямая привязка к объекту, не через договоры)
+- ✅ Справочник из 9 ролей ЦУС (Заказчик, Застройщик, Генподрядчик, Субподрядчик, Авторский надзор, Технический надзор, Строительный контроль, Проектировщик, Экспертная организация)
+- ✅ Добавление / удаление ролей через Popover-меню (Badge с × для удаления)
+- ✅ Физические лица: ФИО, привязка к организации, опциональная привязка к системному пользователю
+- ✅ Документ о назначении: Приказ, Доверенность, Распоряжение, Постановление, Решение, Устав
+- ✅ Загрузка файла документа о назначении (Timeweb S3), иконка FileText серая/синяя
+- ✅ Поиск участников (по названию/ФИО/ИНН) + фильтр по роли
+- ✅ Копирование участника в другой объект (CopyParticipantDialog)
+- ✅ Поиск организаций по всей системе (GET /api/organizations/search)
+- ✅ Создание новой организации прямо из диалога (name, INN, address)
+### Инфраструктура навигации ✅ (2026-04-10)
+- ✅ Единый пункт «Информация» в боковой панели (убраны 5 отдельных пунктов)
+- ✅ `info/layout.tsx`: 12 скроллируемых вкладок (overflow-x-auto) + кнопка ▾ (выпадающий список)
+- ✅ Редиректы: `/passport` → `/info/general`, `/indicators` → `/info/indicators`, `/funding` → `/info/funding`, `/tasks` → `/info/tasks`, `/photos` → `/info/photos`
+
+### Вкладка «Информация» (/info/general)
+- ✅ PassportView: название, адрес, участники, кадастровый номер, площадь, класс ответственности
+- ✅ Разрешение на строительство (№, дата, орган выдачи)
+- ⬜ Автопроверка контрагентов по ИНН через API ФНС/ЕГРЮЛ (кэш Redis 24ч)
+- ⬜ Связанные объекты (суб-объекты)
+
+### Вкладка «Показатели» (/info/indicators)
+- ✅ KPI: количество договоров, записей о работах, ИД, сумма КС-2 (IndicatorsView)
+- ✅ Дефицит ИД: прогресс-бар готовности ИД по договорам
+- ⬜ Дефицит ИД детализация: «Бетонные работы — выполнено 80%, ИД 30%, нехватает АОСР: 12 шт.»
+
+### Вкладка «Участники» (/info/participants)
 - ✅ Реестр организаций с ролями (переиспользуется)
 - ⬜ Автопроверка членства в СРО (реестр НОСТРОЙ)
 - ⬜ Проверка специалистов в НРС
@@ -228,18 +314,55 @@
 - ⬜ Поддержка нескольких очередей строительства
 
 ### Вкладка «Деловая переписка»
+### Вкладка «Файловое хранилище» (/info/files)
+- ⬜ Документарий с категориями и папочной структурой
+
+### Вкладка «Финансирование» (/info/funding)
+- ✅ Реестр источников (бюджет, внебюджет, кредиты) — FundingView с CRUD
+- ⬜ Лимиты по периодам, риски неосвоения
+
+### Вкладка «Риски неосвоения лимитов» (/info/limit-risks)
+- ⬜ Анализ рисков неосвоения финансовых лимитов по периодам
+
+### Вкладка «Земельные участки и ТУ» (/info/land-and-tu)
+- ⬜ Реестр земельных участков (кадастровые номера, площадь, категория)
+- ⬜ Технические условия (электроснабжение, водоснабжение, канализация)
+
+### Вкладка «Фотогалерея» (/info/photos)
+- ✅ Фотоотчёты с GPS, аннотации (PhotosContent)
+- ⬜ Хронологическая лента, сравнение «было / стало»
+
+### Вкладка «Видеонаблюдение» (/info/video)
+- ⬜ Интеграция с IP-камерами, онлайн-трансляция
+
+### Вкладка «Вопросы» (/info/questions)
+- ⬜ Перенос логики RFI из `/info/rfi` → `/info/questions`
+- ✅ Существующий `/info/rfi` (не в основных табах): запросы на разъяснение, назначение ответственного, сроки
+
+### Вкладка «Задачи» (/info/tasks)
+- ✅ Задачи по объекту (ответственный, срок, статус) — TasksView с полным CRUD
+- ⬜ Создание задачи из замечания СК (автосвязь)
+
+### Вкладка «Деловая переписка» (/info/correspondence)
 - ✅ Реестр официальных писем (входящие / исходящие)
 - ✅ Создание письма с маршрутом согласования
 - ✅ Авто-нумерация по шаблону организации
 
-### Вкладка «Вопросы» (RFI)
-- ✅ Запросы на разъяснение, назначение ответственного, сроки
-
-### Модуль «СЭД»
+### Модуль «СЭД» (/objects/[id]/sed/)
 - ✅ Документооборот произвольного типа: черновик → согласование → подписан → архив
 - ✅ Полнотекстовый поиск (PostgreSQL tsvector)
+- ✅ API роуты: список (GET), создание (POST), просмотр/обновление/удаление (GET/PATCH/DELETE)
+- ✅ Расширенная логика видимости: author / senderOrg / receiverOrg / observers / workflow-участники (6 условий OR)
+- ✅ Views: `all` | `active` | `requires_action` | `participating` | `sent_by_me`
+- ✅ Фильтры: folderId, status, docType, полнотекстовый поиск
+- ✅ Авто-отметка `isRead = true` при первом открытии получателем
+- ✅ Bulk mark-read: `POST /sed/[docId]/mark-read` — массовая отметка `{ documentIds, isRead }`
+- ✅ Папки: CRUD `/sed/folders` + `/sed/folders/[folderId]` (дерево с parentId, счётчик документов)
+- ✅ Привязка документов к папкам: `POST/DELETE /sed/[docId]/folders/[folderId]`
+- ✅ Связи (SEDLink): `GET/POST /sed/[docId]/links` + `DELETE /links/[linkId]` (полиморфные, uniqueness guard)
+- ✅ Вложения: `GET /sed/[docId]/attachments` (список с presigned URL) + `GET/DELETE /attachments/[attachmentId]` (удаление только черновиков)
 
-### Вкладка «Чат»
+### Вкладка «Чат» (/info/chat — не в основных табах)
 - ✅ Групповой чат по проекту / договору (Socket.io, порт 3001)
 - ⬜ Прикрепление документа из системы к сообщению
 
@@ -247,6 +370,9 @@
 - ✅ `Correspondence`, `CorrespondenceAttachment` (с tsvector-поиском)
 - ✅ `RFI`, `RFIAttachment`
 - ✅ `SEDDocument`, `SEDAttachment` (с tsvector-поиском)
+- ✅ `SEDFolder`, `SEDDocumentFolder` (папки с иерархией parentId, many-to-many)
+- ✅ `SEDLink` (полиморфная связь: entityType + entityId, @@unique constraint)
+- ✅ `SEDWorkflow`, `SEDWorkflowMessage`, `WorkflowRegulation`, `SEDDocumentBasis` (карточки ДО)
 - ✅ `ChatMessage`
 - ✅ `LandPlot` (cadastralNumber, area, landCategory, ГПЗУ, ЕГРН, обременения, ownerOrg/tenantOrg)
 - ✅ `TechnicalCondition` (type, number, issueDate, expirationDate, issuingAuthority, responsibleOrg)
@@ -255,6 +381,13 @@
 - ✅ `ProjectIndicator` (groupName, indicatorName, value, sourceType MANUAL/AUTO, autoSourceField)
 - ✅ enum `IndicatorSource` (MANUAL, AUTO)
 - ✅ Миграция: `20260409120000_add_info_module_models`
+- ✅ `ObjectOrganization` (прямая привязка юрлица к объекту, @@unique[buildingObjectId, organizationId])
+- ✅ `ObjectPerson` (физлицо на объекте: ФИО, опц. привязка к org и User)
+- ✅ `ObjectParticipantRole` (роль участника: XOR orgParticipantId / personId)
+- ✅ `PersonAppointment` (документ о назначении физлица, опц. файл в S3)
+- ✅ enum `AppointmentDocType` (ORDER, POWER_OF_ATTORNEY, DECREE, REGULATION, DECISION, CHARTER)
+- ✅ `FundingSource` (projectId, type, amount, period) — перенесён из Модуля 2
+- ✅ `Task` (projectId, contractId, assigneeId, title, status, deadline, priority) — перенесён из Модуля 2
 
 ---
 

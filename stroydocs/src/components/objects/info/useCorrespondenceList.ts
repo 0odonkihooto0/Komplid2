@@ -21,7 +21,9 @@ export interface CorrespondenceListItem {
   status: CorrespondenceStatus;
   sentAt: string | null;
   createdAt: string;
+  updatedAt: string;
   tags: string[];
+  buildingObject: { id: string; name: string };
   senderOrg: { id: string; name: string };
   receiverOrg: { id: string; name: string };
   author: { id: string; firstName: string; lastName: string };

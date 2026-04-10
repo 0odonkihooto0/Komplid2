@@ -1,7 +1,9 @@
-import { IndicatorsView } from '@/components/objects/indicators/IndicatorsView';
+import { redirect } from 'next/navigation';
 
-export const dynamic = 'force-dynamic';
-
-export default function IndicatorsPage({ params }: { params: { objectId: string } }) {
-  return <IndicatorsView projectId={params.objectId} />;
+export default function IndicatorsPage({
+  params,
+}: {
+  params: { objectId: string };
+}) {
+  redirect(`/objects/${params.objectId}/info/indicators`);
 }
