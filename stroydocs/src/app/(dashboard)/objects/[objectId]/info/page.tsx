@@ -5,5 +5,5 @@ export default function InfoIndexPage({
 }: {
   params: { objectId: string };
 }) {
-  redirect(`/objects/${params.objectId}/info/participants`);
+  redirect(`/objects/${params.objectId}/info/general`);
 }

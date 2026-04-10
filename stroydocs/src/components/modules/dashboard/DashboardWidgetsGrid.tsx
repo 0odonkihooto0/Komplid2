@@ -39,7 +39,7 @@ interface Widget {
 }
 
 // Компонент одного сортируемого виджета
-function SortableWidget({ widget }: { widget: Widget }) {
+function SortableWidget({ widget, objectIds }: { widget: Widget; objectIds?: string[] }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: widget.id });
 
@@ -80,13 +80,17 @@ function SortableWidget({ widget }: { widget: Widget }) {
       {widget.type === 'smr_progress' && <SmrProgressWidget />}
       {widget.type === 'id_quality' && <IdQualityWidget />}
       {widget.type === 'construction_progress' && <ConstructionProgressWidget />}
-      {widget.type === 'objects' && <ObjectsWidget />}
+      {widget.type === 'objects' && <ObjectsWidget objectIds={objectIds} />}
       {widget.type === 'map' && <MapWidget />}
     </div>
   );
 }
 
-export function DashboardWidgetsGrid() {
+interface DashboardWidgetsGridProps {
+  objectIds?: string[];
+}
+
+export function DashboardWidgetsGrid({ objectIds }: DashboardWidgetsGridProps) {
   const queryClient = useQueryClient();
   const [localOrder, setLocalOrder] = useState<string[] | null>(null);
 
@@ -160,7 +164,7 @@ export function DashboardWidgetsGrid() {
         <SortableContext items={visible.map((w) => w.id)} strategy={rectSortingStrategy}>
           <div className="grid gap-4 lg:grid-cols-3">
             {visible.map((widget) => (
-              <SortableWidget key={widget.id} widget={widget} />
+              <SortableWidget key={widget.id} widget={widget} objectIds={objectIds} />
             ))}
           </div>
         </SortableContext>

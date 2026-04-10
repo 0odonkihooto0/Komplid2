@@ -44,7 +44,7 @@ export const uploadVersionSchema = z.object({
 
 // --- Связи ---
 
-const ALLOWED_ENTITY_TYPES = ['GanttTask', 'ExecutionDoc', 'Defect'] as const;
+const ALLOWED_ENTITY_TYPES = ['GanttTask', 'ExecutionDoc', 'Ks2Act', 'Defect'] as const;
 
 export const createLinkSchema = z.object({
   elementId: z.string().uuid('Укажите элемент'),
