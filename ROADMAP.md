@@ -152,7 +152,10 @@
 - ✅ Кадастровый номер, площадь, класс ответственности (PassportView + поля в Project)
 - ✅ Разрешение на строительство (№, дата, орган выдачи) (PassportView — permitNumber, permitDate, permitAuthority)
 - ⬜ Автопроверка контрагентов по ИНН через API ФНС/ЕГРЮЛ (кэш Redis 24ч)
-- ⬜ Связанные объекты (суб-объекты)
+- ✅ Тип строительства, краткое наименование, стройка (реквизиты КС-2/КС-3) — поля constructionType, shortName, stroyka
+- ✅ Регион (субъект РФ), геолокация (latitude/longitude) — поля region, latitude, longitude; @@index([region])
+- ✅ Фактические даты начала/окончания, опция «заполнять даты из ГПР» — actualStartDate, actualEndDate, fillDatesFromGpr
+- ✅ Связанные объекты / суб-объекты — иерархия через parentId/children (ObjectHierarchy, @@index([parentId]))
 
 ### Вкладка «Показатели»
 - ✅ KPI: количество договоров, записей о работах, ИД, сумма КС-2 (IndicatorsView)
@@ -184,7 +187,8 @@
 - ✅ Мобильный layout — адаптивный sidebar с гамбургер-меню (ObjectModuleSidebar)
 
 **База данных (Модуль 2)**
-- ⬜ `ObjectPassport` отдельная модель (поля cadastralNumber, area и др. добавлены в Project напрямую)
+- ⬜ `ObjectPassport` отдельная модель (поля cadastralNumber, area и др. добавлены в BuildingObject напрямую)
+- ✅ `BuildingObject` расширен: `constructionType`, `region`, `stroyka`, `shortName`, `latitude`, `longitude`, `actualStartDate`, `actualEndDate`, `fillDatesFromGpr`, `parentId` + самосвязь `ObjectHierarchy` — миграция `add_object_fields_audit`
 - ✅ `FundingSource` (projectId, type, amount, period) — модель в schema.prisma
 - ✅ `Task` (projectId, contractId, assigneeId, title, status, deadline, priority) — модель в schema.prisma
 
