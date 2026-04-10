@@ -125,3 +125,28 @@ export async function PATCH(
     return errorResponse('Внутренняя ошибка сервера', 500);
   }
 }
+
+// Удалить договор со всеми связанными данными (Cascade)
+export async function DELETE(_req: NextRequest, { params }: { params: { projectId: string; contractId: string } }) {
+  try {
+    const session = await getSessionOrThrow();
+
+    const project = await db.buildingObject.findFirst({
+      where: { id: params.projectId, organizationId: session.user.organizationId },
+    });
+    if (!project) return errorResponse('Проект не найден', 404);
+
+    const contract = await db.contract.findFirst({
+      where: { id: params.contractId, projectId: params.projectId },
+    });
+    if (!contract) return errorResponse('Договор не найден', 404);
+
+    await db.contract.delete({ where: { id: params.contractId } });
+
+    return successResponse({ deleted: true });
+  } catch (error) {
+    if (error instanceof NextResponse) return error;
+    logger.error({ err: error }, 'Ошибка удаления договора');
+    return errorResponse('Внутренняя ошибка сервера', 500);
+  }
+}
