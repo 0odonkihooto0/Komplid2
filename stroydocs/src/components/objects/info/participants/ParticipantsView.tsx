@@ -11,6 +11,7 @@ import { AddParticipantDialog } from './AddParticipantDialog';
 import { AddAppointmentDialog } from './AddAppointmentDialog';
 import { CopyParticipantDialog } from './CopyParticipantDialog';
 import { useParticipants } from './useParticipants';
+import type { ParticipantRoleName } from '@/lib/validations/participants';
 
 interface Props {
   projectId: string;
@@ -40,7 +41,7 @@ export function ParticipantsView({ projectId }: Props) {
     addAppointmentMutation,
   } = useParticipants(projectId);
 
-  const handleAddRole = (participantId: string, roleName: string, type: 'org' | 'person') => {
+  const handleAddRole = (participantId: string, roleName: ParticipantRoleName, type: 'org' | 'person') => {
     addRoleMutation.mutate({ participantId, data: { roleName, participantType: type } });
   };
 
@@ -87,7 +88,7 @@ export function ParticipantsView({ projectId }: Props) {
                 key={org.id}
                 participant={org}
                 projectId={projectId}
-                onAddRole={(id, roleName) => handleAddRole(id, roleName, 'org')}
+                onAddRole={(id, roleName) => handleAddRole(id, roleName as ParticipantRoleName, 'org')}
                 onDeleteRole={handleDeleteRole}
                 onDelete={(id) => handleDelete(id, 'org')}
                 onCopy={(id) => setCopyTarget({ id, type: 'org' })}
@@ -124,7 +125,7 @@ export function ParticipantsView({ projectId }: Props) {
               <PersonParticipantCard
                 key={person.id}
                 participant={person}
-                onAddRole={(id, roleName) => handleAddRole(id, roleName, 'person')}
+                onAddRole={(id, roleName) => handleAddRole(id, roleName as ParticipantRoleName, 'person')}
                 onDeleteRole={handleDeleteRole}
                 onDelete={(id) => handleDelete(id, 'person')}
                 onCopy={(id) => setCopyTarget({ id, type: 'person' })}

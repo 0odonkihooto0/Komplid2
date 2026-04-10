@@ -1,7 +1,5 @@
-export default function InfoQuestionsPage() {
-  return (
-    <div className="flex items-center justify-center py-20 text-muted-foreground">
-      Вопросы — в разработке
-    </div>
-  );
+import { ProblematicQuestionsView } from '@/components/objects/info/ProblematicQuestionsView';
+
+export default function InfoQuestionsPage({ params }: { params: { objectId: string } }) {
+  return <ProblematicQuestionsView objectId={params.objectId} />;
 }

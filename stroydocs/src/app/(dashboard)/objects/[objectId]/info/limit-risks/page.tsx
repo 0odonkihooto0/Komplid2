@@ -1,7 +1,7 @@
-export default function InfoLimitRisksPage() {
-  return (
-    <div className="flex items-center justify-center py-20 text-muted-foreground">
-      Риски неосвоения лимитов — в разработке
-    </div>
-  );
+import { LimitRisksView } from '@/components/objects/limit-risks/LimitRisksView';
+
+export const dynamic = 'force-dynamic';
+
+export default function InfoLimitRisksPage({ params }: { params: { objectId: string } }) {
+  return <LimitRisksView projectId={params.objectId} />;
 }
