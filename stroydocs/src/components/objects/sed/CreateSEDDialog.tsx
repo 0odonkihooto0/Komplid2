@@ -33,7 +33,7 @@ const DOC_TYPE_OPTIONS = [
   { value: 'OTHER', label: 'Иное' },
 ] as const;
 
-const formSchema = createSEDSchema.omit({ tags: true, receiverOrgIds: true }).extend({
+const formSchema = createSEDSchema.omit({ tags: true, receiverOrgIds: true, date: true }).extend({
   tagsInput: z.string().optional(),
   receiverOrgIds: z.array(z.string()).min(1, 'Укажите хотя бы одного получателя'),
 });
