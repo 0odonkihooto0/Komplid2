@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: 'Times New Roman', serif; font-size: 10pt; margin: 0; padding: 15mm 15mm 15mm 20mm; }
+  .header-meta { text-align: right; font-size: 9pt; color: #333; margin-bottom: 4pt; }
+  .header-meta .date { font-weight: bold; }
+  .header-meta .meta-line { margin-top: 2pt; }
+  .object-title { text-align: center; font-size: 13pt; font-weight: bold; text-transform: uppercase; margin: 10pt 0 2pt; line-height: 1.3; }
+  .object-subtitle { text-align: center; font-size: 9pt; color: #555; margin-bottom: 10pt; }
+
+  .section-title {
+    font-size: 9pt; font-weight: bold; text-transform: uppercase;
+    background-color: #dce6f1; padding: 3pt 6pt; margin: 8pt 0 0;
+    border-left: 3pt solid #2563EB;
+  }
+
+  table { width: 100%; border-collapse: collapse; margin: 0; font-size: 9pt; }
+  th, td { border: 1pt solid #888; padding: 3pt 5pt; text-align: left; vertical-align: top; }
+  th { background-color: #f0f4fa; font-weight: bold; text-align: center; font-size: 8.5pt; }
+  .label-col { width: 38%; font-weight: bold; background-color: #f8f9fa; }
+  .text-center { text-align: center; }
+
+  /* Стадии */
+  .stages-table td { text-align: center; vertical-align: middle; }
+  .stage-name { font-size: 8pt; font-weight: bold; padding-bottom: 2pt; }
+  .stage-arrow { font-size: 10pt; color: #888; border: none !important; }
+  .check-done { color: #16a34a; font-size: 14pt; font-weight: bold; line-height: 1; }
+  .check-empty { color: #aaa; font-size: 14pt; line-height: 1; }
+
+  .problems-text { font-size: 9pt; padding: 5pt; min-height: 30pt; border: 1pt solid #888; margin-top: 0; }
+  .na { color: #aaa; }
+
+  .progress-cell { min-width: 60pt; }
+  .progress-bar-outer { background: #e5e7eb; height: 8pt; border-radius: 3pt; overflow: hidden; margin-top: 2pt; }
+  .progress-bar-inner { background: #2563EB; height: 8pt; }
+</style>
+</head>
+<body>
+
+<!-- Шапка: дата формирования -->
+<div class="header-meta">
+  <div class="date">Дата формирования: {{formationDate}}</div>
+  {{#if programPoint}}<div class="meta-line">Пункт программы: {{programPoint}}</div>{{/if}}
+  {{#if orderNumber}}<div class="meta-line">Порядковый номер: {{orderNumber}}</div>{{/if}}
+</div>
+
+<!-- Название объекта -->
+<div class="object-title">{{objectName}}</div>
+{{#if shortName}}<div class="object-subtitle">{{shortName}}</div>{{/if}}
+
+<!-- Участники -->
+<table style="margin-top: 8pt;">
+  <tr>
+    <td class="label-col">Заказчик</td>
+    <td>{{customer}}</td>
+  </tr>
+  <tr>
+    <td class="label-col">Ответственный исполнитель</td>
+    <td>{{responsibleExecutor}}</td>
+  </tr>
+</table>
+
+<!-- Финансирование -->
+<div class="section-title">Финансирование</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width:15%">Год</th>
+      <th style="width:42.5%">Предусмотрено бюджетом, руб.</th>
+      <th style="width:42.5%">Внебюджетные средства, руб.</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="text-center">{{fundingYear}}</td>
+      <td class="text-center">{{budgetAllocated}}</td>
+      <td class="text-center">{{extraBudget}}</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- Сроки реализации -->
+<div class="section-title">Сроки реализации</div>
+<table>
+  <tr>
+    <td class="label-col">Плановая дата начала</td>
+    <td>{{plannedStartDate}}</td>
+    <td class="label-col" style="width:38%">Плановая дата окончания</td>
+    <td>{{plannedEndDate}}</td>
+  </tr>
+  <tr>
+    <td class="label-col">Отклонение от плана</td>
+    <td colspan="3">{{deviationText}}</td>
+  </tr>
+</table>
+
+<!-- Стадии реализации -->
+<div class="section-title">Стадии реализации</div>
+<table class="stages-table">
+  <tbody>
+    <tr>
+      <td style="width:18%">
+        <div class="stage-name">ИРД</div>
+        <div>Исходно-разрешительная<br>документация</div>
+        <div>{{#if stages.ird}}<span class="check-done">&#10003;</span>{{else}}<span class="check-empty">&#9675;</span>{{/if}}</div>
+      </td>
+      <td class="stage-arrow" style="width:4%; border:none !important;">&#8594;</td>
+      <td style="width:18%">
+        <div class="stage-name">ПИР</div>
+        <div>Проектно-изыскательские<br>работы</div>
+        <div>{{#if stages.pir}}<span class="check-done">&#10003;</span>{{else}}<span class="check-empty">&#9675;</span>{{/if}}</div>
+      </td>
+      <td class="stage-arrow" style="width:4%; border:none !important;">&#8594;</td>
+      <td style="width:18%">
+        <div class="stage-name">Экспертиза</div>
+        <div>Государственная<br>экспертиза</div>
+        <div>{{#if stages.expertise}}<span class="check-done">&#10003;</span>{{else}}<span class="check-empty">&#9675;</span>{{/if}}</div>
+      </td>
+      <td class="stage-arrow" style="width:4%; border:none !important;">&#8594;</td>
+      <td style="width:18%">
+        <div class="stage-name">СМР</div>
+        <div>Строительно-монтажные<br>работы</div>
+        <div>{{#if stages.smr}}<span class="check-done">&#10003;</span>{{else}}<span class="check-empty">&#9675;</span>{{/if}}</div>
+      </td>
+      <td class="stage-arrow" style="width:4%; border:none !important;">&#8594;</td>
+      <td style="width:18%">
+        <div class="stage-name">Ввод в эксплуатацию</div>
+        <div>Разрешение на ввод<br>в эксплуатацию</div>
+        <div>{{#if stages.commissioning}}<span class="check-done">&#10003;</span>{{else}}<span class="check-empty">&#9675;</span>{{/if}}</div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ПИР -->
+<div class="section-title">ПИР (Проектно-изыскательские работы)</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width:30%">Исполнитель</th>
+      <th style="width:20%">Стоимость, руб.</th>
+      <th style="width:15%">Дата окончания</th>
+      <th style="width:20%" class="progress-cell">Готовность</th>
+      <th style="width:15%">Динамика</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>{{pirContractor}}</td>
+      <td class="text-center">{{pirTotalAmount}}</td>
+      <td class="text-center">{{pirEndDate}}</td>
+      <td class="text-center">
+        {{pirReadiness}}
+        {{#if pirReadinessNum}}
+        <div class="progress-bar-outer">
+          <div class="progress-bar-inner" style="width: {{pirReadinessNum}}%;"></div>
+        </div>
+        {{/if}}
+      </td>
+      <td class="text-center">{{pirDynamics}}</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- СМР -->
+<div class="section-title">СМР (Строительно-монтажные работы)</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width:30%">Исполнитель</th>
+      <th style="width:20%">Стоимость договора, руб.</th>
+      <th style="width:15%">Дата окончания</th>
+      <th style="width:20%" class="progress-cell">Готовность</th>
+      <th style="width:15%">Динамика</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>{{smrContractor}}</td>
+      <td class="text-center">{{smrTotalAmount}}</td>
+      <td class="text-center">{{smrEndDate}}</td>
+      <td class="text-center">
+        {{smrReadiness}}
+        {{#if smrReadinessNum}}
+        <div class="progress-bar-outer">
+          <div class="progress-bar-inner" style="width: {{smrReadinessNum}}%;"></div>
+        </div>
+        {{/if}}
+      </td>
+      <td class="text-center">{{smrDynamics}}</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- Проблемные вопросы -->
+<div class="section-title">Проблемные вопросы</div>
+<div class="problems-text">{{problems}}</div>
+
+<!-- Ситуация на объекте -->
+<div class="section-title">Ситуация на объекте</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width:35%">Показатель</th>
+      <th style="width:32.5%">Количество</th>
+      <th style="width:32.5%">Динамика</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Рабочие, чел.</td>
+      <td class="text-center">{{workersCount}}</td>
+      <td class="text-center">{{workersDynamics}}</td>
+    </tr>
+    <tr>
+      <td>Техника, ед.</td>
+      <td class="text-center">{{equipmentCount}}</td>
+      <td class="text-center">{{equipmentDynamics}}</td>
+    </tr>
+  </tbody>
+</table>
+
+</body>
+</html>
