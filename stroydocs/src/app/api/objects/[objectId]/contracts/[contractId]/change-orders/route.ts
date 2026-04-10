@@ -12,6 +12,7 @@ const createSchema = z.object({
   title: z.string().min(1).max(500),
   description: z.string().max(2000).optional(),
   amount: z.number(),
+  changeType: z.enum(['AMOUNT', 'TOTAL_AMOUNT']).default('AMOUNT'),
 });
 
 export async function GET(
@@ -63,15 +64,40 @@ export async function POST(
     const parsed = createSchema.safeParse(body);
     if (!parsed.success) return errorResponse('Ошибка валидации', 400, parsed.error.issues);
 
-    const order = await db.changeOrder.create({
-      data: {
-        ...parsed.data,
-        contractId: params.contractId,
-        createdById: session.user.id,
-      },
-      include: {
-        createdBy: { select: { id: true, firstName: true, lastName: true } },
-      },
+    const { changeType, ...orderData } = parsed.data;
+
+    const order = await db.$transaction(async (tx) => {
+      // Создаём доп. соглашение
+      const created = await tx.changeOrder.create({
+        data: {
+          ...orderData,
+          changeType,
+          contractId: params.contractId,
+          createdById: session.user.id,
+        },
+        include: {
+          createdBy: { select: { id: true, firstName: true, lastName: true } },
+        },
+      });
+
+      // Обновляем сумму договора в зависимости от типа изменения
+      let newTotal: number;
+      if (changeType === 'TOTAL_AMOUNT') {
+        // Заменяем общую сумму
+        newTotal = orderData.amount;
+      } else {
+        // Прибавляем к текущей сумме
+        newTotal = (contract.totalAmount ?? 0) + orderData.amount;
+      }
+
+      const newVatAmount = newTotal * (contract.vatRate ?? 0) / 100;
+
+      await tx.contract.update({
+        where: { id: params.contractId },
+        data: { totalAmount: newTotal, vatAmount: newVatAmount },
+      });
+
+      return created;
     });
 
     return successResponse(order);

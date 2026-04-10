@@ -39,7 +39,7 @@ export function ChangeOrdersTab({ projectId, contractId }: Props) {
   const createOrder = useCreateChangeOrder(projectId, contractId);
   const updateStatus = useUpdateChangeOrderStatus(projectId, contractId);
 
-  function handleCreate(data: { number: string; title: string; description?: string; amount: number }) {
+  function handleCreate(data: { number: string; title: string; description?: string; amount: number; changeType: 'AMOUNT' | 'TOTAL_AMOUNT' }) {
     createOrder.mutate(data, { onSuccess: () => setCreateOpen(false) });
   }
 
