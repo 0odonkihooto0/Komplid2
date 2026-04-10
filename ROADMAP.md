@@ -446,6 +446,35 @@
 - ✅ Сообщения участников в карточке ДО (SEDWorkflowMessage)
 - ✅ Расширены поля SEDDocument: входящий/исходящий номер, дата, физлица-отправитель/получатель, организация-получатель, isRead, наблюдатели
 
+### СЭД — Карточки документооборота (ДО) ✅ (2026-04-10)
+
+**API роуты карточки ДО (`/api/projects/[projectId]/sed/[docId]/workflows/`):**
+- ✅ GET + POST — список и создание ДО по типу (sequential/parallel/single режимы)
+- ✅ POST `/by-regulation` — создание ДО по регламенту организации (stepsTemplate из WorkflowRegulation)
+- ✅ POST `/with-params` — предобновление параметров документа (receiverOrgId, incomingNumber, receiverUserId)
+- ✅ GET `/[wid]` — карточка ДО с маршрутом, шагами, сообщениями, основаниями
+- ✅ POST `/[wid]/approve` — согласование (последовательный режим + параллельный MULTI_APPROVAL/MULTI_SIGNING)
+- ✅ POST `/[wid]/reject` — отклонение (с обязательным комментарием, уведомление инициатора)
+- ✅ POST `/[wid]/redirect` — перенаправление другому участнику (новый ApprovalStep + уведомление)
+- ✅ POST `/[wid]/create-on-basis` — новое ДО на основании (SEDWorkflow + SEDDocumentBasis)
+- ✅ GET + POST `/[wid]/messages` — сообщения в карточке ДО (пагинация, проверка авторства)
+- ✅ DELETE `/[wid]/messages/[msgId]` — удаление сообщения (только автор)
+- ✅ POST `/[wid]/print` — PDF листа согласования (Handlebars + Puppeteer, `templates/sed/approval-sheet.hbs`)
+
+**API роуты регламентов (`/api/organizations/[orgId]/workflow-regulations/`):**
+- ✅ GET + POST — список и создание регламентов (POST только ADMIN)
+- ✅ GET + PUT + DELETE `/[regId]` — карточка, обновление, удаление (DELETE блокируется при активных ДО)
+
+**Вспомогательная инфраструктура:**
+- ✅ `getNextSEDWorkflowNumber()` в `src/lib/numbering.ts` (формат `ДО-{год}-{NNN}`, advisory lock)
+- ✅ `src/lib/sed-workflow-pdf-generator.ts` — PDF генератор (Promise-кэш шаблона, Puppeteer)
+- ✅ `templates/sed/approval-sheet.hbs` — Handlebars шаблон листа согласования А4
+
+**Логика типов ДО:**
+- APPROVAL: последовательные шаги (stepIndex 0, 1, 2...), один участник за раз
+- MULTI_APPROVAL / MULTI_SIGNING: параллельные шаги (все stepIndex=0), завершение при всех APPROVED
+- DELEGATION / REDIRECT / REVIEW / DIGITAL_SIGNING: один шаг, один участник
+
 ### Вкладка «Чат»
 - ✅ API роуты: список (GET), создание (POST), просмотр/обновление/удаление (GET/PATCH/DELETE)
 - ✅ Расширенная логика видимости: author / senderOrg / receiverOrg / observers / workflow-участники (6 условий OR)
@@ -478,6 +507,14 @@
 - ✅ Enum `SEDWorkflowStatus` (5 статусов: CREATED, IN_PROGRESS, APPROVED, REJECTED, COMPLETED)
 - ✅ Миграция `20260410210000_extend_sed_module`
 - ✅ `SEDDocument`, `SEDAttachment` (с tsvector-поиском)
+- ✅ `SEDFolder`, `SEDDocumentFolder` (папочная структура)
+- ✅ `SEDLink` (полиморфные связи: SEDDocument ↔ Contract, ExecutionDoc и др.)
+- ✅ `SEDWorkflow` (workflowType, status, participants[], observers[], approvalRouteId, regulationId)
+- ✅ `SEDWorkflowMessage` (сообщения в карточке ДО)
+- ✅ `SEDDocumentBasis` (связь ДО-основание ↔ новое ДО)
+- ✅ `WorkflowRegulation` (organizationId, stepsTemplate Json [{role, userId?}])
+- ✅ Enum: `WorkflowType` (DELEGATION | APPROVAL | REDIRECT | MULTI_APPROVAL | MULTI_SIGNING | DIGITAL_SIGNING | REVIEW)
+- ✅ Enum: `SEDWorkflowStatus` (CREATED | IN_PROGRESS | APPROVED | REJECTED | COMPLETED)
 - ✅ `SEDFolder`, `SEDDocumentFolder` (папки с иерархией parentId, many-to-many)
 - ✅ `SEDLink` (полиморфная связь: entityType + entityId, @@unique constraint)
 - ✅ `SEDWorkflow`, `SEDWorkflowMessage`, `WorkflowRegulation`, `SEDDocumentBasis` (карточки ДО)
