@@ -47,7 +47,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     });
     if (!regulation) return errorResponse('Регламент не найден', 404);
 
-    const stepsTemplate = regulation.stepsTemplate as RegulationStep[];
+    const stepsTemplate = regulation.stepsTemplate as unknown as RegulationStep[];
     if (!Array.isArray(stepsTemplate) || stepsTemplate.length === 0) {
       return errorResponse('Регламент не содержит шагов', 422);
     }
