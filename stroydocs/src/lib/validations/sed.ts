@@ -7,6 +7,16 @@ export const createSEDSchema = z.object({
   senderOrgId: z.string().uuid('Выберите организацию-отправителя'),
   receiverOrgIds: z.array(z.string().uuid()).min(1, 'Укажите хотя бы одного получателя'),
   tags: z.array(z.string()).optional(),
+  // Физлицо-отправитель (сотрудник текущей организации)
+  senderUserId: z.string().uuid().optional(),
+  // Физлицо-получатель (опционально)
+  receiverUserId: z.string().uuid().optional(),
+  // Организация-получатель (единственная, для явной FK-связи)
+  receiverOrgId: z.string().uuid().optional(),
+  // Дата документа (вводится вручную, по умолчанию сегодня)
+  date: z.coerce.date().optional(),
+  // Кастомный номер: если передан — используется вместо автогенерации
+  number: z.string().max(100).optional(),
 });
 
 export const updateSEDSchema = z.object({

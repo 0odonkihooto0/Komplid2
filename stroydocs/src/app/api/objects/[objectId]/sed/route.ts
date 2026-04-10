@@ -168,12 +168,15 @@ export async function POST(
     const parsed = createSEDSchema.safeParse(body);
     if (!parsed.success) return errorResponse('Ошибка валидации', 400, parsed.error.issues);
 
-    const { senderOrgId, ...rest } = parsed.data;
+    const { senderOrgId, number: customNumber, ...rest } = parsed.data;
 
     const senderOrgEntity = await db.organization.findUnique({ where: { id: senderOrgId } });
     if (!senderOrgEntity) return errorResponse('Организация-отправитель не найдена', 404);
 
-    const number = await getNextSEDNumber(params.objectId);
+    // Используем кастомный номер из формы или автогенерацию через advisory lock
+    const number = customNumber?.trim()
+      ? customNumber.trim()
+      : await getNextSEDNumber(params.objectId);
 
     const doc = await db.sEDDocument.create({
       data: {
