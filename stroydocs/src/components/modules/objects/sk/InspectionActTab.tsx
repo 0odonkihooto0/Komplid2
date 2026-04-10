@@ -11,7 +11,7 @@ interface Props {
   inspectionId: string;
 }
 
-export function InspectionActTab({ acts, objectId, inspectionId }: Props) {
+export function InspectionActTab({ acts, objectId, inspectionId: _inspectionId }: Props) {
   if (acts.length === 0) {
     return (
       <div className="py-6 text-sm text-muted-foreground">
