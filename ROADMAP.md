@@ -161,7 +161,8 @@
 
 ### Вкладка «Финансирование»
 - ✅ Реестр источников (бюджет, внебюджет, кредиты) — FundingView с CRUD
-- ⬜ Лимиты по периодам, риски неосвоения
+- ⬜ UI для FundingRecord (план/факт по годам с разбивкой: фед/рег/мест/собств/внебюдж)
+- ⬜ UI для рисков неосвоения лимитов (LimitRisk)
 
 ### Вкладка «Контракты»
 - ✅ Список договоров (переиспользуется)
@@ -181,6 +182,9 @@
 **База данных (Модуль 2)**
 - ⬜ `ObjectPassport` отдельная модель (поля cadastralNumber, area и др. добавлены в Project напрямую)
 - ✅ `FundingSource` (projectId, type, amount, period) — модель в schema.prisma
+- ✅ `FundingRecord` (projectId, year, recordType ALLOCATED/DELIVERED, federal/regional/local/own/extraBudget)
+- ✅ `LimitRisk` (projectId, contractId?, year, totalAmount, бюджеты по источникам, riskReason, resolutionProposal)
+- ✅ enum `FundingRecordType` (ALLOCATED, DELIVERED)
 - ✅ `Task` (projectId, contractId, assigneeId, title, status, deadline, priority) — модель в schema.prisma
 
 ---
@@ -194,6 +198,34 @@
 - ✅ Реестр организаций с ролями (переиспользуется)
 - ⬜ Автопроверка членства в СРО (реестр НОСТРОЙ)
 - ⬜ Проверка специалистов в НРС
+
+### Вкладка «Земельные участки» (ЦУС)
+- ⬜ UI реестра земельных участков объекта (LandPlot)
+- ⬜ Карточка ЗУ: кадастровый номер, площадь, категория, вид использования
+- ⬜ Блок обременений / ограничений / объектов сноса
+- ⬜ ГПЗУ: номер, дата, прикреплённый файл (gpzuS3Key)
+- ⬜ Привязка собственника и арендатора (ownerOrg / tenantOrg)
+
+### Вкладка «Технические условия» (ЦУС)
+- ⬜ UI реестра ТУ (TechnicalCondition)
+- ⬜ Типы: Водоснабжение, Электроснабжение, Газоснабжение, Теплоснабжение, Канализация, Связь
+- ⬜ Поля: номер ТУ, дата выдачи, срок действия, выдавший орган, условия подключения
+
+### Вкладка «Видеонаблюдение» (ЦУС)
+- ⬜ UI реестра камер (VideoCamera)
+- ⬜ RTSP-поток и HTTP URL трансляции
+- ⬜ Статус камеры: Работает / Не работает / На обслуживании
+- ⬜ Встроенный плеер трансляции в браузере
+
+### Вкладка «Показатели объекта» (ЦУС)
+- ⬜ UI таблицы конфигурируемых показателей (ProjectIndicator)
+- ⬜ Группы: Общая информация, Контракты ПИР, Договоры СМР, Финансирование и др.
+- ⬜ Источник значения: Ручной (MANUAL) / Авто из поля БД (AUTO)
+
+### Вкладка «Координаты» (ЦУС)
+- ⬜ UI управления точками контура объекта (ProjectCoordinate)
+- ⬜ Визуализация контура на карте (Яндекс.Карты / Leaflet)
+- ⬜ Поддержка нескольких очередей строительства
 
 ### Вкладка «Деловая переписка»
 - ✅ Реестр официальных писем (входящие / исходящие)
@@ -216,6 +248,13 @@
 - ✅ `RFI`, `RFIAttachment`
 - ✅ `SEDDocument`, `SEDAttachment` (с tsvector-поиском)
 - ✅ `ChatMessage`
+- ✅ `LandPlot` (cadastralNumber, area, landCategory, ГПЗУ, ЕГРН, обременения, ownerOrg/tenantOrg)
+- ✅ `TechnicalCondition` (type, number, issueDate, expirationDate, issuingAuthority, responsibleOrg)
+- ✅ `VideoCamera` (rtspUrl, httpUrl, operationalStatus, cameraModel, authorId)
+- ✅ `ProjectCoordinate` (latitude, longitude, constructionPhase)
+- ✅ `ProjectIndicator` (groupName, indicatorName, value, sourceType MANUAL/AUTO, autoSourceField)
+- ✅ enum `IndicatorSource` (MANUAL, AUTO)
+- ✅ Миграция: `20260409120000_add_info_module_models`
 
 ---
 
