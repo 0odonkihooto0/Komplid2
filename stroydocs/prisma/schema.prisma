@@ -77,13 +77,16 @@ enum TaskSource {
 }
 
 enum ProblemIssueType {
-  CORRECTION_PSD // Корректировка ПСД
-  LAND_LEGAL // Земельно-правовые
-  PRODUCTION // Производственные
-  ORG_LEGAL // Организационно-правовые
-  CONTRACT_WORK // Договорная работа
-  FINANCIAL // Финансовые
-  OTHER // Прочие
+  CORRECTION_PSD  // Корректировка ПСД
+  LAND_LEGAL      // Земельно-правовые
+  PRODUCTION      // Производственные
+  ORG_LEGAL       // Организационно-правовые
+  CONTRACT_WORK   // Договорная работа
+  FINANCIAL       // Финансирование
+  MATERIAL_SUPPLY // Поставка материалов
+  WORK_QUALITY    // Качество работ
+  DEADLINES       // Сроки
+  OTHER           // Прочие
 }
 
 enum ProblemIssueStatus {
@@ -162,6 +165,10 @@ model Organization {
   // Участники объекта
   objectParticipations ObjectOrganization[]
   objectPersons        ObjectPerson[]
+
+  // Проблемные вопросы (ЦУС)
+  problemIssuesAsAssignee ProblemIssue[] @relation("ProblemIssueAssignee")
+  problemIssuesAsVerifier ProblemIssue[] @relation("ProblemIssueVerifier")
 
   @@map("organizations")
 }
@@ -3817,10 +3824,23 @@ model ProblemIssue {
   type        ProblemIssueType
   status      ProblemIssueStatus @default(ACTIVE)
   description String
-  resolution  String? // Пути решения
-  responsible String? // Ответственный
+  resolution  String? // Пути решения (устаревшее, оставлено для совместимости)
+  responsible String? // Ответственный (устаревшее, оставлено для совместимости)
   deadline    DateTime?
   closedAt    DateTime?
+
+  // Расширенные поля (ЦУС — вкладка «Вопросы»)
+  causes         String?   // Причины возникновения
+  measuresTaken  String?   // Предпринятые меры
+  resolutionDate DateTime? // Дата решения
+
+  // Исполнитель (организация из участников объекта)
+  assigneeOrgId String?
+  assigneeOrg   Organization? @relation("ProblemIssueAssignee", fields: [assigneeOrgId], references: [id])
+
+  // Проверяющий (организация)
+  verifierOrgId String?
+  verifierOrg   Organization? @relation("ProblemIssueVerifier", fields: [verifierOrgId], references: [id])
 
   projectId      String
   buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -3831,9 +3851,29 @@ model ProblemIssue {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  attachments ProblemIssueAttachment[]
+
   @@index([projectId])
   @@index([projectId, status])
+  @@index([assigneeOrgId])
+  @@index([verifierOrgId])
   @@map("problem_issues")
+}
+
+/// Вложение к проблемному вопросу
+model ProblemIssueAttachment {
+  id        String   @id @default(uuid())
+  fileName  String
+  s3Key     String
+  mimeType  String
+  size      Int
+  createdAt DateTime @default(now())
+
+  issueId String
+  issue   ProblemIssue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@index([issueId])
+  @@map("problem_issue_attachments")
 }
 
 // === Модуль «Информация» — ЦУС ===
