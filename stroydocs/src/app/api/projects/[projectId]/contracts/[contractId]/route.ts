@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { updateContractSchema } from '@/lib/validations/contract';
 import { successResponse, errorResponse } from '@/utils/api';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,6 +44,10 @@ export async function GET(
           include: { _count: { select: { subContracts: true } } },
         },
         parent: { select: { id: true, number: true, name: true } },
+        parentContract: { select: { id: true, number: true, name: true } },
+        childContracts: {
+          include: { _count: { select: { subContracts: true } } },
+        },
       },
     });
 
@@ -86,6 +91,37 @@ export async function PUT(
   } catch (error) {
     if (error instanceof NextResponse) return error;
     logger.error({ err: error }, 'Ошибка обновления договора');
+    return errorResponse('Внутренняя ошибка сервера', 500);
+  }
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { projectId: string; contractId: string } },
+) {
+  try {
+    const session = await getSessionOrThrow();
+    const project = await db.buildingObject.findFirst({
+      where: { id: params.projectId, organizationId: session.user.organizationId },
+    });
+    if (!project) return errorResponse('Проект не найден', 404);
+
+    const body = await req.json();
+    // Разрешаем только обновление parentContractId через PATCH
+    const patchSchema = z.object({
+      parentContractId: z.string().uuid().nullable(),
+    });
+    const parsed = patchSchema.safeParse(body);
+    if (!parsed.success) return errorResponse('Ошибка валидации', 400, parsed.error.issues);
+
+    const contract = await db.contract.update({
+      where: { id: params.contractId },
+      data: { parentContractId: parsed.data.parentContractId },
+    });
+    return successResponse(contract);
+  } catch (error) {
+    if (error instanceof NextResponse) return error;
+    logger.error({ err: error }, 'Ошибка обновления связи договора');
     return errorResponse('Внутренняя ошибка сервера', 500);
   }
 }

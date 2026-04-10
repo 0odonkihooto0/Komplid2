@@ -30,8 +30,17 @@ export interface ContractDetail {
   endDate: string | null;
   parentId: string | null;
   parent: { id: string; number: string; name: string } | null;
+  parentContractId: string | null;
+  parentContract: { id: string; number: string; name: string } | null;
   participants: ContractParticipantItem[];
   subContracts: {
+    id: string;
+    number: string;
+    name: string;
+    status: ContractStatus;
+    _count: { subContracts: number };
+  }[];
+  childContracts: {
     id: string;
     number: string;
     name: string;

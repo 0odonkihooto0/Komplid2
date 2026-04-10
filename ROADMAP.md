@@ -34,6 +34,7 @@
 - ✅ Иерархия: Проект → Договор → Субдоговор
 - ✅ Участники договора (застройщик, подрядчик, авторнадзор)
 - ✅ Приказы о назначении ответственных лиц
+- ✅ Карточка договора: сводная строка (документы + платежи плановые/факт) + вкладки «Обязательства», «Связанные контракты», «Подробная информация», «Локальные сметные расчёты» (через EstimateContractVersion)
 
 ---
 
@@ -606,6 +607,7 @@
 - ✅ `ContractPayment` (PLAN / FACT)
 - ✅ `ContractCategory`
 - ✅ **Расширение карточки договора (ЦУС):** новые поля `Contract` (executionStatus, vatRate/vatAmount, plannedStart/End, factStart/End, parentContractId / «ContractLinks»); новые поля `ContractCategory` (includeInPaymentWidget, executionStage); новые поля `ContractPayment` (limitYear, limitAmount); `ChangeOrder.changeType`; 6 новых моделей: `ContractObligation`, `ContractAdvance`, `ContractExecution`, `ContractGuarantee`, `ContractDetailInfo`, `ContractFinancialTable` (миграция `20260411000000_extend_contract_card`)
+- ✅ Карточка договора: сводная строка (документы, платежи) + вкладки «Обязательства», «Связанные контракты», «Подробная информация», «Локальные сметные расчёты»
 
 ---
 
