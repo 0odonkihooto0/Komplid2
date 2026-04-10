@@ -538,15 +538,66 @@
 
 ---
 
-## МОДУЛЬ 13 — ТИМ
+## МОДУЛЬ 13 — ТИМ ✅ (2026-04-10)
 
+> **Аналог:** ЦУС → Модуль «ТИМ»
 > **Ориентир:** 4–6 недель (после основных модулей)
 
-- ✅ Загрузка IFC-модели, 3D-вьюер в браузере
-- ✅ Привязка АОСР к элементу модели (ИД ↔ IFC GUID)
-- ✅ Цветовая индикация: серый / зелёный / красный по статусу ИД
-- ✅ nanoCAD BIM, Renga, Pilot-BIM
-- ✅ `BimModel`, `BimElementLink`
+### 3D-вьюер ✅
+- ✅ Загрузка IFC-файла из Timeweb S3 (presigned URL) в браузере
+- ✅ Рендеринг геометрии через web-ifc (WASM) + Three.js (`IfcViewerCore`, `ifcSceneSetup`)
+- ✅ Элементы управления камерой: сброс, fit, wireframe (`ViewerToolbar`)
+- ✅ Клик на элемент → raycasting → выделение (подсветка синим)
+- ✅ Временная шкала ГПР (TimelineSlider) для привязки к датам
+
+### Панель свойств элемента ✅
+- ✅ Правая панель (`ElementPropertiesPanel`) с вкладками: Инфо / ГПР / Связи / Файлы
+- ✅ Отображение: тип IFC (IfcWall, IfcSlab…), слой, уровень, GUID
+- ✅ **IFC PropertySets клиентски** — `buildIfcPropertiesMap()` сканирует `IfcRelDefinesByProperties`
+  → `IfcPropertySet` / `IfcElementQuantity` и показывает пары ключ-значение без перепарсинга БД
+- ✅ Fallback: данные из БД (`BimElement.properties`) → данные из IFC → сообщение «не загружены»
+- ✅ Привязка элемента к задаче ГПР (`GprLinkPanel`)
+- ✅ Привязка элемента к документу ИД (`DocumentLinkPanel`)
+
+### Управление моделями ✅
+- ✅ Реестр моделей с статусами (PROCESSING / READY / ERROR), `ModelStatusBadge`
+- ✅ Загрузка новой версии IFC (`UploadModelDialog`, `BimModelVersion`)
+- ✅ Таблица версий (`ModelVersionsTable`) с историей и переключением текущей
+- ✅ Фоновый парсинг через BullMQ воркер (`parse-ifc.worker.ts`): GUID, тип, имя, уровень
+- ✅ Дерево разделов (`SectionTree`, `useSections`) — иерархия частей модели
+
+### Сравнение версий и коллизии ✅
+- ✅ Сравнение двух версий (`VersionCompare`, `VersionDiffViewer`, `useVersionCompare`)
+- ✅ Обнаружение коллизий (`CollisionDetector`, `useCollisions`) — пересечения AABB
+- ✅ Подсветка коллизионной пары (красный), список результатов (`CollisionResultsList`)
+
+### Реестр замечаний и доступ ✅
+- ✅ Реестр замечаний ТИМ (`BimIssuesRegistry`, `useBimIssues`)
+- ✅ Управление доступом (`BimAccessSettings`, `AddBimAccessDialog`, `useBimAccess`)
+- ✅ Уровни доступа: VIEW / ADD / EDIT / DELETE (`BimAccessLevel`)
+
+### URL-структура ✅
+- ✅ `/objects/[id]/tim/` — главная с реестром моделей
+- ✅ `/objects/[id]/tim/models/[modelId]/` — 3D-вьюер + панель свойств
+- ✅ `/objects/[id]/tim/issues/` — реестр замечаний ТИМ
+- ✅ `/objects/[id]/tim/access/` — управление доступом
+
+**База данных (Модуль 13)**
+- ✅ `BimModel` (name, status, stage, s3Key, ifcVersion, elementCount, metadata)
+- ✅ `BimModelVersion` (version, isCurrent, s3Key, comment)
+- ✅ `BimElement` (ifcGuid, ifcType, name, description, layer, level, properties Json?)
+- ✅ `BimElementLink` (elementId, entityType, entityId — полиморфная: GanttTask/ExecutionDoc/Defect)
+- ✅ `BimSection` (иерархия через parentId)
+- ✅ Enum: `BimModelStatus`, `BimModelStage` (OTR/PROJECT/WORKING/CONSTRUCTION), `BimAccessLevel`
+- ✅ Индексы: `@@index([modelId])`, `@@index([ifcGuid])`, `@@unique([modelId, ifcGuid])`
+
+### Не реализовано / на будущее
+- ⬜ Сохранение PropertySets в БД (`BimElement.properties`) при фоновом парсинге воркером
+- ⬜ Фильтрация по уровню / типу / разделу в 3D-вьюере
+- ⬜ Экспорт в IFC (round-trip) с изменёнными статусами
+- ⬜ Интеграция с ИСУП Минстроя (BIM-паспорт)
+- ⬜ Совместный просмотр (multi-user cursor)
+- ⬜ nanoCAD BIM, Renga, Pilot-BIM — прямой импорт (пока только IFC)
 
 ---
 
