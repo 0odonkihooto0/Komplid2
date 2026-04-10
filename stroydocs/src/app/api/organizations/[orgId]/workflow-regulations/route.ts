@@ -46,7 +46,7 @@ export async function GET(req: NextRequest, { params }: Params) {
       db.workflowRegulation.count({ where: { organizationId: params.orgId } }),
     ]);
 
-    return successResponse(regulations, { total, page, limit });
+    return successResponse(regulations, { total, page, pageSize: limit, totalPages: Math.ceil(total / limit) });
   } catch (error) {
     if (error instanceof NextResponse) return error;
     logger.error({ err: error }, 'Ошибка получения регламентов');
