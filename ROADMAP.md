@@ -538,15 +538,65 @@
 
 ---
 
-## МОДУЛЬ 13 — ТИМ
+## МОДУЛЬ 13 — ТИМ (Технологии информационного моделирования) 🔄
 
-> **Ориентир:** 4–6 недель (после основных модулей)
+> **Аналог:** ЦУС → Модуль «ТИМ» (стр. 300)
+> **Статус:** В работе — базовый вьюер и инфраструктура готовы
 
-- ✅ Загрузка IFC-модели, 3D-вьюер в браузере
-- ✅ Привязка АОСР к элементу модели (ИД ↔ IFC GUID)
-- ✅ Цветовая индикация: серый / зелёный / красный по статусу ИД
-- ✅ nanoCAD BIM, Renga, Pilot-BIM
-- ✅ `BimModel`, `BimElementLink`
+### 3D-вьюер ✅
+- ✅ Загрузка IFC-файла из Timeweb S3 (presigned URL → web-ifc WASM)
+- ✅ Рендеринг геометрии через Three.js (BufferGeometry + MeshLambertMaterial)
+- ✅ Orbit controls (вращение, зум, пан)
+- ✅ Выбор элемента кликом (raycasting → expressID → IFC GUID)
+- ✅ Подсветка выбранного элемента (серый / синий / красный)
+- ✅ Тулбар: сброс вида, fit-to-view, wireframe, коллизии, сравнение
+- ✅ Клиентский парсинг IFC PropertySets (web-ifc → ifcProperties Map)
+- ✅ **Панель «Структура модели»** (2026-04-10):
+  - сворачиваемая левая панель (260px, коллапс в localStorage)
+  - вкладка «Структура»: дерево элементов из БД, сгруппированных по уровням; поиск, toggle видимости (mesh.visible)
+  - вкладка «Файлы»: список версий, скачать, загрузить новую версию, удалить
+  - вкладка «Связанные модели ТИМ»: другие модели объекта со статусами
+
+### Управление моделями ✅
+- ✅ Реестр моделей объекта (ModelsView + ModelVersionsTable)
+- ✅ Загрузка IFC-файла в Timeweb S3 (presigned URL upload, 3 шага)
+- ✅ Поддержка CAD-систем: nanoCAD BIM, Renga, Pilot-BIM, Revit, ArchiCAD
+- ✅ Версионирование (BimModelVersion): история, флаг isCurrent
+- ✅ Загрузка новой версии существующей модели (upload-version)
+- ✅ Стадии: ОТР / Проект / РД / АС
+- ✅ Дерево разделов (BimSection, SectionTree) — иерархические папки
+- ✅ Статусы обработки: PROCESSING → READY / ERROR (ModelStatusBadge)
+
+### Работа с элементами ✅
+- ✅ Парсинг и хранение элементов в БД (BimElement): GUID, тип IFC, имя, уровень, слой
+- ✅ Панель свойств элемента (ElementPropertiesPanel): 4 вкладки (Инфо, ГПР, Связи, Файлы)
+- ✅ Привязка элемента → задача ГПР (GprLinkPanel, BimElementLink)
+- ✅ Привязка элемента → ИД / дефект (DocumentLinkPanel)
+- ✅ Поиск элементов по GUID и имени (API с пагинацией, лимит 50–200)
+
+### Инструменты ✅
+- ✅ Обнаружение коллизий (CollisionDetector — пересечения и дубликаты геометрии)
+- ✅ Сравнение версий модели (VersionCompare + VersionDiffViewer)
+- ✅ Временная шкала ГПР (TimelineSlider — дата + диапазон)
+- ✅ Контроль доступа к BIM (BimAccessSettings + AddBimAccessDialog)
+- ✅ Реестр замечаний ТИМ (BimIssuesRegistry)
+
+### Не реализовано
+- ⬜ Цветовая индикация готовности ИД: серый / зелёный / красный по статусу
+- ⬜ Пространственная иерархия через web-ifc (IfcProject → IfcSite → IfcBuilding → IfcBuildingStorey)
+- ⬜ Привязка к временной шкале ГПР: показывать/скрывать элементы по дате
+- ⬜ Публичная страница просмотра 3D-модели (для заказчика / субподрядчика)
+- ⬜ Сечения (клиппинг-плоскости)
+- ⬜ Измерения в 3D
+- ⬜ Интеграция с ИСУП Минстроя (3D-контроль хода строительства)
+
+**База данных (Модуль 13)**
+- ✅ `BimModel` (id, name, status, stage, s3Key, fileName, ifcVersion, elementCount, isCurrent)
+- ✅ `BimModelVersion` (version, isCurrent, s3Key, uploadedById)
+- ✅ `BimSection` (иерархия через parentId, order)
+- ✅ `BimElement` (ifcGuid, ifcType, name, level, layer, properties Json)
+- ✅ `BimElementLink` (elementId, entityType, entityId — полиморфная связь)
+- ✅ `BimAccess`, `BimIssue`
 
 ---
 
