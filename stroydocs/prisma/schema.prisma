@@ -101,6 +101,15 @@ enum IndicatorSource {
   AUTO   // Автоматически
 }
 
+enum AppointmentDocType {
+  ORDER             // Приказ
+  POWER_OF_ATTORNEY // Доверенность
+  DECREE            // Распоряжение
+  REGULATION        // Постановление
+  DECISION          // Решение
+  CHARTER           // Устав
+}
+
 // === Модели Фазы 1 ===
 
 /// Организация (компания-участник строительства)
@@ -149,6 +158,10 @@ model Organization {
   ownedLandPlots                 LandPlot[]           @relation("LandPlotOwner")
   tenantedLandPlots              LandPlot[]           @relation("LandPlotTenant")
   responsibleTechnicalConditions TechnicalCondition[] @relation("TechnicalConditionOrg")
+
+  // Участники объекта
+  objectParticipations ObjectOrganization[]
+  objectPersons        ObjectPerson[]
 
   @@map("organizations")
 }
@@ -274,6 +287,9 @@ model User {
 
   // Модуль «Информация» — ЦУС
   authoredCameras VideoCamera[] @relation("CameraAuthor")
+
+  // Участники объекта (физлица, привязанные к системному пользователю)
+  objectPersonLinks ObjectPerson[]
 
   @@index([organizationId])
   @@map("users")
@@ -404,6 +420,10 @@ model BuildingObject {
   videoCameras        VideoCamera[]
   projectCoordinates  ProjectCoordinate[]
   projectIndicators   ProjectIndicator[]
+
+  // Участники объекта (прямая привязка, не через договоры)
+  objectOrganizations ObjectOrganization[]
+  objectPersons       ObjectPerson[]
 
   @@index([organizationId])
   @@index([parentId])
@@ -3994,4 +4014,78 @@ model ProjectIndicator {
 
   @@index([projectId, groupName])
   @@map("project_indicators")
+}
+
+// === Модуль «Участники» — прямая привязка к объекту (ЦУС) ===
+
+/// Юридическое лицо — участник строительного объекта
+model ObjectOrganization {
+  id               String         @id @default(uuid())
+  buildingObjectId String
+  buildingObject   BuildingObject @relation(fields: [buildingObjectId], references: [id], onDelete: Cascade)
+  organizationId   String
+  organization     Organization   @relation(fields: [organizationId], references: [id])
+  roles            ObjectParticipantRole[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([buildingObjectId, organizationId])
+  @@index([buildingObjectId])
+  @@map("object_organizations")
+}
+
+/// Физическое лицо — участник строительного объекта
+model ObjectPerson {
+  id               String         @id @default(uuid())
+  firstName        String // Имя
+  lastName         String // Фамилия
+  middleName       String?        // Отчество
+  organizationId   String?        // Организация, в которой числится физлицо
+  organization     Organization?  @relation(fields: [organizationId], references: [id])
+  linkedUserId     String?        // Привязанный пользователь системы (опционально)
+  linkedUser       User?          @relation(fields: [linkedUserId], references: [id])
+  buildingObjectId String
+  buildingObject   BuildingObject @relation(fields: [buildingObjectId], references: [id], onDelete: Cascade)
+  roles            ObjectParticipantRole[]
+  appointments     PersonAppointment[]
+
+  createdAt DateTime @default(now())
+
+  @@index([buildingObjectId])
+  @@map("object_persons")
+}
+
+/// Роль участника (юрлица или физлица) на объекте
+model ObjectParticipantRole {
+  id               String              @id @default(uuid())
+  roleName         String // Наименование роли из справочника
+  orgParticipantId String?             // FK к ObjectOrganization (XOR с personId)
+  orgParticipant   ObjectOrganization? @relation(fields: [orgParticipantId], references: [id], onDelete: Cascade)
+  personId         String?             // FK к ObjectPerson (XOR с orgParticipantId)
+  person           ObjectPerson?       @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([orgParticipantId])
+  @@index([personId])
+  @@map("object_participant_roles")
+}
+
+/// Документ о назначении физического лица (приказ, доверенность и т.д.)
+model PersonAppointment {
+  id             String             @id @default(uuid())
+  personId       String
+  person         ObjectPerson       @relation(fields: [personId], references: [id], onDelete: Cascade)
+  documentType   AppointmentDocType // Тип документа
+  documentNumber String?            // Номер документа
+  startDate      DateTime?          // Дата начала полномочий
+  endDate        DateTime?          // Дата окончания полномочий
+  isActive       Boolean            @default(true) // Актуальность
+  s3Key          String?            // S3 ключ прикреплённого файла
+  fileName       String?            // Оригинальное имя файла
+
+  createdAt DateTime @default(now())
+
+  @@index([personId])
+  @@map("person_appointments")
 }
