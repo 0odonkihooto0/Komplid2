@@ -13,6 +13,7 @@ const updateSchema = z.object({
   amount: z.number().optional(),
   status: z.enum(['DRAFT', 'SENT', 'APPROVED', 'REJECTED']).optional(),
   approvedBy: z.string().max(200).optional().nullable(),
+  changeType: z.enum(['AMOUNT', 'TOTAL_AMOUNT']).optional(),
 });
 
 export async function PUT(

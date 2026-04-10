@@ -32,6 +32,10 @@ import { AosrRegistryTable } from '@/components/modules/execution-docs/AosrRegis
 import { GanttContent } from './gantt/GanttContent';
 import { DailyLogTab } from '@/components/modules/daily-logs/DailyLogTab';
 import { ChangeOrdersTab } from '@/components/modules/change-orders/ChangeOrdersTab';
+import { PaymentsTab } from '@/components/modules/contracts/PaymentsTab';
+import { AdvancesTab } from '@/components/modules/contracts/AdvancesTab';
+import { ExecutionProgressTab } from '@/components/modules/contracts/ExecutionProgressTab';
+import { GuaranteesTab } from '@/components/modules/contracts/GuaranteesTab';
 import { ObligationsTab } from '@/components/modules/contracts/ObligationsTab';
 import { LinkedContractsTab } from '@/components/modules/contracts/LinkedContractsTab';
 import { DetailInfoTab } from '@/components/modules/contracts/DetailInfoTab';
@@ -204,8 +208,32 @@ export function ContractTabsContent({
       <TabsContent value="daily-log" className="mt-4">
         {activeTab === 'daily-log' && <DailyLogTab projectId={projectId} contractId={contractId} />}
       </TabsContent>
+      <TabsContent value="payments" className="mt-4">
+        {activeTab === 'payments' && (
+          <PaymentsTab projectId={projectId} contractId={contractId} />
+        )}
+      </TabsContent>
+
+      <TabsContent value="advances" className="mt-4">
+        {activeTab === 'advances' && (
+          <AdvancesTab projectId={projectId} contractId={contractId} />
+        )}
+      </TabsContent>
+
+      <TabsContent value="execution-progress" className="mt-4">
+        {activeTab === 'execution-progress' && (
+          <ExecutionProgressTab projectId={projectId} contractId={contractId} />
+        )}
+      </TabsContent>
+
       <TabsContent value="change-orders" className="mt-4">
         {activeTab === 'change-orders' && <ChangeOrdersTab projectId={projectId} contractId={contractId} />}
+      </TabsContent>
+
+      <TabsContent value="guarantees" className="mt-4">
+        {activeTab === 'guarantees' && (
+          <GuaranteesTab projectId={projectId} contractId={contractId} />
+        )}
       </TabsContent>
 
       <TabsContent value="obligations" className="mt-4">

@@ -49,6 +49,7 @@ export function useCreateChangeOrder(projectId: string, contractId: string) {
       title: string;
       description?: string;
       amount: number;
+      changeType?: 'AMOUNT' | 'TOTAL_AMOUNT';
     }) => {
       const res = await fetch(base(projectId, contractId), {
         method: 'POST',

@@ -10,12 +10,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const schema = z.object({
   number: z.string().min(1, 'Укажите номер'),
   title: z.string().min(1, 'Укажите наименование'),
   description: z.string().optional(),
   amount: z.string().refine((v) => !isNaN(Number(v)), 'Введите сумму'),
+  changeType: z.enum(['AMOUNT', 'TOTAL_AMOUNT']).default('AMOUNT'),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -23,13 +25,14 @@ type FormValues = z.infer<typeof schema>;
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  onSubmit: (data: { number: string; title: string; description?: string; amount: number }) => void;
+  onSubmit: (data: { number: string; title: string; description?: string; amount: number; changeType: 'AMOUNT' | 'TOTAL_AMOUNT' }) => void;
   isPending?: boolean;
 }
 
 export function CreateChangeOrderDialog({ open, onOpenChange, onSubmit, isPending }: Props) {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
+    defaultValues: { changeType: 'AMOUNT' },
   });
 
   function handleFormSubmit(values: FormValues) {
@@ -38,6 +41,7 @@ export function CreateChangeOrderDialog({ open, onOpenChange, onSubmit, isPendin
       title: values.title,
       description: values.description || undefined,
       amount: Number(values.amount),
+      changeType: values.changeType,
     });
     reset();
   }
@@ -49,6 +53,24 @@ export function CreateChangeOrderDialog({ open, onOpenChange, onSubmit, isPendin
           <DialogTitle>Новое доп. соглашение</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Тип изменений</Label>
+            <RadioGroup
+              value={watch('changeType')}
+              onValueChange={(v) => setValue('changeType', v as 'AMOUNT' | 'TOTAL_AMOUNT')}
+              className="flex gap-4"
+            >
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="AMOUNT" id="changeType-amount" />
+                <Label htmlFor="changeType-amount" className="cursor-pointer font-normal">Сумма (прибавить)</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="TOTAL_AMOUNT" id="changeType-total" />
+                <Label htmlFor="changeType-total" className="cursor-pointer font-normal">Общая сумма (заменить)</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="number">Номер</Label>

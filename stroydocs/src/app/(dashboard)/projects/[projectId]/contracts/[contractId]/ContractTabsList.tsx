@@ -1,4 +1,4 @@
-import { Hammer, Package, ClipboardList, Camera, FileText, Archive, FlaskConical, Receipt, BookOpen, Table2, CalendarRange, NotebookPen, ShieldCheck, Link2, Info, Calculator } from 'lucide-react';
+import { Hammer, Package, ClipboardList, Camera, FileText, Archive, FlaskConical, Receipt, BookOpen, Table2, CalendarRange, NotebookPen, ShieldCheck, Link2, Info, Calculator, CreditCard, ArrowUpCircle, TrendingUp, ShieldAlert } from 'lucide-react';
 import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 
@@ -66,9 +66,25 @@ export function ContractTabsList({ participantCount, subContractCount }: Props) 
         <NotebookPen className="mr-1 h-3.5 w-3.5" />
         Дневник
       </TabsTrigger>
+      <TabsTrigger value="payments">
+        <CreditCard className="mr-1 h-3.5 w-3.5" />
+        Платежи
+      </TabsTrigger>
+      <TabsTrigger value="advances">
+        <ArrowUpCircle className="mr-1 h-3.5 w-3.5" />
+        Авансы
+      </TabsTrigger>
+      <TabsTrigger value="execution-progress">
+        <TrendingUp className="mr-1 h-3.5 w-3.5" />
+        Ход исполнения
+      </TabsTrigger>
       <TabsTrigger value="change-orders">
         <Receipt className="mr-1 h-3.5 w-3.5" />
-        Доп. работы
+        Доп. соглашения
+      </TabsTrigger>
+      <TabsTrigger value="guarantees">
+        <ShieldAlert className="mr-1 h-3.5 w-3.5" />
+        Гарантийные удержания
       </TabsTrigger>
       <TabsTrigger value="obligations">
         <ShieldCheck className="mr-1 h-3.5 w-3.5" />
