@@ -174,6 +174,11 @@
 - ✅ Фотоотчёты с GPS (переиспользуется)
 - ⬜ Хронологическая лента, сравнение «было / стало»
 
+### Печатная форма (информационный отчёт)
+- ✅ Handlebars-шаблон `templates/info-report.hbs` (A4 портрет: стадии, ПИР, СМР, финансирование, проблемы, ситуация на объекте)
+- ✅ Генератор `src/lib/info-report-pdf-generator.ts` (Puppeteer + Promise-кэш шаблона)
+- ✅ API `POST /api/projects/[projectId]/info-report/generate-pdf` → pre-signed URL (Timeweb S3)
+
 ### Инфраструктура (Модуль 2)
 - ✅ loading.tsx + error.tsx для всех 13 вкладок (/objects/[objectId]/*)
 - ✅ Мобильный layout — адаптивный sidebar с гамбургер-меню (ObjectModuleSidebar)
