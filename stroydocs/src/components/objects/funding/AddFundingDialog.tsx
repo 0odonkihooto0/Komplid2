@@ -43,8 +43,6 @@ const schema = z.object({
   extraBudget: z.coerce.number().min(0).default(0),
 });
 
-type FormValues = z.infer<typeof schema>;
-
 interface AddFundingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
