@@ -131,7 +131,7 @@
 - ✅ Виджет «Выполнение СМР»: план/факт/отклонение по месяцам (SmrProgressWidget)
 - ✅ Персонализация: drag-and-drop (@dnd-kit), скрытие виджетов (DashboardWidgetsManager)
 - ✅ Лента событий (ActivityFeed на дашборде)
-- ✅ In-app уведомления со счётчиком в sidebar (useUnreadCount + SidebarNav badge)
+- ✅ In-app уведомления: Popover-дропдаун в sidebar — последние 10 уведомлений, иконка по типу, относительное время, «Отметить все как прочитанные», ссылка «Все уведомления» (`NotificationDropdown.tsx`, badge-счётчик, collapsed-режим с точкой)
 - ✅ Email-уведомления (BullMQ + SMTP + notification.worker.ts)
 - ✅ Уведомление следующему участнику цепочки согласования (approval/decide + lib/approval/notify.ts)
 - ✅ Уведомление о дате освидетельствования за ≥3 рабочих дня (inspection-reminder.worker.ts, ГОСТ Р 70108-2025)
