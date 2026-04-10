@@ -5,9 +5,46 @@ import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { createSEDSchema } from '@/lib/validations/sed';
 import { getNextSEDNumber } from '@/lib/numbering';
+
 export const dynamic = 'force-dynamic';
 
 type SEDView = 'all' | 'active' | 'requires' | 'my' | 'sent';
+
+// Дополнительный фильтр из строки запроса (объединяется с baseWhere через AND)
+function buildAdditionalWhere(
+  senderOrg: string | null,
+  receiverOrg: string | null,
+  dateFrom: string | null,
+  dateTo: string | null,
+  folderId: string | null,
+): Record<string, unknown> {
+  const extra: Record<string, unknown> = {};
+
+  if (senderOrg) {
+    extra.senderOrg = { name: { contains: senderOrg, mode: 'insensitive' } };
+  }
+  if (receiverOrg) {
+    extra.receiverOrg = { name: { contains: receiverOrg, mode: 'insensitive' } };
+  }
+  if (dateFrom || dateTo) {
+    const dateFilter: Record<string, Date> = {};
+    if (dateFrom) dateFilter.gte = new Date(dateFrom);
+    if (dateTo) dateFilter.lte = new Date(dateTo);
+    extra.date = dateFilter;
+  }
+  if (folderId) {
+    extra.folderLinks = { some: { folderId } };
+  }
+
+  return extra;
+}
+
+const INCLUDE = {
+  author: { select: { id: true, firstName: true, lastName: true } },
+  senderOrg: { select: { id: true, name: true } },
+  receiverOrg: { select: { id: true, name: true } },
+  _count: { select: { attachments: true } },
+} as const;
 
 export async function GET(
   req: NextRequest,
@@ -21,14 +58,21 @@ export async function GET(
     });
     if (!project) return errorResponse('Проект не найден', 404);
 
-    const searchParams = req.nextUrl.searchParams;
-    const view = (searchParams.get('view') ?? 'all') as SEDView;
-    const status = searchParams.get('status');
-    const docType = searchParams.get('docType');
-    const search = searchParams.get('search');
-    const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
-    const limit = Math.min(200, Math.max(1, parseInt(searchParams.get('limit') ?? '50', 10)));
+    const sp = req.nextUrl.searchParams;
+    const view = (sp.get('view') ?? 'all') as SEDView;
+    const status = sp.get('status');
+    const docType = sp.get('docType');
+    const search = sp.get('search');
+    const folderId = sp.get('folderId');
+    const senderOrg = sp.get('senderOrg');
+    const receiverOrg = sp.get('receiverOrg');
+    const dateFrom = sp.get('dateFrom');
+    const dateTo = sp.get('dateTo');
+    const page = Math.max(1, parseInt(sp.get('page') ?? '1', 10));
+    const limit = Math.min(200, Math.max(1, parseInt(sp.get('limit') ?? '50', 10)));
     const skip = (page - 1) * limit;
+
+    const extra = buildAdditionalWhere(senderOrg, receiverOrg, dateFrom, dateTo, folderId);
 
     // Полнотекстовый поиск через PostgreSQL tsvector
     if (search) {
@@ -42,25 +86,23 @@ export async function GET(
       const ids = results.map((r: { id: string }) => r.id);
 
       const items = await db.sEDDocument.findMany({
-        where: { id: { in: ids } },
-        include: {
-          author: { select: { id: true, firstName: true, lastName: true } },
-          senderOrg: { select: { id: true, name: true } },
-          _count: { select: { attachments: true } },
-        },
+        where: { id: { in: ids }, ...extra },
+        include: INCLUDE,
         orderBy: { createdAt: 'desc' },
       });
 
-      return successResponse({ data: items, page, limit });
+      return successResponse({ data: items, page, limit, total: ids.length });
     }
 
-    const baseWhere: Record<string, unknown> = { projectId: params.objectId };
+    const baseWhere: Record<string, unknown> = {
+      projectId: params.objectId,
+      ...extra,
+    };
     if (status) baseWhere.status = status;
     if (docType) baseWhere.docType = docType;
 
     let where: Record<string, unknown> = baseWhere;
 
-    // Фильтрация по представлению (как в ЦУС)
     switch (view) {
       case 'active':
         where = { ...baseWhere, status: { notIn: ['REJECTED', 'ARCHIVED'] } };
@@ -70,14 +112,19 @@ export async function GET(
           ...baseWhere,
           status: 'REQUIRES_ACTION',
           approvalRoute: {
-            steps: {
-              some: { userId: session.user.id, status: 'PENDING' },
-            },
+            steps: { some: { userId: session.user.id, status: 'PENDING' } },
           },
         };
         break;
       case 'my':
-        where = { ...baseWhere, authorId: session.user.id };
+        // Участвую: автор ИЛИ наблюдатель
+        where = {
+          ...baseWhere,
+          OR: [
+            { authorId: session.user.id },
+            { observers: { has: session.user.id } },
+          ],
+        };
         break;
       case 'sent':
         where = { ...baseWhere, senderOrgId: session.user.organizationId };
@@ -89,11 +136,7 @@ export async function GET(
     const [items, total] = await Promise.all([
       db.sEDDocument.findMany({
         where,
-        include: {
-          author: { select: { id: true, firstName: true, lastName: true } },
-          senderOrg: { select: { id: true, name: true } },
-          _count: { select: { attachments: true } },
-        },
+        include: INCLUDE,
         orderBy: { createdAt: 'desc' },
         take: limit,
         skip,
@@ -127,9 +170,8 @@ export async function POST(
 
     const { senderOrgId, ...rest } = parsed.data;
 
-    // Проверяем существование организации-отправителя
-    const senderOrg = await db.organization.findUnique({ where: { id: senderOrgId } });
-    if (!senderOrg) return errorResponse('Организация-отправитель не найдена', 404);
+    const senderOrgEntity = await db.organization.findUnique({ where: { id: senderOrgId } });
+    if (!senderOrgEntity) return errorResponse('Организация-отправитель не найдена', 404);
 
     const number = await getNextSEDNumber(params.objectId);
 
@@ -144,6 +186,7 @@ export async function POST(
       include: {
         author: { select: { id: true, firstName: true, lastName: true } },
         senderOrg: { select: { id: true, name: true } },
+        receiverOrg: { select: { id: true, name: true } },
       },
     });
 

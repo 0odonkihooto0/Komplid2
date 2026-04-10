@@ -60,7 +60,7 @@ export async function GET(_req: NextRequest, { params }: { params: Params }) {
     const [
       defectsOpen,
       defectsOverdue,
-      execDocsCounts,
+      _execDocsCounts,
       ks2Amounts,
       ganttTasksRaw,
     ] = await Promise.all([

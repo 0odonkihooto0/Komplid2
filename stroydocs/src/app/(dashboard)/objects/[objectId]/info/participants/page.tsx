@@ -1,4 +1,4 @@
-import { ParticipantsView } from '@/components/objects/info/ParticipantsView';
+import { ParticipantsView } from '@/components/objects/info/participants/ParticipantsView';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,5 +7,5 @@ export default function ParticipantsPage({
 }: {
   params: { objectId: string };
 }) {
-  return <ParticipantsView objectId={params.objectId} />;
+  return <ParticipantsView projectId={params.objectId} />;
 }

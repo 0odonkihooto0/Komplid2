@@ -1,7 +1,5 @@
-export default function InfoLandAndTuPage() {
-  return (
-    <div className="flex items-center justify-center py-20 text-muted-foreground">
-      Земельные участки и ТУ — в разработке
-    </div>
-  );
+import { redirect } from 'next/navigation';
+
+export default function LandAndTuPage({ params }: { params: { objectId: string } }) {
+  redirect(`/objects/${params.objectId}/info/land-and-tu/land-plots`);
 }
