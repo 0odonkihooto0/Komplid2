@@ -1,4 +1,4 @@
-import { DocumentsView } from '@/components/objects/management/DocumentsView';
+import { ProjectDocumentsRegistryView } from '@/components/objects/management/ProjectDocumentsRegistryView';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,5 +7,5 @@ interface Props {
 }
 
 export default function ManagementDocumentsPage({ params }: Props) {
-  return <DocumentsView objectId={params.objectId} />;
+  return <ProjectDocumentsRegistryView objectId={params.objectId} />;
 }
