@@ -3964,14 +3964,16 @@ model LimitRisk {
 
 /// Камера видеонаблюдения на объекте
 model VideoCamera {
-  id                String  @id @default(uuid())
-  cameraNumber      String? // Номер камеры
-  locationName      String? // Место установки
-  operationalStatus String  @default("Работает") // Работает / Не работает / На обслуживании
-  cameraModel       String? // Модель камеры
-  rtspUrl           String? // RTSP-поток
-  httpUrl           String // HTTP URL трансляции
-  failureReason     String? // Причина неисправности
+  id                String   @id @default(uuid())
+  cameraNumber      String?  // Номер камеры
+  locationName      String?  // Место установки
+  operationalStatus String   @default("Работает") // Работает / Не работает
+  cameraModel       String?  // Модель камеры
+  rtspUrl           String?  // RTSP-поток
+  httpUrl           String   // HTTP URL трансляции
+  failureReason     String?  // Причина неисправности
+  s3Keys            String[] @default([]) // Ключи S3 прикреплённых файлов
+  fileNames         String[] @default([]) // Оригинальные имена файлов
 
   projectId String
   project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
