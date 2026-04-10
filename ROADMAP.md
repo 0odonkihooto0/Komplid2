@@ -131,6 +131,7 @@
 - ✅ Виджет «Выполнение СМР»: план/факт/отклонение по месяцам (SmrProgressWidget)
 - ✅ Персонализация: drag-and-drop (@dnd-kit), скрытие виджетов (DashboardWidgetsManager)
 - ✅ Лента событий (ActivityFeed на дашборде)
+- ✅ In-app уведомления: Popover-дропдаун в sidebar — последние 10 уведомлений, иконка по типу, относительное время, «Отметить все как прочитанные», ссылка «Все уведомления» (`NotificationDropdown.tsx`, badge-счётчик, collapsed-режим с точкой)
 - ✅ Панель фильтрации дашборда (DashboardFilterPanel): сворачиваемая правая панель 280px, 4 фильтра с поиском — Проекты / Статус / Регион / Тип объекта; фильтрация виджета «Объекты» через API objectIds (ЦУС стр. 13-14)
 - ✅ In-app уведомления со счётчиком в sidebar (useUnreadCount + SidebarNav badge)
 - ✅ Email-уведомления (BullMQ + SMTP + notification.worker.ts)
