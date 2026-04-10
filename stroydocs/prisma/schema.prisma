@@ -3876,6 +3876,8 @@ model LandPlot {
   tenantOrgId String?
   tenantOrg   Organization? @relation("LandPlotTenant", fields: [tenantOrgId], references: [id])
 
+  technicalConditions TechnicalCondition[] @relation("TechnicalConditionPlot")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -3899,6 +3901,11 @@ model TechnicalCondition {
 
   responsibleOrgId String?
   responsibleOrg   Organization? @relation("TechnicalConditionOrg", fields: [responsibleOrgId], references: [id])
+
+  landPlotId       String?
+  landPlot         LandPlot?      @relation("TechnicalConditionPlot", fields: [landPlotId], references: [id], onDelete: SetNull)
+  documentS3Key    String?        // S3-ключ файла ТУ
+  documentFileName String?        // Оригинальное имя файла ТУ
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
