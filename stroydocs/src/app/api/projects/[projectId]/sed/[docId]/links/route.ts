@@ -2,9 +2,8 @@ import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
-import { generateUploadUrl, buildS3Key, getDownloadUrl } from '@/lib/s3-utils';
 import { successResponse, errorResponse } from '@/utils/api';
-import { addSEDAttachmentSchema } from '@/lib/validations/sed';
+import { addSEDLinkSchema } from '@/lib/validations/sed';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,23 +25,15 @@ export async function GET(
     });
     if (!doc) return errorResponse('СЭД-документ не найден', 404);
 
-    const attachments = await db.sEDAttachment.findMany({
-      where: { sedDocId: params.docId },
+    const links = await db.sEDLink.findMany({
+      where: { documentId: params.docId },
       orderBy: { createdAt: 'asc' },
     });
 
-    // Генерировать presigned URL для скачивания каждого вложения (TTL: 1 час)
-    const withUrls = await Promise.all(
-      attachments.map(async (a) => ({
-        ...a,
-        downloadUrl: await getDownloadUrl(a.s3Key),
-      }))
-    );
-
-    return successResponse(withUrls);
+    return successResponse(links);
   } catch (error) {
     if (error instanceof NextResponse) return error;
-    logger.error({ err: error }, 'Ошибка получения вложений СЭД-документа');
+    logger.error({ err: error }, 'Ошибка получения связей СЭД-документа');
     return errorResponse('Внутренняя ошибка сервера', 500);
   }
 }
@@ -61,31 +52,38 @@ export async function POST(
 
     const doc = await db.sEDDocument.findFirst({
       where: { id: params.docId, projectId: params.projectId },
+      select: { id: true },
     });
     if (!doc) return errorResponse('СЭД-документ не найден', 404);
 
     const body = await req.json();
-    const parsed = addSEDAttachmentSchema.safeParse(body);
+    const parsed = addSEDLinkSchema.safeParse(body);
     if (!parsed.success) return errorResponse('Ошибка валидации', 400, parsed.error.issues);
 
-    const s3Key = buildS3Key(session.user.organizationId, 'sed', parsed.data.fileName);
-
-    const uploadUrl = await generateUploadUrl(s3Key, parsed.data.mimeType);
-
-    const attachment = await db.sEDAttachment.create({
-      data: {
-        sedDocId: params.docId,
-        fileName: parsed.data.fileName,
-        mimeType: parsed.data.mimeType,
-        size: parsed.data.size,
-        s3Key,
-      },
-    });
-
-    return successResponse({ attachment, uploadUrl });
+    try {
+      const link = await db.sEDLink.create({
+        data: {
+          documentId: params.docId,
+          entityType: parsed.data.entityType,
+          entityId: parsed.data.entityId,
+        },
+      });
+      return successResponse(link);
+    } catch (err: unknown) {
+      // Уникальное ограничение — связь уже существует
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'code' in err &&
+        (err as { code: string }).code === 'P2002'
+      ) {
+        return errorResponse('Такая связь уже существует', 409);
+      }
+      throw err;
+    }
   } catch (error) {
     if (error instanceof NextResponse) return error;
-    logger.error({ err: error }, 'Ошибка загрузки вложения к СЭД-документу');
+    logger.error({ err: error }, 'Ошибка создания связи СЭД-документа');
     return errorResponse('Внутренняя ошибка сервера', 500);
   }
 }
