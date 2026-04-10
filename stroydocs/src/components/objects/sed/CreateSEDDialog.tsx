@@ -16,7 +16,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/useToast';
 import { createSEDSchema } from '@/lib/validations/sed';
-import type { ObjectParticipantItem } from '../info/useParticipantsView';
+// Тип для contract-based участников (агрегация ContractParticipant)
+interface ObjectParticipantItem {
+  organization: { id: string; name: string; inn: string; sroNumber: string | null };
+  roles: string[];
+  contracts: Array<{ id: string; number: string; name: string | null }>;
+}
 
 const DOC_TYPE_OPTIONS = [
   { value: 'LETTER', label: 'Письмо' },

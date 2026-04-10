@@ -14,7 +14,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/useToast';
 import { createCorrespondenceSchema } from '@/lib/validations/correspondence';
-import type { ObjectParticipantItem } from './useParticipantsView';
+// Тип для contract-based участников (агрегация ContractParticipant)
+interface ObjectParticipantItem {
+  organization: { id: string; name: string; inn: string; sroNumber: string | null };
+  roles: string[];
+  contracts: Array<{ id: string; number: string; name: string | null }>;
+}
 import { z } from 'zod';
 
 // Форма использует tagsInput (строка) вместо tags (массив)
