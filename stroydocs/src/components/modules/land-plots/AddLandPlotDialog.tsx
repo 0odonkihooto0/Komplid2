@@ -33,7 +33,7 @@ export function AddLandPlotDialog({ open, onOpenChange, projectId, initialValues
     watch,
     reset,
     formState: { errors },
-  } = useForm<CreateLandPlotInput>({
+  } = useForm({
     resolver: zodResolver(createLandPlotSchema),
     defaultValues: initialValues ? {
       cadastralNumber: initialValues.cadastralNumber,
