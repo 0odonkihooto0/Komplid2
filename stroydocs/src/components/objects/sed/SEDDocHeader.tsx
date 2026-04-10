@@ -32,6 +32,7 @@ interface SEDDocHeaderProps {
   isWorkflowPending: boolean;
   onPatchStatus: (status: SEDStatus) => void;
   onStartWorkflow: () => void;
+  onCreateWorkflow: () => void;
 }
 
 export function SEDDocHeader({
@@ -42,6 +43,7 @@ export function SEDDocHeader({
   isWorkflowPending,
   onPatchStatus,
   onStartWorkflow,
+  onCreateWorkflow,
 }: SEDDocHeaderProps) {
   const router = useRouter();
   const st = STATUS_LABELS[doc.status];
@@ -68,8 +70,8 @@ export function SEDDocHeader({
 
       <Badge variant={st.variant} className="shrink-0">{st.label}</Badge>
 
-      <Button variant="outline" size="sm" className="shrink-0">
-        Создать на основании
+      <Button variant="outline" size="sm" className="shrink-0" onClick={onCreateWorkflow}>
+        Создать ДО
       </Button>
 
       <DropdownMenu>
