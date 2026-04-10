@@ -77,13 +77,16 @@ enum TaskSource {
 }
 
 enum ProblemIssueType {
-  CORRECTION_PSD // Корректировка ПСД
-  LAND_LEGAL // Земельно-правовые
-  PRODUCTION // Производственные
-  ORG_LEGAL // Организационно-правовые
-  CONTRACT_WORK // Договорная работа
-  FINANCIAL // Финансовые
-  OTHER // Прочие
+  CORRECTION_PSD  // Корректировка ПСД
+  LAND_LEGAL      // Земельно-правовые
+  PRODUCTION      // Производственные
+  ORG_LEGAL       // Организационно-правовые
+  CONTRACT_WORK   // Договорная работа
+  FINANCIAL       // Финансирование
+  MATERIAL_SUPPLY // Поставка материалов
+  WORK_QUALITY    // Качество работ
+  DEADLINES       // Сроки
+  OTHER           // Прочие
 }
 
 enum ProblemIssueStatus {
@@ -99,6 +102,15 @@ enum FundingRecordType {
 enum IndicatorSource {
   MANUAL // Вручную
   AUTO   // Автоматически
+}
+
+enum AppointmentDocType {
+  ORDER             // Приказ
+  POWER_OF_ATTORNEY // Доверенность
+  DECREE            // Распоряжение
+  REGULATION        // Постановление
+  DECISION          // Решение
+  CHARTER           // Устав
 }
 
 // === Модели Фазы 1 ===
@@ -128,6 +140,8 @@ model Organization {
   correspondencesSent     Correspondence[]      @relation("CorrespondenceSender")
   correspondencesReceived Correspondence[]      @relation("CorrespondenceReceiver")
   sedDocumentsSent        SEDDocument[]         @relation("SEDSender")
+  sedDocumentsReceived    SEDDocument[]         @relation("SEDReceiver")
+  workflowRegulations     WorkflowRegulation[]
   contractCategories      ContractCategory[]
 
   // Модуль 5 — ПИР
@@ -149,6 +163,14 @@ model Organization {
   ownedLandPlots                 LandPlot[]           @relation("LandPlotOwner")
   tenantedLandPlots              LandPlot[]           @relation("LandPlotTenant")
   responsibleTechnicalConditions TechnicalCondition[] @relation("TechnicalConditionOrg")
+
+  // Участники объекта
+  objectParticipations ObjectOrganization[]
+  objectPersons        ObjectPerson[]
+
+  // Проблемные вопросы (ЦУС)
+  problemIssuesAsAssignee ProblemIssue[] @relation("ProblemIssueAssignee")
+  problemIssuesAsVerifier ProblemIssue[] @relation("ProblemIssueVerifier")
 
   @@map("organizations")
 }
@@ -200,8 +222,12 @@ model User {
   rfisAuthored            RFI[]                    @relation("RFIAuthor")
   rfisAssigned            RFI[]                    @relation("RFIAssignee")
   rfisAnswered            RFI[]                    @relation("RFIAnswerer")
-  sedDocumentsAuthored    SEDDocument[]            @relation("SEDAuthor")
-  chatMessages            ChatMessage[]            @relation("ChatAuthor")
+  sedDocumentsAuthored       SEDDocument[]            @relation("SEDAuthor")
+  sedDocumentsSentBy         SEDDocument[]            @relation("SEDSenderUser")
+  sedDocumentsReceivedBy     SEDDocument[]            @relation("SEDReceiverUser")
+  sedWorkflowsInitiated      SEDWorkflow[]            @relation("SEDWorkflowInitiator")
+  sedWorkflowMessages        SEDWorkflowMessage[]     @relation("SEDWorkflowMessageAuthor")
+  chatMessages               ChatMessage[]            @relation("ChatAuthor")
   projectDocsUploaded     ProjectDocument[]        @relation("ProjectDocUploader")
   docVersionsUploaded     ProjectDocumentVersion[] @relation("DocVersionUploader")
   eventsOrganized         ProjectEvent[]           @relation("EventOrganizer")
@@ -274,6 +300,9 @@ model User {
 
   // Модуль «Информация» — ЦУС
   authoredCameras VideoCamera[] @relation("CameraAuthor")
+
+  // Участники объекта (физлица, привязанные к системному пользователю)
+  objectPersonLinks ObjectPerson[]
 
   @@index([organizationId])
   @@map("users")
@@ -350,6 +379,7 @@ model BuildingObject {
   correspondences Correspondence[]
   rfis            RFI[]
   sedDocuments    SEDDocument[]
+  sedFolders      SEDFolder[]
   chatMessages    ChatMessage[]
   folders         ProjectFolder[]
   events          ProjectEvent[]
@@ -404,6 +434,10 @@ model BuildingObject {
   videoCameras        VideoCamera[]
   projectCoordinates  ProjectCoordinate[]
   projectIndicators   ProjectIndicator[]
+
+  // Участники объекта (прямая привязка, не через договоры)
+  objectOrganizations ObjectOrganization[]
+  objectPersons       ObjectPerson[]
 
   @@index([organizationId])
   @@index([parentId])
@@ -1064,6 +1098,9 @@ model ApprovalRoute {
 
   // Модуль 12 — Отчёты
   report Report? @relation("ReportApproval")
+
+  // СЭД — Карточка документооборота
+  sedWorkflow SEDWorkflow? @relation("SEDWorkflowApproval")
 
   @@map("approval_routes")
 }
@@ -1940,6 +1977,24 @@ enum SEDStatus {
   ARCHIVED // Архив
 }
 
+enum WorkflowType {
+  DELEGATION      // Делегирование
+  APPROVAL        // Согласование
+  REDIRECT        // Перенаправление
+  MULTI_APPROVAL  // Многостороннее согласование
+  MULTI_SIGNING   // Многостороннее подписание
+  DIGITAL_SIGNING // Подписание ЭП
+  REVIEW          // Ознакомление
+}
+
+enum SEDWorkflowStatus {
+  CREATED     // Создан
+  IN_PROGRESS // В работе
+  APPROVED    // Согласован
+  REJECTED    // Отклонён
+  COMPLETED   // Завершён
+}
+
 /// Официальное письмо (Деловая переписка)
 model Correspondence {
   id        String               @id @default(uuid())
@@ -2087,10 +2142,37 @@ model SEDDocument {
   // Полнотекстовый поиск (управляется через raw SQL миграцию)
   searchVector Unsupported("tsvector")?
 
+  // Входящий / исходящий номер и дата документа
+  incomingNumber String?   // Входящий номер
+  outgoingNumber String?   // Исходящий номер
+  date           DateTime? // Дата документа (вводится вручную)
+
+  // Отправитель (физлицо)
+  senderUserId String?
+  senderUser   User?   @relation("SEDSenderUser", fields: [senderUserId], references: [id])
+
+  // Получатель (физлицо)
+  receiverUserId String?
+  receiverUser   User?   @relation("SEDReceiverUser", fields: [receiverUserId], references: [id])
+
+  // Получатель (организация — единственная, для явной связи)
+  receiverOrgId String?
+  receiverOrg   Organization? @relation("SEDReceiver", fields: [receiverOrgId], references: [id])
+
+  // Статус прочтения
+  isRead Boolean  @default(false)
+  readAt DateTime?
+
+  // Наблюдатели (массив ID пользователей)
+  observers String[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   attachments SEDAttachment[]
+  folderLinks SEDDocumentFolder[]
+  workflows   SEDWorkflow[]
+  links       SEDLink[]
 
   @@index([projectId])
   @@index([status])
@@ -3797,10 +3879,23 @@ model ProblemIssue {
   type        ProblemIssueType
   status      ProblemIssueStatus @default(ACTIVE)
   description String
-  resolution  String? // Пути решения
-  responsible String? // Ответственный
+  resolution  String? // Пути решения (устаревшее, оставлено для совместимости)
+  responsible String? // Ответственный (устаревшее, оставлено для совместимости)
   deadline    DateTime?
   closedAt    DateTime?
+
+  // Расширенные поля (ЦУС — вкладка «Вопросы»)
+  causes         String?   // Причины возникновения
+  measuresTaken  String?   // Предпринятые меры
+  resolutionDate DateTime? // Дата решения
+
+  // Исполнитель (организация из участников объекта)
+  assigneeOrgId String?
+  assigneeOrg   Organization? @relation("ProblemIssueAssignee", fields: [assigneeOrgId], references: [id])
+
+  // Проверяющий (организация)
+  verifierOrgId String?
+  verifierOrg   Organization? @relation("ProblemIssueVerifier", fields: [verifierOrgId], references: [id])
 
   projectId      String
   buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -3811,9 +3906,29 @@ model ProblemIssue {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  attachments ProblemIssueAttachment[]
+
   @@index([projectId])
   @@index([projectId, status])
+  @@index([assigneeOrgId])
+  @@index([verifierOrgId])
   @@map("problem_issues")
+}
+
+/// Вложение к проблемному вопросу
+model ProblemIssueAttachment {
+  id        String   @id @default(uuid())
+  fileName  String
+  s3Key     String
+  mimeType  String
+  size      Int
+  createdAt DateTime @default(now())
+
+  issueId String
+  issue   ProblemIssue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@index([issueId])
+  @@map("problem_issue_attachments")
 }
 
 // === Модуль «Информация» — ЦУС ===
@@ -3856,6 +3971,8 @@ model LandPlot {
   tenantOrgId String?
   tenantOrg   Organization? @relation("LandPlotTenant", fields: [tenantOrgId], references: [id])
 
+  technicalConditions TechnicalCondition[] @relation("TechnicalConditionPlot")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -3879,6 +3996,11 @@ model TechnicalCondition {
 
   responsibleOrgId String?
   responsibleOrg   Organization? @relation("TechnicalConditionOrg", fields: [responsibleOrgId], references: [id])
+
+  landPlotId       String?
+  landPlot         LandPlot?      @relation("TechnicalConditionPlot", fields: [landPlotId], references: [id], onDelete: SetNull)
+  documentS3Key    String?        // S3-ключ файла ТУ
+  documentFileName String?        // Оригинальное имя файла ТУ
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3937,14 +4059,16 @@ model LimitRisk {
 
 /// Камера видеонаблюдения на объекте
 model VideoCamera {
-  id                String  @id @default(uuid())
-  cameraNumber      String? // Номер камеры
-  locationName      String? // Место установки
-  operationalStatus String  @default("Работает") // Работает / Не работает / На обслуживании
-  cameraModel       String? // Модель камеры
-  rtspUrl           String? // RTSP-поток
-  httpUrl           String // HTTP URL трансляции
-  failureReason     String? // Причина неисправности
+  id                String   @id @default(uuid())
+  cameraNumber      String?  // Номер камеры
+  locationName      String?  // Место установки
+  operationalStatus String   @default("Работает") // Работает / Не работает
+  cameraModel       String?  // Модель камеры
+  rtspUrl           String?  // RTSP-поток
+  httpUrl           String   // HTTP URL трансляции
+  failureReason     String?  // Причина неисправности
+  s3Keys            String[] @default([]) // Ключи S3 прикреплённых файлов
+  fileNames         String[] @default([]) // Оригинальные имена файлов
 
   projectId String
   project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -3984,6 +4108,7 @@ model ProjectIndicator {
   maxValue        String?         // Плановое/максимальное значение
   sourceType      IndicatorSource @default(MANUAL)
   autoSourceField String?         // Поле-источник при AUTO (например: "contract.totalAmount")
+  fileKeys        String[]        @default([]) // S3 ключи прикреплённых файлов
 
   projectId String
   project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -3993,4 +4118,220 @@ model ProjectIndicator {
 
   @@index([projectId, groupName])
   @@map("project_indicators")
+}
+
+// === Модуль «Участники» — прямая привязка к объекту (ЦУС) ===
+
+/// Юридическое лицо — участник строительного объекта
+model ObjectOrganization {
+  id               String         @id @default(uuid())
+  buildingObjectId String
+  buildingObject   BuildingObject @relation(fields: [buildingObjectId], references: [id], onDelete: Cascade)
+  organizationId   String
+  organization     Organization   @relation(fields: [organizationId], references: [id])
+  roles            ObjectParticipantRole[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([buildingObjectId, organizationId])
+  @@index([buildingObjectId])
+  @@map("object_organizations")
+}
+
+/// Физическое лицо — участник строительного объекта
+model ObjectPerson {
+  id               String         @id @default(uuid())
+  firstName        String // Имя
+  lastName         String // Фамилия
+  middleName       String?        // Отчество
+  organizationId   String?        // Организация, в которой числится физлицо
+  organization     Organization?  @relation(fields: [organizationId], references: [id])
+  linkedUserId     String?        // Привязанный пользователь системы (опционально)
+  linkedUser       User?          @relation(fields: [linkedUserId], references: [id])
+  buildingObjectId String
+  buildingObject   BuildingObject @relation(fields: [buildingObjectId], references: [id], onDelete: Cascade)
+  roles            ObjectParticipantRole[]
+  appointments     PersonAppointment[]
+
+  createdAt DateTime @default(now())
+
+  @@index([buildingObjectId])
+  @@map("object_persons")
+}
+
+/// Роль участника (юрлица или физлица) на объекте
+model ObjectParticipantRole {
+  id               String              @id @default(uuid())
+  roleName         String // Наименование роли из справочника
+  orgParticipantId String?             // FK к ObjectOrganization (XOR с personId)
+  orgParticipant   ObjectOrganization? @relation(fields: [orgParticipantId], references: [id], onDelete: Cascade)
+  personId         String?             // FK к ObjectPerson (XOR с orgParticipantId)
+  person           ObjectPerson?       @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([orgParticipantId])
+  @@index([personId])
+  @@map("object_participant_roles")
+}
+
+/// Документ о назначении физического лица (приказ, доверенность и т.д.)
+model PersonAppointment {
+  id             String             @id @default(uuid())
+  personId       String
+  person         ObjectPerson       @relation(fields: [personId], references: [id], onDelete: Cascade)
+  documentType   AppointmentDocType // Тип документа
+  documentNumber String?            // Номер документа
+  startDate      DateTime?          // Дата начала полномочий
+  endDate        DateTime?          // Дата окончания полномочий
+  isActive       Boolean            @default(true) // Актуальность
+  s3Key          String?            // S3 ключ прикреплённого файла
+  fileName       String?            // Оригинальное имя файла
+
+  createdAt DateTime @default(now())
+
+  @@index([personId])
+  @@map("person_appointments")
+}
+
+// === СЭД: Папки для группировки документов ===
+/// Папка для группировки СЭД-документов на объекте
+model SEDFolder {
+  id        String         @id @default(uuid())
+  name      String // Название папки
+  order     Int            @default(0) // Порядок отображения
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Самоссылка для вложенности
+  parentId String?
+  parent   SEDFolder?     @relation("SEDFolderHierarchy", fields: [parentId], references: [id])
+  children SEDFolder[]    @relation("SEDFolderHierarchy")
+
+  createdAt DateTime @default(now())
+
+  documentLinks SEDDocumentFolder[]
+
+  @@index([projectId])
+  @@map("sed_folders")
+}
+
+// === СЭД: Связь документ ↔ папка (many-to-many) ===
+/// Связь СЭД-документа с папкой
+model SEDDocumentFolder {
+  id         String      @id @default(uuid())
+  documentId String
+  document   SEDDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  folderId   String
+  folder     SEDFolder   @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  createdAt  DateTime    @default(now())
+
+  @@unique([documentId, folderId])
+  @@map("sed_document_folders")
+}
+
+// === СЭД: Регламент документооборота ===
+/// Регламент (шаблон маршрута) для карточек документооборота
+model WorkflowRegulation {
+  id             String       @id @default(uuid())
+  name           String // Название регламента
+  description    String? // Описание
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Шаблон шагов: [{role, userId?, action}]
+  stepsTemplate Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workflows SEDWorkflow[]
+
+  @@index([organizationId])
+  @@map("workflow_regulations")
+}
+
+// === СЭД: Карточка документооборота ===
+/// Карточка документооборота (ДО) — отдельная сущность для процессов согласования, подписания и т.д.
+model SEDWorkflow {
+  id           String            @id @default(uuid())
+  number       String // Номер карточки ДО
+  workflowType WorkflowType // Тип процесса
+  status       SEDWorkflowStatus @default(CREATED) // Статус карточки
+
+  // Связь с документом
+  documentId String
+  document   SEDDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  // Инициатор
+  initiatorId String
+  initiator   User   @relation("SEDWorkflowInitiator", fields: [initiatorId], references: [id])
+
+  // Участники и наблюдатели (массивы ID пользователей)
+  participants String[] // ID пользователей-участников
+  observers    String[] // ID наблюдателей
+
+  // Маршрут согласования (FK на стороне SEDWorkflow)
+  approvalRouteId String?        @unique
+  approvalRoute   ApprovalRoute? @relation("SEDWorkflowApproval", fields: [approvalRouteId], references: [id])
+
+  // Регламент (если создан по регламенту)
+  regulationId String?
+  regulation   WorkflowRegulation? @relation(fields: [regulationId], references: [id])
+
+  // Сроки
+  sentAt      DateTime? // Дата отправки
+  completedAt DateTime? // Дата завершения
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages SEDWorkflowMessage[]
+  bases    SEDDocumentBasis[]
+
+  @@index([documentId])
+  @@map("sed_workflows")
+}
+
+// === СЭД: Сообщения в карточке ДО ===
+/// Сообщение участника в карточке документооборота
+model SEDWorkflowMessage {
+  id         String      @id @default(uuid())
+  text       String // Текст сообщения
+  workflowId String
+  workflow   SEDWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User        @relation("SEDWorkflowMessageAuthor", fields: [authorId], references: [id])
+  createdAt  DateTime    @default(now())
+
+  @@index([workflowId])
+  @@map("sed_workflow_messages")
+}
+
+// === СЭД: Связи документа с другими сущностями ===
+/// Полиморфная связь СЭД-документа с другими сущностями системы
+model SEDLink {
+  id         String      @id @default(uuid())
+  documentId String
+  document   SEDDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  entityType String // SEDDocument, Contract, ExecutionDoc...
+  entityId   String // ID связанной сущности
+  createdAt  DateTime    @default(now())
+
+  @@index([documentId])
+  @@unique([documentId, entityType, entityId])
+  @@map("sed_links")
+}
+
+// === СЭД: Основания (связь ДО → ДО) ===
+/// Основание для карточки ДО — ссылка на другую карточку документооборота
+model SEDDocumentBasis {
+  id              String      @id @default(uuid())
+  workflowId      String
+  workflow        SEDWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  basisWorkflowId String // ID карточки-основания
+  createdAt       DateTime    @default(now())
+
+  @@index([workflowId])
+  @@map("sed_document_bases")
 }

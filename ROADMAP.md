@@ -152,8 +152,19 @@
 - ✅ Название, адрес, участники
 - ✅ Кадастровый номер, площадь, класс ответственности (PassportView + поля в Project)
 - ✅ Разрешение на строительство (№, дата, орган выдачи) (PassportView — permitNumber, permitDate, permitAuthority)
+- ✅ Виджет «ПИР»: общая сумма ПИР-контрактов (по имени категории), освоение (акты закрытия ПИР SIGNED), % выполнения, дата плана, отклонение ▲/▼ в рублях (PirWidget + GET /api/objects/[objectId]/passport/widgets)
+- ✅ Виджет «СМР»: общая сумма контрактов, освоение (КС-2 APPROVED), % выполнения, даты начала/окончания, отклонение ▲/▼ в рублях (SmrWidget + usePassportWidgets)
+- ✅ Тип строительства (Select: Новое строительство / Реконструкция / Капитальный ремонт / Техническое перевооружение)
+- ✅ Регион (Select из 85 субъектов РФ по ОКТМО, `RF_SUBJECTS` в constants.ts)
+- ✅ Стройка (Input, используется в реквизитах КС-2, КС-3)
+- ✅ Широта / Долгота (number inputs, отображаются в PassportView как «ш, д»)
+- ✅ Фактические даты начала / окончания строительства (actualStartDate, actualEndDate)
+- ✅ Чекбокс «Заполнять даты из актуальной версии ГПР» (fillDatesFromGpr)
 - ⬜ Автопроверка контрагентов по ИНН через API ФНС/ЕГРЮЛ (кэш Redis 24ч)
-- ⬜ Связанные объекты (суб-объекты)
+- ✅ Тип строительства, краткое наименование, стройка (реквизиты КС-2/КС-3) — поля constructionType, shortName, stroyka
+- ✅ Регион (субъект РФ), геолокация (latitude/longitude) — поля region, latitude, longitude; @@index([region])
+- ✅ Фактические даты начала/окончания, опция «заполнять даты из ГПР» — actualStartDate, actualEndDate, fillDatesFromGpr
+- ✅ Связанные объекты / суб-объекты — иерархия через parentId/children (ObjectHierarchy, @@index([parentId]))
 
 ### Вкладка «Показатели»
 - ✅ KPI: количество договоров, записей о работах, ИД, сумма КС-2 (IndicatorsView)
@@ -171,19 +182,52 @@
 - ✅ Задачи по объекту (ответственный, срок, статус) — TasksView с полным CRUD
 - ⬜ Создание задачи из замечания СК (автосвязь)
 
+### Вкладка «Строительный контроль» ✅ (2026-04-10)
+- ✅ Read-only реестр недостатков из модуля СК (PassportSkView)
+- ✅ Левая панель (200px): счётчики по статусам — Всего / Открыто / В работе / Устранено / Подтверждено
+- ✅ TanStack Table: №, Кем выдано, Описание недостатка, Срок устранения, Контроль устранения, Статус (Badge), Мероприятия по устранению
+- ✅ Данные из GET /api/projects/[pid]/defects (переиспользование существующего API Модуля 11)
+- ✅ Маршрут: `/objects/[objectId]/passport/sk` → `passport/sk/page.tsx`
+### Вкладка «Проблемные вопросы» ✅
+- ✅ Реестр проблемных вопросов (CRUD) по 7 типам (ГОСТ Р 70108-2025 / ЦУС стр. 30)
+- ✅ Типы: Корректировка ПСД, Земельно-правовые, Производственные, Организационно-правовые, Договорная работа, Финансовые, Прочие
+- ✅ Статусы: Актуальный (ACTIVE) / Закрыт (CLOSED), дата закрытия автофиксируется
+- ✅ Двухпанельный UI: сводка по типам (Закрытые | Актуальные) + TanStack DataTable
+- ✅ Колонки таблицы: Тип, Статус, Дата, Проблемный вопрос, Исполнитель, Проверено
+- ✅ Диалог создания: Select тип, Textarea описание, Input исполнитель, DatePicker срок
+- ✅ API: GET/POST `/api/projects/[projectId]/problem-issues/` + PATCH/DELETE `…/[id]/`
+### Вкладка «Проблемные вопросы» ✅ (2026-04-09)
+- ✅ Реестр проблемных вопросов по объекту (ЦУС стр. 30)
+- ✅ 7 типов: Корректировка ПСД, Земельно-правовые, Производственные, Орг.-правовые, Договорная работа, Финансовые, Прочие
+- ✅ Статусы: ACTIVE / CLOSED с автоматической фиксацией `closedAt`
+- ✅ Поля: описание, пути решения, ответственный, срок, автор
+- ✅ API: GET (с фильтром ?status= и пагинацией), POST, PATCH, DELETE
+- ✅ Multi-tenancy: проверка organizationId через BuildingObject
+
 ### Вкладка «Фотогалерея»
 - ✅ Фотоотчёты с GPS (переиспользуется)
 - ⬜ Хронологическая лента, сравнение «было / стало»
+
+### Печатная форма (информационный отчёт)
+- ✅ Handlebars-шаблон `templates/info-report.hbs` (A4 портрет: стадии, ПИР, СМР, финансирование, проблемы, ситуация на объекте)
+- ✅ Генератор `src/lib/info-report-pdf-generator.ts` (Puppeteer + Promise-кэш шаблона)
+- ✅ API `POST /api/projects/[projectId]/info-report/generate-pdf` → pre-signed URL (Timeweb S3)
 
 ### Инфраструктура (Модуль 2)
 - ✅ loading.tsx + error.tsx для всех 13 вкладок (/objects/[objectId]/*)
 - ✅ Мобильный layout — адаптивный sidebar с гамбургер-меню (ObjectModuleSidebar)
 - ✅ ObjectModuleSidebar обновлён: Паспорт/Показатели/Финансирование/Задачи/Фото убраны как отдельные пункты → единый «Информация» (2026-04-10)
+- ✅ Tab-навигация паспорта: `passport/layout.tsx` (Задачи / Проблемные вопросы / Фотогалерея)
 
 **База данных (Модуль 2)**
-- ⬜ `ObjectPassport` отдельная модель (поля cadastralNumber, area и др. добавлены в Project напрямую)
+- ⬜ `ObjectPassport` отдельная модель (поля cadastralNumber, area и др. добавлены в BuildingObject напрямую)
+- ✅ `BuildingObject` расширен: `constructionType`, `region`, `stroyka`, `shortName`, `latitude`, `longitude`, `actualStartDate`, `actualEndDate`, `fillDatesFromGpr`, `parentId` + самосвязь `ObjectHierarchy` — миграция `add_object_fields_audit`
 - ✅ `FundingSource` (projectId, type, amount, period) — модель в schema.prisma
 - ✅ `Task` (projectId, contractId, assigneeId, title, status, deadline, priority) — модель в schema.prisma
+- ✅ `ProblemIssue` (projectId, type, status, description, resolution, responsible, deadline, closedAt, authorId) + enum `ProblemIssueType` (7 значений) + `ProblemIssueStatus`
+- ✅ `ProblemIssue` (projectId, type, status, description, resolution, responsible, deadline, closedAt, authorId) — миграция `20260409000000_add_problem_issues`
+- ✅ `ProblemIssueType` enum (7 значений), `ProblemIssueStatus` enum (ACTIVE / CLOSED)
+- ✅ Расширенные реквизиты `BuildingObject`: constructionType, region, stroyka, shortName, latitude, longitude, actualStartDate, actualEndDate, fillDatesFromGpr, parentId — миграция `20260408000000_add_object_fields_audit`
 
 ---
 
