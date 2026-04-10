@@ -132,6 +132,7 @@
 - ✅ Персонализация: drag-and-drop (@dnd-kit), скрытие виджетов (DashboardWidgetsManager)
 - ✅ Лента событий (ActivityFeed на дашборде)
 - ✅ In-app уведомления со счётчиком в sidebar (useUnreadCount + SidebarNav badge)
+- ✅ Страница «Входящие» (/inbox) — все документы ожидающие действия текущего пользователя в workflow согласования (ApprovalStep WAITING + фильтр по currentStepIdx + группировка по категориям ИД/Переписка/СЭД/ПИР/Журналы + синий badge в sidebar)
 - ✅ Email-уведомления (BullMQ + SMTP + notification.worker.ts)
 - ✅ Уведомление следующему участнику цепочки согласования (approval/decide + lib/approval/notify.ts)
 - ✅ Уведомление о дате освидетельствования за ≥3 рабочих дня (inspection-reminder.worker.ts, ГОСТ Р 70108-2025)
