@@ -24,7 +24,27 @@ export async function GET(
       include: {
         author: { select: { id: true, firstName: true, lastName: true } },
         senderOrg: { select: { id: true, name: true, inn: true } },
+        receiverOrg: { select: { id: true, name: true, inn: true } },
+        senderUser: { select: { id: true, firstName: true, lastName: true } },
+        receiverUser: { select: { id: true, firstName: true, lastName: true } },
         attachments: true,
+        workflows: {
+          include: {
+            initiator: { select: { id: true, firstName: true, lastName: true } },
+            approvalRoute: {
+              include: {
+                steps: {
+                  include: {
+                    user: { select: { id: true, firstName: true, lastName: true } },
+                  },
+                  orderBy: { stepIndex: 'asc' },
+                },
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+        links: { orderBy: { createdAt: 'desc' } },
         approvalRoute: {
           include: {
             steps: {

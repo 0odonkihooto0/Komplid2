@@ -490,6 +490,7 @@
 - ✅ `TagInput.tsx` (shared) — компонент ввода тэгов: Enter/запятая → Badge с ×, Backspace для удаления
 - ✅ `GET /api/objects/[objectId]/sed/next-number` — предпросмотр следующего номера без advisory lock
 - ✅ `createSEDSchema` расширена: `senderUserId`, `receiverUserId`, `receiverOrgId`, `date`, `number` (кастомный override)
+- ✅ SEDDocumentCard — полноэкранная карточка документа (5 вкладок: Информация, Параметры, Подписание, Связи, Основания; лента ДО, боковая панель 280px, авто-маркировка isRead)
 
 ### Вкладка «Чат» (/info/chat — не в основных табах)
 - ✅ Групповой чат по проекту / договору (Socket.io, порт 3001)
