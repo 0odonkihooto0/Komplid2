@@ -3984,6 +3984,7 @@ model ProjectIndicator {
   maxValue        String?         // Плановое/максимальное значение
   sourceType      IndicatorSource @default(MANUAL)
   autoSourceField String?         // Поле-источник при AUTO (например: "contract.totalAmount")
+  fileKeys        String[]        @default([]) // S3 ключи прикреплённых файлов
 
   projectId String
   project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
