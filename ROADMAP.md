@@ -170,6 +170,14 @@
 - ✅ Задачи по объекту (ответственный, срок, статус) — TasksView с полным CRUD
 - ⬜ Создание задачи из замечания СК (автосвязь)
 
+### Вкладка «Проблемные вопросы» ✅ (2026-04-09)
+- ✅ Реестр проблемных вопросов по объекту (ЦУС стр. 30)
+- ✅ 7 типов: Корректировка ПСД, Земельно-правовые, Производственные, Орг.-правовые, Договорная работа, Финансовые, Прочие
+- ✅ Статусы: ACTIVE / CLOSED с автоматической фиксацией `closedAt`
+- ✅ Поля: описание, пути решения, ответственный, срок, автор
+- ✅ API: GET (с фильтром ?status= и пагинацией), POST, PATCH, DELETE
+- ✅ Multi-tenancy: проверка organizationId через BuildingObject
+
 ### Вкладка «Фотогалерея»
 - ✅ Фотоотчёты с GPS (переиспользуется)
 - ⬜ Хронологическая лента, сравнение «было / стало»
@@ -182,6 +190,9 @@
 - ⬜ `ObjectPassport` отдельная модель (поля cadastralNumber, area и др. добавлены в Project напрямую)
 - ✅ `FundingSource` (projectId, type, amount, period) — модель в schema.prisma
 - ✅ `Task` (projectId, contractId, assigneeId, title, status, deadline, priority) — модель в schema.prisma
+- ✅ `ProblemIssue` (projectId, type, status, description, resolution, responsible, deadline, closedAt, authorId) — миграция `20260409000000_add_problem_issues`
+- ✅ `ProblemIssueType` enum (7 значений), `ProblemIssueStatus` enum (ACTIVE / CLOSED)
+- ✅ Расширенные реквизиты `BuildingObject`: constructionType, region, stroyka, shortName, latitude, longitude, actualStartDate, actualEndDate, fillDatesFromGpr, parentId — миграция `20260408000000_add_object_fields_audit`
 
 ---
 
