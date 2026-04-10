@@ -46,7 +46,7 @@ export async function GET(req: NextRequest, { params }: Params) {
       db.sEDWorkflowMessage.count({ where: { workflowId: params.wid } }),
     ]);
 
-    return successResponse(messages, { total, page, limit });
+    return successResponse(messages, { total, page, pageSize: limit, totalPages: Math.ceil(total / limit) });
   } catch (error) {
     if (error instanceof NextResponse) return error;
     logger.error({ err: error }, 'Ошибка получения сообщений ДО');
