@@ -12,13 +12,16 @@ import { useProblemIssues, type ProblemIssue } from './useProblemIssues';
 import { CreateProblemDialog } from './CreateProblemDialog';
 
 export const PROBLEM_TYPE_LABELS: Record<ProblemIssueType, string> = {
-  CORRECTION_PSD: 'Корректировка ПСД',
-  LAND_LEGAL:     'Земельно-правовые',
-  PRODUCTION:     'Производственные',
-  ORG_LEGAL:      'Организационно-правовые',
-  CONTRACT_WORK:  'Договорная работа',
-  FINANCIAL:      'Финансовые',
-  OTHER:          'Прочие',
+  CORRECTION_PSD:  'Корректировка ПСД',
+  LAND_LEGAL:      'Земельно-правовые',
+  PRODUCTION:      'Производственные',
+  ORG_LEGAL:       'Организационно-правовые',
+  CONTRACT_WORK:   'Договорная работа',
+  FINANCIAL:       'Финансирование',
+  MATERIAL_SUPPLY: 'Поставка материалов',
+  WORK_QUALITY:    'Качество работ',
+  DEADLINES:       'Сроки',
+  OTHER:           'Прочие',
 };
 
 const TYPE_ORDER = Object.keys(PROBLEM_TYPE_LABELS) as ProblemIssueType[];
