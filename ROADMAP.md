@@ -179,6 +179,14 @@
 - ✅ Задачи по объекту (ответственный, срок, статус) — TasksView с полным CRUD
 - ⬜ Создание задачи из замечания СК (автосвязь)
 
+### Вкладка «Проблемные вопросы» ✅
+- ✅ Реестр проблемных вопросов (CRUD) по 7 типам (ГОСТ Р 70108-2025 / ЦУС стр. 30)
+- ✅ Типы: Корректировка ПСД, Земельно-правовые, Производственные, Организационно-правовые, Договорная работа, Финансовые, Прочие
+- ✅ Статусы: Актуальный (ACTIVE) / Закрыт (CLOSED), дата закрытия автофиксируется
+- ✅ Двухпанельный UI: сводка по типам (Закрытые | Актуальные) + TanStack DataTable
+- ✅ Колонки таблицы: Тип, Статус, Дата, Проблемный вопрос, Исполнитель, Проверено
+- ✅ Диалог создания: Select тип, Textarea описание, Input исполнитель, DatePicker срок
+- ✅ API: GET/POST `/api/projects/[projectId]/problem-issues/` + PATCH/DELETE `…/[id]/`
 ### Вкладка «Проблемные вопросы» ✅ (2026-04-09)
 - ✅ Реестр проблемных вопросов по объекту (ЦУС стр. 30)
 - ✅ 7 типов: Корректировка ПСД, Земельно-правовые, Производственные, Орг.-правовые, Договорная работа, Финансовые, Прочие
@@ -199,12 +207,14 @@
 ### Инфраструктура (Модуль 2)
 - ✅ loading.tsx + error.tsx для всех 13 вкладок (/objects/[objectId]/*)
 - ✅ Мобильный layout — адаптивный sidebar с гамбургер-меню (ObjectModuleSidebar)
+- ✅ Tab-навигация паспорта: `passport/layout.tsx` (Задачи / Проблемные вопросы / Фотогалерея)
 
 **База данных (Модуль 2)**
 - ⬜ `ObjectPassport` отдельная модель (поля cadastralNumber, area и др. добавлены в BuildingObject напрямую)
 - ✅ `BuildingObject` расширен: `constructionType`, `region`, `stroyka`, `shortName`, `latitude`, `longitude`, `actualStartDate`, `actualEndDate`, `fillDatesFromGpr`, `parentId` + самосвязь `ObjectHierarchy` — миграция `add_object_fields_audit`
 - ✅ `FundingSource` (projectId, type, amount, period) — модель в schema.prisma
 - ✅ `Task` (projectId, contractId, assigneeId, title, status, deadline, priority) — модель в schema.prisma
+- ✅ `ProblemIssue` (projectId, type, status, description, resolution, responsible, deadline, closedAt, authorId) + enum `ProblemIssueType` (7 значений) + `ProblemIssueStatus`
 - ✅ `ProblemIssue` (projectId, type, status, description, resolution, responsible, deadline, closedAt, authorId) — миграция `20260409000000_add_problem_issues`
 - ✅ `ProblemIssueType` enum (7 значений), `ProblemIssueStatus` enum (ACTIVE / CLOSED)
 - ✅ Расширенные реквизиты `BuildingObject`: constructionType, region, stroyka, shortName, latitude, longitude, actualStartDate, actualEndDate, fillDatesFromGpr, parentId — миграция `20260408000000_add_object_fields_audit`
