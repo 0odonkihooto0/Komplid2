@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Pencil } from 'lucide-react';
+import { Pencil, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -10,7 +10,13 @@ import { StatusBadge } from '@/components/shared/StatusBadge';
 import { formatDate } from '@/utils/format';
 import { PROJECT_STATUS_LABELS } from '@/utils/constants';
 import { usePassport } from './usePassport';
+import { usePassportWidgets } from './usePassportWidgets';
+import { PirWidget } from './PirWidget';
+import { SmrWidget } from './SmrWidget';
 import { PassportEditDialog } from './PassportEditDialog';
+import { CoordinatesMap } from './CoordinatesMap';
+import { ImplementationTimeline } from './ImplementationTimeline';
+import { toast } from '@/hooks/useToast';
 import type { PassportUpdateData } from './usePassport';
 
 function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
@@ -50,12 +56,18 @@ interface PassportViewProps {
 
 export function PassportView({ projectId }: PassportViewProps) {
   const { project, isLoading, updateMutation } = usePassport(projectId);
+  const { data: widgetsData, isLoading: widgetsLoading } = usePassportWidgets(projectId);
   const [editOpen, setEditOpen] = useState(false);
 
   function handleUpdate(data: PassportUpdateData) {
     updateMutation.mutate(data, {
       onSuccess: () => setEditOpen(false),
     });
+  }
+
+  async function handleGeneratePdf() {
+    await fetch(`/api/projects/${projectId}/info-report/generate-pdf`, { method: 'POST' });
+    toast({ title: 'Функция в разработке', description: 'Генерация PDF будет доступна позже' });
   }
 
   if (isLoading) {
@@ -89,7 +101,7 @@ export function PassportView({ projectId }: PassportViewProps) {
   return (
     <div className="space-y-6">
       {/* Заголовок */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">{project.name}</h1>
           <div className="mt-1 flex items-center gap-2">
@@ -102,10 +114,37 @@ export function PassportView({ projectId }: PassportViewProps) {
             )}
           </div>
         </div>
-        <Button onClick={() => setEditOpen(true)}>
-          <Pencil className="mr-2 h-4 w-4" />
-          Редактировать
-        </Button>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={handleGeneratePdf}>
+            <Printer className="mr-1.5 h-4 w-4" />
+            Печатная форма
+          </Button>
+          <Button variant="outline" size="sm" disabled>
+            Сводный отчёт
+          </Button>
+          <Button variant="outline" size="sm" disabled>
+            История загрузок
+          </Button>
+          <Button size="sm" onClick={() => setEditOpen(true)}>
+            <Pencil className="mr-1.5 h-4 w-4" />
+            Редактировать
+          </Button>
+        </div>
+      </div>
+
+      {/* KPI-виджеты ПИР и СМР */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {widgetsLoading ? (
+          <>
+            <Skeleton className="h-44 w-full rounded-lg" />
+            <Skeleton className="h-44 w-full rounded-lg" />
+          </>
+        ) : widgetsData ? (
+          <>
+            <PirWidget data={widgetsData.pir} />
+            <SmrWidget data={widgetsData.smr} />
+          </>
+        ) : null}
       </div>
 
       {/* Двухколоночный grid */}
@@ -202,6 +241,12 @@ export function PassportView({ projectId }: PassportViewProps) {
           </Card>
         </div>
       </div>
+
+      {/* Карта и координаты */}
+      <CoordinatesMap projectId={projectId} address={project.address} />
+
+      {/* График реализации */}
+      <ImplementationTimeline project={project} />
 
       <PassportEditDialog
         open={editOpen}

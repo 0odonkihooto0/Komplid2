@@ -41,9 +41,39 @@ export interface BimModelDetail {
 
 export interface BimElementLink {
   id: string;
-  entityType: 'GanttTask' | 'ExecutionDoc' | 'Defect';
+  entityType: 'GanttTask' | 'ExecutionDoc' | 'Ks2Act' | 'Defect';
   entityId: string;
   createdAt: string;
+  /** Читаемое имя сущности (номер + название или только название) */
+  entityLabel?: string;
+  /** Статус сущности для отображения Badge */
+  entityStatus?: string;
+  /** Присутствует только при запросах с include element (allGprLinks, entityId-фильтр) */
+  element?: { id: string; ifcGuid: string; ifcType: string; name: string | null };
+}
+
+/** Версия ГПР (сводные данные из /api/projects/[id]/gantt-versions) */
+export interface GanttVersionSummary {
+  id: string;
+  name: string;
+  isBaseline: boolean;
+  isActive: boolean;
+  planStart: string | null;
+  planEnd: string | null;
+  taskCount: number;
+}
+
+/** Задача ГПР для просмотра в TIM (подмножество полей GanttTask) */
+export interface GanttTaskViewer {
+  id: string;
+  name: string;
+  level: number;
+  sortOrder: number;
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'DELAYED' | 'ON_HOLD';
+  planStart: string;
+  planEnd: string;
+  factEnd: string | null;
+  progress: number;
 }
 
 export interface BimElementDetail {
@@ -62,8 +92,37 @@ export interface BimElementDetail {
 export interface CreateLinkPayload {
   elementId: string;
   modelId: string;
-  entityType: 'GanttTask' | 'ExecutionDoc' | 'Defect';
+  entityType: 'GanttTask' | 'ExecutionDoc' | 'Ks2Act' | 'Defect';
   entityId: string;
+}
+
+/** Документ (ExecutionDoc или Ks2Act) для диалога поиска */
+export interface DocSearchItem {
+  id: string;
+  entityType: 'ExecutionDoc' | 'Ks2Act';
+  number: string | null;
+  title: string | null;
+  status: string;
+  contractId: string;
+}
+
+/** Дефект для диалога поиска */
+export interface DefectSearchItem {
+  id: string;
+  title: string;
+  status: string;
+  category: string | null;
+}
+
+/** Данные для создания нового замечания и привязки к ТИМ-элементу */
+export interface CreateDefectPayload {
+  elementId: string;
+  modelId: string;
+  title: string;
+  description?: string;
+  category?: string;
+  normativeRef?: string;
+  deadline?: string;
 }
 
 interface ApiResponse<T> {
@@ -152,11 +211,115 @@ export function useCreateLink(projectId: string) {
       queryClient.invalidateQueries({
         queryKey: ['bim-element-detail', projectId, variables.modelId, variables.elementId],
       });
+      // Инвалидируем кэш всех связей модели для обновления цветов Timeline
+      queryClient.invalidateQueries({ queryKey: ['all-gpr-links', projectId] });
       toast({ title: 'Привязка создана' });
     },
     onError: (error: Error) => {
       toast({ title: 'Ошибка', description: error.message, variant: 'destructive' });
     },
+  });
+}
+
+// ─── Upload version ──────────────────────────────────────────────────────────
+
+export interface UploadVersionInput {
+  file: File;
+  name: string;
+  comment?: string | null;
+  setAsCurrent: boolean;
+}
+
+interface PresignedUrlResponse {
+  presignedUrl: string;
+  s3Key: string;
+}
+
+/** Загрузить новую версию существующей модели */
+export function useUploadVersion(projectId: string, modelId: string) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ file, name, comment, setAsCurrent }: UploadVersionInput) => {
+      // Шаг 1 — получить presigned URL
+      const presignedRes = await apiFetch<PresignedUrlResponse>(
+        `/api/projects/${projectId}/bim/models/presigned-url`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileName: file.name, mimeType: 'application/octet-stream' }),
+        }
+      );
+
+      // Шаг 2 — загрузить файл в S3
+      const uploadRes = await fetch(presignedRes.presignedUrl, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': 'application/octet-stream' },
+      });
+      if (!uploadRes.ok) throw new Error('Ошибка загрузки файла в S3');
+
+      // Шаг 3 — создать запись версии
+      return apiFetch<{ id: string }>(
+        `/api/projects/${projectId}/bim/models/${modelId}/upload-version`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            comment: comment ?? null,
+            s3Key: presignedRes.s3Key,
+            fileName: file.name,
+            fileSize: file.size,
+            setAsCurrent,
+          }),
+        }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bim-model-detail', projectId, modelId] });
+      toast({ title: 'Версия загружена', description: 'Новая версия модели добавлена' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Ошибка загрузки', description: error.message, variant: 'destructive' });
+    },
+  });
+}
+
+// ─── ГПР хуки для TIM-вьюера ────────────────────────────────────────────────
+
+/** Версии ГПР текущего объекта (для Select в GprLinkPanel и динамических дат Timeline) */
+export function useGanttVersionsForViewer(projectId: string) {
+  return useQuery<GanttVersionSummary[]>({
+    queryKey: ['gantt-versions-viewer', projectId],
+    queryFn: () => apiFetch<GanttVersionSummary[]>(`/api/projects/${projectId}/gantt-versions`),
+    staleTime: 60_000,
+  });
+}
+
+/** Задачи выбранной версии ГПР (для списка позиций в GprLinkPanel) */
+export function useGanttTasksForViewer(projectId: string, versionId: string | null) {
+  return useQuery<{ tasks: GanttTaskViewer[]; dependencies: unknown[] }>({
+    queryKey: ['gantt-tasks-viewer', projectId, versionId],
+    enabled: !!versionId,
+    queryFn: () =>
+      apiFetch<{ tasks: GanttTaskViewer[]; dependencies: unknown[] }>(
+        `/api/projects/${projectId}/gantt-versions/${versionId}/tasks`
+      ),
+    staleTime: 30_000,
+  });
+}
+
+/** Все GPR-связи модели (для цветовой индикации по временной шкале) */
+export function useAllGprLinks(projectId: string, modelId: string) {
+  return useQuery<BimElementLink[]>({
+    queryKey: ['all-gpr-links', projectId, modelId],
+    queryFn: () =>
+      apiFetch<BimElementLink[]>(
+        `/api/projects/${projectId}/bim/links?entityType=GanttTask&modelId=${modelId}`
+      ),
+    staleTime: 30_000,
   });
 }
 
@@ -175,7 +338,80 @@ export function useDeleteLink(projectId: string, modelId: string, elementId: str
       queryClient.invalidateQueries({
         queryKey: ['bim-element-detail', projectId, modelId, elementId],
       });
+      // Инвалидируем кэш всех связей модели для обновления цветов Timeline
+      queryClient.invalidateQueries({ queryKey: ['all-gpr-links', projectId] });
       toast({ title: 'Привязка удалена' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Ошибка', description: error.message, variant: 'destructive' });
+    },
+  });
+}
+
+// ─── Поиск документов для диалога привязки ─────────────────────────────────
+
+/** Поиск ExecutionDoc и Ks2Act по объекту (для диалога добавления связи) */
+export function useSearchDocs(projectId: string, search: string, enabled: boolean) {
+  return useQuery<DocSearchItem[]>({
+    queryKey: ['bim-search-docs', projectId, search],
+    queryFn: () =>
+      apiFetch<DocSearchItem[]>(
+        `/api/projects/${projectId}/execution-docs?search=${encodeURIComponent(search)}&limit=50`
+      ),
+    enabled,
+    staleTime: 15_000,
+  });
+}
+
+/** Поиск Defect по объекту (для диалога добавления связи).
+ *  API дефектов не поддерживает text-search — загружаем все, фильтруем на клиенте. */
+export function useSearchDefects(projectId: string, enabled: boolean) {
+  return useQuery<{ data: DefectSearchItem[] }>({
+    queryKey: ['bim-search-defects', projectId],
+    queryFn: () =>
+      apiFetch<{ data: DefectSearchItem[] }>(
+        `/api/projects/${projectId}/defects?limit=50`
+      ),
+    enabled,
+    staleTime: 30_000,
+  });
+}
+
+/** Создать новое замечание (Defect) и сразу привязать к ТИМ-элементу */
+export function useCreateDefectAndLink(projectId: string) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({
+      elementId, modelId, title, description, category, normativeRef, deadline,
+    }: CreateDefectPayload) => {
+      // Шаг 1: создать Defect
+      const defect = await apiFetch<{ id: string }>(
+        `/api/projects/${projectId}/defects`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, description, category, normativeRef, deadline }),
+        }
+      );
+      // Шаг 2: создать привязку к ТИМ-элементу
+      await apiFetch<{ id: string }>(
+        `/api/projects/${projectId}/bim/links`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ elementId, modelId, entityType: 'Defect', entityId: defect.id }),
+        }
+      );
+      return defect;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['bim-element-detail', projectId, variables.modelId, variables.elementId],
+      });
+      queryClient.invalidateQueries({ queryKey: ['bim-issues', projectId] });
+      toast({ title: 'Замечание создано и привязано к элементу' });
     },
     onError: (error: Error) => {
       toast({ title: 'Ошибка', description: error.message, variant: 'destructive' });

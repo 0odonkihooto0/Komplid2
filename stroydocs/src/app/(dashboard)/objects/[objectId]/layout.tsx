@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { ObjectModuleSidebar } from '@/components/objects/ObjectModuleSidebar';
+import { ObjectInfoHeader } from '@/components/objects/ObjectInfoHeader';
 
 // Двухколоночный layout: модульная навигация слева + контент справа
 export default async function ObjectLayout({
@@ -13,7 +14,10 @@ export default async function ObjectLayout({
     <div className="flex h-full">
       <ObjectModuleSidebar objectId={params.objectId} />
       {/* На мобильных добавляем отступ сверху под кнопку гамбургера */}
-      <main className="flex-1 overflow-y-auto p-6 pt-14 md:pt-6">{children}</main>
+      <main className="flex-1 overflow-y-auto p-6 pt-14 md:pt-6">
+        <ObjectInfoHeader objectId={params.objectId} />
+        {children}
+      </main>
     </div>
   );
 }

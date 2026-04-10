@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Building2, FileText, BookOpen, BarChart3, Monitor } from 'lucide-react';
+import { LayoutDashboard, Building2, FileText, BookOpen, BarChart3, Monitor, Inbox, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -10,10 +10,19 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useUnreadCount } from '@/hooks/useUnreadCount';
+import { useInboxCount } from '@/hooks/useInboxCount';
+import { NotificationDropdown } from './NotificationDropdown';
 
-const navItems = [
-  { href: '/', label: 'Главная', icon: LayoutDashboard, showBadge: true },
+interface NavItem {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  showInboxBadge?: boolean;
+}
+
+const navItems: NavItem[] = [
+  { href: '/', label: 'Главная', icon: LayoutDashboard },
+  { href: '/inbox', label: 'Входящие', icon: Inbox, showInboxBadge: true },
   { href: '/objects', label: 'Объекты', icon: Building2 },
   { href: '/analytics', label: 'Аналитика', icon: BarChart3 },
   { href: '/monitoring', label: 'Мониторинг', icon: Monitor },
@@ -27,7 +36,7 @@ interface Props {
 
 export function SidebarNav({ isCollapsed }: Props) {
   const pathname = usePathname();
-  const unreadCount = useUnreadCount();
+  const inboxCount = useInboxCount();
 
   return (
     <TooltipProvider delayDuration={100}>
@@ -37,11 +46,14 @@ export function SidebarNav({ isCollapsed }: Props) {
             ? pathname === '/'
             : pathname.startsWith(item.href);
 
-          const badge = item.showBadge && unreadCount > 0 ? (
-            <span className="ml-auto flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white px-0.5">
-              {unreadCount > 9 ? '9+' : unreadCount}
+          // Badge для входящих документов (Входящие)
+          const inboxBadge = item.showInboxBadge && inboxCount > 0 ? (
+            <span className="ml-auto flex h-4 min-w-[16px] items-center justify-center rounded-full bg-blue-500 text-[9px] font-bold text-white px-0.5">
+              {inboxCount > 9 ? '9+' : inboxCount}
             </span>
           ) : null;
+
+          const showCollapsedDot = isCollapsed && inboxCount > 0 && item.showInboxBadge;
 
           const linkContent = (
             <Link
@@ -58,12 +70,12 @@ export function SidebarNav({ isCollapsed }: Props) {
               <div className="relative flex-shrink-0">
                 <item.icon className="h-4 w-4" />
                 {/* Badge в свёрнутом режиме — поверх иконки */}
-                {isCollapsed && unreadCount > 0 && item.showBadge && (
-                  <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white" />
+                {showCollapsedDot && (
+                  <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-blue-500" />
                 )}
               </div>
               {!isCollapsed && item.label}
-              {!isCollapsed && badge}
+              {!isCollapsed && inboxBadge}
             </Link>
           );
 
@@ -73,7 +85,7 @@ export function SidebarNav({ isCollapsed }: Props) {
                 <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
                 <TooltipContent side="right">
                   {item.label}
-                  {item.showBadge && unreadCount > 0 && ` (${unreadCount})`}
+                  {item.showInboxBadge && inboxCount > 0 && ` (${inboxCount})`}
                 </TooltipContent>
               </Tooltip>
             );
@@ -82,6 +94,8 @@ export function SidebarNav({ isCollapsed }: Props) {
           return linkContent;
         })}
 
+        {/* Уведомления — Popover вместо обычной ссылки */}
+        <NotificationDropdown isCollapsed={isCollapsed} />
       </nav>
     </TooltipProvider>
   );

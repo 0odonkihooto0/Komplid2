@@ -1,7 +1,9 @@
-import { FundingView } from '@/components/objects/funding/FundingView';
+import { redirect } from 'next/navigation';
 
-export const dynamic = 'force-dynamic';
-
-export default function FundingPage({ params }: { params: { objectId: string } }) {
-  return <FundingView projectId={params.objectId} />;
+export default function FundingPage({
+  params,
+}: {
+  params: { objectId: string };
+}) {
+  redirect(`/objects/${params.objectId}/info/funding`);
 }
