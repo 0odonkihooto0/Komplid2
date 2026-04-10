@@ -152,6 +152,9 @@
 - ✅ Название, адрес, участники
 - ✅ Кадастровый номер, площадь, класс ответственности (PassportView + поля в Project)
 - ✅ Разрешение на строительство (№, дата, орган выдачи) (PassportView — permitNumber, permitDate, permitAuthority)
+- ✅ Секция «Карта и координаты» — react-leaflet карта (OSM tiles), мультиточечные маркеры из ProjectCoordinate (очередь строительства), Nominatim geocoding по адресу объекта, контекстное меню маркера (Изменить / Удалить), диалог добавления/редактирования точки
+- ✅ Секция «График реализации» — полоса стадий (Экспертиза, Обследование, Изыскания, ПД, СМР, Ввод) с Badge + div-прогресс-бар плана СМР по плановым датам паспорта
+- ✅ Кнопки действий в шапке: «Печатная форма» (POST /info-report/generate-pdf, заглушка 501), «Сводный отчёт» (placeholder), «История загрузок» (placeholder)
 - ✅ Виджет «ПИР»: общая сумма ПИР-контрактов (по имени категории), освоение (акты закрытия ПИР SIGNED), % выполнения, дата плана, отклонение ▲/▼ в рублях (PirWidget + GET /api/objects/[objectId]/passport/widgets)
 - ✅ Виджет «СМР»: общая сумма контрактов, освоение (КС-2 APPROVED), % выполнения, даты начала/окончания, отклонение ▲/▼ в рублях (SmrWidget + usePassportWidgets)
 - ✅ Тип строительства (Select: Новое строительство / Реконструкция / Капитальный ремонт / Техническое перевооружение)
@@ -224,6 +227,7 @@
 - ✅ `BuildingObject` расширен: `constructionType`, `region`, `stroyka`, `shortName`, `latitude`, `longitude`, `actualStartDate`, `actualEndDate`, `fillDatesFromGpr`, `parentId` + самосвязь `ObjectHierarchy` — миграция `add_object_fields_audit`
 - ✅ `FundingSource` (projectId, type, amount, period) — модель в schema.prisma
 - ✅ `Task` (projectId, contractId, assigneeId, title, status, deadline, priority) — модель в schema.prisma
+- ✅ `ProjectCoordinate` (projectId, latitude, longitude, constructionPhase?) — миграция 20260409120000_add_info_module_models
 - ✅ `ProblemIssue` (projectId, type, status, description, resolution, responsible, deadline, closedAt, authorId) + enum `ProblemIssueType` (7 значений) + `ProblemIssueStatus`
 - ✅ `ProblemIssue` (projectId, type, status, description, resolution, responsible, deadline, closedAt, authorId) — миграция `20260409000000_add_problem_issues`
 - ✅ `ProblemIssueType` enum (7 значений), `ProblemIssueStatus` enum (ACTIVE / CLOSED)
