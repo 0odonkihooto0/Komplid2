@@ -7,7 +7,7 @@ import { createSEDSchema } from '@/lib/validations/sed';
 import { getNextSEDNumber } from '@/lib/numbering';
 export const dynamic = 'force-dynamic';
 
-type SEDView = 'all' | 'active' | 'requires' | 'my' | 'sent';
+type SEDView = 'all' | 'active' | 'requires_action' | 'participating' | 'sent_by_me';
 
 export async function GET(
   req: NextRequest,
@@ -25,10 +25,33 @@ export async function GET(
     const view = (searchParams.get('view') ?? 'all') as SEDView;
     const status = searchParams.get('status');
     const docType = searchParams.get('docType');
+    const folderId = searchParams.get('folderId');
     const search = searchParams.get('search');
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
     const limit = Math.min(200, Math.max(1, parseInt(searchParams.get('limit') ?? '50', 10)));
     const skip = (page - 1) * limit;
+
+    // Фильтр видимости документа (на уровне документа, как в ЦУС)
+    const visibilityWhere = {
+      OR: [
+        { authorId: session.user.id },
+        { senderOrgId: session.user.organizationId },
+        { receiverOrgIds: { has: session.user.organizationId } },
+        { receiverOrgId: session.user.organizationId },
+        { observers: { has: session.user.id } },
+        {
+          workflows: {
+            some: {
+              OR: [
+                { initiatorId: session.user.id },
+                { participants: { has: session.user.id } },
+                { observers: { has: session.user.id } },
+              ],
+            },
+          },
+        },
+      ],
+    };
 
     // Полнотекстовый поиск через PostgreSQL tsvector
     if (search) {
@@ -42,7 +65,7 @@ export async function GET(
       const ids = results.map((r: { id: string }) => r.id);
 
       const items = await db.sEDDocument.findMany({
-        where: { id: { in: ids } },
+        where: { id: { in: ids }, ...visibilityWhere },
         include: {
           author: { select: { id: true, firstName: true, lastName: true } },
           senderOrg: { select: { id: true, name: true } },
@@ -54,21 +77,24 @@ export async function GET(
       return successResponse({ data: items, page, limit });
     }
 
-    const baseWhere: Record<string, unknown> = { projectId: params.projectId };
+    const baseWhere: Record<string, unknown> = {
+      projectId: params.projectId,
+      ...visibilityWhere,
+    };
     if (status) baseWhere.status = status;
     if (docType) baseWhere.docType = docType;
+    if (folderId) baseWhere.folderLinks = { some: { folderId } };
 
     let where: Record<string, unknown> = baseWhere;
 
-    // Фильтрация по представлению (как в ЦУС)
+    // Фильтрация по представлению поверх видимости
     switch (view) {
       case 'active':
         where = { ...baseWhere, status: { notIn: ['REJECTED', 'ARCHIVED'] } };
         break;
-      case 'requires':
+      case 'requires_action':
         where = {
           ...baseWhere,
-          status: 'REQUIRES_ACTION',
           approvalRoute: {
             steps: {
               some: { userId: session.user.id, status: 'PENDING' },
@@ -76,11 +102,21 @@ export async function GET(
           },
         };
         break;
-      case 'my':
-        where = { ...baseWhere, authorId: session.user.id };
+      case 'participating':
+        where = {
+          ...baseWhere,
+          workflows: {
+            some: {
+              OR: [
+                { participants: { has: session.user.id } },
+                { observers: { has: session.user.id } },
+              ],
+            },
+          },
+        };
         break;
-      case 'sent':
-        where = { ...baseWhere, senderOrgId: session.user.organizationId };
+      case 'sent_by_me':
+        where = { ...baseWhere, authorId: session.user.id };
         break;
       default:
         where = baseWhere;
