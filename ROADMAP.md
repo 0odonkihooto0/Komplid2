@@ -730,6 +730,8 @@
 - ✅ Улучшенное освещение 3D-сцены (AmbientLight + DirectionalLight + HemisphereLight) — исправлено 2026-04-10
 - ✅ nanoCAD BIM, Renga, Pilot-BIM
 - ✅ `BimModel`, `BimElementLink`
+- ✅ **Разрезы (Clipping Planes)** — кнопка «Разрезы» в toolbar, горизонтальный / вертикальный разрез, слайдер положения плоскости, «Убрать разрез» (ЦУС стр. 301)
+- ✅ **Измерения (Dimensions)** — кнопка «Измерения», клик A → клик B → расстояние в метрах, линия + 3D-метка (CSS2DRenderer), «Удалить все измерения» (ЦУС стр. 302)
 ### 3D-вьюер ✅
 - ✅ Загрузка IFC-файла из Timeweb S3 (presigned URL) в браузере
 - ✅ Рендеринг геометрии через web-ifc (WASM) + Three.js (`IfcViewerCore`, `ifcSceneSetup`)
