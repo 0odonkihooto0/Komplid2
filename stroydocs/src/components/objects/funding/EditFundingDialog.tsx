@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -27,7 +27,8 @@ import {
   RECORD_TYPE_LABELS,
   BUDGET_KEYS,
   BUDGET_LABELS,
-  type CreateFundingRecordData,
+  type FundingRecord,
+  type UpdateFundingRecordData,
 } from './useFundingRecords';
 
 const currentYear = new Date().getFullYear();
@@ -45,32 +46,38 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-interface AddFundingDialogProps {
+interface EditFundingDialogProps {
+  record: FundingRecord | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: CreateFundingRecordData) => void;
+  onSubmit: (id: string, data: UpdateFundingRecordData) => void;
   isPending: boolean;
 }
 
-export function AddFundingDialog({
+export function EditFundingDialog({
+  record,
   open,
   onOpenChange,
   onSubmit,
   isPending,
-}: AddFundingDialogProps) {
+}: EditFundingDialogProps) {
   const { register, handleSubmit, control, watch, reset, formState: { errors } } =
-    useForm<FormValues>({
-      resolver: zodResolver(schema),
-      defaultValues: {
-        year: currentYear,
-        recordType: 'ALLOCATED',
-        federalBudget: 0,
-        regionalBudget: 0,
-        localBudget: 0,
-        ownFunds: 0,
-        extraBudget: 0,
-      },
-    });
+    useForm<FormValues>({ resolver: zodResolver(schema) });
+
+  // Заполняем форму при открытии с данными записи
+  useEffect(() => {
+    if (record) {
+      reset({
+        year: record.year,
+        recordType: record.recordType,
+        federalBudget: record.federalBudget,
+        regionalBudget: record.regionalBudget,
+        localBudget: record.localBudget,
+        ownFunds: record.ownFunds,
+        extraBudget: record.extraBudget,
+      });
+    }
+  }, [record, reset]);
 
   const values = watch();
   const total = useMemo(
@@ -89,17 +96,19 @@ export function AddFundingDialog({
     onOpenChange(isOpen);
   }
 
+  function handleFormSubmit(values: FormValues) {
+    if (!record) return;
+    onSubmit(record.id, values as UpdateFundingRecordData);
+  }
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Добавить запись финансирования</DialogTitle>
+          <DialogTitle>Редактировать запись финансирования</DialogTitle>
         </DialogHeader>
 
-        <form
-          onSubmit={handleSubmit((v) => onSubmit(v as CreateFundingRecordData))}
-          className="space-y-4"
-        >
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             {/* Год */}
             <div className="space-y-1">
@@ -137,8 +146,8 @@ export function AddFundingDialog({
                   >
                     {(Object.keys(RECORD_TYPE_LABELS) as Array<'ALLOCATED' | 'DELIVERED'>).map((key) => (
                       <div key={key} className="flex items-center gap-2">
-                        <RadioGroupItem value={key} id={`add-rt-${key}`} />
-                        <Label htmlFor={`add-rt-${key}`} className="font-normal cursor-pointer">
+                        <RadioGroupItem value={key} id={`edit-rt-${key}`} />
+                        <Label htmlFor={`edit-rt-${key}`} className="font-normal cursor-pointer">
                           {RECORD_TYPE_LABELS[key]}
                         </Label>
                       </div>
@@ -173,7 +182,7 @@ export function AddFundingDialog({
               Отмена
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? 'Создание...' : 'Создать'}
+              {isPending ? 'Сохранение...' : 'Сохранить'}
             </Button>
           </DialogFooter>
         </form>
