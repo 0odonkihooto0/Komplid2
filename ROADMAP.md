@@ -371,6 +371,10 @@
 - ✅ Привязка документов к папкам: `POST/DELETE /sed/[docId]/folders/[folderId]`
 - ✅ Связи (SEDLink): `GET/POST /sed/[docId]/links` + `DELETE /links/[linkId]` (полиморфные, uniqueness guard)
 - ✅ Вложения: `GET /sed/[docId]/attachments` (список с presigned URL) + `GET/DELETE /attachments/[attachmentId]` (удаление только черновиков)
+- ✅ `CreateSEDDocumentDialog.tsx` — полноэкранный диалог создания (тип, отправитель/получатель физлицо + организация, номер, дата, TipTap текст, TagInput тэги, Dropzone + S3 вложения)
+- ✅ `TagInput.tsx` (shared) — компонент ввода тэгов: Enter/запятая → Badge с ×, Backspace для удаления
+- ✅ `GET /api/objects/[objectId]/sed/next-number` — предпросмотр следующего номера без advisory lock
+- ✅ `createSEDSchema` расширена: `senderUserId`, `receiverUserId`, `receiverOrgId`, `date`, `number` (кастомный override)
 
 ### Вкладка «Чат» (/info/chat — не в основных табах)
 - ✅ Групповой чат по проекту / договору (Socket.io, порт 3001)
