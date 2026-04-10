@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/useToast';
 import type { SEDStatus } from './useSEDList';
@@ -86,6 +86,9 @@ export function useSEDDocumentCard(objectId: string, docId: string) {
 
   const [activeTab, setActiveTab] = useState('info');
   const [activeWorkflowId, setActiveWorkflowId] = useState<string | null>(null);
+  const [showCreateWorkflowDialog, setShowCreateWorkflowDialog] = useState(false);
+  // Флаг: автовыбор первого ДО выполнен один раз при загрузке
+  const hasAutoSelected = useRef(false);
 
   const detailKey = ['sed-card', docId];
   const listKey = ['sed', objectId];
@@ -101,12 +104,14 @@ export function useSEDDocumentCard(objectId: string, docId: string) {
     enabled: Boolean(docId),
   });
 
-  // Устанавливаем первый workflow как активный при загрузке
+  // Автовыбор первого ДО при первоначальной загрузке документа (один раз)
   useEffect(() => {
-    if (doc?.workflows?.length && !activeWorkflowId) {
+    if (doc?.workflows?.length && !hasAutoSelected.current) {
       setActiveWorkflowId(doc.workflows[0].id);
+      hasAutoSelected.current = true;
     }
-  }, [doc?.workflows, activeWorkflowId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doc?.workflows]);
 
   // Авто-маркировка isRead при открытии получателем
   useEffect(() => {
@@ -199,6 +204,9 @@ export function useSEDDocumentCard(objectId: string, docId: string) {
     activeWorkflowId,
     setActiveWorkflowId,
     activeWorkflow,
+    showCreateWorkflowDialog,
+    setShowCreateWorkflowDialog,
+    invalidate,
     patchMutation,
     startWorkflowMutation,
     addLinkMutation,

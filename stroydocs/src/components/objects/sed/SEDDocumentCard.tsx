@@ -13,6 +13,8 @@ import { SEDSigningTab } from './SEDSigningTab';
 import { SEDLinksTab } from './SEDLinksTab';
 import { SEDBasesTab } from './SEDBasesTab';
 import { SEDDocSidebar } from './SEDDocSidebar';
+import { WorkflowCard } from './WorkflowCard';
+import { CreateWorkflowDialog } from './CreateWorkflowDialog';
 
 interface SEDDocumentCardProps {
   objectId: string;
@@ -28,6 +30,9 @@ export function SEDDocumentCard({ objectId, docId }: SEDDocumentCardProps) {
     setActiveTab,
     activeWorkflowId,
     setActiveWorkflowId,
+    showCreateWorkflowDialog,
+    setShowCreateWorkflowDialog,
+    invalidate,
     patchMutation,
     startWorkflowMutation,
     addLinkMutation,
@@ -72,56 +77,77 @@ export function SEDDocumentCard({ objectId, docId }: SEDDocumentCardProps) {
         isWorkflowPending={startWorkflowMutation.isPending}
         onPatchStatus={(status) => patchMutation.mutate({ status })}
         onStartWorkflow={() => startWorkflowMutation.mutate()}
+        onCreateWorkflow={() => setShowCreateWorkflowDialog(true)}
       />
       {doc.workflows.length > 0 && (
         <SEDWorkflowRibbon
           workflows={doc.workflows}
           activeWorkflowId={activeWorkflowId}
-          onSelect={setActiveWorkflowId}
+          onSelect={(id) => setActiveWorkflowId(activeWorkflowId === id ? null : id)}
         />
       )}
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="info">Информация</TabsTrigger>
-              <TabsTrigger value="params">Параметры</TabsTrigger>
-              <TabsTrigger value="signing">Подписание</TabsTrigger>
-              <TabsTrigger value="links">Связи</TabsTrigger>
-              <TabsTrigger value="bases">Основания</TabsTrigger>
-            </TabsList>
-            <TabsContent value="info">
-              <SEDInfoTab doc={doc} />
-            </TabsContent>
-            <TabsContent value="params">
-              <SEDParamsTab doc={doc} />
-            </TabsContent>
-            <TabsContent value="signing">
-              <SEDSigningTab
-                doc={doc}
-                objectId={objectId}
-                docId={docId}
-                onStartWorkflow={() => startWorkflowMutation.mutate()}
-                isWorkflowPending={startWorkflowMutation.isPending}
-              />
-            </TabsContent>
-            <TabsContent value="links">
-              <SEDLinksTab
-                doc={doc}
-                objectId={objectId}
-                docId={docId}
-                addLinkMutation={addLinkMutation}
-              />
-            </TabsContent>
-            <TabsContent value="bases">
-              <SEDBasesTab doc={doc} />
-            </TabsContent>
-          </Tabs>
+
+      {/* Показываем WorkflowCard если выбран ДО, иначе — стандартные вкладки */}
+      {activeWorkflowId ? (
+        <WorkflowCard
+          objectId={objectId}
+          docId={docId}
+          workflowId={activeWorkflowId}
+          doc={doc}
+        />
+      ) : (
+        <div className="flex flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="mb-4">
+                <TabsTrigger value="info">Информация</TabsTrigger>
+                <TabsTrigger value="params">Параметры</TabsTrigger>
+                <TabsTrigger value="signing">Подписание</TabsTrigger>
+                <TabsTrigger value="links">Связи</TabsTrigger>
+                <TabsTrigger value="bases">Основания</TabsTrigger>
+              </TabsList>
+              <TabsContent value="info">
+                <SEDInfoTab doc={doc} />
+              </TabsContent>
+              <TabsContent value="params">
+                <SEDParamsTab doc={doc} />
+              </TabsContent>
+              <TabsContent value="signing">
+                <SEDSigningTab
+                  doc={doc}
+                  objectId={objectId}
+                  docId={docId}
+                  onStartWorkflow={() => startWorkflowMutation.mutate()}
+                  isWorkflowPending={startWorkflowMutation.isPending}
+                />
+              </TabsContent>
+              <TabsContent value="links">
+                <SEDLinksTab
+                  doc={doc}
+                  objectId={objectId}
+                  docId={docId}
+                  addLinkMutation={addLinkMutation}
+                />
+              </TabsContent>
+              <TabsContent value="bases">
+                <SEDBasesTab doc={doc} />
+              </TabsContent>
+            </Tabs>
+          </div>
+          <div className="w-[280px] shrink-0 border-l overflow-y-auto">
+            <SEDDocSidebar doc={doc} objectId={objectId} />
+          </div>
         </div>
-        <div className="w-[280px] shrink-0 border-l overflow-y-auto">
-          <SEDDocSidebar doc={doc} objectId={objectId} />
-        </div>
-      </div>
+      )}
+
+      <CreateWorkflowDialog
+        open={showCreateWorkflowDialog}
+        onOpenChange={setShowCreateWorkflowDialog}
+        objectId={objectId}
+        docId={docId}
+        orgId={doc.senderOrg.id}
+        onCreated={invalidate}
+      />
     </div>
   );
 }
