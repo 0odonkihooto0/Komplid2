@@ -211,6 +211,16 @@
 ### Модуль «СЭД»
 - ✅ Документооборот произвольного типа: черновик → согласование → подписан → архив
 - ✅ Полнотекстовый поиск (PostgreSQL tsvector)
+- ✅ API роуты: список (GET), создание (POST), просмотр/обновление/удаление (GET/PATCH/DELETE)
+- ✅ Расширенная логика видимости: author / senderOrg / receiverOrg / observers / workflow-участники (6 условий OR)
+- ✅ Views: `all` | `active` | `requires_action` | `participating` | `sent_by_me`
+- ✅ Фильтры: folderId, status, docType, полнотекстовый поиск
+- ✅ Авто-отметка `isRead = true` при первом открытии получателем
+- ✅ Bulk mark-read: `POST /sed/[docId]/mark-read` — массовая отметка `{ documentIds, isRead }`
+- ✅ Папки: CRUD `/sed/folders` + `/sed/folders/[folderId]` (дерево с parentId, счётчик документов)
+- ✅ Привязка документов к папкам: `POST/DELETE /sed/[docId]/folders/[folderId]`
+- ✅ Связи (SEDLink): `GET/POST /sed/[docId]/links` + `DELETE /links/[linkId]` (полиморфные, uniqueness guard)
+- ✅ Вложения: `GET /sed/[docId]/attachments` (список с presigned URL) + `GET/DELETE /attachments/[attachmentId]` (удаление только черновиков)
 
 ### Вкладка «Чат»
 - ✅ Групповой чат по проекту / договору (Socket.io, порт 3001)
@@ -220,6 +230,9 @@
 - ✅ `Correspondence`, `CorrespondenceAttachment` (с tsvector-поиском)
 - ✅ `RFI`, `RFIAttachment`
 - ✅ `SEDDocument`, `SEDAttachment` (с tsvector-поиском)
+- ✅ `SEDFolder`, `SEDDocumentFolder` (папки с иерархией parentId, many-to-many)
+- ✅ `SEDLink` (полиморфная связь: entityType + entityId, @@unique constraint)
+- ✅ `SEDWorkflow`, `SEDWorkflowMessage`, `WorkflowRegulation`, `SEDDocumentBasis` (карточки ДО)
 - ✅ `ChatMessage`
 
 ---
