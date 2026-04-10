@@ -384,7 +384,7 @@ async function getKs2Summary(
 /** gpr-deviation — Отклонения от ГПР */
 async function getGprDeviation(
   projectId: string,
-  filters: ThematicFilters
+  _filters: ThematicFilters
 ): Promise<ThematicRow[]> {
   const tasks = await db.ganttTask.findMany({
     where: {
@@ -492,7 +492,7 @@ async function getPaymentsReport(
 /** funding-report — Исполнение финансирования */
 async function getFundingReport(
   projectId: string,
-  filters: ThematicFilters
+  _filters: ThematicFilters
 ): Promise<ThematicRow[]> {
   const fundingSources = await db.fundingSource.findMany({
     where: { projectId },

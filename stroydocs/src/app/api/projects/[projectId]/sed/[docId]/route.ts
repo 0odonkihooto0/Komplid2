@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { updateSEDSchema } from '@/lib/validations/sed';
+import { deleteFile } from '@/lib/s3-utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,6 +40,21 @@ export async function GET(
     });
 
     if (!doc) return errorResponse('СЭД-документ не найден', 404);
+
+    // Автоматически отмечать прочитанным при первом открытии получателем
+    const isReceiver =
+      doc.receiverOrgIds.includes(session.user.organizationId) ||
+      doc.receiverOrgId === session.user.organizationId ||
+      doc.receiverUserId === session.user.id;
+
+    if (isReceiver && !doc.isRead) {
+      await db.sEDDocument.update({
+        where: { id: params.docId },
+        data: { isRead: true, readAt: new Date() },
+      });
+      doc.isRead = true;
+      doc.readAt = new Date();
+    }
 
     return successResponse(doc);
   } catch (error) {
@@ -89,6 +105,49 @@ export async function PATCH(
   } catch (error) {
     if (error instanceof NextResponse) return error;
     logger.error({ err: error }, 'Ошибка обновления СЭД-документа');
+    return errorResponse('Внутренняя ошибка сервера', 500);
+  }
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: { projectId: string; docId: string } }
+) {
+  try {
+    const session = await getSessionOrThrow();
+
+    const project = await db.buildingObject.findFirst({
+      where: { id: params.projectId, organizationId: session.user.organizationId },
+    });
+    if (!project) return errorResponse('Проект не найден', 404);
+
+    const doc = await db.sEDDocument.findFirst({
+      where: { id: params.docId, projectId: params.projectId },
+      include: { attachments: true },
+    });
+    if (!doc) return errorResponse('СЭД-документ не найден', 404);
+
+    // Только автор может удалять документ
+    if (doc.authorId !== session.user.id) {
+      return errorResponse('Удаление доступно только автору документа', 403);
+    }
+
+    // Только черновики можно удалять
+    if (doc.status !== 'DRAFT') {
+      return errorResponse('Удаление доступно только для черновиков', 409);
+    }
+
+    // Удалить вложения из S3 перед удалением документа
+    if (doc.attachments.length > 0) {
+      await Promise.all(doc.attachments.map((a) => deleteFile(a.s3Key)));
+    }
+
+    await db.sEDDocument.delete({ where: { id: params.docId } });
+
+    return successResponse({ id: params.docId });
+  } catch (error) {
+    if (error instanceof NextResponse) return error;
+    logger.error({ err: error }, 'Ошибка удаления СЭД-документа');
     return errorResponse('Внутренняя ошибка сервера', 500);
   }
 }

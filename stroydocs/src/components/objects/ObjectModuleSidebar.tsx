@@ -5,12 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
-  Building2,
-  BarChart3,
-  Banknote,
   FileText,
-  CheckSquare,
-  Camera,
   Calendar,
   Package,
   BookOpen,
@@ -34,13 +29,8 @@ interface ModuleItem {
 }
 
 const MODULES: ModuleItem[] = [
-  { label: 'Паспорт',        href: 'passport',   icon: Building2 },
-  { label: 'Показатели',     href: 'indicators', icon: BarChart3 },
-  { label: 'Финансирование', href: 'funding',    icon: Banknote },
+  { label: 'Информация',     href: 'info',       icon: Info },
   { label: 'Контракты',      href: 'contracts',  icon: FileText },
-  { label: 'Задачи',         href: 'tasks',      icon: CheckSquare },
-  { label: 'Фотогалерея',    href: 'photos',     icon: Camera },
-  { label: 'Информация',     href: 'info/participants', icon: Info },
   { label: 'СЭД',            href: 'sed',        icon: Mail },
   { label: 'Упр. проектом', href: 'management/contracts', icon: Briefcase },
   { label: 'ПИР',           href: 'pir/design-task',      icon: Layers },

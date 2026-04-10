@@ -7,7 +7,7 @@ import { createLinkSchema } from '@/lib/validations/bim';
 
 /** GET /api/projects/[projectId]/bim/links
  *  Связи элементов ТИМ с сущностями системы.
- *  Обязателен один из параметров: ?entityType=GanttTask или ?elementId=<uuid>
+ *  Параметры: ?entityType=GanttTask, ?elementId=<uuid>, ?entityId=<uuid>, ?modelId=<uuid>
  */
 export async function GET(
   req: NextRequest,
@@ -25,9 +25,13 @@ export async function GET(
     const { searchParams } = new URL(req.url);
     const entityType = searchParams.get('entityType');
     const elementId = searchParams.get('elementId');
+    // entityId — фильтр для «Следовать за работой»: все элементы привязанные к задаче
+    const entityId = searchParams.get('entityId');
+    // modelId — для загрузки всех связей модели (цветовая индикация Timeline)
+    const modelIdFilter = searchParams.get('modelId');
 
-    if (!entityType && !elementId) {
-      return errorResponse('Укажите параметр entityType или elementId', 400);
+    if (!entityType && !elementId && !entityId && !modelIdFilter) {
+      return errorResponse('Укажите параметр entityType, elementId, entityId или modelId', 400);
     }
 
     const links = await db.bimElementLink.findMany({
@@ -35,8 +39,11 @@ export async function GET(
         model: { projectId: params.projectId },
         ...(entityType ? { entityType } : {}),
         ...(elementId ? { elementId } : {}),
+        ...(entityId ? { entityId } : {}),
+        ...(modelIdFilter ? { modelId: modelIdFilter } : {}),
       },
-      take: 50,
+      // При запросе всех связей модели — лимит выше для полного покрытия Timeline
+      take: modelIdFilter ? 500 : 50,
       orderBy: { createdAt: 'desc' },
       include: {
         element: { select: { id: true, ifcGuid: true, ifcType: true, name: true } },
