@@ -454,7 +454,14 @@ model Contract {
   status      ContractStatus @default(DRAFT)
   startDate   DateTime? // Дата начала
   endDate     DateTime? // Дата окончания
-  totalAmount Float? // Общая сумма договора
+  totalAmount      Float?    // Общая сумма договора
+  executionStatus  String?   // Статус выполнения работ
+  vatRate          Float?    // Ставка НДС (%)
+  vatAmount        Float?    // Сумма НДС (amount * vatRate / 100)
+  plannedStartDate DateTime? // Плановая дата начала
+  plannedEndDate   DateTime? // Плановая дата окончания
+  factStartDate    DateTime? // Фактическая дата начала
+  factEndDate      DateTime? // Фактическая дата окончания
 
   categoryId     String?
   projectId      String
@@ -464,6 +471,11 @@ model Contract {
   parentId     String?
   parent       Contract?  @relation("ContractHierarchy", fields: [parentId], references: [id])
   subContracts Contract[] @relation("ContractHierarchy")
+
+  // Ссылка на связанный контракт (отличается от иерархии субдоговоров)
+  parentContractId String?
+  parentContract   Contract?  @relation("ContractLinks", fields: [parentContractId], references: [id])
+  childContracts   Contract[] @relation("ContractLinks")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -496,8 +508,17 @@ model Contract {
   // Модуль «Информация» — ЦУС
   limitRisks LimitRisk[]
 
+  // Карточка договора — расширение
+  obligations     ContractObligation[]
+  advances        ContractAdvance[]
+  executions      ContractExecution[]
+  guarantees      ContractGuarantee[]
+  detailInfos     ContractDetailInfo[]
+  financialTables ContractFinancialTable[]
+
   @@index([projectId])
   @@index([parentId])
+  @@index([parentContractId])
   @@map("contracts")
 }
 
@@ -1856,6 +1877,7 @@ model ChangeOrder {
   description String? // Подробное описание изменений
   amount      Float // Сумма изменения (положительная — доп. работы, отрицательная — сокращение)
   status      ChangeOrderStatus @default(DRAFT)
+  changeType  String? // "AMOUNT" (прибавить к сумме) или "TOTAL_AMOUNT" (заменить сумму)
 
   contractId String
   contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
@@ -2238,8 +2260,10 @@ model ChatMessage {
 model ContractCategory {
   id            String  @id @default(uuid())
   name          String
-  trackPayments Boolean @default(true)
-  order         Int     @default(0)
+  trackPayments          Boolean @default(true)
+  includeInPaymentWidget Boolean @default(false) // Включить в виджет «Оплачено по контрактам»
+  executionStage         String? // Стадия (ИРД, ПИР, СМР…)
+  order                  Int     @default(0)
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
@@ -2264,6 +2288,8 @@ model ContractPayment {
   amount      Float
   paymentDate DateTime
   budgetType  String? // Вид бюджета (федеральный, региональный…)
+  limitYear   Int?    // Год лимита
+  limitAmount Float?  // Сумма лимита
   description String?
 
   contractId String
@@ -2277,6 +2303,115 @@ model ContractPayment {
   @@index([contractId])
   @@index([paymentDate])
   @@map("contract_payments")
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Карточка договора — расширенные модели
+// ─────────────────────────────────────────────────────────────────
+
+/// Обязательства по договору
+model ContractObligation {
+  id          String    @id @default(uuid())
+  description String
+  amount      Float?
+  deadline    DateTime?
+  status      String    @default("ACTIVE")
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([contractId])
+  @@map("contract_obligations")
+}
+
+/// Авансовые платежи по договору
+model ContractAdvance {
+  id          String    @id @default(uuid())
+  number      String?
+  date        DateTime
+  amount      Float
+  description String?
+  budgetType  String?
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([contractId])
+  @@map("contract_advances")
+}
+
+/// Ход исполнения договора (записи по датам)
+model ContractExecution {
+  id                String   @id @default(uuid())
+  date              DateTime
+  completionPercent Float?   // % исполнения на дату
+  workersCount      Int?     // Количество рабочих
+  equipmentCount    Int?     // Количество техники
+  notes             String?
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([contractId])
+  @@map("contract_executions")
+}
+
+/// Гарантийные удержания по договору
+model ContractGuarantee {
+  id            String    @id @default(uuid())
+  amount        Float
+  percentage    Float?
+  retentionDate DateTime?
+  releaseDate   DateTime?
+  status        String    @default("RETAINED")
+  description   String?
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([contractId])
+  @@map("contract_guarantees")
+}
+
+/// Произвольные реквизиты договора (key-value)
+model ContractDetailInfo {
+  id         String  @id @default(uuid())
+  fieldName  String
+  fieldValue String?
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([contractId])
+  @@map("contract_detail_infos")
+}
+
+/// Финансовые таблицы договора (произвольная структура)
+model ContractFinancialTable {
+  id      String @id @default(uuid())
+  name    String
+  columns Json   // Определение колонок [{name, type, source?}]
+  rows    Json   // Данные строк
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([contractId])
+  @@map("contract_financial_tables")
 }
 
 /// Папка в файловом хранилище объекта
