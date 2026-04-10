@@ -363,6 +363,16 @@
 ### Модуль «СЭД» (/objects/[id]/sed/)
 - ✅ Документооборот произвольного типа: черновик → согласование → подписан → архив
 - ✅ Полнотекстовый поиск (PostgreSQL tsvector)
+- ✅ Карточки документооборота (SEDWorkflow): типы ДО (7), статусы (5), участники, наблюдатели
+- ✅ Регламент маршрута согласования (WorkflowRegulation: шаблон шагов Json)
+- ✅ Папки для группировки документов (SEDFolder, самоссылка для вложенности)
+- ✅ Связь документ↔папка many-to-many (SEDDocumentFolder)
+- ✅ Полиморфные связи документа с сущностями (SEDLink: entityType, entityId)
+- ✅ Основания ДО→ДО (SEDDocumentBasis)
+- ✅ Сообщения участников в карточке ДО (SEDWorkflowMessage)
+- ✅ Расширены поля SEDDocument: входящий/исходящий номер, дата, физлица-отправитель/получатель, организация-получатель, isRead, наблюдатели
+
+### Вкладка «Чат»
 - ✅ API роуты: список (GET), создание (POST), просмотр/обновление/удаление (GET/PATCH/DELETE)
 - ✅ Расширенная логика видимости: author / senderOrg / receiverOrg / observers / workflow-участники (6 условий OR)
 - ✅ Views: `all` | `active` | `requires_action` | `participating` | `sent_by_me`
@@ -381,6 +391,14 @@
 **База данных (Модуль 3)**
 - ✅ `Correspondence`, `CorrespondenceAttachment` (с tsvector-поиском)
 - ✅ `RFI`, `RFIAttachment`
+- ✅ `SEDDocument`, `SEDAttachment` (с tsvector-поиском, расширена: incomingNumber, outgoingNumber, date, senderUser, receiverUser, receiverOrg, isRead, readAt, observers)
+- ✅ `SEDFolder`, `SEDDocumentFolder` (папки, many-to-many)
+- ✅ `SEDWorkflow`, `SEDWorkflowMessage`, `SEDDocumentBasis` (карточки ДО)
+- ✅ `WorkflowRegulation` (регламент/шаблон маршрута)
+- ✅ `SEDLink` (полиморфные связи с сущностями)
+- ✅ Enum `WorkflowType` (7 типов: DELEGATION, APPROVAL, REDIRECT, MULTI_APPROVAL, MULTI_SIGNING, DIGITAL_SIGNING, REVIEW)
+- ✅ Enum `SEDWorkflowStatus` (5 статусов: CREATED, IN_PROGRESS, APPROVED, REJECTED, COMPLETED)
+- ✅ Миграция `20260410210000_extend_sed_module`
 - ✅ `SEDDocument`, `SEDAttachment` (с tsvector-поиском)
 - ✅ `SEDFolder`, `SEDDocumentFolder` (папки с иерархией parentId, many-to-many)
 - ✅ `SEDLink` (полиморфная связь: entityType + entityId, @@unique constraint)
