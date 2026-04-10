@@ -41,6 +41,7 @@ export async function GET(
       const items = await db.correspondence.findMany({
         where: { id: { in: ids } },
         include: {
+          buildingObject: { select: { id: true, name: true } },
           author: { select: { id: true, firstName: true, lastName: true } },
           senderOrg: { select: { id: true, name: true } },
           receiverOrg: { select: { id: true, name: true } },
@@ -60,6 +61,7 @@ export async function GET(
       db.correspondence.findMany({
         where,
         include: {
+          buildingObject: { select: { id: true, name: true } },
           author: { select: { id: true, firstName: true, lastName: true } },
           senderOrg: { select: { id: true, name: true } },
           receiverOrg: { select: { id: true, name: true } },
