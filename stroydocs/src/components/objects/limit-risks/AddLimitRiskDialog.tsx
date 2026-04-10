@@ -99,7 +99,7 @@ export function AddLimitRiskDialog({
   };
 
   const { register, handleSubmit, control, watch, reset, formState: { errors } } =
-    useForm<FormValues>({
+    useForm({
       resolver: zodResolver(schema),
       defaultValues,
     });
@@ -130,11 +130,11 @@ export function AddLimitRiskDialog({
   const values = watch();
   const total = useMemo(
     () =>
-      (values.federalBudget ?? 0) +
-      (values.regionalBudget ?? 0) +
-      (values.localBudget ?? 0) +
-      (values.ownFunds ?? 0) +
-      (values.extraBudget ?? 0),
+      (Number(values.federalBudget) || 0) +
+      (Number(values.regionalBudget) || 0) +
+      (Number(values.localBudget) || 0) +
+      (Number(values.ownFunds) || 0) +
+      (Number(values.extraBudget) || 0),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [values.federalBudget, values.regionalBudget, values.localBudget, values.ownFunds, values.extraBudget]
   );
