@@ -36,7 +36,9 @@ export async function POST(
     const buffer = Buffer.from(arrayBuffer);
 
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(buffer);
+    // ExcelJS типы основаны на @types/node@14 (нет generic), @types/node@20 возвращает Buffer<ArrayBuffer>.
+    // Cast через unknown обходит несовместимость типов (безопасно — runtime идентичен).
+    await workbook.xlsx.load(buffer as unknown as Parameters<typeof workbook.xlsx.load>[0]);
 
     const sheet = workbook.worksheets[0];
     if (!sheet) {

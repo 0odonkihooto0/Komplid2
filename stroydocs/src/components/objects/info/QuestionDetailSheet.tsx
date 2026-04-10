@@ -55,9 +55,9 @@ export function QuestionDetailSheet({ objectId, questionId, onClose }: Props) {
         description,
         causes:         causes   || undefined,
         measuresTaken:  measuresTaken  || undefined,
-        resolutionDate: resolutionDate ? new Date(resolutionDate).toISOString() : null,
-        assigneeOrgId:  assigneeOrgId  || null,
-        verifierOrgId:  verifierOrgId  || null,
+        resolutionDate: resolutionDate ? new Date(resolutionDate).toISOString() : undefined,
+        assigneeOrgId:  assigneeOrgId  || undefined,
+        verifierOrgId:  verifierOrgId  || undefined,
       },
       { onSuccess: () => setEditing(false) }
     );
