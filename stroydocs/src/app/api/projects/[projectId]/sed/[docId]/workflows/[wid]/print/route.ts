@@ -44,13 +44,22 @@ export async function POST(_req: NextRequest, { params }: Params) {
       where: { id: params.wid, documentId: params.docId },
       include: {
         document: { select: { id: true, title: true, number: true } },
-        initiator: { select: { firstName: true, lastName: true } },
+        initiator: {
+          select: { firstName: true, lastName: true, position: true },
+        },
         approvalRoute: {
           include: {
             steps: {
               orderBy: { stepIndex: 'asc' },
               include: {
-                user: { select: { firstName: true, lastName: true } },
+                user: {
+                  select: {
+                    firstName: true,
+                    lastName: true,
+                    position: true,
+                    organization: { select: { name: true } },
+                  },
+                },
               },
             },
           },
@@ -62,13 +71,15 @@ export async function POST(_req: NextRequest, { params }: Params) {
 
     const locale = 'ru-RU';
     const dateOpts: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit', year: 'numeric' };
+    const actionLabel = WORKFLOW_TYPE_LABELS[workflow.workflowType] ?? workflow.workflowType;
 
     const data: ApprovalSheetPdfData = {
       workflowNumber: workflow.number,
-      workflowType: WORKFLOW_TYPE_LABELS[workflow.workflowType] ?? workflow.workflowType,
+      workflowType: actionLabel,
       documentTitle: workflow.document.title,
       documentNumber: workflow.document.number,
       initiatorName: `${workflow.initiator.lastName} ${workflow.initiator.firstName}`,
+      authorPosition: workflow.initiator.position ?? undefined,
       createdAt: workflow.createdAt.toLocaleDateString(locale, dateOpts),
       completedAt: workflow.completedAt
         ? workflow.completedAt.toLocaleDateString(locale, dateOpts)
@@ -78,6 +89,9 @@ export async function POST(_req: NextRequest, { params }: Params) {
         participantName: step.user
           ? `${step.user.lastName} ${step.user.firstName}`
           : '—',
+        position: step.user?.position ?? undefined,
+        organization: step.user?.organization?.name ?? undefined,
+        action: actionLabel,
         status: STEP_STATUS_LABELS[step.status] ?? step.status,
         comment: step.comment ?? undefined,
         decidedAt: step.decidedAt

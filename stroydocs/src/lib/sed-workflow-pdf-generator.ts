@@ -49,8 +49,9 @@ async function htmlToPdf(html: string): Promise<Buffer> {
     await page.setContent(html, { waitUntil: 'networkidle0' });
     const pdfBuffer = await page.pdf({
       format: 'A4',
+      landscape: true,
       printBackground: true,
-      margin: { top: '15mm', bottom: '15mm', left: '20mm', right: '15mm' },
+      margin: { top: '15mm', bottom: '15mm', left: '15mm', right: '15mm' },
     });
     return Buffer.from(pdfBuffer);
   } finally {
@@ -63,6 +64,12 @@ async function htmlToPdf(html: string): Promise<Buffer> {
 export interface ApprovalSheetStep {
   stepNumber: number;
   participantName: string;
+  /** Должность участника (User.position) */
+  position?: string;
+  /** Название организации участника */
+  organization?: string;
+  /** Действие = человекочитаемый тип ДО (Согласование, Подписание и т.д.) */
+  action: string;
   status: string;
   comment?: string;
   decidedAt?: string;
@@ -74,6 +81,8 @@ export interface ApprovalSheetPdfData {
   documentTitle: string;
   documentNumber: string;
   initiatorName: string;
+  /** Должность инициатора ДО */
+  authorPosition?: string;
   createdAt: string;
   completedAt?: string;
   steps: ApprovalSheetStep[];

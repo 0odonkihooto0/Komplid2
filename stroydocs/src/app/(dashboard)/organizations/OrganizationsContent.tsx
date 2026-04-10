@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { OrganizationCard } from '@/components/modules/organizations/OrganizationCard';
 import { EmployeeTable } from '@/components/modules/organizations/EmployeeTable';
 import { InviteEmployeeDialog } from '@/components/modules/organizations/InviteEmployeeDialog';
+import { WorkflowRegulationsView } from '@/components/objects/sed/WorkflowRegulationsView';
 
 export function OrganizationsContent() {
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -20,6 +21,7 @@ export function OrganizationsContent() {
         <TabsList>
           <TabsTrigger value="card">Карточка компании</TabsTrigger>
           <TabsTrigger value="employees">Сотрудники</TabsTrigger>
+          <TabsTrigger value="regulations">Регламенты ДО</TabsTrigger>
         </TabsList>
         <TabsContent value="card" className="mt-4">
           <OrganizationCard />
@@ -33,6 +35,9 @@ export function OrganizationsContent() {
           </div>
           <EmployeeTable />
           <InviteEmployeeDialog open={inviteOpen} onOpenChange={setInviteOpen} />
+        </TabsContent>
+        <TabsContent value="regulations" className="mt-4">
+          <WorkflowRegulationsView />
         </TabsContent>
       </Tabs>
     </div>

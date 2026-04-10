@@ -476,7 +476,11 @@
 **Вспомогательная инфраструктура:**
 - ✅ `getNextSEDWorkflowNumber()` в `src/lib/numbering.ts` (формат `ДО-{год}-{NNN}`, advisory lock)
 - ✅ `src/lib/sed-workflow-pdf-generator.ts` — PDF генератор (Promise-кэш шаблона, Puppeteer)
-- ✅ `templates/sed/approval-sheet.hbs` — Handlebars шаблон листа согласования А4
+- ✅ `templates/sed/approval-sheet.hbs` — Handlebars шаблон листа согласования А4 (8 колонок: ФИО, Должность, Организация, Действие, Дата, Результат, Комментарий + блок подписи автора)
+
+**UI регламентов:**
+- ✅ `WorkflowRegulationsView.tsx` — таблица регламентов в настройках организации (вкладка «Регламенты ДО»)
+- ✅ `CreateRegulationDialog.tsx` — диалог создания регламента с DnD-конструктором шагов (`@dnd-kit/sortable`)
 
 **Логика типов ДО:**
 - APPROVAL: последовательные шаги (stepIndex 0, 1, 2...), один участник за раз
