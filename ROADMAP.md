@@ -151,6 +151,9 @@
 - ✅ Название, адрес, участники
 - ✅ Кадастровый номер, площадь, класс ответственности (PassportView + поля в Project)
 - ✅ Разрешение на строительство (№, дата, орган выдачи) (PassportView — permitNumber, permitDate, permitAuthority)
+- ✅ Секция «Карта и координаты» — react-leaflet карта (OSM tiles), мультиточечные маркеры из ProjectCoordinate (очередь строительства), Nominatim geocoding по адресу объекта, контекстное меню маркера (Изменить / Удалить), диалог добавления/редактирования точки
+- ✅ Секция «График реализации» — полоса стадий (Экспертиза, Обследование, Изыскания, ПД, СМР, Ввод) с Badge + div-прогресс-бар плана СМР по плановым датам паспорта
+- ✅ Кнопки действий в шапке: «Печатная форма» (POST /info-report/generate-pdf, заглушка 501), «Сводный отчёт» (placeholder), «История загрузок» (placeholder)
 - ⬜ Автопроверка контрагентов по ИНН через API ФНС/ЕГРЮЛ (кэш Redis 24ч)
 - ⬜ Связанные объекты (суб-объекты)
 
@@ -182,6 +185,7 @@
 - ⬜ `ObjectPassport` отдельная модель (поля cadastralNumber, area и др. добавлены в Project напрямую)
 - ✅ `FundingSource` (projectId, type, amount, period) — модель в schema.prisma
 - ✅ `Task` (projectId, contractId, assigneeId, title, status, deadline, priority) — модель в schema.prisma
+- ✅ `ProjectCoordinate` (projectId, latitude, longitude, constructionPhase?) — миграция 20260409120000_add_info_module_models
 
 ---
 
