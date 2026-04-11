@@ -61,6 +61,11 @@ export const TASK_STATUS_CONFIG: Record<DesignTaskStatus, TaskStatusConfig> = {
     label: 'Аннулировано',
     badgeClass: 'bg-gray-100 text-gray-500',
   },
+  REJECTED: {
+    dotClass: 'bg-red-500',
+    label: 'Отклонён',
+    badgeClass: 'bg-red-100 text-red-800',
+  },
 };
 
 // ─────────────────────────────────────────────
@@ -84,6 +89,7 @@ export const ALLOWED_ACTIONS: Record<DesignTaskStatus, TaskAction[]> = {
   IN_APPROVAL:     ['cancel'],
   APPROVED:        [],
   CANCELLED:       [],
+  REJECTED:        [],
 };
 
 export const ACTION_LABELS: Record<TaskAction, string> = {

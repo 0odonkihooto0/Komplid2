@@ -38,6 +38,11 @@ export const CLOSURE_STATUS_CONFIG: Record<PIRClosureStatus, ClosureStatusConfig
     label: 'Подписан',
     badgeClass: 'bg-green-200 text-green-900',
   },
+  REJECTED: {
+    dotClass: 'bg-red-500',
+    label: 'Отклонён',
+    badgeClass: 'bg-red-100 text-red-800',
+  },
 };
 
 // ─────────────────────────────────────────────
@@ -54,6 +59,7 @@ export const CLOSURE_ALLOWED_ACTIONS: Record<PIRClosureStatus, ClosureAction[]> 
   CONDUCTED:   ['start_approval'],
   IN_APPROVAL: [],
   SIGNED:      [],
+  REJECTED:    [],
 };
 
 export const CLOSURE_ACTION_LABELS: Record<ClosureAction, string> = {

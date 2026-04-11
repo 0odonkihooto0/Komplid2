@@ -60,6 +60,11 @@ export const DOC_STATUS_CONFIG: Record<DesignDocStatus, DocStatusConfig> = {
     label: 'Аннулирован',
     badgeClass: 'bg-gray-100 text-gray-500',
   },
+  REJECTED: {
+    dotClass: 'bg-red-500',
+    label: 'Отклонён',
+    badgeClass: 'bg-red-100 text-red-800',
+  },
 };
 
 // ─────────────────────────────────────────────
@@ -83,6 +88,7 @@ export const DOC_ALLOWED_ACTIONS: Record<DesignDocStatus, DocAction[]> = {
   IN_APPROVAL:     ['cancel'],
   APPROVED:        [],
   CANCELLED:       [],
+  REJECTED:        [],
 };
 
 export const DOC_ACTION_LABELS: Record<DocAction, string> = {
