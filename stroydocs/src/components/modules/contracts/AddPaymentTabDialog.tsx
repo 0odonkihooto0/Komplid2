@@ -27,7 +27,7 @@ const LIMIT_YEARS = Array.from({ length: 16 }, (_, i) => 2020 + i);
 const schema = z.object({
   paymentType: z.enum(['PLAN', 'FACT']),
   paymentDate: z.string().min(1, 'Дата обязательна'),
-  amount: z.number({ invalid_type_error: 'Введите сумму' }).positive('Сумма должна быть положительной'),
+  amount: z.number({ error: 'Введите сумму' }).positive('Сумма должна быть положительной'),
   limitYear: z.number().int().optional(),
   budgetType: z.string().optional(),
   limitAmount: z.number().min(0).optional(),

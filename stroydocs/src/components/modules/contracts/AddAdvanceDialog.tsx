@@ -17,7 +17,7 @@ import { useAdvances } from './useAdvances';
 const schema = z.object({
   number: z.string().max(50).optional(),
   date: z.string().min(1, 'Дата обязательна'),
-  amount: z.number({ invalid_type_error: 'Введите сумму' }).positive('Сумма должна быть положительной'),
+  amount: z.number({ error: 'Введите сумму' }).positive('Сумма должна быть положительной'),
   budgetType: z.string().optional(),
   description: z.string().max(500).optional(),
 });
