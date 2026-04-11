@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, FileText } from 'lucide-react';
+import { ArrowLeft, FileText, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDate } from '@/utils/format';
@@ -24,7 +24,7 @@ export default function PIRDesignTaskDetailPage({
   const [activeTab, setActiveTab] = useState('params');
 
   // objectId === projectId: BuildingObject.id используется как projectId во всех API
-  const { task, isLoading, conductMutation, cancelMutation } = useDesignTaskDetail(
+  const { task, isLoading, conductMutation, cancelMutation, printMutation } = useDesignTaskDetail(
     params.objectId,
     params.taskId
   );
@@ -114,6 +114,16 @@ export default function PIRDesignTaskDetailPage({
               Аннулировать
             </Button>
           )}
+          {/* Печать PDF */}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => printMutation.mutate()}
+            disabled={printMutation.isPending}
+          >
+            <Printer className="mr-1.5 h-3.5 w-3.5" />
+            {printMutation.isPending ? 'Формирование...' : 'Печать'}
+          </Button>
         </div>
       </div>
 

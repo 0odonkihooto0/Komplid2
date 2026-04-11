@@ -110,11 +110,28 @@ export function useDesignTaskDetail(projectId: string, taskId: string) {
     onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
   });
 
+  // Генерация PDF-печатной формы задания
+  const printMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${baseUrl}/print`, { method: 'POST' });
+      if (!res.ok) throw new Error('Ошибка генерации PDF');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `task-${taskId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+    onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
+  });
+
   return {
     task,
     isLoading,
     isError,
     conductMutation,
     cancelMutation,
+    printMutation,
   };
 }

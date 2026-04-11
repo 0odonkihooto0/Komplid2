@@ -26,6 +26,8 @@ export function PIRClosureActDetailSheet({ projectId, actId, onClose }: Props) {
     isConducting,
     fillItems,
     isFilling,
+    printAct,
+    isPrinting,
   } = usePIRClosureDetail(projectId, actId);
 
   if (isLoading) {
@@ -90,8 +92,14 @@ export function PIRClosureActDetailSheet({ projectId, actId, onClose }: Props) {
                 Провести
               </Button>
             )}
-            {/* Печать — заглушка, будет реализована в Модуле 7 */}
-            <Button size="sm" variant="ghost" disabled aria-label="Печать (скоро)">
+            {/* Печать PDF */}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => printAct()}
+              disabled={isPrinting}
+              aria-label="Печать акта"
+            >
               <Printer className="h-4 w-4" />
             </Button>
             <button onClick={onClose} className="rounded-sm opacity-70 hover:opacity-100 ml-1">
