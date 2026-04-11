@@ -28,7 +28,7 @@ const obligationSchema = z.object({
   description: z.string().min(1, 'Обязательное поле'),
   amount: z.number().optional(),
   deadline: z.string().optional(),
-  status: z.string().default('ACTIVE'),
+  status: z.string(),
 });
 
 type ObligationFormValues = z.infer<typeof obligationSchema>;
