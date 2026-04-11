@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/useToast';
-import type { PIRApprovalRoute } from './PIRApprovalSection';
+import type { ApprovalRoute } from '@/components/modules/approval/types';
 
 // ─────────────────────────────────────────────
 // Типы
@@ -43,7 +43,7 @@ export interface DesignTaskDetail {
   customerPerson: TaskUser | null;
   parameters: DesignTaskParam[];
   comments: { id: string }[];
-  approvalRoute: PIRApprovalRoute | null;
+  approvalRoute: ApprovalRoute | null;
   _count: { comments: number; parameters: number };
   createdAt: string;
   updatedAt: string;

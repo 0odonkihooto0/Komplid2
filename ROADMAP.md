@@ -676,6 +676,8 @@
 - ✅ Аналитика ПИР (6 виджетов Recharts: статусы, типы, авторы, замечания)
 - ✅ loading.tsx + error.tsx для всех 11 страниц модуля
 - ✅ CRUD API шаблонов маршрутов согласования (`/api/organizations/[oid]/approval-templates`) + применение к сущности (POST `.../apply`)
+- ✅ Бэкенд decide-роуты для ПИР-сущностей (POST `.../workflow/decide`) и stop-роуты (DELETE `.../workflow`) для DesignTask, DesignDocument, PIRClosureAct
+- ✅ Вкладка «Согласование» (`PIRApprovalWidget`): выбор шаблона (`ApprovalTemplateSelector`), создание шаблона с уровнями (`CreateApprovalTemplateDialog`), таймлайн с кнопками «Согласовать» / «Отклонить» / «История» / «Скачать ▾» / «Остановить» (`ApprovalTimeline`) — переиспользуется в DesignTask (ЗП/ЗИ), DesignDocument, PIRClosureAct
 - ✅ Soft-delete / restore / физическое удаление документов ПИР с очисткой S3 (`soft-delete`, `restore`, `permanent`)
 - ✅ CRUD API штампов PDF (`/api/projects/[pid]/stamps`): создание, перемещение (`move`), изменение размера (`resize`), удаление
 - ✅ CRUD справочника титулов штампов (`/api/organizations/[oid]/stamp-titles`)

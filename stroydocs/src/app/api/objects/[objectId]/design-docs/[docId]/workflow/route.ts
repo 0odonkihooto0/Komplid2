@@ -7,37 +7,41 @@ import { successResponse, errorResponse } from '@/utils/api';
 
 export const dynamic = 'force-dynamic';
 
-type Params = { params: { objectId: string; actId: string } };
+type Params = { params: { objectId: string; docId: string } };
 
-// POST — запустить или перезапустить маршрут согласования акта закрытия ПИР
+// POST — запустить или перезапустить маршрут согласования документа ПИР
 export async function POST(_req: NextRequest, { params }: Params) {
   try {
     const session = await getSessionOrThrow();
 
-    const act = await db.pIRClosureAct.findFirst({
+    const doc = await db.designDocument.findFirst({
       where: {
-        id: params.actId,
-        projectId: params.objectId,
+        id: params.docId,
         buildingObject: { organizationId: session.user.organizationId },
       },
       select: { id: true, status: true, approvalRouteId: true },
     });
-    if (!act) return errorResponse('Акт закрытия не найден', 404);
+    if (!doc) return errorResponse('Документ ПИР не найден', 404);
 
-    // Согласование разрешено только из статуса CONDUCTED
-    if (act.status !== 'CONDUCTED' && act.status !== 'IN_APPROVAL') {
-      return errorResponse(
-        'Согласование доступно только для проведённых актов',
-        409
-      );
+    // Согласование запрещено если документ уже утверждён или аннулирован
+    if (doc.status === 'APPROVED' || doc.status === 'CANCELLED') {
+      return errorResponse('Нельзя запустить согласование для документа в текущем статусе', 409);
+    }
+
+    // Проверить отсутствие активных замечаний (правило бизнес-логики)
+    const activeComments = await db.designDocComment.count({
+      where: { docId: params.docId, status: 'ACTIVE' },
+    });
+    if (activeComments > 0) {
+      return errorResponse('Невозможно отправить на согласование: есть активные замечания', 422);
     }
 
     // Если уже был маршрут — удалить и создать заново (перезапуск)
-    if (act.approvalRouteId) {
-      await db.approvalRoute.delete({ where: { id: act.approvalRouteId } });
+    if (doc.approvalRouteId) {
+      await db.approvalRoute.delete({ where: { id: doc.approvalRouteId } });
     }
 
-    // Формируем шаги согласования из участников контракта проекта
+    // Получить уникальные роли участников контракта для формирования шагов
     const participants = await db.contractParticipant.findMany({
       where: { contract: { projectId: params.objectId } },
       select: { role: true },
@@ -80,51 +84,50 @@ export async function POST(_req: NextRequest, { params }: Params) {
       },
     });
 
-    // Привязать маршрут к акту и обновить статус
-    await db.pIRClosureAct.update({
-      where: { id: params.actId },
+    // Привязать маршрут к документу и перевести в статус «На согласовании»
+    await db.designDocument.update({
+      where: { id: params.docId },
       data: { approvalRouteId: route.id, status: 'IN_APPROVAL' },
     });
 
     return successResponse(route);
   } catch (error) {
     if (error instanceof NextResponse) return error;
-    logger.error({ err: error }, 'Ошибка запуска согласования акта закрытия ПИР');
+    logger.error({ err: error }, 'Ошибка запуска согласования документа ПИР');
     return errorResponse('Внутренняя ошибка сервера', 500);
   }
 }
 
-// DELETE — остановить и сбросить маршрут согласования акта закрытия ПИР
+// DELETE — остановить и сбросить маршрут согласования документа ПИР
 export async function DELETE(_req: NextRequest, { params }: Params) {
   try {
     const session = await getSessionOrThrow();
 
-    const act = await db.pIRClosureAct.findFirst({
+    const doc = await db.designDocument.findFirst({
       where: {
-        id: params.actId,
-        projectId: params.objectId,
+        id: params.docId,
         buildingObject: { organizationId: session.user.organizationId },
       },
       select: { id: true, approvalRouteId: true },
     });
-    if (!act) return errorResponse('Акт закрытия не найден', 404);
+    if (!doc) return errorResponse('Документ ПИР не найден', 404);
 
-    if (!act.approvalRouteId) {
+    if (!doc.approvalRouteId) {
       return errorResponse('Маршрут не найден', 404);
     }
 
-    // Удалить маршрут согласования и вернуть акт в статус «Проведён»
-    await db.approvalRoute.delete({ where: { id: act.approvalRouteId } });
+    // Удалить маршрут согласования и вернуть документ в статус прошедшего экспертизу
+    await db.approvalRoute.delete({ where: { id: doc.approvalRouteId } });
 
-    await db.pIRClosureAct.update({
-      where: { id: params.actId },
-      data: { approvalRouteId: null, status: 'CONDUCTED' },
+    await db.designDocument.update({
+      where: { id: params.docId },
+      data: { approvalRouteId: null, status: 'REVIEW_PASSED' },
     });
 
     return successResponse({ ok: true });
   } catch (error) {
     if (error instanceof NextResponse) return error;
-    logger.error({ err: error }, 'Ошибка сброса согласования акта закрытия ПИР');
+    logger.error({ err: error }, 'Ошибка сброса согласования документа ПИР');
     return errorResponse('Внутренняя ошибка сервера', 500);
   }
 }
