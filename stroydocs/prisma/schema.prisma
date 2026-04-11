@@ -446,6 +446,9 @@ model BuildingObject {
   activityCategories ActivityCategory[]
   activityDocuments  ActivityDocument[]
 
+  // Модуль 4 — Планировщик проекта
+  plannerVersions ProjectManagementVersion[]
+
   @@index([organizationId])
   @@index([parentId])
   @@index([region])
@@ -1950,9 +1953,38 @@ model Task {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Иерархия для планировщика (Модуль 4 — Планировщик проекта)
+  parentTaskId String?
+  order        Int     @default(0) // Порядок среди сиблингов
+  level        Int     @default(0) // Глубина вложенности (0 = корень)
+  versionId    String? // Привязка к версии УП
+
+  parentTask Task?                     @relation("TaskHierarchy", fields: [parentTaskId], references: [id])
+  childTasks Task[]                    @relation("TaskHierarchy")
+  version    ProjectManagementVersion? @relation(fields: [versionId], references: [id])
+
   @@index([projectId])
   @@index([assigneeId])
+  @@index([parentTaskId])
+  @@index([versionId])
   @@map("tasks")
+}
+
+/// Версия Управляющего плана (УП) объекта
+model ProjectManagementVersion {
+  id        String   @id @default(uuid())
+  name      String
+  isCurrent Boolean  @default(false) // Только одна версия может быть актуальной
+
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks     Task[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@map("project_management_versions")
 }
 
 // === Модели Модуля 3 — Информация и СЭД ===

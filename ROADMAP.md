@@ -612,6 +612,17 @@
 - ✅ API CRUD: `/api/objects/[objectId]/activity-categories` + `/configure` + `/activity-documents`
 - ✅ Миграция: `20260411010000_add_activity_models`
 
+### Вкладка «Планировщик проекта» ✅
+- ✅ Иерархический планировщик мероприятий (дерево задач с неограниченной вложенностью)
+- ✅ Drag-and-drop для изменения порядка задач (@dnd-kit/sortable)
+- ✅ Раскрытие/скрытие ветвей дерева (expand/collapse)
+- ✅ Контекстное меню: Редактировать | Добавить подзадачу | Удалить
+- ✅ Версионирование УП (ProjectManagementVersion, isCurrent)
+- ✅ Фильтрация по версии УП
+- ✅ API CRUD: `/api/objects/[objectId]/planner-tasks`, `/api/objects/[objectId]/planner-versions`
+- ✅ Reorder API: `/api/objects/[objectId]/planner-tasks/reorder`
+- ✅ URL: `/objects/[objectId]/project-management/planner`
+
 **База данных (Модуль 4)**
 - ✅ `ProjectDocument` (projectId, folderId, name, version, s3Key, qrToken)
 - ✅ `ProjectDocumentVersion` (история версий)
@@ -623,6 +634,9 @@
 - ✅ Карточка договора: сводная строка (документы, платежи) + вкладки «Обязательства», «Связанные контракты», «Подробная информация», «Локальные сметные расчёты»
 - ✅ `ActivityCategory` (projectId, isSystem, isHidden, parentId — иерархия, @@unique[projectId+name])
 - ✅ `ActivityDocument` (categoryId, projectId, authorId, status, version, activeIssuesCount)
+- ✅ `Task` расширена: `parentTaskId`, `order`, `level`, `versionId` + самоссылка "TaskHierarchy"
+- ✅ `ProjectManagementVersion` (id, name, isCurrent, projectId) — `@@map("project_management_versions")`
+- ✅ Миграция: `20260411020000_add_planner_hierarchy`
 
 ---
 
