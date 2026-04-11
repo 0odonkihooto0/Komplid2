@@ -79,7 +79,7 @@ export async function POST(
 
     return successResponse({ taskId, newParentTaskId, newOrder, newLevel });
   } catch (error) {
-    logger.error('Ошибка при переупорядочивании задачи планировщика', { error });
+    logger.error({ error }, 'Ошибка при переупорядочивании задачи планировщика');
     return errorResponse('Внутренняя ошибка сервера', 500);
   }
 }
