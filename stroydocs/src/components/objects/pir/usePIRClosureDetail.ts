@@ -138,6 +138,23 @@ export function usePIRClosureDetail(projectId: string, actId: string | null) {
       toast({ title: err.message, variant: 'destructive' }),
   });
 
+  // Генерация PDF-печатной формы акта закрытия
+  const printMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${baseUrl}/print`, { method: 'POST' });
+      if (!res.ok) throw new Error('Ошибка генерации PDF');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `closure-act-${actId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+    onError: (err: Error) =>
+      toast({ title: err.message, variant: 'destructive' }),
+  });
+
   return {
     act: data ?? null,
     isLoading,
@@ -147,5 +164,7 @@ export function usePIRClosureDetail(projectId: string, actId: string | null) {
     isFilling: fillItemsMutation.isPending,
     startWorkflow: startWorkflowMutation.mutate,
     isStartingWorkflow: startWorkflowMutation.isPending,
+    printAct: printMutation.mutate,
+    isPrinting: printMutation.isPending,
   };
 }

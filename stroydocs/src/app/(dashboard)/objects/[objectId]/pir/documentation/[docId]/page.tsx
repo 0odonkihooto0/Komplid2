@@ -4,8 +4,14 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import nextDynamic from 'next/dynamic';
-import { ArrowLeft, FileText } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileText, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDate } from '@/utils/format';
 import { cn } from '@/lib/utils';
@@ -50,6 +56,7 @@ export default function PIRDocDetailPage({
     cancelMutation,
     sendReviewMutation,
     approveReviewMutation,
+    sendToSEDMutation,
   } = useDesignDocDetail(params.objectId, params.docId);
 
   if (isLoading) {
@@ -170,6 +177,26 @@ export default function PIRDocDetailPage({
               {DOC_ACTION_LABELS.cancel}
             </Button>
           )}
+
+          {/* Документооборот — создание СЭД-документа со ссылкой на этот чертёж */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={sendToSEDMutation.isPending}
+              >
+                <Share2 className="mr-1.5 h-3.5 w-3.5" />
+                {sendToSEDMutation.isPending ? 'Создание...' : 'Документооборот'}
+                <ChevronDown className="ml-1 h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => sendToSEDMutation.mutate()}>
+                Создать в СЭД
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

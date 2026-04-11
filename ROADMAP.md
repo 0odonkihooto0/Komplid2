@@ -684,6 +684,10 @@
 - ✅ `create-version` — новая версия документа с наследованием замечаний (`DesignDocComment`)
 - ✅ `create-copy` — независимая копия документа без наследования замечаний
 - ✅ GET design-docs: параметр `?includeDeleted=true` (только для роли ADMIN)
+- ✅ Печать Задания на проектирование (ЗП) — PDF Handlebars (`templates/pir/design-task.hbs`): блоки УТВЕРЖДАЮ/СОГЛАСОВАНО + таблица параметров; `POST /api/objects/[oid]/design-tasks/[tid]/print`
+- ✅ Печать Задания на изыскания (ЗИИ) — тот же шаблон, `isSurveyTask=true`, заголовок «ЗАДАНИЕ НА ИЗЫСКАНИЯ»
+- ✅ Печать Акта закрытия ПИР — PDF Handlebars (`templates/pir/closure-act.hbs`): реквизиты, таблица позиций, итого, подписи; `POST /api/objects/[oid]/pir-closure/[aid]/print`; заглушка активирована
+- ✅ Кнопка «Документооборот ▾» в карточке документа ПИР → «Создать в СЭД»: `POST /api/objects/[oid]/design-docs/[did]/send-to-sed` создаёт `SEDDocument` (тип OTHER, внутренний) + `SEDLink(entityType=DESIGN_DOC)` → редирект на новый СЭД-документ
 
 **База данных (Модуль 5)**
 - ✅ `DesignTask`, `DesignTaskParam`, `DesignTaskComment`

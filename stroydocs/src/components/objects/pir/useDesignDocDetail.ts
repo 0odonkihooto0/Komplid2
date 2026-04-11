@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/useToast';
 import type { DesignDocStatus, ExpertiseStatus } from '@prisma/client';
 
@@ -92,6 +93,7 @@ interface ApiResponse<T> {
 
 export function useDesignDocDetail(projectId: string, docId: string) {
   const { toast } = useToast();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const baseUrl = `/api/objects/${projectId}/design-docs/${docId}`;
 
@@ -184,6 +186,23 @@ export function useDesignDocDetail(projectId: string, docId: string) {
     onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
   });
 
+  // Создать СЭД-документ из карточки документа ПИР с полиморфной ссылкой
+  const sendToSEDMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${baseUrl}/send-to-sed`, { method: 'POST' });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? 'Ошибка создания в СЭД');
+      }
+      const json: ApiResponse<{ sedDocId: string }> = await res.json();
+      return json.data.sedDocId;
+    },
+    onSuccess: (sedDocId) => {
+      router.push(`/objects/${projectId}/sed/${sedDocId}`);
+    },
+    onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
+  });
+
   return {
     doc,
     isLoading,
@@ -192,5 +211,6 @@ export function useDesignDocDetail(projectId: string, docId: string) {
     cancelMutation,
     sendReviewMutation,
     approveReviewMutation,
+    sendToSEDMutation,
   };
 }

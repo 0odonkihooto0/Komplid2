@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 12pt;
+      line-height: 1.5;
+      padding: 20mm 15mm 20mm 25mm;
+      color: #000;
+    }
+    .header { text-align: center; margin-bottom: 20px; }
+    .header h1 { font-size: 14pt; font-weight: bold; text-transform: uppercase; }
+    .header .subtitle { font-size: 12pt; margin-top: 4px; }
+    .approval-block {
+      margin-bottom: 24px;
+      display: flex;
+      gap: 60px;
+    }
+    .approval-item { min-width: 220px; }
+    .approval-item .label { font-weight: bold; font-size: 11pt; }
+    .approval-item .name {
+      border-bottom: 1px solid #000;
+      min-width: 200px;
+      display: inline-block;
+      margin-top: 4px;
+      padding-bottom: 2px;
+      font-size: 11pt;
+    }
+    .approval-item .hint { font-size: 9pt; color: #555; margin-top: 2px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      font-size: 11pt;
+    }
+    th {
+      background: #e8e8e8;
+      border: 1px solid #000;
+      padding: 5px 8px;
+      text-align: center;
+      font-weight: bold;
+    }
+    td {
+      border: 1px solid #000;
+      padding: 5px 8px;
+      vertical-align: top;
+    }
+    td.num { text-align: center; width: 40px; }
+    td.param { width: 55%; }
+    td.value { width: 35%; }
+    .signatures {
+      margin-top: 40px;
+      display: flex;
+      justify-content: space-between;
+      gap: 40px;
+    }
+    .sig-block { flex: 1; }
+    .sig-block .role { font-weight: bold; font-size: 11pt; margin-bottom: 6px; }
+    .sig-line {
+      border-bottom: 1px solid #000;
+      margin-top: 30px;
+      margin-bottom: 4px;
+    }
+    .sig-hint { font-size: 9pt; color: #555; }
+    .footer {
+      margin-top: 30px;
+      font-size: 9pt;
+      color: #888;
+      text-align: right;
+    }
+    .no-params {
+      text-align: center;
+      color: #888;
+      font-style: italic;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>{{#if isSurveyTask}}Задание на изыскания{{else}}Задание на проектирование{{/if}}</h1>
+    <div class="subtitle">№&nbsp;{{number}} от {{date}}</div>
+  </div>
+
+  <div class="approval-block">
+    <div class="approval-item">
+      <div class="label">УТВЕРЖДАЮ:</div>
+      <div class="name">{{approvedByName}}</div>
+      <div class="hint">(подпись, расшифровка)</div>
+    </div>
+    <div class="approval-item">
+      <div class="label">СОГЛАСОВАНО:</div>
+      <div class="name">{{agreedByName}}</div>
+      <div class="hint">(подпись, расшифровка)</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:40px;">№</th>
+        <th>Параметр</th>
+        <th>Значение</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#if parameters.length}}
+        {{#each parameters}}
+        <tr>
+          <td class="num">{{addOne @index}}</td>
+          <td class="param">{{this.paramName}}</td>
+          <td class="value">{{this.value}}</td>
+        </tr>
+        {{/each}}
+      {{else}}
+        <tr><td colspan="3" class="no-params">Параметры не заданы</td></tr>
+      {{/if}}
+    </tbody>
+  </table>
+
+  <div class="signatures">
+    <div class="sig-block">
+      <div class="role">Утвердил:</div>
+      <div class="sig-line"></div>
+      <div class="sig-hint">{{approvedByName}}</div>
+    </div>
+    <div class="sig-block">
+      <div class="role">Согласовал:</div>
+      <div class="sig-line"></div>
+      <div class="sig-hint">{{agreedByName}}</div>
+    </div>
+    <div class="sig-block">
+      <div class="role">Исполнитель:</div>
+      <div class="sig-line"></div>
+      <div class="sig-hint">(подпись)</div>
+    </div>
+  </div>
+
+  <div class="footer">Сформировано: {{generatedAt}}</div>
+
+</body>
+</html>
