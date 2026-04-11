@@ -145,10 +145,13 @@ model Organization {
   contractCategories      ContractCategory[]
 
   // Модуль 5 — ПИР
-  designTasksAsCustomer DesignTask[]     @relation("DesignTaskCustomer")
-  pirRegistriesSent     PIRRegistry[]    @relation("PIRRegistrySender")
-  pirRegistriesReceived PIRRegistry[]    @relation("PIRRegistryReceiver")
-  responsibleDesignDocs DesignDocument[] @relation("DesignDocOrg")
+  designTasksAsCustomer DesignTask[]       @relation("DesignTaskCustomer")
+  pirRegistriesSent     PIRRegistry[]      @relation("PIRRegistrySender")
+  pirRegistriesReceived PIRRegistry[]      @relation("PIRRegistryReceiver")
+  responsibleDesignDocs DesignDocument[]   @relation("DesignDocOrg")
+  reviewingDesignDocs   DesignDocument[]   @relation("DesignDocReviewer")
+  approvalTemplates     ApprovalTemplate[]
+  stampTitles           StampTitle[]
 
   // Модуль 8 — Ресурсы
   supplierRequests MaterialRequest[]      @relation("RequestSupplier")
@@ -306,6 +309,11 @@ model User {
 
   // Модуль 4 — Перечень мероприятий
   activityDocumentsAuthored ActivityDocument[]
+
+  // Модуль 5 — ПИР (дополнительные роли)
+  approvalTemplateLevels   ApprovalTemplateLevel[]
+  reviewingDesignDocs      DesignDocument[]         @relation("DesignDocReviewerUser")
+  designDocChangesAuthored DesignDocChange[]        @relation("DesignDocChangeAuthor")
 
   @@index([organizationId])
   @@map("users")
@@ -2801,13 +2809,24 @@ model DesignDocument {
   parentDoc   DesignDocument?  @relation("DesignDocVersion", fields: [parentDocId], references: [id])
   versions    DesignDocument[] @relation("DesignDocVersion")
 
-  isDeleted Boolean @default(false) // Помечен на удаление (soft delete)
+  isDeleted Boolean   @default(false) // Помечен на удаление (soft delete)
+  deletedAt DateTime? // Время мягкого удаления
+
+  sentForExpertise Boolean @default(false) // Отправлен на государственную экспертизу
+
+  // Проверяющая организация и пользователь
+  reviewerOrgId   String?
+  reviewerOrg     Organization? @relation("DesignDocReviewer", fields: [reviewerOrgId], references: [id])
+  reviewerUserId  String?
+  reviewerUser    User?         @relation("DesignDocReviewerUser", fields: [reviewerUserId], references: [id])
+  reviewerComment String?       // Комментарий проверяющего
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   comments      DesignDocComment[]
   registryItems PIRRegistryItem[]
+  changes       DesignDocChange[]
 
   @@index([projectId])
   @@index([docType])
@@ -2842,6 +2861,11 @@ model DesignDocComment {
   respondedBy   User?     @relation("DesignDocCommentResponder", fields: [respondedById], references: [id])
 
   s3Keys String[]
+
+  // Дополнительные поля замечания
+  plannedResolutionDate DateTime? // Плановая дата устранения
+  suggestion            String?   // Предложение по устранению
+  watchers              String[]  @default([]) // Наблюдатели (массив userId)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2949,6 +2973,104 @@ model PIRClosureItem {
 
   @@index([actId])
   @@map("pir_closure_items")
+}
+
+// === Модуль 5 — ПИР: шаблоны согласования, журнал изменений, PDF-штампы ===
+
+/// Шаблон маршрута согласования (переиспользуемый)
+model ApprovalTemplate {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+
+  // Тип сущности, для которой предназначен шаблон
+  entityType String // 'DESIGN_TASK_PIR' | 'DESIGN_TASK_SURVEY' | 'DESIGN_DOC' | 'PIR_CLOSURE'
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  levels ApprovalTemplateLevel[]
+
+  @@index([organizationId, entityType])
+  @@map("approval_templates")
+}
+
+/// Уровень (шаг) в шаблоне согласования
+model ApprovalTemplateLevel {
+  id         String           @id @default(uuid())
+  templateId String
+  template   ApprovalTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  level  Int    // Порядковый номер уровня
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  requiresPreviousApproval Boolean @default(true) // Требуется ли предыдущее согласование
+
+  createdAt DateTime @default(now())
+
+  @@index([templateId])
+  @@map("approval_template_levels")
+}
+
+/// Журнал изменений документа ПИР
+model DesignDocChange {
+  id                String         @id @default(uuid())
+  docId             String
+  doc               DesignDocument @relation(fields: [docId], references: [id], onDelete: Cascade)
+
+  changeDescription String
+  version           Int // Версия документа на момент изменения
+
+  authorId String
+  author   User   @relation("DesignDocChangeAuthor", fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([docId])
+  @@map("design_doc_changes")
+}
+
+/// Штамп на PDF-документе
+model PdfStamp {
+  id         String  @id @default(uuid())
+  entityType String  // 'DESIGN_DOC' | 'DESIGN_TASK'
+  entityId   String
+  s3Key      String  // Ключ S3-файла, на котором размещён штамп
+
+  stampText String
+  titleId   String? // Ссылка на справочник StampTitle (опционально)
+
+  positionX Float
+  positionY Float
+  page      Int
+  width     Float @default(200)
+  height    Float @default(100)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([entityType, entityId])
+  @@map("pdf_stamps")
+}
+
+/// Справочник заголовков штампов
+model StampTitle {
+  id   String @id @default(uuid())
+  name String
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  template String? // Handlebars-шаблон текста штампа
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId])
+  @@map("stamp_titles")
 }
 
 // === Модуль 6 — Сметы (версионирование, иерархия, смета контракта) ===
