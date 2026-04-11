@@ -4,10 +4,13 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 
-const PM_TABS = [
-  { label: 'Планировщик',            href: 'planner' },
-  { label: 'Версии УП',             href: 'versions' },
-  { label: 'Аналитика (контракты)', href: 'analytics' },
+const TABS = [
+  { label: 'Контракты',            href: 'contracts'  },
+  { label: 'Документы',            href: 'documents'  },
+  { label: 'Перечень мероприятий', href: 'activities' },
+  { label: 'Управление проектом',  href: 'planner'    },
+  { label: 'Версии УП',            href: 'versions'   },
+  { label: 'Аналитика (контракты)',href: 'analytics'  },
 ];
 
 export default function ProjectManagementLayout({
@@ -21,7 +24,7 @@ export default function ProjectManagementLayout({
   const router   = useRouter();
 
   const active =
-    PM_TABS.find((t) => pathname.includes(`/project-management/${t.href}`))?.href ?? 'planner';
+    TABS.find((t) => pathname.includes(`/project-management/${t.href}`))?.href ?? 'contracts';
 
   return (
     <div className="space-y-4">
@@ -32,7 +35,7 @@ export default function ProjectManagementLayout({
         }
       >
         <TabsList>
-          {PM_TABS.map((t) => (
+          {TABS.map((t) => (
             <TabsTrigger key={t.href} value={t.href}>
               {t.label}
             </TabsTrigger>

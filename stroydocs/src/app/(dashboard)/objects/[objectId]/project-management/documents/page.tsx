@@ -6,6 +6,6 @@ interface Props {
   params: { objectId: string };
 }
 
-export default function ManagementDocumentsPage({ params }: Props) {
+export default function ProjectManagementDocumentsPage({ params }: Props) {
   return <ProjectDocumentsRegistryView objectId={params.objectId} />;
 }

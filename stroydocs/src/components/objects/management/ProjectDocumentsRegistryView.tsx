@@ -35,7 +35,7 @@ export function ProjectDocumentsRegistryView({ objectId }: ProjectDocumentsRegis
       DefectRemediationAct: `/objects/${objectId}/sk/inspections`,
       DesignDocument:       `/objects/${objectId}/pir/design-task`,
       SEDDocument:          `/objects/${objectId}/sed`,
-      ProjectDocument:      `/objects/${objectId}/management/documents`,
+      ProjectDocument:      `/objects/${objectId}/project-management/documents`,
     };
     window.location.href = routes[doc.entityType];
   };

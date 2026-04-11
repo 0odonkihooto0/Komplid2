@@ -30,9 +30,8 @@ interface ModuleItem {
 
 const MODULES: ModuleItem[] = [
   { label: 'Информация',     href: 'info',       icon: Info },
-  { label: 'Контракты',      href: 'contracts',  icon: FileText },
-  { label: 'СЭД',            href: 'sed',        icon: Mail },
-  { label: 'Упр. проектом', href: 'management/contracts', icon: Briefcase },
+  { label: 'СЭД',                  href: 'sed',                        icon: Mail },
+  { label: 'Управление проектом', href: 'project-management/contracts', icon: Briefcase },
   { label: 'ПИР',           href: 'pir/design-task',      icon: Layers },
   { label: 'ТИМ',           href: 'tim',                  icon: Box },
   // Будущие модули — доступны после реализации соответствующих шагов

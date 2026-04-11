@@ -2,7 +2,7 @@ import { EventsView } from '@/components/objects/management/EventsView';
 
 export const dynamic = 'force-dynamic';
 
-export default function ManagementEventsPage({
+export default function ProjectManagementEventsPage({
   params,
 }: {
   params: { objectId: string };
