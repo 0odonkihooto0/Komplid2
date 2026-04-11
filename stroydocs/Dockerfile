@@ -74,7 +74,7 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=deps /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=deps /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 
 # Собранное приложение
 COPY --from=builder /app/public ./public
