@@ -678,9 +678,14 @@
 
 **База данных (Модуль 5)**
 - ✅ `DesignTask`, `DesignTaskParam`, `DesignTaskComment`
-- ✅ `DesignDocument`, `DesignDocComment`
+- ✅ `DesignDocument` (+`deletedAt`, +`sentForExpertise`, +`reviewer*`, +`reviewerComment`), `DesignDocComment` (+`plannedResolutionDate`, +`suggestion`, +`watchers[]`)
 - ✅ `PIRRegistry`, `PIRRegistryItem`
 - ✅ `PIRClosureAct`, `PIRClosureItem`
+- ✅ `ApprovalTemplate`, `ApprovalTemplateLevel` — переиспользуемые шаблоны маршрутов согласования с уровнями
+- ✅ `DesignDocChange` — журнал версий и изменений документа ПИР
+- ✅ `PdfStamp` — размещение штампов на PDF-файлах (`entityType`/`entityId`, позиция, размер)
+- ✅ `StampTitle` — справочник заголовков штампов (per-организация, Handlebars-шаблон)
+- ✅ Миграция `20260411030000_extend_pir_module`
 
 ---
 
