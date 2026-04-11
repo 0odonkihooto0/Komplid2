@@ -695,6 +695,7 @@
 - ✅ `PdfStamp` — размещение штампов на PDF-файлах (`entityType`/`entityId`, позиция, размер)
 - ✅ `StampTitle` — справочник заголовков штампов (per-организация, Handlebars-шаблон)
 - ✅ Миграция `20260411030000_extend_pir_module`
+- ✅ UI штампов ПИР: `PdfStampManager` + `PdfQrManager` на каждом файле карточки документа; drag-and-drop позиционирование в `PdfStampPreview`; `AddStampDialog` (выбор/создание `StampTitle`, произвольный текст, страница); `AddQrDialog` с выбором шаблона (Только QR / QR+название / QR+дата) и click-позиционированием на PDF
 
 ---
 

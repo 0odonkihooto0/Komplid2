@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import nextDynamic from 'next/dynamic';
 import { ArrowLeft, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,16 @@ const PdfViewer = nextDynamic(
   { ssr: false, loading: () => <div className="h-96 animate-pulse rounded-md bg-muted" /> }
 );
 
+// Менеджеры штампов и QR-кодов — только на клиенте (используют react-pdf)
+const PdfStampManager = nextDynamic(
+  () => import('@/components/objects/pir/stamps/PdfStampManager').then((m) => m.PdfStampManager),
+  { ssr: false }
+);
+const PdfQrManager = nextDynamic(
+  () => import('@/components/objects/pir/stamps/PdfQrManager').then((m) => m.PdfQrManager),
+  { ssr: false }
+);
+
 export default function PIRDocDetailPage({
   params,
 }: {
@@ -29,6 +40,8 @@ export default function PIRDocDetailPage({
 }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('document');
+
+  const { data: session } = useSession();
 
   const {
     doc,
@@ -194,17 +207,40 @@ export default function PIRDocDetailPage({
           {doc.s3Keys.length > 0 && (
             <div className="mt-4 space-y-2">
               <p className="text-xs font-medium text-muted-foreground">Все файлы</p>
-              {doc.s3Keys.map((key, idx) => (
-                <div
-                  key={key}
-                  className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
-                >
-                  <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                  <span className="truncate text-muted-foreground">
-                    {key.split('/').pop() ?? `Файл ${idx + 1}`}
-                  </span>
-                </div>
-              ))}
+              {doc.s3Keys.map((key, idx) => {
+                // pdfUrl доступен только для текущего файла (pre-signed URL)
+                const filePdfUrl = key === doc.currentS3Key ? doc.downloadUrl : null;
+                return (
+                  <div
+                    key={key}
+                    className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+                  >
+                    <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                    <span className="flex-1 truncate text-muted-foreground">
+                      {key.split('/').pop() ?? `Файл ${idx + 1}`}
+                    </span>
+                    {/* Менеджеры штампов и QR (только для авторизованных пользователей) */}
+                    {session?.user?.organizationId && (
+                      <>
+                        <PdfStampManager
+                          objectId={params.objectId}
+                          docId={params.docId}
+                          s3Key={key}
+                          pdfUrl={filePdfUrl}
+                          orgId={session.user.organizationId}
+                        />
+                        <PdfQrManager
+                          objectId={params.objectId}
+                          docId={params.docId}
+                          s3Key={key}
+                          pdfUrl={filePdfUrl}
+                          orgId={session.user.organizationId}
+                        />
+                      </>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </TabsContent>
