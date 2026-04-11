@@ -5,10 +5,11 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 const MGMT_TABS = [
-  { label: 'Контракты',   href: 'contracts' },
-  { label: 'Документы',   href: 'documents' },
-  { label: 'Мероприятия', href: 'events' },
-  { label: 'Аналитика',   href: 'analytics' },
+  { label: 'Контракты',            href: 'contracts' },
+  { label: 'Документы',            href: 'documents' },
+  { label: 'Мероприятия',          href: 'events' },
+  { label: 'Аналитика',            href: 'analytics' },
+  { label: 'Перечень мероприятий', href: 'activities' },
 ];
 
 export default function ManagementLayout({
