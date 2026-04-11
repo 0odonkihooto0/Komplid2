@@ -2631,6 +2631,7 @@ enum DesignTaskStatus {
   IN_APPROVAL // На согласовании
   APPROVED // Согласовано в производство работ
   CANCELLED // Аннулирован
+  REJECTED // Отклонён
 }
 
 enum DesignDocType {
@@ -2649,6 +2650,7 @@ enum DesignDocStatus {
   IN_APPROVAL // На согласовании
   APPROVED // Согласовано в производство
   CANCELLED // Аннулирован
+  REJECTED // Отклонён
 }
 
 enum DesignCommentStatus {
@@ -2670,6 +2672,7 @@ enum PIRClosureStatus {
   CONDUCTED // Проведён
   IN_APPROVAL // На согласовании
   SIGNED // Подписан
+  REJECTED // Отклонён
 }
 
 /// Задание на проектирование (ЗП) или изыскания (ЗИ)
