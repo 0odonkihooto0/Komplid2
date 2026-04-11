@@ -126,6 +126,22 @@ export function useDesignTaskDetail(projectId: string, taskId: string) {
     onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
   });
 
+  // Генерация PDF Листа согласования задания ПИР
+  const printApprovalSheetMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${baseUrl}/approval-sheet`, { method: 'POST' });
+      if (!res.ok) throw new Error('Ошибка генерации листа согласования');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `approval-sheet-${taskId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+    onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
+  });
+
   return {
     task,
     isLoading,
@@ -133,5 +149,6 @@ export function useDesignTaskDetail(projectId: string, taskId: string) {
     conductMutation,
     cancelMutation,
     printMutation,
+    printApprovalSheetMutation,
   };
 }

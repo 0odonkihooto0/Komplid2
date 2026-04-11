@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Лист согласования {{docNumber}}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 11px; color: #111; }
+    h1 {
+      font-size: 15px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 11px;
+      color: #555;
+      margin-bottom: 16px;
+    }
+    .meta { margin-bottom: 16px; }
+    .meta table { width: 100%; border-collapse: collapse; }
+    .meta td { padding: 3px 6px; vertical-align: top; }
+    .meta td:first-child { font-weight: bold; width: 180px; color: #555; }
+    .steps-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    .steps-table th, .steps-table td {
+      border: 1px solid #ccc;
+      padding: 5px 6px;
+      vertical-align: top;
+    }
+    .steps-table th {
+      background: #f0f0f0;
+      font-weight: bold;
+      text-align: center;
+      font-size: 10px;
+    }
+    .steps-table td:first-child { text-align: center; width: 28px; }
+    .col-level { width: 11%; }
+    .col-fio   { width: 13%; }
+    .col-org   { width: 15%; }
+    .col-pos   { width: 12%; }
+    .col-date  { width: 9%; text-align: center; }
+    .col-res   { width: 9%; text-align: center; }
+    .col-comm  { width: 20%; }
+    .status-approved { color: #16a34a; font-weight: bold; }
+    .status-rejected { color: #dc2626; font-weight: bold; }
+    .status-waiting  { color: #ca8a04; }
+    .no-steps {
+      text-align: center;
+      color: #999;
+      font-style: italic;
+      padding: 14px;
+    }
+    .signature-block {
+      margin-top: 28px;
+      padding-top: 12px;
+      border-top: 1px solid #ccc;
+    }
+    .signature-block .sig-title {
+      font-size: 11px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .signature-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+      margin-top: 6px;
+    }
+    .signature-row .sig-label { font-size: 10px; color: #555; width: 140px; }
+    .signature-row .sig-value { font-size: 11px; flex: 1; }
+    .signature-row .sig-line {
+      border-bottom: 1px solid #333;
+      width: 160px;
+      min-height: 18px;
+    }
+    .footer { margin-top: 16px; font-size: 9px; color: #999; text-align: right; }
+  </style>
+</head>
+<body>
+
+  <h1>Лист согласования</h1>
+  <div class="subtitle">{{docType}}</div>
+
+  <div class="meta">
+    <table>
+      <tr>
+        <td>Документ:</td>
+        <td><strong>№ {{docNumber}}</strong></td>
+      </tr>
+      <tr>
+        <td>Дата документа:</td>
+        <td>{{docDate}}</td>
+      </tr>
+      <tr>
+        <td>Автор:</td>
+        <td>{{authorName}}{{#if authorPosition}}, {{authorPosition}}{{/if}}</td>
+      </tr>
+    </table>
+  </div>
+
+  <table class="steps-table">
+    <thead>
+      <tr>
+        <th>№</th>
+        <th class="col-level">Уровень</th>
+        <th class="col-fio">ФИО</th>
+        <th class="col-org">Организация</th>
+        <th class="col-pos">Должность</th>
+        <th class="col-res">Статус</th>
+        <th class="col-date">Дата</th>
+        <th class="col-comm">Комментарий</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#if steps.length}}
+        {{#each steps}}
+        <tr>
+          <td>{{stepNumber}}</td>
+          <td class="col-level">{{level}}</td>
+          <td class="col-fio">{{#if participantName}}{{participantName}}{{else}}—{{/if}}</td>
+          <td class="col-org">{{#if organization}}{{organization}}{{else}}—{{/if}}</td>
+          <td class="col-pos">{{#if position}}{{position}}{{else}}—{{/if}}</td>
+          <td class="col-res">
+            {{#if (eq status "Согласовано")}}
+              <span class="status-approved">{{status}}</span>
+            {{else if (eq status "Отклонено")}}
+              <span class="status-rejected">{{status}}</span>
+            {{else}}
+              <span class="status-waiting">{{status}}</span>
+            {{/if}}
+          </td>
+          <td class="col-date">{{#if decidedAt}}{{decidedAt}}{{else}}—{{/if}}</td>
+          <td class="col-comm">{{#if comment}}{{comment}}{{else}}—{{/if}}</td>
+        </tr>
+        {{/each}}
+      {{else}}
+        <tr>
+          <td colspan="8" class="no-steps">Маршрут согласования не запущен</td>
+        </tr>
+      {{/if}}
+    </tbody>
+  </table>
+
+  <div class="signature-block">
+    <div class="sig-title">Автор документа</div>
+    <div class="signature-row">
+      <span class="sig-label">ФИО:</span>
+      <span class="sig-value">{{authorName}}</span>
+      <span class="sig-label">Подпись:</span>
+      <span class="sig-line"></span>
+    </div>
+    {{#if authorPosition}}
+    <div class="signature-row" style="margin-top: 4px;">
+      <span class="sig-label">Должность:</span>
+      <span class="sig-value">{{authorPosition}}</span>
+    </div>
+    {{/if}}
+  </div>
+
+  <div class="footer">Сформировано: {{generatedAt}}</div>
+
+</body>
+</html>

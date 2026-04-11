@@ -205,6 +205,38 @@ export function useDesignDocDetail(projectId: string, docId: string) {
     onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
   });
 
+  // Генерация PDF Листа согласования документа ПИР
+  const printApprovalSheetMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${baseUrl}/approval-sheet`, { method: 'POST' });
+      if (!res.ok) throw new Error('Ошибка генерации листа согласования');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `approval-sheet-${docId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+    onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
+  });
+
+  // Генерация PDF Листа подписания документа ПИР
+  const printSigningSheetMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${baseUrl}/signing-sheet`, { method: 'POST' });
+      if (!res.ok) throw new Error('Ошибка генерации листа подписания');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `signing-sheet-${docId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+    onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
+  });
+
   return {
     doc,
     isLoading,
@@ -214,5 +246,7 @@ export function useDesignDocDetail(projectId: string, docId: string) {
     sendReviewMutation,
     approveReviewMutation,
     sendToSEDMutation,
+    printApprovalSheetMutation,
+    printSigningSheetMutation,
   };
 }
