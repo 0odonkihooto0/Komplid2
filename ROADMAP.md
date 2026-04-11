@@ -694,8 +694,14 @@
 - ✅ `DesignDocChange` — журнал версий и изменений документа ПИР
 - ✅ `PdfStamp` — размещение штампов на PDF-файлах (`entityType`/`entityId`, позиция, размер)
 - ✅ `StampTitle` — справочник заголовков штампов (per-организация, Handlebars-шаблон)
+- ✅ `PIRObjectTypeConfig`, `PIRCategoryConfig` — конфигурация категорий ПИР по типу объекта (@@unique projectId, parentCode для дерева)
 - ✅ Миграция `20260411030000_extend_pir_module`
 - ✅ UI штампов ПИР: `PdfStampManager` + `PdfQrManager` на каждом файле карточки документа; drag-and-drop позиционирование в `PdfStampPreview`; `AddStampDialog` (выбор/создание `StampTitle`, произвольный текст, страница); `AddQrDialog` с выбором шаблона (Только QR / QR+название / QR+дата) и click-позиционированием на PDF
+- ✅ `PIRObjectTypeConfig` + `PIRCategoryConfig` — настройка разделов ПД/РД по типу объекта строительства (ПП РФ №87)
+- ✅ `ConfigurePIRCategoriesDialog` — 2-шаговый диалог: выбор типа объекта → чекбоксы включения разделов
+- ✅ Дерево категорий в левой панели «Документация» (`PIRCategoryTree`): навигация по разделам, кнопка «+» для пользовательских разделов
+- ✅ API: `POST /api/projects/[pid]/pir-config` (создать конфиг + предустановки ПП РФ №87), `GET/PATCH /api/projects/[pid]/pir-config/categories`
+- ✅ Миграция `20260411040000_add_pir_object_type_config`
 
 ---
 

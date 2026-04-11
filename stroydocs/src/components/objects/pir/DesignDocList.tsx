@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useDesignDocs } from './useDesignDocs';
 import { CreateDesignDocDialog } from './CreateDesignDocDialog';
+import { PIRCategoryTree } from './PIRCategoryTree';
 import { DOC_STATUS_CONFIG, getDocStatusDotClass } from '@/lib/pir/doc-state-machine';
 import type { DesignDocItem } from './useDesignDocs';
 import type { DesignDocType } from '@prisma/client';
@@ -19,15 +20,6 @@ interface Props {
   /** Показать кнопку «Создать копию» в каждой строке */
   showCopyButton?: boolean;
 }
-
-// Фильтры по типу документации
-const CATEGORY_FILTERS: { label: string; value: DesignDocType | null }[] = [
-  { label: 'Все документы', value: null },
-  { label: 'Проектная документация (ПД)', value: 'DESIGN_PD' },
-  { label: 'Рабочая документация (РД)', value: 'WORKING_RD' },
-  { label: 'Изыскания', value: 'SURVEY' },
-  { label: 'Повторного применения', value: 'REPEATED_USE' },
-];
 
 const DOC_TYPE_SHORT: Record<DesignDocType, string> = {
   DESIGN_PD:    'ПД',
@@ -57,45 +49,26 @@ function DocRowSkeleton({ colCount }: { colCount: number }) {
 export function DesignDocList({ objectId, projectId, fixedDocType, showCopyButton }: Props) {
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<DesignDocType | null>(fixedDocType ?? null);
-  const { docs, isLoading, copyMutation } = useDesignDocs(projectId, activeFilter);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const { docs, isLoading, copyMutation } = useDesignDocs(projectId, fixedDocType ?? null, activeCategory);
   const colCount = showCopyButton ? 9 : 8;
 
   return (
     <div className="flex gap-0 rounded-md border">
-      {/* Левая панель — фильтры по типу (скрыта при fixedDocType) */}
+      {/* Левая панель — дерево категорий ПИР (скрыта при fixedDocType) */}
       {!fixedDocType && (
-        <aside className="w-52 flex-shrink-0 border-r">
-          <div className="p-2">
-            <p className="px-2 py-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Тип документации
-            </p>
-            <ul className="space-y-0.5">
-              {CATEGORY_FILTERS.map((f) => (
-                <li key={f.value ?? 'all'}>
-                  <button
-                    onClick={() => setActiveFilter(f.value)}
-                    className={cn(
-                      'w-full rounded-md px-2 py-1.5 text-left text-sm transition-colors',
-                      activeFilter === f.value
-                        ? 'bg-primary text-primary-foreground font-medium'
-                        : 'hover:bg-muted'
-                    )}
-                  >
-                    {f.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </aside>
+        <PIRCategoryTree
+          projectId={projectId}
+          activeCode={activeCategory}
+          onSelect={setActiveCategory}
+        />
       )}
 
       {/* Правая часть — заголовок + таблица */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between border-b px-4 py-3">
           <h2 className="text-base font-semibold">
-            {CATEGORY_FILTERS.find((f) => f.value === activeFilter)?.label ?? 'Все документы'}
+            {activeCategory ?? 'Все документы'}
           </h2>
           <Button size="sm" onClick={() => setDialogOpen(true)}>
             <Plus className="mr-1.5 h-4 w-4" />
