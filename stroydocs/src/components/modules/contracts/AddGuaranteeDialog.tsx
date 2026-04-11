@@ -15,11 +15,11 @@ import {
 import { useGuarantees } from './useGuarantees';
 
 const schema = z.object({
-  amount: z.number({ invalid_type_error: 'Введите сумму' }).positive('Сумма должна быть положительной'),
+  amount: z.number().positive('Сумма должна быть положительной'),
   percentage: z.number().min(0).max(100).optional(),
   retentionDate: z.string().optional(),
   releaseDate: z.string().optional(),
-  status: z.string().default('RETAINED'),
+  status: z.string(),
   description: z.string().max(500).optional(),
 });
 

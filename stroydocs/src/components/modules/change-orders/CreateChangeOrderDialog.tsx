@@ -17,7 +17,7 @@ const schema = z.object({
   title: z.string().min(1, 'Укажите наименование'),
   description: z.string().optional(),
   amount: z.string().refine((v) => !isNaN(Number(v)), 'Введите сумму'),
-  changeType: z.enum(['AMOUNT', 'TOTAL_AMOUNT']).default('AMOUNT'),
+  changeType: z.enum(['AMOUNT', 'TOTAL_AMOUNT'] as const),
 });
 
 type FormValues = z.infer<typeof schema>;
