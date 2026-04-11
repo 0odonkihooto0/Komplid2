@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import nextDynamic from 'next/dynamic';
-import { ArrowLeft, ChevronDown, FileText, Share2 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileText, PenLine, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -18,6 +18,8 @@ import { cn } from '@/lib/utils';
 import { useDesignDocDetail } from '@/components/objects/pir/useDesignDocDetail';
 import { DesignDocComments } from '@/components/objects/pir/DesignDocComments';
 import { DesignDocExpertise } from '@/components/objects/pir/DesignDocExpertise';
+import { DesignDocChangelog } from '@/components/objects/pir/DesignDocChangelog';
+import { DesignDocTimTab } from '@/components/objects/pir/DesignDocTimTab';
 import { PIRApprovalWidget } from '@/components/modules/approval/PIRApprovalWidget';
 import { DOC_STATUS_CONFIG, DOC_ALLOWED_ACTIONS, DOC_ACTION_LABELS } from '@/lib/pir/doc-state-machine';
 
@@ -38,6 +40,14 @@ const PdfQrManager = nextDynamic(
   () => import('@/components/objects/pir/stamps/PdfQrManager').then((m) => m.PdfQrManager),
   { ssr: false }
 );
+
+// Маппинг статусов маршрута согласования
+const APPROVAL_STATUS_LABELS: Record<string, string> = {
+  PENDING: 'На согласовании',
+  APPROVED: 'Согласовано',
+  REJECTED: 'Отклонено',
+  RESET: 'Сброшено',
+};
 
 export default function PIRDocDetailPage({
   params,
@@ -89,9 +99,13 @@ export default function PIRDocDetailPage({
   const allowedActions = DOC_ALLOWED_ACTIONS[statusKey] ?? [];
   const isEditable = !['APPROVED', 'CANCELLED'].includes(doc.status);
 
-  // Индикатор версии: показываем если есть потомки или родитель
-  const showVersionBadge = doc.versions.length > 0 || doc.parentDoc !== null;
-  const totalVersions = doc.versions.length + (doc.parentDoc ? 1 : 0) + 1;
+  // Статус согласования
+  const approvalStatusLabel = doc.approvalRoute
+    ? (APPROVAL_STATUS_LABELS[doc.approvalRoute.status] ?? doc.approvalRoute.status)
+    : '—';
+
+  // Статус подписания — производится после согласования (APPROVED)
+  const signStatusLabel = doc.status === 'APPROVED' ? 'Подписан' : '—';
 
   return (
     <div className="space-y-4">
@@ -104,38 +118,37 @@ export default function PIRDocDetailPage({
         Документация ПИР
       </button>
 
-      {/* Шапка карточки */}
+      {/* Шапка карточки (ЦУС стр. 106) */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg font-semibold">{doc.name}</h1>
-            {showVersionBadge && (
-              <span className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                v{doc.version}{totalVersions > 1 ? ` из ${totalVersions}` : ''}
-              </span>
-            )}
-          </div>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            {doc.category && <span className="font-medium text-foreground">{doc.category}</span>}
-            {doc.category && <span>·</span>}
-            <span>от {formatDate(doc.createdAt)}</span>
-            {doc.responsibleUser && (
-              <span>· {doc.responsibleUser.lastName} {doc.responsibleUser.firstName}</span>
-            )}
+          {/* Строка 1: идентификатор документа */}
+          <h1 className="text-lg font-semibold">
+            Документ ПИР № {doc.number} от {formatDate(doc.createdAt)}
+          </h1>
+          {/* Наименование */}
+          <p className="mt-0.5 text-sm text-muted-foreground">{doc.name}</p>
+          {/* Строка 2: статусная строка */}
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+            <span>Версия №{doc.version}</span>
+            <span className="text-border">|</span>
+            <span
+              className={cn(
+                'inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium',
+                statusConfig?.badgeClass ?? 'bg-gray-100 text-gray-700'
+              )}
+            >
+              {statusConfig?.label ?? doc.status}
+            </span>
+            <span className="text-border">|</span>
+            <span>Внешний № —</span>
+            <span className="text-border">|</span>
+            <span>Согласование: {approvalStatusLabel}</span>
+            <span className="text-border">|</span>
+            <span>Подписание: {signStatusLabel}</span>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* Статус Badge */}
-          <span
-            className={cn(
-              'inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium',
-              statusConfig?.badgeClass ?? 'bg-gray-100 text-gray-700'
-            )}
-          >
-            {statusConfig?.label ?? doc.status}
-          </span>
-
           {/* Кнопки действий по статусной машине */}
           {allowedActions.includes('conduct') && (
             <Button
@@ -200,10 +213,12 @@ export default function PIRDocDetailPage({
         </div>
       </div>
 
-      {/* Вкладки карточки */}
+      {/* Вкладки карточки (ЦУС стр. 106): Документ | Согласование | Подписание | Замечания | Изменения | ТИМ | Экспертиза */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="document">Документ</TabsTrigger>
+          <TabsTrigger value="approval">Согласование</TabsTrigger>
+          <TabsTrigger value="signing">Подписание</TabsTrigger>
           <TabsTrigger value="comments">
             Замечания
             {doc._count.comments > 0 && (
@@ -212,8 +227,23 @@ export default function PIRDocDetailPage({
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="changes">
+            Изменения
+            {doc._count.changes > 0 && (
+              <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
+                {doc._count.changes}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="tim">
+            ТИМ
+            {doc.timLinksCount > 0 && (
+              <span className="ml-1.5 rounded-full bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-700">
+                {doc.timLinksCount}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="expertise">Экспертиза</TabsTrigger>
-          <TabsTrigger value="approval">Согласование</TabsTrigger>
         </TabsList>
 
         {/* Документ (PDF-viewer) */}
@@ -235,7 +265,6 @@ export default function PIRDocDetailPage({
             <div className="mt-4 space-y-2">
               <p className="text-xs font-medium text-muted-foreground">Все файлы</p>
               {doc.s3Keys.map((key, idx) => {
-                // pdfUrl доступен только для текущего файла (pre-signed URL)
                 const filePdfUrl = key === doc.currentS3Key ? doc.downloadUrl : null;
                 return (
                   <div
@@ -246,7 +275,6 @@ export default function PIRDocDetailPage({
                     <span className="flex-1 truncate text-muted-foreground">
                       {key.split('/').pop() ?? `Файл ${idx + 1}`}
                     </span>
-                    {/* Менеджеры штампов и QR (только для авторизованных пользователей) */}
                     {session?.user?.organizationId && (
                       <>
                         <PdfStampManager
@@ -272,26 +300,6 @@ export default function PIRDocDetailPage({
           )}
         </TabsContent>
 
-        {/* Замечания */}
-        <TabsContent value="comments" className="mt-4">
-          <DesignDocComments
-            projectId={params.objectId}
-            docId={params.docId}
-            sessionUserId={doc.author.id}
-          />
-        </TabsContent>
-
-        {/* Экспертиза */}
-        <TabsContent value="expertise" className="mt-4">
-          <DesignDocExpertise
-            projectId={params.objectId}
-            docId={params.docId}
-            expertiseStatus={doc.expertiseStatus}
-            expertiseDate={doc.expertiseDate}
-            expertiseComment={doc.expertiseComment}
-          />
-        </TabsContent>
-
         {/* Согласование */}
         <TabsContent value="approval" className="mt-4">
           <PIRApprovalWidget
@@ -303,6 +311,60 @@ export default function PIRDocDetailPage({
             isTerminalStatus={['APPROVED', 'CANCELLED'].includes(doc.status)}
             canStartApproval={!['APPROVED', 'CANCELLED', 'IN_APPROVAL'].includes(doc.status)}
             queryKey={['design-doc', params.docId]}
+          />
+        </TabsContent>
+
+        {/* Подписание (ЭЦП — заглушка до настройки КриптоПро) */}
+        <TabsContent value="signing" className="mt-4">
+          <div className="flex flex-col items-center justify-center rounded-md border border-dashed py-14 text-center">
+            <PenLine className="mb-3 h-8 w-8 text-muted-foreground" />
+            <p className="text-sm font-medium text-muted-foreground">Подписание ЭЦП</p>
+            <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+              Функция доступна после настройки провайдера электронной подписи (КриптоПро CSP)
+              в настройках организации
+            </p>
+            {doc.status === 'APPROVED' && (
+              <div className="mt-4 rounded-md bg-green-50 px-4 py-2.5 text-sm text-green-700">
+                Документ согласован к производству
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Замечания */}
+        <TabsContent value="comments" className="mt-4">
+          <DesignDocComments
+            projectId={params.objectId}
+            docId={params.docId}
+            sessionUserId={doc.author.id}
+          />
+        </TabsContent>
+
+        {/* Журнал изменений */}
+        <TabsContent value="changes" className="mt-4">
+          <DesignDocChangelog
+            projectId={params.objectId}
+            docId={params.docId}
+            currentVersion={doc.version}
+          />
+        </TabsContent>
+
+        {/* ТИМ — связанные BIM-элементы */}
+        <TabsContent value="tim" className="mt-4">
+          <DesignDocTimTab
+            projectId={params.objectId}
+            docId={params.docId}
+          />
+        </TabsContent>
+
+        {/* Экспертиза */}
+        <TabsContent value="expertise" className="mt-4">
+          <DesignDocExpertise
+            projectId={params.objectId}
+            docId={params.docId}
+            expertiseStatus={doc.expertiseStatus}
+            expertiseDate={doc.expertiseDate}
+            expertiseComment={doc.expertiseComment}
           />
         </TabsContent>
       </Tabs>

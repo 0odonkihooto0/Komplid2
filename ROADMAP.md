@@ -706,6 +706,10 @@
 - ✅ Дерево категорий в левой панели «Документация» (`PIRCategoryTree`): навигация по разделам, кнопка «+» для пользовательских разделов
 - ✅ API: `POST /api/projects/[pid]/pir-config` (создать конфиг + предустановки ПП РФ №87), `GET/PATCH /api/projects/[pid]/pir-config/categories`
 - ✅ Миграция `20260411040000_add_pir_object_type_config`
+- ✅ Вкладка «Изменения» в карточке документа ПИР (`DesignDocChangelog`): таблица Версия/Описание/Автор/Дата, ручное добавление записей через диалог; API `GET/POST /api/objects/[oid]/design-docs/[did]/changes`
+- ✅ Вкладка «ТИМ» в карточке документа ПИР (`DesignDocTimTab`): связанные BIM-элементы через `BimElementLink(entityType=DESIGN_DOC)`, группировка по модели, placeholder при отсутствии связей; API `GET /api/objects/[oid]/design-docs/[did]/tim-links`; счётчик в табе
+- ✅ Вкладка «Подписание» в карточке документа ПИР: заглушка ЭЦП (КриптоПро CSP), индикатор статуса `APPROVED`
+- ✅ Шапка карточки ПИР-документа по ЦУС стр. 106: строка 1 «Документ ПИР № {number} от {date}», строка 2 «Версия №{v} | {status} | Внешний № — | Согласование {approvalStatus} | Подписание {signStatus}»; 7 вкладок с динамическими счётчиками
 
 ---
 

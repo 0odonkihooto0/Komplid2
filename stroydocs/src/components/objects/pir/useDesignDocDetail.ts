@@ -77,7 +77,9 @@ export interface DesignDocDetail {
   parentDoc: DesignDocVersion | null;
   // Мягкое удаление
   isDeleted: boolean;
-  _count: { comments: number };
+  _count: { comments: number; changes: number };
+  // Количество связанных BIM-элементов (из BimElementLink, entityType=DESIGN_DOC)
+  timLinksCount: number;
   createdAt: string;
   updatedAt: string;
 }
