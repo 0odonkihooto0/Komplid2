@@ -11,6 +11,7 @@ import {
   FileCheck,
   Shield,
   BarChart3,
+  ClipboardCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -29,6 +30,7 @@ const moduleItems = [
   { segment: 'id',         label: 'ИД',              icon: FileCheck },
   { segment: 'sk',         label: 'Стройконтроль',   icon: Shield },
   { segment: 'reports',    label: 'Отчёты',          icon: BarChart3 },
+  { segment: 'project-management', label: 'Управление проектом', icon: ClipboardCheck },
 ];
 
 interface Props {
