@@ -27,7 +27,7 @@ const DOC_FULL_INCLUDE = {
     orderBy: { version: 'asc' as const },
   },
   parentDoc: { select: { id: true, number: true, version: true } },
-  _count: { select: { comments: true } },
+  _count: { select: { comments: true, changes: true } },
 } as const;
 
 type Params = { params: { objectId: string; docId: string } };
@@ -52,7 +52,12 @@ export async function GET(_req: NextRequest, { params }: Params) {
       downloadUrl = await getDownloadUrl(doc.currentS3Key);
     }
 
-    return successResponse({ ...doc, downloadUrl });
+    // Количество связанных BIM-элементов (полиморфная связь через BimElementLink)
+    const timLinksCount = await db.bimElementLink.count({
+      where: { entityType: 'DESIGN_DOC', entityId: params.docId },
+    });
+
+    return successResponse({ ...doc, downloadUrl, timLinksCount });
   } catch (error) {
     if (error instanceof NextResponse) return error;
     logger.error({ err: error }, 'Ошибка получения документа ПИР');
