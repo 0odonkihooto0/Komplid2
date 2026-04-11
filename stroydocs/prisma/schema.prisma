@@ -454,6 +454,9 @@ model BuildingObject {
   activityCategories ActivityCategory[]
   activityDocuments  ActivityDocument[]
 
+  // Модуль 5 — ПИР
+  pirObjectTypeConfig  PIRObjectTypeConfig?
+
   // Модуль 4 — Планировщик проекта
   plannerVersions ProjectManagementVersion[]
 
@@ -4705,4 +4708,38 @@ model ActivityDocument {
   @@index([categoryId])
   @@index([projectId])
   @@map("activity_documents")
+}
+
+// === Модуль 5: Конфигурация категорий ПИР ===
+
+/// Конфигурация типа объекта строительства для модуля ПИР (один на проект)
+model PIRObjectTypeConfig {
+  id         String @id @default(uuid())
+  objectType String // «Объекты кап. строительства» | «Линейные объекты» | «Уникальные объекты»
+
+  projectId String         @unique
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  categories PIRCategoryConfig[]
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@map("pir_object_type_configs")
+}
+
+/// Категория документов ПИР (выбранный раздел ПД/РД по ПП РФ №87)
+model PIRCategoryConfig {
+  id           String  @id @default(uuid())
+  categoryCode String  // «II», «1», «2», «2.1», «5.3» и т.д.
+  categoryName String  // «ПЗ (Пояснительная записка)»
+  parentCode   String? // Код родительской категории для дерева (null = корень)
+  enabled      Boolean @default(true)
+  order        Int     // Порядок отображения
+
+  configId String
+  config   PIRObjectTypeConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@index([configId])
+  @@map("pir_category_configs")
 }
