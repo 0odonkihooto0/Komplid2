@@ -631,6 +631,15 @@
 - ✅ Удаление актуальной версии заблокировано (кнопка disabled)
 - ✅ URL: `/objects/[objectId]/project-management/versions`
 
+### Вкладка «Аналитика (контракты)» ✅
+- ✅ Фильтр по периоду (DateRange: два поля «с» / «по», дефолт — текущий год)
+- ✅ Виджет 1 — «Стоимость по контрактам»: горизонтальный BarChart только по ACTIVE-контрактам, отсортирован по убыванию суммы
+- ✅ Виджет 2 — «Плановые платежи»: LineChart с двумя линиями — помесячно и накопительным итогом
+- ✅ Виджет 3 — «Фактические vs Плановые»: совмещённый LineChart двух накопительных линий (план/факт) с объединённой осью X
+- ✅ Виджет 4 — «Статусы контрактов»: PieChart donut (Подписан / Не подписан / Расторгнут), количество + процент
+- ✅ API: `GET /api/objects/[objectId]/contract-analytics?from=&to=` → `{ costByContract, plannedPayments, factPayments, statusDistribution }`
+- ✅ URL: `/objects/[objectId]/project-management/analytics`
+
 **База данных (Модуль 4)**
 - ✅ `ProjectDocument` (projectId, folderId, name, version, s3Key, qrToken)
 - ✅ `ProjectDocumentVersion` (история версий)

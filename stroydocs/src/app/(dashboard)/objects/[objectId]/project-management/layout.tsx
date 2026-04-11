@@ -5,8 +5,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 const PM_TABS = [
-  { label: 'Планировщик', href: 'planner' },
-  { label: 'Версии УП',   href: 'versions' },
+  { label: 'Планировщик',            href: 'planner' },
+  { label: 'Версии УП',             href: 'versions' },
+  { label: 'Аналитика (контракты)', href: 'analytics' },
 ];
 
 export default function ProjectManagementLayout({
