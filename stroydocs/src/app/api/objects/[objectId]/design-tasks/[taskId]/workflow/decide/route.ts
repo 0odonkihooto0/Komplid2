@@ -26,7 +26,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         id: params.taskId,
         buildingObject: { organizationId: session.user.organizationId },
       },
-      select: { id: true, number: true, approvalRouteId: true, createdById: true },
+      select: { id: true, number: true, approvalRouteId: true, authorId: true },
     });
     if (!task) return errorResponse('Задание на ПИР не найдено', 404);
 
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         docName,
         actorName,
         event: 'rejected',
-        targetUserId: task.createdById,
+        targetUserId: task.authorId,
       }).catch((err) => logger.error({ err }, 'Ошибка уведомления об отклонении задания на ПИР'));
     } else {
       // При одобрении — переходим к следующему шагу или закрываем маршрут
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest, { params }: Params) {
           docName,
           actorName,
           event: 'approved',
-          targetUserId: task.createdById,
+          targetUserId: task.authorId,
         }).catch((err) => logger.error({ err }, 'Ошибка уведомления об одобрении задания на ПИР'));
       } else {
         // Передаём согласование следующему участнику

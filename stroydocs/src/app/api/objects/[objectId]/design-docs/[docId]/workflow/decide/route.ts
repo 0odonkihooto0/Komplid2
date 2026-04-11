@@ -27,7 +27,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         isDeleted: false,
         buildingObject: { organizationId: session.user.organizationId },
       },
-      select: { id: true, number: true, approvalRouteId: true, createdById: true },
+      select: { id: true, number: true, approvalRouteId: true, authorId: true },
     });
     if (!doc) return errorResponse('Документ ПИР не найден', 404);
 
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         docName,
         actorName,
         event: 'rejected',
-        targetUserId: doc.createdById,
+        targetUserId: doc.authorId,
       }).catch((err) => logger.error({ err }, 'Ошибка уведомления об отклонении документа ПИР'));
     } else {
       // При одобрении — переходим к следующему шагу или закрываем маршрут
@@ -109,7 +109,7 @@ export async function POST(req: NextRequest, { params }: Params) {
           docName,
           actorName,
           event: 'approved',
-          targetUserId: doc.createdById,
+          targetUserId: doc.authorId,
         }).catch((err) => logger.error({ err }, 'Ошибка уведомления об одобрении документа ПИР'));
       } else {
         // Передаём согласование следующему участнику
