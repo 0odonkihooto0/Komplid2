@@ -77,10 +77,17 @@ export async function PUT(
 
     const { startDate, endDate, ...rest } = parsed.data;
 
+    // Авторасчёт НДС при наличии обоих значений в запросе
+    const vatAmount =
+      rest.vatRate != null && rest.totalAmount != null
+        ? rest.totalAmount * rest.vatRate / 100
+        : undefined;
+
     const contract = await db.contract.update({
       where: { id: params.contractId },
       data: {
         ...rest,
+        ...(vatAmount !== undefined && { vatAmount }),
         ...(startDate !== undefined && { startDate: startDate ? new Date(startDate) : null }),
         ...(endDate !== undefined && { endDate: endDate ? new Date(endDate) : null }),
       },

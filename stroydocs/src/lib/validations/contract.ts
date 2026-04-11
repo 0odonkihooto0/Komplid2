@@ -7,12 +7,15 @@ export const createContractSchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   parentId: z.string().optional().nullable(),
+  totalAmount: z.number().optional().nullable(),
+  vatRate: z.number().min(0).max(100).optional().nullable(),
 });
 
 export const updateContractSchema = createContractSchema.partial().extend({
   status: z.enum(['DRAFT', 'ACTIVE', 'COMPLETED', 'TERMINATED']).optional(),
   categoryId: z.string().uuid().optional().nullable(),
   totalAmount: z.number().optional().nullable(),
+  vatRate: z.number().min(0).max(100).optional().nullable(),
 });
 
 export const addParticipantSchema = z.object({

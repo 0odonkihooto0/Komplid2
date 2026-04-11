@@ -37,7 +37,7 @@ const DOC_TYPES: DocTypeOption[] = [
   { value: 'inspection',  label: 'Акт проверки СК',                               category: 'sk',  redirectPath: 'sk/inspections', canCreate: false },
   { value: 'pir_doc',     label: 'Документ ПИР',                                  category: 'pir', redirectPath: 'pir/design-task', canCreate: false },
   { value: 'sed',         label: 'Документ СЭД',                                  category: 'other', redirectPath: 'sed', canCreate: false },
-  { value: 'project_doc', label: 'Файл проекта',                                  category: 'other', redirectPath: 'management/documents', canCreate: false },
+  { value: 'project_doc', label: 'Файл проекта',                                  category: 'other', redirectPath: 'project-management/documents', canCreate: false },
 ];
 
 function getCategoryTypes(category: DocumentCategory): DocTypeOption[] {
