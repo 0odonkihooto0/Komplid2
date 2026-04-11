@@ -9,7 +9,7 @@ import { formatDate } from '@/utils/format';
 import { CLOSURE_STATUS_CONFIG } from '@/lib/pir/closure-state-machine';
 import { cn } from '@/lib/utils';
 import { PIRClosureItemsEditor } from './PIRClosureItemsEditor';
-import { PIRClosureApprovalSection } from './PIRClosureApprovalSection';
+import { PIRApprovalWidget } from '@/components/modules/approval/PIRApprovalWidget';
 import { usePIRClosureDetail } from './usePIRClosureDetail';
 
 interface Props {
@@ -26,8 +26,6 @@ export function PIRClosureActDetailSheet({ projectId, actId, onClose }: Props) {
     isConducting,
     fillItems,
     isFilling,
-    startWorkflow,
-    isStartingWorkflow,
   } = usePIRClosureDetail(projectId, actId);
 
   if (isLoading) {
@@ -136,13 +134,15 @@ export function PIRClosureActDetailSheet({ projectId, actId, onClose }: Props) {
 
             {/* Вкладка «Согласование» */}
             <TabsContent value="approval" className="px-6 pb-6 pt-4">
-              <PIRClosureApprovalSection
-                projectId={projectId}
-                actId={actId}
+              <PIRApprovalWidget
+                entityType="PIR_CLOSURE"
+                entityId={actId}
+                objectId={projectId}
                 approvalRoute={act.approvalRoute}
-                actStatus={act.status}
-                onStartWorkflow={startWorkflow}
-                isStarting={isStartingWorkflow}
+                entityStatus={act.status}
+                isTerminalStatus={act.status === 'SIGNED'}
+                canStartApproval={act.status === 'CONDUCTED'}
+                queryKey={['pir-closure-act', actId]}
               />
             </TabsContent>
           </Tabs>

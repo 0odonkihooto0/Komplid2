@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { useDesignDocDetail } from '@/components/objects/pir/useDesignDocDetail';
 import { DesignDocComments } from '@/components/objects/pir/DesignDocComments';
 import { DesignDocExpertise } from '@/components/objects/pir/DesignDocExpertise';
-import { PIRDocApprovalSection } from '@/components/objects/pir/PIRDocApprovalSection';
+import { PIRApprovalWidget } from '@/components/modules/approval/PIRApprovalWidget';
 import { DOC_STATUS_CONFIG, DOC_ALLOWED_ACTIONS, DOC_ACTION_LABELS } from '@/lib/pir/doc-state-machine';
 
 export const dynamic = 'force-dynamic';
@@ -231,11 +231,15 @@ export default function PIRDocDetailPage({
 
         {/* Согласование */}
         <TabsContent value="approval" className="mt-4">
-          <PIRDocApprovalSection
-            projectId={params.objectId}
-            docId={params.docId}
+          <PIRApprovalWidget
+            entityType="DESIGN_DOC"
+            entityId={params.docId}
+            objectId={params.objectId}
             approvalRoute={doc.approvalRoute}
-            docStatus={doc.status}
+            entityStatus={doc.status}
+            isTerminalStatus={['APPROVED', 'CANCELLED'].includes(doc.status)}
+            canStartApproval={!['APPROVED', 'CANCELLED', 'IN_APPROVAL'].includes(doc.status)}
+            queryKey={['design-doc', params.docId]}
           />
         </TabsContent>
       </Tabs>

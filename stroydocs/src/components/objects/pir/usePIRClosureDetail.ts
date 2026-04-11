@@ -23,6 +23,7 @@ export interface PIRClosureApprovalStep {
   status: 'WAITING' | 'APPROVED' | 'REJECTED';
   comment: string | null;
   decidedAt: string | null;
+  userId: string | null;
   user: { id: string; firstName: string; lastName: string } | null;
 }
 

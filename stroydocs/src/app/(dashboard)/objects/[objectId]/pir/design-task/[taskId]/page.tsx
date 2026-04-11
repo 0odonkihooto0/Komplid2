@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { useDesignTaskDetail } from '@/components/objects/pir/useDesignTaskDetail';
 import { DesignTaskParams } from '@/components/objects/pir/DesignTaskParams';
 import { DesignTaskComments } from '@/components/objects/pir/DesignTaskComments';
-import { PIRApprovalSection } from '@/components/objects/pir/PIRApprovalSection';
+import { PIRApprovalWidget } from '@/components/modules/approval/PIRApprovalWidget';
 import { TASK_STATUS_CONFIG, ALLOWED_ACTIONS } from '@/lib/pir/task-state-machine';
 
 export const dynamic = 'force-dynamic';
@@ -177,11 +177,15 @@ export default function PIRDesignTaskDetailPage({
 
         {/* Согласование */}
         <TabsContent value="approval" className="mt-4">
-          <PIRApprovalSection
-            projectId={params.objectId}
-            taskId={params.taskId}
+          <PIRApprovalWidget
+            entityType={task.taskType === 'DESIGN' ? 'DESIGN_TASK_PIR' : 'DESIGN_TASK_SURVEY'}
+            entityId={params.taskId}
+            objectId={params.objectId}
             approvalRoute={task.approvalRoute}
-            taskStatus={task.status}
+            entityStatus={task.status}
+            isTerminalStatus={['APPROVED', 'CANCELLED'].includes(task.status)}
+            canStartApproval={!['APPROVED', 'CANCELLED', 'IN_APPROVAL'].includes(task.status)}
+            queryKey={['design-task', params.taskId]}
           />
         </TabsContent>
       </Tabs>
