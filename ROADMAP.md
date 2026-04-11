@@ -602,6 +602,16 @@
 - ✅ Просроченные акты КС-2 (виджет-алерт)
 - ✅ Фильтр по году
 
+### Вкладка «Перечень мероприятий» ✅
+- ✅ Двухколоночный layout: сайдбар категорий слева + реестр документов справа (URL `/management/activities`)
+- ✅ ActivityCategory — настраиваемые категории с самоссылкой parentId, isSystem/isHidden
+- ✅ ActivityDocument — реестр: Статус / Тип / Номер / Дата / Наименование / Версия / Активные замечания
+- ✅ 5 системных категорий (seed): Заключение договоров, Дорожная карта, Подготовка к строительству, Разрешительная документация, Приёмка объекта
+- ✅ ConfigureCategoriesDialog — чекбоксы вкл/выкл системных категорий в сайдбаре
+- ✅ CreateActivityDocumentDialog — создание с предзаполненной категорией (или Select если «Все»)
+- ✅ API CRUD: `/api/objects/[objectId]/activity-categories` + `/configure` + `/activity-documents`
+- ✅ Миграция: `20260411010000_add_activity_models`
+
 **База данных (Модуль 4)**
 - ✅ `ProjectDocument` (projectId, folderId, name, version, s3Key, qrToken)
 - ✅ `ProjectDocumentVersion` (история версий)
@@ -611,6 +621,8 @@
 - ✅ `ContractCategory`
 - ✅ **Расширение карточки договора (ЦУС):** новые поля `Contract` (executionStatus, vatRate/vatAmount, plannedStart/End, factStart/End, parentContractId / «ContractLinks»); новые поля `ContractCategory` (includeInPaymentWidget, executionStage); новые поля `ContractPayment` (limitYear, limitAmount); `ChangeOrder.changeType`; 6 новых моделей: `ContractObligation`, `ContractAdvance`, `ContractExecution`, `ContractGuarantee`, `ContractDetailInfo`, `ContractFinancialTable` (миграция `20260411000000_extend_contract_card`)
 - ✅ Карточка договора: сводная строка (документы, платежи) + вкладки «Обязательства», «Связанные контракты», «Подробная информация», «Локальные сметные расчёты»
+- ✅ `ActivityCategory` (projectId, isSystem, isHidden, parentId — иерархия, @@unique[projectId+name])
+- ✅ `ActivityDocument` (categoryId, projectId, authorId, status, version, activeIssuesCount)
 
 ---
 

@@ -220,6 +220,35 @@ async function main() {
     },
   });
 
+  // === Системные категории мероприятий (Модуль 4 — Перечень мероприятий) ===
+  const SYSTEM_ACTIVITY_CATEGORIES = [
+    { name: 'Заключение договоров',          order: 0 },
+    { name: 'Формирование дорожной карты',   order: 1 },
+    { name: 'Подготовка к строительству',    order: 2 },
+    { name: 'Разрешительная документация',   order: 3 },
+    { name: 'Приёмка объекта',              order: 4 },
+  ];
+
+  for (const project of [buildingObject1, buildingObject2]) {
+    for (const cat of SYSTEM_ACTIVITY_CATEGORIES) {
+      await prisma.activityCategory.upsert({
+        where: {
+          projectId_name: {
+            projectId: project.id,
+            name: cat.name,
+          },
+        },
+        update: {},
+        create: {
+          ...cat,
+          isSystem: true,
+          projectId: project.id,
+        },
+      });
+    }
+  }
+  console.log('✅ Системные категории мероприятий: созданы');
+
   // === Шаблоны документов (Фаза 3.6) ===
   console.log('Создание .docx шаблонов...');
   await createMissingDocxTemplates();
