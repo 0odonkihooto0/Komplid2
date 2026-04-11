@@ -26,7 +26,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         id: params.actId,
         buildingObject: { organizationId: session.user.organizationId },
       },
-      select: { id: true, number: true, approvalRouteId: true, createdById: true },
+      select: { id: true, number: true, approvalRouteId: true, authorId: true },
     });
     if (!act) return errorResponse('Акт закрытия ПИР не найден', 404);
 
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         docName,
         actorName,
         event: 'rejected',
-        targetUserId: act.createdById,
+        targetUserId: act.authorId,
       }).catch((err) =>
         logger.error({ err }, 'Ошибка уведомления об отклонении акта закрытия ПИР'),
       );
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest, { params }: Params) {
           docName,
           actorName,
           event: 'approved',
-          targetUserId: act.createdById,
+          targetUserId: act.authorId,
         }).catch((err) =>
           logger.error({ err }, 'Ошибка уведомления об одобрении акта закрытия ПИР'),
         );
