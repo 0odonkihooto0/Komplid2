@@ -675,6 +675,13 @@
 - ✅ Замечания к заданиям и документам (создание, ответ, принятие, статус)
 - ✅ Аналитика ПИР (6 виджетов Recharts: статусы, типы, авторы, замечания)
 - ✅ loading.tsx + error.tsx для всех 11 страниц модуля
+- ✅ CRUD API шаблонов маршрутов согласования (`/api/organizations/[oid]/approval-templates`) + применение к сущности (POST `.../apply`)
+- ✅ Soft-delete / restore / физическое удаление документов ПИР с очисткой S3 (`soft-delete`, `restore`, `permanent`)
+- ✅ CRUD API штампов PDF (`/api/projects/[pid]/stamps`): создание, перемещение (`move`), изменение размера (`resize`), удаление
+- ✅ CRUD справочника титулов штампов (`/api/organizations/[oid]/stamp-titles`)
+- ✅ `create-version` — новая версия документа с наследованием замечаний (`DesignDocComment`)
+- ✅ `create-copy` — независимая копия документа без наследования замечаний
+- ✅ GET design-docs: параметр `?includeDeleted=true` (только для роли ADMIN)
 
 **База данных (Модуль 5)**
 - ✅ `DesignTask`, `DesignTaskParam`, `DesignTaskComment`

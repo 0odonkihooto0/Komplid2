@@ -25,7 +25,9 @@ export async function GET(
     const docType = sp.get('docType') as DesignDocType | null;
     const status = sp.get('status') as DesignDocStatus | null;
     const category = sp.get('category');
-    const showDeleted = sp.get('showDeleted') === 'true';
+    // Только ADMIN может запросить включение удалённых документов
+    const includeDeleted = sp.get('includeDeleted') === 'true';
+    const canSeeDeleted = includeDeleted && session.user.role === 'ADMIN';
     // Фильтр для двусторонней привязки: вернуть только документы, связанные с конкретным АОСР
     const linkedTo = sp.get('linkedTo');
     const page = Math.max(1, parseInt(sp.get('page') ?? '1'));
@@ -34,7 +36,7 @@ export async function GET(
 
     const where = {
       projectId: params.projectId,
-      isDeleted: showDeleted ? undefined : false,
+      isDeleted: canSeeDeleted ? undefined : false,
       ...(docType && { docType }),
       ...(status && { status }),
       ...(category && { category }),
