@@ -623,6 +623,14 @@
 - ✅ Reorder API: `/api/objects/[objectId]/planner-tasks/reorder`
 - ✅ URL: `/objects/[objectId]/project-management/planner`
 
+### Вкладка «Версии УП» ✅
+- ✅ Таблица версий УП: Название | Актуальная (✓/—) | Дата создания | Количество задач
+- ✅ Контекстное меню строки: Сделать актуальной | Редактировать | Удалить с подтверждением
+- ✅ Диалог создания: название + чекбокс «Актуальная» с предупреждением о смене
+- ✅ Транзакция isCurrent: сброс у всех версий → установка у выбранной (переиспользует PATCH API)
+- ✅ Удаление актуальной версии заблокировано (кнопка disabled)
+- ✅ URL: `/objects/[objectId]/project-management/versions`
+
 **База данных (Модуль 4)**
 - ✅ `ProjectDocument` (projectId, folderId, name, version, s3Key, qrToken)
 - ✅ `ProjectDocumentVersion` (история версий)
