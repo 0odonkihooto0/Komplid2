@@ -2,8 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, FileText, Printer } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Download, FileText, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDate } from '@/utils/format';
 import { cn } from '@/lib/utils';
@@ -24,10 +30,14 @@ export default function PIRDesignTaskDetailPage({
   const [activeTab, setActiveTab] = useState('params');
 
   // objectId === projectId: BuildingObject.id используется как projectId во всех API
-  const { task, isLoading, conductMutation, cancelMutation, printMutation } = useDesignTaskDetail(
-    params.objectId,
-    params.taskId
-  );
+  const {
+    task,
+    isLoading,
+    conductMutation,
+    cancelMutation,
+    printMutation,
+    printApprovalSheetMutation,
+  } = useDesignTaskDetail(params.objectId, params.taskId);
 
   if (isLoading) {
     return (
@@ -187,6 +197,26 @@ export default function PIRDesignTaskDetailPage({
 
         {/* Согласование */}
         <TabsContent value="approval" className="mt-4">
+          <div className="mb-3 flex justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={printApprovalSheetMutation.isPending}
+                >
+                  <Download className="mr-1.5 h-3.5 w-3.5" />
+                  {printApprovalSheetMutation.isPending ? 'Формирование...' : 'Скачать'}
+                  <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => printApprovalSheetMutation.mutate()}>
+                  Лист согласования (PDF)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <PIRApprovalWidget
             entityType={task.taskType === 'DESIGN' ? 'DESIGN_TASK_PIR' : 'DESIGN_TASK_SURVEY'}
             entityId={params.taskId}

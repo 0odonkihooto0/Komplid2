@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Лист подписания {{docNumber}}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 11px; color: #111; }
+    h1 {
+      font-size: 15px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 11px;
+      color: #555;
+      margin-bottom: 16px;
+    }
+    .meta { margin-bottom: 16px; }
+    .meta table { width: 100%; border-collapse: collapse; }
+    .meta td { padding: 3px 6px; vertical-align: top; }
+    .meta td:first-child { font-weight: bold; width: 180px; color: #555; }
+    .notice {
+      margin: 12px 0 16px;
+      padding: 8px 12px;
+      background: #fefce8;
+      border: 1px solid #fde047;
+      border-radius: 4px;
+      font-size: 10px;
+      color: #713f12;
+    }
+    .sign-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    .sign-table th, .sign-table td {
+      border: 1px solid #ccc;
+      padding: 5px 6px;
+      vertical-align: top;
+    }
+    .sign-table th {
+      background: #f0f0f0;
+      font-weight: bold;
+      text-align: center;
+      font-size: 10px;
+    }
+    .sign-table td:first-child { text-align: center; width: 28px; }
+    .col-level { width: 12%; }
+    .col-fio   { width: 14%; }
+    .col-pos   { width: 13%; }
+    .col-org   { width: 16%; }
+    .col-sign  { width: 20%; }
+    .col-date  { width: 10%; text-align: center; }
+    .sign-placeholder {
+      border-bottom: 1px solid #999;
+      height: 18px;
+      width: 90%;
+      margin: 0 auto;
+    }
+    .footer { margin-top: 20px; font-size: 9px; color: #999; text-align: right; }
+  </style>
+</head>
+<body>
+
+  <h1>Лист подписания</h1>
+  <div class="subtitle">{{docType}}</div>
+
+  <div class="meta">
+    <table>
+      <tr>
+        <td>Документ:</td>
+        <td><strong>№ {{docNumber}}</strong></td>
+      </tr>
+      <tr>
+        <td>Дата:</td>
+        <td>{{docDate}}</td>
+      </tr>
+      <tr>
+        <td>Статус согласования:</td>
+        <td>{{approvalStatus}}</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="notice">
+    Электронная подпись (ЭЦП) будет доступна после подключения провайдера КриптоПро CSP
+    в настройках организации. Данный лист является предварительной формой для ручного подписания.
+  </div>
+
+  <table class="sign-table">
+    <thead>
+      <tr>
+        <th>№</th>
+        <th class="col-level">Роль</th>
+        <th class="col-fio">ФИО</th>
+        <th class="col-pos">Должность</th>
+        <th class="col-org">Организация</th>
+        <th class="col-sign">Подпись</th>
+        <th class="col-date">Дата</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#if participants.length}}
+        {{#each participants}}
+        <tr>
+          <td>{{addOne @index}}</td>
+          <td class="col-level">{{level}}</td>
+          <td class="col-fio">{{#if name}}{{name}}{{else}}—{{/if}}</td>
+          <td class="col-pos">{{#if position}}{{position}}{{else}}—{{/if}}</td>
+          <td class="col-org">{{#if organization}}{{organization}}{{else}}—{{/if}}</td>
+          <td class="col-sign"><div class="sign-placeholder"></div></td>
+          <td class="col-date"></td>
+        </tr>
+        {{/each}}
+      {{else}}
+        <tr>
+          <td colspan="7" style="text-align:center; color:#999; font-style:italic; padding:14px;">
+            Маршрут согласования не завершён
+          </td>
+        </tr>
+      {{/if}}
+    </tbody>
+  </table>
+
+  <div class="footer">Сформировано: {{generatedAt}}</div>
+
+</body>
+</html>

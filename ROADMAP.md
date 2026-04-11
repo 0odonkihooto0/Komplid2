@@ -710,6 +710,8 @@
 - ✅ Вкладка «ТИМ» в карточке документа ПИР (`DesignDocTimTab`): связанные BIM-элементы через `BimElementLink(entityType=DESIGN_DOC)`, группировка по модели, placeholder при отсутствии связей; API `GET /api/objects/[oid]/design-docs/[did]/tim-links`; счётчик в табе
 - ✅ Вкладка «Подписание» в карточке документа ПИР: заглушка ЭЦП (КриптоПро CSP), индикатор статуса `APPROVED`
 - ✅ Шапка карточки ПИР-документа по ЦУС стр. 106: строка 1 «Документ ПИР № {number} от {date}», строка 2 «Версия №{v} | {status} | Внешний № — | Согласование {approvalStatus} | Подписание {signStatus}»; 7 вкладок с динамическими счётчиками
+- ✅ Лист согласования ПИР (PDF): шаблон `templates/pir/approval-sheet.hbs` (колонки Уровень/ФИО/Организация/Должность/Статус/Дата/Комментарий), генератор `generatePIRApprovalSheetPdf()` в `pir-pdf-generator.ts`, кнопка «Скачать ▾» во вкладке «Согласование» для DesignTask и DesignDocument; `POST /api/objects/[oid]/design-tasks/[tid]/approval-sheet` + `POST /api/objects/[oid]/design-docs/[did]/approval-sheet`; организации подтягиваются из ContractParticipant по роли; работает даже без активного маршрута
+- ✅ Лист подписания ПИР (шаблон-заглушка): `templates/pir/signing-sheet.hbs` (таблица с пустыми полями подписей + уведомление о КриптоПро CSP), `generatePIRSigningSheetPdf()`, `POST /api/objects/[oid]/design-docs/[did]/signing-sheet`; кнопка «Скачать ▾» во вкладке «Подписание» карточки документа ПИР
 
 ---
 

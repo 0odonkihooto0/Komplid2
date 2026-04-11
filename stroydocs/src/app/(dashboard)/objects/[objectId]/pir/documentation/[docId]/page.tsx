@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import nextDynamic from 'next/dynamic';
-import { ArrowLeft, ChevronDown, FileText, PenLine, Share2 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Download, FileText, PenLine, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -67,6 +67,8 @@ export default function PIRDocDetailPage({
     sendReviewMutation,
     approveReviewMutation,
     sendToSEDMutation,
+    printApprovalSheetMutation,
+    printSigningSheetMutation,
   } = useDesignDocDetail(params.objectId, params.docId);
 
   if (isLoading) {
@@ -302,6 +304,26 @@ export default function PIRDocDetailPage({
 
         {/* Согласование */}
         <TabsContent value="approval" className="mt-4">
+          <div className="mb-3 flex justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={printApprovalSheetMutation.isPending}
+                >
+                  <Download className="mr-1.5 h-3.5 w-3.5" />
+                  {printApprovalSheetMutation.isPending ? 'Формирование...' : 'Скачать'}
+                  <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => printApprovalSheetMutation.mutate()}>
+                  Лист согласования (PDF)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <PIRApprovalWidget
             entityType="DESIGN_DOC"
             entityId={params.docId}
@@ -316,6 +338,26 @@ export default function PIRDocDetailPage({
 
         {/* Подписание (ЭЦП — заглушка до настройки КриптоПро) */}
         <TabsContent value="signing" className="mt-4">
+          <div className="mb-3 flex justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={printSigningSheetMutation.isPending}
+                >
+                  <Download className="mr-1.5 h-3.5 w-3.5" />
+                  {printSigningSheetMutation.isPending ? 'Формирование...' : 'Скачать'}
+                  <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => printSigningSheetMutation.mutate()}>
+                  Лист подписания (PDF)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <div className="flex flex-col items-center justify-center rounded-md border border-dashed py-14 text-center">
             <PenLine className="mb-3 h-8 w-8 text-muted-foreground" />
             <p className="text-sm font-medium text-muted-foreground">Подписание ЭЦП</p>
