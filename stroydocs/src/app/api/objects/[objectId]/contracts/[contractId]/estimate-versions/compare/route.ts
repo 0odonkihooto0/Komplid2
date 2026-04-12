@@ -4,6 +4,7 @@ import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
 import { compareVersions } from '@/lib/estimates/compare-versions';
+import { compareModeSchema } from '@/lib/validations/estimate';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,10 @@ export async function GET(
     const { searchParams } = new URL(req.url);
     const v1 = searchParams.get('v1');
     const v2 = searchParams.get('v2');
+    const mode = searchParams.get('mode') ?? 'default';
+
+    const parsedMode = compareModeSchema.safeParse(mode);
+    if (!parsedMode.success) return errorResponse('Недопустимый режим сравнения', 400);
 
     if (!v1 || !v2) {
       return errorResponse('Необходимо передать параметры v1 и v2', 400);
@@ -40,7 +45,7 @@ export async function GET(
     if (!version1) return errorResponse('Версия v1 не найдена в этом договоре', 404);
     if (!version2) return errorResponse('Версия v2 не найдена в этом договоре', 404);
 
-    const result = await compareVersions(v1, v2);
+    const result = await compareVersions(v1, v2, parsedMode.data);
     return successResponse(result);
   } catch (error) {
     if (error instanceof NextResponse) return error;

@@ -738,7 +738,11 @@
 - ✅ API коэффициентов пересчёта: GET/POST/PATCH/DELETE (по версии сметы, включение/отключение через isEnabled)
 - ⬜ Иерархический UI: Глава → Раздел → Позиция
 - ⬜ Интеграция с ФГИС ЦС (актуальные индексы цен)
-- ⬜ Сравнение версий смет с подсветкой изменений
+- ✅ Сравнение версий смет: расширенный API с режимами default/volumes/cost/contract, алгоритм сопоставления по sortOrder+code → importItemId → name+unit ✅ (2026-04-12)
+- ✅ Загрузка корректировочных смет: POST load-correction (gsfx/gge/xml → CORRECTIVE версия с parentVersionId) ✅ (2026-04-12)
+- ✅ Перезагрузка сметы из исходного файла: POST reload (откат к sourceImport, пересоздание глав/позиций) ✅ (2026-04-12)
+- ✅ Экспорт сметы в Excel-шаблон ЦУС: GET export-template (ExcelJS, 2 листа: Смета + info) ✅ (2026-04-12)
+- ✅ История изменений сметы: GET history (EstimateChangeLog, пагинация, audit trail) ✅ (2026-04-12)
 
 ### Полный сметный модуль (финальная фаза)
 - ⬜ Справочник ГЭСН-2022, КСР
@@ -753,6 +757,7 @@
 - ✅ `EstimateItem`: `isCustomerResource`, `ssrWorkType`, `isExcluded`
 - ✅ `EstimateAdditionalCost` + `EstimateAdditionalCostChapter` + `EstimateAdditionalCostEstimate` — доп. затраты (НР, СП, НДС, зимнее удорожание и т.д.)
 - ✅ `EstimateCoefficient` — коэффициенты пересчёта сметы
+- ✅ `EstimateChangeLog` — лог изменений версии сметы (action, field, oldValue/newValue, userId) ✅ (2026-04-12)
 - ⬜ `GesnNorm`, `KsrResource`, `FgisPrice` (финальная фаза)
 
 ---

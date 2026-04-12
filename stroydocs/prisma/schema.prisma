@@ -255,8 +255,9 @@ model User {
   pirClosureActsAuthored      PIRClosureAct[]     @relation("PIRActAuthor")
 
   // Модуль 6 — Сметы
-  estimateVersionsCreated  EstimateVersion[]  @relation("EstimateVersionCreator")
-  estimateContractsCreated EstimateContract[] @relation("EstimateContractCreator")
+  estimateVersionsCreated  EstimateVersion[]    @relation("EstimateVersionCreator")
+  estimateContractsCreated EstimateContract[]   @relation("EstimateContractCreator")
+  estimateChangeLogs       EstimateChangeLog[]  @relation("EstimateChangeLogUser")
 
   // Модуль 7 — ГПР
   ganttDailyPlans       GanttDailyPlan[]   @relation("GanttDailyPlanCreator")
@@ -3169,6 +3170,7 @@ model EstimateVersion {
   additionalCosts             EstimateAdditionalCost[]
   coefficients                EstimateCoefficient[]
   additionalCostEstimateLinks EstimateAdditionalCostEstimate[]
+  changeLogs                  EstimateChangeLog[]
 
   @@index([contractId])
   @@index([parentVersionId])
@@ -3257,6 +3259,30 @@ model EstimateItem {
   @@index([ksiNodeId])
   @@index([workItemId])
   @@map("estimate_items")
+}
+
+/// Лог изменений версии сметы (история правок позиций/глав)
+model EstimateChangeLog {
+  id         String  @id @default(uuid())
+  action     String // "item_updated", "item_deleted", "chapter_created", "version_reloaded", "correction_loaded"
+  field      String? // Изменённое поле ("volume", "unitPrice")
+  oldValue   String? // Предыдущее значение (сериализованное)
+  newValue   String? // Новое значение (сериализованное)
+
+  versionId String
+  version   EstimateVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  entityType String? // "EstimateItem" | "EstimateChapter"
+  entityId   String? // ID конкретной позиции/главы
+
+  userId String
+  user   User   @relation("EstimateChangeLogUser", fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([versionId, createdAt(sort: Desc)])
+  @@index([userId])
+  @@map("estimate_change_logs")
 }
 
 /// Смета контракта (сводная из нескольких версий смет)

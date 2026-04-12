@@ -18,6 +18,11 @@ export function detectFormatByMime(
     return EstimateFormat.PDF;
   }
 
+  // Гранд-Смета: .gsfx и .gge — XML-совместимые форматы
+  if (ext === 'gsfx' || ext === 'gge') {
+    return EstimateFormat.XML_GRAND_SMETA;
+  }
+
   if (ext === 'xml' || mimeType === 'application/xml' || mimeType === 'text/xml') {
     // Точный формат XML определяется после парсинга содержимого
     return EstimateFormat.XML_GRAND_SMETA;
