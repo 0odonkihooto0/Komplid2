@@ -40,8 +40,13 @@ worker.on('failed', (job, err) => {
   console.error(`[notification-worker] ✗ Задача ${job?.id} провалилась:`, err.message);
 });
 
+let lastWorkerError = 0;
 worker.on('error', (err) => {
-  console.error('[notification-worker] Ошибка воркера:', err);
+  const now = Date.now();
+  if (now - lastWorkerError > 30_000) {
+    lastWorkerError = now;
+    console.error('[notification-worker] Ошибка воркера:', err);
+  }
 });
 
 console.log('[notification-worker] Запущен, ожидаю задачи из очереди "notifications"...');

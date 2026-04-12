@@ -202,6 +202,15 @@ type-level refs, string literals, dynamic imports, re-exports, тестовые 
 Socket.io сервер — отдельный процесс на порту 3001.
 Смешивание с Next.js API = конфликт с серверлесс моделью деплоя.
 
+**Redis ECONNREFUSED спам в логах — rate-limiting обязателен для ioredis error handler.**
+При недоступном Redis (Timeweb Managed Redis на обслуживании, сетевая ошибка) ioredis
+генерирует `error` event при каждой попытке переподключения. Без rate-limiting логи
+заполняются десятками ошибок в секунду, маскируя реальные проблемы.
+Правило: `client.on('error')` **всегда** с rate-limiting (max 1 раз в 30 секунд).
+`retryStrategy` с `return null` после N попыток — иначе ioredis переподключается вечно.
+BullMQ воркеры: `maxRetriesPerRequest: null` (требование BullMQ), но `worker.on('error')`
+с тем же rate-limiting. Воркеры запускать ТОЛЬКО после проверки доступности Redis.
+
 ---
 
 ## Среда разработки / CI

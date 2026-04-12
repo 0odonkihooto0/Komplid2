@@ -162,6 +162,15 @@ worker.on('failed', (job, err) => {
   console.error(`[inspection-reminder] ✗ Задача ${job?.id} провалилась:`, err.message);
 });
 
+let lastWorkerError = 0;
+worker.on('error', (err) => {
+  const now = Date.now();
+  if (now - lastWorkerError > 30_000) {
+    lastWorkerError = now;
+    console.error('[inspection-reminder] Ошибка воркера:', err);
+  }
+});
+
 // Инициализация
 registerCronJob()
   .then(() => console.log('[inspection-reminder] Воркер готов'))

@@ -60,10 +60,23 @@ if [ $attempt -ge $max_attempts ]; then
   exit 1
 fi
 
-# ── Запуск BIM-воркера ───────────────────────────────────────────────────────
-echo '[worker] Запуск parse-ifc worker...'
-node /app/dist/workers/lib/workers/parse-ifc.worker.js &
-WORKER_PID=$!
-echo '[worker] parse-ifc worker запущен (PID: '"$WORKER_PID"')'
+# ── Запуск BIM-воркера (только если Redis доступен) ──────────────────────────
+REDIS_OK=$(node -e "
+const url = new URL(process.env.REDIS_URL || 'redis://localhost:6379');
+const net = require('net');
+const s = net.createConnection(Number(url.port) || 6379, url.hostname);
+s.on('connect', () => { s.destroy(); console.log('ok'); process.exit(0); });
+s.on('error', () => { s.destroy(); console.log('no'); process.exit(0); });
+setTimeout(() => { s.destroy(); console.log('no'); process.exit(0); }, 3000);
+" 2>/dev/null || echo 'no')
+
+if [ "$REDIS_OK" = "ok" ]; then
+  echo '[worker] Redis доступен. Запуск parse-ifc worker...'
+  node /app/dist/workers/lib/workers/parse-ifc.worker.js &
+  WORKER_PID=$!
+  echo '[worker] parse-ifc worker запущен (PID: '"$WORKER_PID"')'
+else
+  echo '[worker] Redis недоступен ('"$REDIS_URL"'). parse-ifc worker НЕ запущен.'
+fi
 
 exec node server.js

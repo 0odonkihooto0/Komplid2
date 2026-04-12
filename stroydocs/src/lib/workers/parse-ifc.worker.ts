@@ -202,8 +202,13 @@ worker.on('failed', (job, err) => {
   console.error(`[parse-ifc-worker] ✗ Задача ${job?.id} провалилась:`, err.message);
 });
 
+let lastWorkerError = 0;
 worker.on('error', (err) => {
-  console.error('[parse-ifc-worker] Ошибка воркера:', err);
+  const now = Date.now();
+  if (now - lastWorkerError > 30_000) {
+    lastWorkerError = now;
+    console.error('[parse-ifc-worker] Ошибка воркера:', err);
+  }
 });
 
 console.log('[parse-ifc-worker] Запущен, ожидаю задачи из очереди "parse-bim"...');
