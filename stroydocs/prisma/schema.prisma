@@ -77,16 +77,16 @@ enum TaskSource {
 }
 
 enum ProblemIssueType {
-  CORRECTION_PSD  // Корректировка ПСД
-  LAND_LEGAL      // Земельно-правовые
-  PRODUCTION      // Производственные
-  ORG_LEGAL       // Организационно-правовые
-  CONTRACT_WORK   // Договорная работа
-  FINANCIAL       // Финансирование
+  CORRECTION_PSD // Корректировка ПСД
+  LAND_LEGAL // Земельно-правовые
+  PRODUCTION // Производственные
+  ORG_LEGAL // Организационно-правовые
+  CONTRACT_WORK // Договорная работа
+  FINANCIAL // Финансирование
   MATERIAL_SUPPLY // Поставка материалов
-  WORK_QUALITY    // Качество работ
-  DEADLINES       // Сроки
-  OTHER           // Прочие
+  WORK_QUALITY // Качество работ
+  DEADLINES // Сроки
+  OTHER // Прочие
 }
 
 enum ProblemIssueStatus {
@@ -101,16 +101,16 @@ enum FundingRecordType {
 
 enum IndicatorSource {
   MANUAL // Вручную
-  AUTO   // Автоматически
+  AUTO // Автоматически
 }
 
 enum AppointmentDocType {
-  ORDER             // Приказ
+  ORDER // Приказ
   POWER_OF_ATTORNEY // Доверенность
-  DECREE            // Распоряжение
-  REGULATION        // Постановление
-  DECISION          // Решение
-  CHARTER           // Устав
+  DECREE // Распоряжение
+  REGULATION // Постановление
+  DECISION // Решение
+  CHARTER // Устав
 }
 
 // === Модели Фазы 1 ===
@@ -225,12 +225,12 @@ model User {
   rfisAuthored            RFI[]                    @relation("RFIAuthor")
   rfisAssigned            RFI[]                    @relation("RFIAssignee")
   rfisAnswered            RFI[]                    @relation("RFIAnswerer")
-  sedDocumentsAuthored       SEDDocument[]            @relation("SEDAuthor")
-  sedDocumentsSentBy         SEDDocument[]            @relation("SEDSenderUser")
-  sedDocumentsReceivedBy     SEDDocument[]            @relation("SEDReceiverUser")
-  sedWorkflowsInitiated      SEDWorkflow[]            @relation("SEDWorkflowInitiator")
-  sedWorkflowMessages        SEDWorkflowMessage[]     @relation("SEDWorkflowMessageAuthor")
-  chatMessages               ChatMessage[]            @relation("ChatAuthor")
+  sedDocumentsAuthored    SEDDocument[]            @relation("SEDAuthor")
+  sedDocumentsSentBy      SEDDocument[]            @relation("SEDSenderUser")
+  sedDocumentsReceivedBy  SEDDocument[]            @relation("SEDReceiverUser")
+  sedWorkflowsInitiated   SEDWorkflow[]            @relation("SEDWorkflowInitiator")
+  sedWorkflowMessages     SEDWorkflowMessage[]     @relation("SEDWorkflowMessageAuthor")
+  chatMessages            ChatMessage[]            @relation("ChatAuthor")
   projectDocsUploaded     ProjectDocument[]        @relation("ProjectDocUploader")
   docVersionsUploaded     ProjectDocumentVersion[] @relation("DocVersionUploader")
   eventsOrganized         ProjectEvent[]           @relation("EventOrganizer")
@@ -312,8 +312,8 @@ model User {
 
   // Модуль 5 — ПИР (дополнительные роли)
   approvalTemplateLevels   ApprovalTemplateLevel[]
-  reviewingDesignDocs      DesignDocument[]         @relation("DesignDocReviewerUser")
-  designDocChangesAuthored DesignDocChange[]        @relation("DesignDocChangeAuthor")
+  reviewingDesignDocs      DesignDocument[]        @relation("DesignDocReviewerUser")
+  designDocChangesAuthored DesignDocChange[]       @relation("DesignDocChangeAuthor")
 
   @@index([organizationId])
   @@map("users")
@@ -365,16 +365,16 @@ model BuildingObject {
   plannedEndDate      DateTime? // Плановая дата окончания
 
   // Расширенные реквизиты объекта
-  constructionType String?   // Тип строительства (Новое строительство / Реконструкция / Капитальный ремонт)
-  region           String?   // Регион (Субъект РФ)
-  stroyka          String?   // Стройка (для реквизитов КС-2, КС-3)
-  shortName        String?   // Краткое наименование
-  latitude         Float?    // Широта
-  longitude        Float?    // Долгота
+  constructionType String? // Тип строительства (Новое строительство / Реконструкция / Капитальный ремонт)
+  region           String? // Регион (Субъект РФ)
+  stroyka          String? // Стройка (для реквизитов КС-2, КС-3)
+  shortName        String? // Краткое наименование
+  latitude         Float? // Широта
+  longitude        Float? // Долгота
   actualStartDate  DateTime? // Фактическая дата начала
   actualEndDate    DateTime? // Фактическая дата окончания
   fillDatesFromGpr Boolean   @default(false) // Заполнять даты из ГПР
-  parentId         String?   // ID родительского объекта (иерархия объектов)
+  parentId         String? // ID родительского объекта (иерархия объектов)
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -455,10 +455,14 @@ model BuildingObject {
   activityDocuments  ActivityDocument[]
 
   // Модуль 5 — ПИР
-  pirObjectTypeConfig  PIRObjectTypeConfig?
+  pirObjectTypeConfig PIRObjectTypeConfig?
 
   // Модуль 4 — Планировщик проекта
   plannerVersions ProjectManagementVersion[]
+
+  // Модуль 6 — Сметы
+  estimateCategories      EstimateCategory[]
+  estimateAdditionalCosts EstimateAdditionalCost[]
 
   @@index([organizationId])
   @@index([parentId])
@@ -468,17 +472,17 @@ model BuildingObject {
 
 /// Договор (или субдоговор)
 model Contract {
-  id          String         @id @default(uuid())
-  number      String // Номер договора
-  name        String // Наименование
-  type        ContractType   @default(MAIN)
-  status      ContractStatus @default(DRAFT)
-  startDate   DateTime? // Дата начала
-  endDate     DateTime? // Дата окончания
-  totalAmount      Float?    // Общая сумма договора
-  executionStatus  String?   // Статус выполнения работ
-  vatRate          Float?    // Ставка НДС (%)
-  vatAmount        Float?    // Сумма НДС (amount * vatRate / 100)
+  id               String         @id @default(uuid())
+  number           String // Номер договора
+  name             String // Наименование
+  type             ContractType   @default(MAIN)
+  status           ContractStatus @default(DRAFT)
+  startDate        DateTime? // Дата начала
+  endDate          DateTime? // Дата окончания
+  totalAmount      Float? // Общая сумма договора
+  executionStatus  String? // Статус выполнения работ
+  vatRate          Float? // Ставка НДС (%)
+  vatAmount        Float? // Сумма НДС (amount * vatRate / 100)
   plannedStartDate DateTime? // Плановая дата начала
   plannedEndDate   DateTime? // Плановая дата окончания
   factStartDate    DateTime? // Фактическая дата начала
@@ -530,11 +534,11 @@ model Contract {
   limitRisks LimitRisk[]
 
   // Карточка договора — расширение
-  obligations     ContractObligation[]
-  advances        ContractAdvance[]
-  executions      ContractExecution[]
-  guarantees      ContractGuarantee[]
-  detailInfos     ContractDetailInfo[]
+  obligations      ContractObligation[]
+  advances         ContractAdvance[]
+  executions       ContractExecution[]
+  guarantees       ContractGuarantee[]
+  detailInfos      ContractDetailInfo[]
   financialTables  ContractFinancialTable[]
   contractDocLinks ContractDocLink[]
 
@@ -850,8 +854,8 @@ enum DocCommentStatus {
 /// Классификация ИД по ГОСТ Р 70108-2025
 enum IdCategory {
   ACCOUNTING_JOURNAL // Журналы учёта (ЭОЖР, ЭСЖР)
-  INSPECTION_ACT     // Акты освидетельствования (АОСР, АВК)
-  OTHER_ID           // Иная исполнительная документация
+  INSPECTION_ACT // Акты освидетельствования (АОСР, АВК)
+  OTHER_ID // Иная исполнительная документация
 }
 
 /// Категория архивного документа
@@ -1067,22 +1071,22 @@ model ExecutionDoc {
   lastEditedBy   User?     @relation("ExecutionDocEditor", fields: [lastEditedById], references: [id])
 
   // Модуль 10 — QR, режим хранения, классификация
-  qrToken       String?      @unique // UUID для QR-кода (ссылка на публичную страницу)
-  qrCodeS3Key   String?              // Ключ PNG QR-кода в S3
-  storageMode   Boolean      @default(false) // Режим хранения (запрет редактирования)
-  storageModeAt DateTime?            // Дата перевода в хранение
-  idCategory    IdCategory?          // Классификация по ГОСТ Р 70108-2025
+  qrToken       String?     @unique // UUID для QR-кода (ссылка на публичную страницу)
+  qrCodeS3Key   String? // Ключ PNG QR-кода в S3
+  storageMode   Boolean     @default(false) // Режим хранения (запрет редактирования)
+  storageModeAt DateTime? // Дата перевода в хранение
+  idCategory    IdCategory? // Классификация по ГОСТ Р 70108-2025
 
   // Штамп производства работ на PDF
   stampType  String? // Тип штампа: "work_permit" | "certified_copy" | "qr_stamp"
-  stampX     Float?  // X-координата штампа (в пунктах от левого края)
-  stampY     Float?  // Y-координата штампа
-  stampPage  Int?    // Номер страницы для штампа
+  stampX     Float? // X-координата штампа (в пунктах от левого края)
+  stampY     Float? // Y-координата штампа
+  stampPage  Int? // Номер страницы для штампа
   stampS3Key String? // Ключ PDF с наложенным штампом
 
   // XML-экспорт по схемам Минстроя
   xmlExportedAt DateTime? // Дата последнего XML-экспорта
-  xmlS3Key      String?   // Ключ XML-файла в S3
+  xmlS3Key      String? // Ключ XML-файла в S3
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1751,9 +1755,9 @@ model Defect {
   assignee   User?   @relation("DefectAssignee", fields: [assigneeId], references: [id])
 
   // Модуль 11 — Строительный контроль
-  requiresSuspension Boolean      @default(false) // Требует приостановки работ
+  requiresSuspension Boolean       @default(false) // Требует приостановки работ
   inspectionId       String?
-  inspection         Inspection?  @relation(fields: [inspectionId], references: [id])
+  inspection         Inspection?   @relation(fields: [inspectionId], references: [id])
   prescriptionId     String?
   prescription       Prescription? @relation(fields: [prescriptionId], references: [id])
   deputyInspectorId  String? // ID заместителя инспектора
@@ -1983,9 +1987,9 @@ model Task {
 
 /// Версия Управляющего плана (УП) объекта
 model ProjectManagementVersion {
-  id        String   @id @default(uuid())
+  id        String  @id @default(uuid())
   name      String
-  isCurrent Boolean  @default(false) // Только одна версия может быть актуальной
+  isCurrent Boolean @default(false) // Только одна версия может быть актуальной
 
   projectId String
   project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -2051,21 +2055,21 @@ enum SEDStatus {
 }
 
 enum WorkflowType {
-  DELEGATION      // Делегирование
-  APPROVAL        // Согласование
-  REDIRECT        // Перенаправление
-  MULTI_APPROVAL  // Многостороннее согласование
-  MULTI_SIGNING   // Многостороннее подписание
+  DELEGATION // Делегирование
+  APPROVAL // Согласование
+  REDIRECT // Перенаправление
+  MULTI_APPROVAL // Многостороннее согласование
+  MULTI_SIGNING // Многостороннее подписание
   DIGITAL_SIGNING // Подписание ЭП
-  REVIEW          // Ознакомление
+  REVIEW // Ознакомление
 }
 
 enum SEDWorkflowStatus {
-  CREATED     // Создан
+  CREATED // Создан
   IN_PROGRESS // В работе
-  APPROVED    // Согласован
-  REJECTED    // Отклонён
-  COMPLETED   // Завершён
+  APPROVED // Согласован
+  REJECTED // Отклонён
+  COMPLETED // Завершён
 }
 
 /// Официальное письмо (Деловая переписка)
@@ -2216,8 +2220,8 @@ model SEDDocument {
   searchVector Unsupported("tsvector")?
 
   // Входящий / исходящий номер и дата документа
-  incomingNumber String?   // Входящий номер
-  outgoingNumber String?   // Исходящий номер
+  incomingNumber String? // Входящий номер
+  outgoingNumber String? // Исходящий номер
   date           DateTime? // Дата документа (вводится вручную)
 
   // Отправитель (физлицо)
@@ -2233,7 +2237,7 @@ model SEDDocument {
   receiverOrg   Organization? @relation("SEDReceiver", fields: [receiverOrgId], references: [id])
 
   // Статус прочтения
-  isRead Boolean  @default(false)
+  isRead Boolean   @default(false)
   readAt DateTime?
 
   // Наблюдатели (массив ID пользователей)
@@ -2309,8 +2313,8 @@ model ChatMessage {
 
 /// Категория / вид контракта (пользовательский справочник)
 model ContractCategory {
-  id            String  @id @default(uuid())
-  name          String
+  id                     String  @id @default(uuid())
+  name                   String
   trackPayments          Boolean @default(true)
   includeInPaymentWidget Boolean @default(false) // Включить в виджет «Оплачено по контрактам»
   executionStage         String? // Стадия (ИРД, ПИР, СМР…)
@@ -2339,8 +2343,8 @@ model ContractPayment {
   amount      Float
   paymentDate DateTime
   budgetType  String? // Вид бюджета (федеральный, региональный…)
-  limitYear   Int?    // Год лимита
-  limitAmount Float?  // Сумма лимита
+  limitYear   Int? // Год лимита
+  limitAmount Float? // Сумма лимита
   description String?
 
   contractId String
@@ -2380,7 +2384,7 @@ model ContractObligation {
 
 /// Авансовые платежи по договору
 model ContractAdvance {
-  id          String    @id @default(uuid())
+  id          String   @id @default(uuid())
   number      String?
   date        DateTime
   amount      Float
@@ -2400,9 +2404,9 @@ model ContractAdvance {
 model ContractExecution {
   id                String   @id @default(uuid())
   date              DateTime
-  completionPercent Float?   // % исполнения на дату
-  workersCount      Int?     // Количество рабочих
-  equipmentCount    Int?     // Количество техники
+  completionPercent Float? // % исполнения на дату
+  workersCount      Int? // Количество рабочих
+  equipmentCount    Int? // Количество техники
   notes             String?
 
   contractId String
@@ -2452,8 +2456,8 @@ model ContractDetailInfo {
 model ContractFinancialTable {
   id      String @id @default(uuid())
   name    String
-  columns Json   // Определение колонок [{name, type, source?}]
-  rows    Json   // Данные строк
+  columns Json // Определение колонок [{name, type, source?}]
+  rows    Json // Данные строк
 
   contractId String
   contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
@@ -2467,16 +2471,16 @@ model ContractFinancialTable {
 
 /// Ссылка договор → проектный документ (ЗнП / ЗнИИ)
 model ContractDocLink {
-  id         String          @id @default(uuid())
-  linkType   String          // 'ZNP' | 'ZNII'
+  id       String @id @default(uuid())
+  linkType String // 'ZNP' | 'ZNII'
 
   contractId String
-  contract   Contract        @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
 
   documentId String
   document   ProjectDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
-  createdAt  DateTime        @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([contractId, documentId, linkType])
   @@index([contractId])
@@ -2825,7 +2829,7 @@ model DesignDocument {
   reviewerOrg     Organization? @relation("DesignDocReviewer", fields: [reviewerOrgId], references: [id])
   reviewerUserId  String?
   reviewerUser    User?         @relation("DesignDocReviewerUser", fields: [reviewerUserId], references: [id])
-  reviewerComment String?       // Комментарий проверяющего
+  reviewerComment String? // Комментарий проверяющего
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2870,7 +2874,7 @@ model DesignDocComment {
 
   // Дополнительные поля замечания
   plannedResolutionDate DateTime? // Плановая дата устранения
-  suggestion            String?   // Предложение по устранению
+  suggestion            String? // Предложение по устранению
   watchers              String[]  @default([]) // Наблюдатели (массив userId)
 
   createdAt DateTime @default(now())
@@ -3010,7 +3014,7 @@ model ApprovalTemplateLevel {
   templateId String
   template   ApprovalTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
-  level  Int    // Порядковый номер уровня
+  level  Int // Порядковый номер уровня
   userId String
   user   User   @relation(fields: [userId], references: [id])
 
@@ -3024,9 +3028,9 @@ model ApprovalTemplateLevel {
 
 /// Журнал изменений документа ПИР
 model DesignDocChange {
-  id                String         @id @default(uuid())
-  docId             String
-  doc               DesignDocument @relation(fields: [docId], references: [id], onDelete: Cascade)
+  id    String         @id @default(uuid())
+  docId String
+  doc   DesignDocument @relation(fields: [docId], references: [id], onDelete: Cascade)
 
   changeDescription String
   version           Int // Версия документа на момент изменения
@@ -3042,10 +3046,10 @@ model DesignDocChange {
 
 /// Штамп на PDF-документе
 model PdfStamp {
-  id         String  @id @default(uuid())
-  entityType String  // 'DESIGN_DOC' | 'DESIGN_TASK'
+  id         String @id @default(uuid())
+  entityType String // 'DESIGN_DOC' | 'DESIGN_TASK'
   entityId   String
-  s3Key      String  // Ключ S3-файла, на котором размещён штамп
+  s3Key      String // Ключ S3-файла, на котором размещён штамп
 
   stampText String
   titleId   String? // Ссылка на справочник StampTitle (опционально)
@@ -3087,6 +3091,40 @@ enum EstimateVersionType {
   CORRECTIVE // Корректировочная (изменения к базовой)
 }
 
+/// Статус пересчёта версии сметы
+enum EstimateVersionStatus {
+  OK // Расчёт актуален
+  EDITING // Версия редактируется
+  RECALCULATING // Идёт пересчёт
+  ERROR // Ошибка пересчёта
+}
+
+/// Тип дополнительных начислений / затрат
+enum EstimateAdditionalCostType {
+  ACCRUAL_BY_WORK_TYPE // Начисление по видам работ
+  ACCRUAL_TO_TOTALS // Начисление на итоги
+  TEMP_BUILDINGS // Временные здания и сооружения
+  WINTER_MARKUP // Зимнее удорожание
+  ADDITIONAL_CURRENT_PRICES // Дополнительные затраты в текущих ценах
+  DEFLATOR_INDEX // Индекс-дефлятор
+  MINUS_CUSTOMER_RESOURCES // Минус ресурсы заказчика
+  VAT // НДС
+}
+
+/// Режим применения дополнительных начислений
+enum EstimateAdditionalCostApplicationMode {
+  BY_CHAPTERS // По главам
+  BY_ESTIMATES // По сметам
+  BY_CHAPTERS_AND_ESTIMATES // По главам и сметам
+}
+
+/// Метод расчёта начисления
+enum EstimateCalculationMethod {
+  COEFFICIENT // Коэффициент (множитель)
+  PERCENT // Процент от суммы
+  FIXED_SUM // Фиксированная сумма
+}
+
 /// Версия сметы (Базовая / Актуальная / Корректировочная)
 model EstimateVersion {
   id          String              @id @default(uuid())
@@ -3116,14 +3154,25 @@ model EstimateVersion {
   totalLabor  Float? // Итого ФОТ
   totalMat    Float? // Итого материалы
 
+  // Статус расчёта
+  status EstimateVersionStatus @default(OK)
+
+  // Категория (папка) для группировки
+  categoryId String?
+  category   EstimateCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  chapters         EstimateChapter[]
-  contractVersions EstimateContractVersion[]
+  chapters                    EstimateChapter[]
+  contractVersions            EstimateContractVersion[]
+  additionalCosts             EstimateAdditionalCost[]
+  coefficients                EstimateCoefficient[]
+  additionalCostEstimateLinks EstimateAdditionalCostEstimate[]
 
   @@index([contractId])
   @@index([parentVersionId])
+  @@index([categoryId])
   @@map("estimate_versions")
 }
 
@@ -3193,6 +3242,11 @@ model EstimateItem {
   isEdited  Boolean @default(false) // Ручная правка (отличается от оригинала)
   isDeleted Boolean @default(false) // Soft delete
 
+  // Расширенные поля для сметного расчёта
+  isCustomerResource Boolean @default(false) // Ресурс заказчика (давальческий)
+  ssrWorkType        String? // Вид работ по ССР
+  isExcluded         Boolean @default(false) // Не учитывать в расчёте
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -3238,6 +3292,108 @@ model EstimateContractVersion {
   @@index([estimateContractId])
   @@index([estimateVersionId])
   @@map("estimate_contract_versions")
+}
+
+/// Категория (папка) для группировки смет — иерархическая структура
+model EstimateCategory {
+  id    String @id @default(uuid())
+  name  String // Наименование категории
+  order Int    @default(0) // Порядок отображения
+
+  // Иерархия: подкатегории
+  parentId String?
+  parent   EstimateCategory?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children EstimateCategory[] @relation("CategoryTree")
+
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  versions EstimateVersion[]
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@index([parentId])
+  @@map("estimate_categories")
+}
+
+/// Дополнительные начисления к смете (НР, СП, зимнее удорожание, НДС и т.д.)
+model EstimateAdditionalCost {
+  id                 String                                @id @default(uuid())
+  name               String // Наименование начисления
+  costType           EstimateAdditionalCostType // Тип начисления
+  applicationMode    EstimateAdditionalCostApplicationMode // Режим применения
+  level              Int                                   @default(1) // Очерёдность учёта
+  value              String? // Формула или число (может содержать идентификаторы ПЗ, ОЗП, ЭМ, МАТ, НР, СП, СМР)
+  constructionWorks  String? // Значение для строительных работ
+  mountingWorks      String? // Значение для монтажных работ
+  equipment          String? // Значение для оборудования
+  other              String? // Значение для прочих работ
+  calculationMethod  EstimateCalculationMethod // Метод расчёта
+  useCustomPrecision Boolean                               @default(false) // Использовать свою точность
+  precision          Int? // Точность (знаков после запятой)
+
+  // Привязка к конкретной версии сметы (для ДЗ конкретной сметы)
+  versionId String?
+  version   EstimateVersion? @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  // Привязка к проекту (для общих ДЗ объекта)
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Связи: к каким главам/сметам применяется
+  chapterLinks  EstimateAdditionalCostChapter[]
+  estimateLinks EstimateAdditionalCostEstimate[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([versionId])
+  @@index([projectId])
+  @@map("estimate_additional_costs")
+}
+
+/// Связь дополнительного начисления с главой сметы (по имени главы)
+model EstimateAdditionalCostChapter {
+  id               String                 @id @default(uuid())
+  additionalCostId String
+  additionalCost   EstimateAdditionalCost @relation(fields: [additionalCostId], references: [id], onDelete: Cascade)
+  chapterName      String // Наименование главы
+
+  @@index([additionalCostId])
+  @@map("estimate_additional_cost_chapters")
+}
+
+/// Связь дополнительного начисления с версией сметы
+model EstimateAdditionalCostEstimate {
+  id               String                 @id @default(uuid())
+  additionalCostId String
+  additionalCost   EstimateAdditionalCost @relation(fields: [additionalCostId], references: [id], onDelete: Cascade)
+  versionId        String
+  version          EstimateVersion        @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@index([additionalCostId])
+  @@index([versionId])
+  @@map("estimate_additional_cost_estimates")
+}
+
+/// Коэффициент пересчёта сметы
+model EstimateCoefficient {
+  id          String  @id @default(uuid())
+  name        String // Наименование коэффициента
+  code        String? // Код (например из ФСНБ)
+  application String // Область применения (к итогам / по видам работ)
+  value       Float // Значение коэффициента
+  isEnabled   Boolean @default(true) // Активен ли
+
+  versionId String
+  version   EstimateVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([versionId])
+  @@map("estimate_coefficients")
 }
 
 // ─────────────────────────────────────────────
@@ -3690,8 +3846,8 @@ model JournalEntryRemark {
 /// Закрывающий пакет ИД для сдачи объекта
 model IdClosurePackage {
   id     String  @id @default(uuid())
-  number String  // Номер пакета
-  name   String  // Наименование
+  number String // Номер пакета
+  name   String // Наименование
   status String  @default("DRAFT") // DRAFT | ASSEMBLED | EXPORTED | ACCEPTED
   notes  String?
 
@@ -3709,7 +3865,7 @@ model IdClosurePackage {
   buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   createdById String
-  createdBy   User @relation("ClosurePackageCreator", fields: [createdById], references: [id])
+  createdBy   User   @relation("ClosurePackageCreator", fields: [createdById], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3733,7 +3889,7 @@ model Inspection {
 
   // Проверяющий (инспектор СК)
   inspectorId    String
-  inspector      User   @relation("InspectionInspector", fields: [inspectorId], references: [id])
+  inspector      User    @relation("InspectionInspector", fields: [inspectorId], references: [id])
   inspectorOrgId String? // ID организации инспектора
 
   // Ответственный за объект проверки
@@ -3749,7 +3905,7 @@ model Inspection {
   buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   createdById String
-  createdBy   User @relation("InspectionCreator", fields: [createdById], references: [id])
+  createdBy   User   @relation("InspectionCreator", fields: [createdById], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3776,7 +3932,7 @@ model InspectionAct {
   inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
 
   issuedById String
-  issuedBy   User @relation("InspectionActIssuer", fields: [issuedById], references: [id])
+  issuedBy   User   @relation("InspectionActIssuer", fields: [issuedById], references: [id])
 
   approvalRouteId String?        @unique
   approvalRoute   ApprovalRoute? @relation("InspectionActApproval", fields: [approvalRouteId], references: [id])
@@ -3803,10 +3959,10 @@ model Prescription {
   inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
 
   issuedById String
-  issuedBy   User @relation("PrescriptionIssuer", fields: [issuedById], references: [id])
+  issuedBy   User   @relation("PrescriptionIssuer", fields: [issuedById], references: [id])
 
   responsibleId String?
-  responsible   User? @relation("PrescriptionResponsible", fields: [responsibleId], references: [id])
+  responsible   User?   @relation("PrescriptionResponsible", fields: [responsibleId], references: [id])
 
   approvalRouteId String?        @unique
   approvalRoute   ApprovalRoute? @relation("PrescriptionApproval", fields: [approvalRouteId], references: [id])
@@ -3841,7 +3997,7 @@ model DefectRemediationAct {
   remediationDetails Json? // Детали устранения
 
   issuedById String
-  issuedBy   User @relation("RemediationActIssuer", fields: [issuedById], references: [id])
+  issuedBy   User   @relation("RemediationActIssuer", fields: [issuedById], references: [id])
 
   approvalRouteId String?        @unique
   approvalRoute   ApprovalRoute? @relation("RemediationActApproval", fields: [approvalRouteId], references: [id])
@@ -3863,7 +4019,7 @@ model SafetyBriefing {
   notes String? // Примечания
 
   conductedById String
-  conductedBy   User @relation("BriefingConductor", fields: [conductedById], references: [id])
+  conductedBy   User   @relation("BriefingConductor", fields: [conductedById], references: [id])
 
   projectId      String
   buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -3881,22 +4037,22 @@ model SafetyBriefing {
 // ============================================================
 
 enum BimModelStatus {
-  PROCESSING  // Загрузка/обработка
-  READY       // Готова к просмотру
-  ERROR       // Ошибка обработки
+  PROCESSING // Загрузка/обработка
+  READY // Готова к просмотру
+  ERROR // Ошибка обработки
 }
 
 enum BimModelStage {
-  OTR          // Обоснование технических решений
-  PROJECT      // Проектная документация (П)
-  WORKING      // Рабочая документация (Р)
+  OTR // Обоснование технических решений
+  PROJECT // Проектная документация (П)
+  WORKING // Рабочая документация (Р)
   CONSTRUCTION // В производство работ
 }
 
 enum BimAccessLevel {
-  VIEW   // Просмотр
-  ADD    // Добавление
-  EDIT   // Редактирование
+  VIEW // Просмотр
+  ADD // Добавление
+  EDIT // Редактирование
   DELETE // Удаление
 }
 
@@ -3938,16 +4094,16 @@ model BimModel {
   buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   uploadedById String
-  uploadedBy   User @relation("BimModelUploader", fields: [uploadedById], references: [id])
+  uploadedBy   User   @relation("BimModelUploader", fields: [uploadedById], references: [id])
 
   // S3
-  s3Key    String  // Ключ IFC-файла в Timeweb S3
-  fileName String  // Оригинальное имя файла
-  fileSize Int?    // Размер в байтах
+  s3Key      String // Ключ IFC-файла в Timeweb S3
+  fileName   String // Оригинальное имя файла
+  fileSize   Int? // Размер в байтах
   ifcVersion String? // "IFC2X3" | "IFC4"
 
   // Метаданные из парсинга
-  elementCount Int?  // Количество элементов
+  elementCount Int? // Количество элементов
   metadata     Json? // Доп. данные из IFC (проект, автор, ПО)
 
   createdAt DateTime @default(now())
@@ -3966,8 +4122,8 @@ model BimModel {
 /// Версия модели (ЦУС стр. 297 — «Версии модели»)
 model BimModelVersion {
   id        String  @id @default(uuid())
-  version   Int     // 1, 2, 3...
-  name      String  // "Версия 1", "Версия 2"
+  version   Int // 1, 2, 3...
+  name      String // "Версия 1", "Версия 2"
   comment   String?
   isCurrent Boolean @default(false)
 
@@ -3979,7 +4135,7 @@ model BimModelVersion {
   fileSize Int?
 
   uploadedById String
-  uploadedBy   User @relation("BimVersionUploader", fields: [uploadedById], references: [id])
+  uploadedBy   User   @relation("BimVersionUploader", fields: [uploadedById], references: [id])
 
   createdAt DateTime @default(now())
 
@@ -3990,13 +4146,13 @@ model BimModelVersion {
 /// Элемент ТИМ-модели (парсится из IFC, ЦУС стр. 304 — Информация/Параметры)
 model BimElement {
   id          String  @id @default(uuid())
-  ifcGuid     String  // IFC GlobalId (22 символа)
-  ifcType     String  // IfcWall, IfcSlab, IfcColumn и т.д.
+  ifcGuid     String // IFC GlobalId (22 символа)
+  ifcType     String // IfcWall, IfcSlab, IfcColumn и т.д.
   name        String?
   description String?
   layer       String? // Слой IFC
   level       String? // Этаж / уровень
-  properties  Json?   // IFC PropertySets (Pset_QuantityTakeOff и т.д.)
+  properties  Json? // IFC PropertySets (Pset_QuantityTakeOff и т.д.)
 
   modelId String
   model   BimModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
@@ -4038,13 +4194,13 @@ model BimAccess {
   level BimAccessLevel
 
   userId String
-  user   User @relation("BimAccessUser", fields: [userId], references: [id])
+  user   User   @relation("BimAccessUser", fields: [userId], references: [id])
 
   projectId      String
   buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   stage  BimModelStage?
-  status String?        // Согласована | Утверждена | На согласовании | На проверке | На доработке
+  status String? // Согласована | Утверждена | На согласовании | На проверке | На доработке
 
   createdAt DateTime @default(now())
 
@@ -4058,23 +4214,23 @@ model BimAccess {
 // ─────────────────────────────────────────────────────────────
 
 enum ReportStatus {
-  DRAFT       // Черновик
-  GENERATED   // Сформирован
-  SIGNED      // Подписан
+  DRAFT // Черновик
+  GENERATED // Сформирован
+  SIGNED // Подписан
 }
 
 enum ReportBlockType {
-  TITLE_PAGE        // 0. Титульный лист
-  WORK_VOLUMES      // 1. Объём работ подрядной организации
-  KS2_ACTS          // 2. Акты приёмки выполненных работ (КС-2)
-  ID_STATUS         // 3. Статус исполнительной документации
-  DEFECTS_SUMMARY   // 4. Сводка по недостаткам СК
-  GPR_PROGRESS      // 5. Ход выполнения ГПР
-  PHOTO_REPORT      // 6. Фото-отчёт
-  FUNDING_STATUS    // 7. Финансирование
+  TITLE_PAGE // 0. Титульный лист
+  WORK_VOLUMES // 1. Объём работ подрядной организации
+  KS2_ACTS // 2. Акты приёмки выполненных работ (КС-2)
+  ID_STATUS // 3. Статус исполнительной документации
+  DEFECTS_SUMMARY // 4. Сводка по недостаткам СК
+  GPR_PROGRESS // 5. Ход выполнения ГПР
+  PHOTO_REPORT // 6. Фото-отчёт
+  FUNDING_STATUS // 7. Финансирование
   DAILY_LOG_SUMMARY // 8. Сводка дневника прораба
-  FREE_TEXT         // 9. Произвольный текст
-  CUSTOM_TABLE      // 10. Произвольная таблица
+  FREE_TEXT // 9. Произвольный текст
+  CUSTOM_TABLE // 10. Произвольная таблица
 }
 
 /// Категория отчётов (иерархическое дерево, ЦУС стр. 290)
@@ -4118,7 +4274,7 @@ model Report {
   buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   authorId String
-  author   User @relation("ReportAuthor", fields: [authorId], references: [id])
+  author   User   @relation("ReportAuthor", fields: [authorId], references: [id])
 
   pdfS3Key  String?
   xlsxS3Key String?
@@ -4165,7 +4321,7 @@ model ReportTemplate {
   id               String  @id @default(uuid())
   name             String
   description      String?
-  blockDefinitions Json    // [{order, type, title}]
+  blockDefinitions Json // [{order, type, title}]
   isSystem         Boolean @default(false)
 
   organizationId String?
@@ -4207,8 +4363,8 @@ model ProblemIssue {
   closedAt    DateTime?
 
   // Расширенные поля (ЦУС — вкладка «Вопросы»)
-  causes         String?   // Причины возникновения
-  measuresTaken  String?   // Предпринятые меры
+  causes         String? // Причины возникновения
+  measuresTaken  String? // Предпринятые меры
   resolutionDate DateTime? // Дата решения
 
   // Исполнитель (организация из участников объекта)
@@ -4223,7 +4379,7 @@ model ProblemIssue {
   buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   authorId String
-  author   User @relation("ProblemIssueAuthor", fields: [authorId], references: [id])
+  author   User   @relation("ProblemIssueAuthor", fields: [authorId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -4260,10 +4416,10 @@ model LandPlot {
   id              String  @id @default(uuid())
   cadastralNumber String // Кадастровый номер
   address         String? // Адрес
-  area            Float?  // Площадь (кв.м)
+  area            Float? // Площадь (кв.м)
   landCategory    String? // Категория земель
   permittedUse    String? // Вид разрешённого использования
-  cadastralValue  Float?  // Кадастровая стоимость (руб.)
+  cadastralValue  Float? // Кадастровая стоимость (руб.)
   status          String? // Статус участка
   ownershipForm   String? // Форма собственности
 
@@ -4275,14 +4431,14 @@ model LandPlot {
   demolitionInfo       String?
 
   inspectionDate DateTime? // Дата обследования
-  egrnNumber     String?   // Номер выписки ЕГРН
+  egrnNumber     String? // Номер выписки ЕГРН
 
   hasPlacementPossibility Boolean   @default(false) // Возможность размещения
   placementInfo           String?
-  surveyInfo              String?   // Инженерные изыскания
-  gpzuNumber              String?   // Номер ГПЗУ
+  surveyInfo              String? // Инженерные изыскания
+  gpzuNumber              String? // Номер ГПЗУ
   gpzuDate                DateTime? // Дата ГПЗУ
-  gpzuS3Key               String?   // S3-ключ файла ГПЗУ
+  gpzuS3Key               String? // S3-ключ файла ГПЗУ
 
   projectId String
   project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -4306,12 +4462,12 @@ model LandPlot {
 model TechnicalCondition {
   id                     String    @id @default(uuid())
   type                   String // Водоснабжение, Электроснабжение, Газоснабжение, Теплоснабжение, Канализация, Связь
-  connectionAvailability String?   // Наличие возможности подключения
+  connectionAvailability String? // Наличие возможности подключения
   issueDate              DateTime? // Дата выдачи
-  number                 String?   // Номер ТУ
+  number                 String? // Номер ТУ
   expirationDate         DateTime? // Срок действия
-  issuingAuthority       String?   // Выдавший орган
-  connectionConditions   String?   // Условия подключения
+  issuingAuthority       String? // Выдавший орган
+  connectionConditions   String? // Условия подключения
 
   projectId String
   project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -4320,9 +4476,9 @@ model TechnicalCondition {
   responsibleOrg   Organization? @relation("TechnicalConditionOrg", fields: [responsibleOrgId], references: [id])
 
   landPlotId       String?
-  landPlot         LandPlot?      @relation("TechnicalConditionPlot", fields: [landPlotId], references: [id], onDelete: SetNull)
-  documentS3Key    String?        // S3-ключ файла ТУ
-  documentFileName String?        // Оригинальное имя файла ТУ
+  landPlot         LandPlot? @relation("TechnicalConditionPlot", fields: [landPlotId], references: [id], onDelete: SetNull)
+  documentS3Key    String? // S3-ключ файла ТУ
+  documentFileName String? // Оригинальное имя файла ТУ
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -4364,7 +4520,7 @@ model LimitRisk {
   extraBudget        Float     @default(0)
   ownFunds           Float     @default(0)
   riskReason         String // Причина риска
-  resolutionProposal String?   // Предложение по устранению
+  resolutionProposal String? // Предложение по устранению
   completionDate     DateTime? // Ожидаемая дата устранения
 
   projectId String
@@ -4382,13 +4538,13 @@ model LimitRisk {
 /// Камера видеонаблюдения на объекте
 model VideoCamera {
   id                String   @id @default(uuid())
-  cameraNumber      String?  // Номер камеры
-  locationName      String?  // Место установки
+  cameraNumber      String? // Номер камеры
+  locationName      String? // Место установки
   operationalStatus String   @default("Работает") // Работает / Не работает
-  cameraModel       String?  // Модель камеры
-  rtspUrl           String?  // RTSP-поток
-  httpUrl           String   // HTTP URL трансляции
-  failureReason     String?  // Причина неисправности
+  cameraModel       String? // Модель камеры
+  rtspUrl           String? // RTSP-поток
+  httpUrl           String // HTTP URL трансляции
+  failureReason     String? // Причина неисправности
   s3Keys            String[] @default([]) // Ключи S3 прикреплённых файлов
   fileNames         String[] @default([]) // Оригинальные имена файлов
 
@@ -4409,7 +4565,7 @@ model ProjectCoordinate {
   id                String @id @default(uuid())
   latitude          Float // Широта
   longitude         Float // Долгота
-  constructionPhase Int?   // Очередь строительства
+  constructionPhase Int? // Очередь строительства
 
   projectId String
   project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -4425,11 +4581,11 @@ model ProjectIndicator {
   id              String          @id @default(uuid())
   groupName       String // Группа: Общая информация, Контракты ПИР, Договоры СМР, ...
   indicatorName   String // Наименование показателя
-  value           String?         // Значение
-  comment         String?         // Комментарий
-  maxValue        String?         // Плановое/максимальное значение
+  value           String? // Значение
+  comment         String? // Комментарий
+  maxValue        String? // Плановое/максимальное значение
   sourceType      IndicatorSource @default(MANUAL)
-  autoSourceField String?         // Поле-источник при AUTO (например: "contract.totalAmount")
+  autoSourceField String? // Поле-источник при AUTO (например: "contract.totalAmount")
   fileKeys        String[]        @default([]) // S3 ключи прикреплённых файлов
 
   projectId String
@@ -4446,11 +4602,11 @@ model ProjectIndicator {
 
 /// Юридическое лицо — участник строительного объекта
 model ObjectOrganization {
-  id               String         @id @default(uuid())
+  id               String                  @id @default(uuid())
   buildingObjectId String
-  buildingObject   BuildingObject @relation(fields: [buildingObjectId], references: [id], onDelete: Cascade)
+  buildingObject   BuildingObject          @relation(fields: [buildingObjectId], references: [id], onDelete: Cascade)
   organizationId   String
-  organization     Organization   @relation(fields: [organizationId], references: [id])
+  organization     Organization            @relation(fields: [organizationId], references: [id])
   roles            ObjectParticipantRole[]
 
   createdAt DateTime @default(now())
@@ -4462,16 +4618,16 @@ model ObjectOrganization {
 
 /// Физическое лицо — участник строительного объекта
 model ObjectPerson {
-  id               String         @id @default(uuid())
+  id               String                  @id @default(uuid())
   firstName        String // Имя
   lastName         String // Фамилия
-  middleName       String?        // Отчество
-  organizationId   String?        // Организация, в которой числится физлицо
-  organization     Organization?  @relation(fields: [organizationId], references: [id])
-  linkedUserId     String?        // Привязанный пользователь системы (опционально)
-  linkedUser       User?          @relation(fields: [linkedUserId], references: [id])
+  middleName       String? // Отчество
+  organizationId   String? // Организация, в которой числится физлицо
+  organization     Organization?           @relation(fields: [organizationId], references: [id])
+  linkedUserId     String? // Привязанный пользователь системы (опционально)
+  linkedUser       User?                   @relation(fields: [linkedUserId], references: [id])
   buildingObjectId String
-  buildingObject   BuildingObject @relation(fields: [buildingObjectId], references: [id], onDelete: Cascade)
+  buildingObject   BuildingObject          @relation(fields: [buildingObjectId], references: [id], onDelete: Cascade)
   roles            ObjectParticipantRole[]
   appointments     PersonAppointment[]
 
@@ -4485,9 +4641,9 @@ model ObjectPerson {
 model ObjectParticipantRole {
   id               String              @id @default(uuid())
   roleName         String // Наименование роли из справочника
-  orgParticipantId String?             // FK к ObjectOrganization (XOR с personId)
+  orgParticipantId String? // FK к ObjectOrganization (XOR с personId)
   orgParticipant   ObjectOrganization? @relation(fields: [orgParticipantId], references: [id], onDelete: Cascade)
-  personId         String?             // FK к ObjectPerson (XOR с orgParticipantId)
+  personId         String? // FK к ObjectPerson (XOR с orgParticipantId)
   person           ObjectPerson?       @relation(fields: [personId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
@@ -4503,12 +4659,12 @@ model PersonAppointment {
   personId       String
   person         ObjectPerson       @relation(fields: [personId], references: [id], onDelete: Cascade)
   documentType   AppointmentDocType // Тип документа
-  documentNumber String?            // Номер документа
-  startDate      DateTime?          // Дата начала полномочий
-  endDate        DateTime?          // Дата окончания полномочий
+  documentNumber String? // Номер документа
+  startDate      DateTime? // Дата начала полномочий
+  endDate        DateTime? // Дата окончания полномочий
   isActive       Boolean            @default(true) // Актуальность
-  s3Key          String?            // S3 ключ прикреплённого файла
-  fileName       String?            // Оригинальное имя файла
+  s3Key          String? // S3 ключ прикреплённого файла
+  fileName       String? // Оригинальное имя файла
 
   createdAt DateTime @default(now())
 
@@ -4527,8 +4683,8 @@ model SEDFolder {
 
   // Самоссылка для вложенности
   parentId String?
-  parent   SEDFolder?     @relation("SEDFolderHierarchy", fields: [parentId], references: [id])
-  children SEDFolder[]    @relation("SEDFolderHierarchy")
+  parent   SEDFolder?  @relation("SEDFolderHierarchy", fields: [parentId], references: [id])
+  children SEDFolder[] @relation("SEDFolderHierarchy")
 
   createdAt DateTime @default(now())
 
@@ -4640,8 +4796,8 @@ model SEDLink {
   entityId   String // ID связанной сущности
   createdAt  DateTime    @default(now())
 
-  @@index([documentId])
   @@unique([documentId, entityType, entityId])
+  @@index([documentId])
   @@map("sed_links")
 }
 
@@ -4687,14 +4843,14 @@ model ActivityCategory {
 
 /// Документ мероприятия в реестре УП
 model ActivityDocument {
-  id                String   @id @default(uuid())
+  id                String    @id @default(uuid())
   number            String? // Номер документа
   date              DateTime? // Дата документа
   name              String // Наименование документа
   type              String? // Тип документа
-  status            String   @default("В работе") // Статус: «В работе», «Согласовано», «Отклонено»
-  version           Int      @default(1) // Версия документа
-  activeIssuesCount Int      @default(0) // Количество активных замечаний
+  status            String    @default("В работе") // Статус: «В работе», «Согласовано», «Отклонено»
+  version           Int       @default(1) // Версия документа
+  activeIssuesCount Int       @default(0) // Количество активных замечаний
 
   categoryId String
   category   ActivityCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
@@ -4734,11 +4890,11 @@ model PIRObjectTypeConfig {
 /// Категория документов ПИР (выбранный раздел ПД/РД по ПП РФ №87)
 model PIRCategoryConfig {
   id           String  @id @default(uuid())
-  categoryCode String  // «II», «1», «2», «2.1», «5.3» и т.д.
-  categoryName String  // «ПЗ (Пояснительная записка)»
+  categoryCode String // «II», «1», «2», «2.1», «5.3» и т.д.
+  categoryName String // «ПЗ (Пояснительная записка)»
   parentCode   String? // Код родительской категории для дерева (null = корень)
   enabled      Boolean @default(true)
-  order        Int     // Порядок отображения
+  order        Int // Порядок отображения
 
   configId String
   config   PIRObjectTypeConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
