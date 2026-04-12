@@ -1,5 +1,10 @@
-import { EstimateListView } from '@/components/objects/estimates/EstimateListView';
+import { redirect } from 'next/navigation';
 
-export default function EstimateListPage({ params }: { params: { objectId: string } }) {
-  return <EstimateListView objectId={params.objectId} />;
+/** Обратная совместимость — перенаправление на основную вкладку Сметы */
+export default function EstimateListPage({
+  params,
+}: {
+  params: { objectId: string };
+}) {
+  redirect(`/objects/${params.objectId}/estimates`);
 }

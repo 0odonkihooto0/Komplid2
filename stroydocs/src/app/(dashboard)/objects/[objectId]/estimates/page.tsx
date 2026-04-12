@@ -1,9 +1,9 @@
-import { redirect } from 'next/navigation';
+import { EstimateListView } from '@/components/objects/estimates/EstimateListView';
 
-export default function ObjectEstimatesPage({
+export default function EstimatesPage({
   params,
 }: {
   params: { objectId: string };
 }) {
-  redirect(`/objects/${params.objectId}/estimates/list`);
+  return <EstimateListView objectId={params.objectId} />;
 }

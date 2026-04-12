@@ -18,7 +18,7 @@ export default function EstimateVersionPage({ params, searchParams }: Props) {
 
   // Без contractId вернуться к списку — навигация не завершена корректно
   if (!contractId) {
-    redirect(`/objects/${objectId}/estimates/list`);
+    redirect(`/objects/${objectId}/estimates`);
   }
 
   return (

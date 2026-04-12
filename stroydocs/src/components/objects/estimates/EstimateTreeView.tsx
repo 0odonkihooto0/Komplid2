@@ -86,7 +86,7 @@ export function EstimateTreeView({ objectId, contractId, versionId }: Props) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => router.push(`/objects/${objectId}/estimates/list`)}
+            onClick={() => router.push(`/objects/${objectId}/estimates`)}
           >
             <ArrowLeft className="mr-1 h-4 w-4" />
             Все сметы

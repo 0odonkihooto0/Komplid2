@@ -40,7 +40,7 @@ const MODULES: ModuleItem[] = [
   { label: 'Журналы',        href: 'journals',   icon: BookOpen },
   { label: 'ИД',             href: 'id',         icon: FileText },
   { label: 'Стройконтроль',  href: 'sk/inspections', icon: Shield },
-  { label: 'Сметы',          href: 'estimates/list', icon: Scale },
+  { label: 'Сметы',          href: 'estimates', icon: Scale },
   { label: 'Отчёты',         href: 'reports',    icon: BarChart2 },
 ];
 
