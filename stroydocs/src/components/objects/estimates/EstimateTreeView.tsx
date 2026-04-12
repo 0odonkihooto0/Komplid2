@@ -10,6 +10,8 @@ import { EstimateTreeToolbar } from './EstimateTreeToolbar';
 import { EstimateTreeTable } from './EstimateTreeTable';
 import { EstimateItemEditDialog } from './EstimateItemEditDialog';
 import { EstimateHistoryDialog } from './EstimateHistoryDialog';
+import { AdditionalCostsDialog } from './AdditionalCostsDialog';
+import { CoefficientListDialog } from './CoefficientListDialog';
 import { Button } from '@/components/ui/button';
 
 // Форматирование суммы в рублях
@@ -71,6 +73,8 @@ export function EstimateTreeView({ objectId, contractId, versionId }: Props) {
         onExportTemplate={() => tree.exportTemplate.mutate()}
         onShowHistory={() => view.setHistoryOpen(true)}
         onAddChapter={() => view.setAddingChapter(true)}
+        onShowCoefficients={() => view.setCoefficientsOpen(true)}
+        onShowAdditionalCosts={() => view.setAdditionalCostsOpen(true)}
       />
 
       {/* Предупреждение для базовой версии */}
@@ -155,6 +159,23 @@ export function EstimateTreeView({ objectId, contractId, versionId }: Props) {
         open={view.historyOpen}
         onOpenChange={view.setHistoryOpen}
         projectId={objectId}
+        contractId={contractId}
+        versionId={versionId}
+      />
+
+      {/* Диалог доп. затрат версии */}
+      <AdditionalCostsDialog
+        open={view.additionalCostsOpen}
+        onOpenChange={view.setAdditionalCostsOpen}
+        objectId={objectId}
+      />
+
+      {/* Диалог коэффициентов */}
+      <CoefficientListDialog
+        open={view.coefficientsOpen}
+        onOpenChange={view.setCoefficientsOpen}
+        coefficients={version.coefficients}
+        objectId={objectId}
         contractId={contractId}
         versionId={versionId}
       />
