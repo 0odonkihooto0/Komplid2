@@ -49,13 +49,13 @@ export async function GET(
     // Поиск по переписке
     if (requestedTypes.includes('correspondence')) {
       const rows = await db.$queryRaw<
-        { id: string; subject: string; body: string | null; created_at: Date }[]
+        { id: string; subject: string; body: string | null; createdAt: Date }[]
       >`
-        SELECT id, subject, body, created_at
+        SELECT id, subject, body, "createdAt"
         FROM correspondences
-        WHERE project_id = ${params.projectId}
+        WHERE "projectId" = ${params.projectId}
           AND search_vector @@ plainto_tsquery('russian', ${q})
-        ORDER BY created_at DESC
+        ORDER BY "createdAt" DESC
         LIMIT 5
       `;
       for (const row of rows) {
@@ -64,7 +64,7 @@ export async function GET(
           id: row.id,
           title: row.subject,
           excerpt: makeExcerpt(row.body),
-          createdAt: row.created_at.toISOString(),
+          createdAt: row.createdAt.toISOString(),
         });
       }
     }
@@ -72,13 +72,13 @@ export async function GET(
     // Поиск по RFI
     if (requestedTypes.includes('rfi')) {
       const rows = await db.$queryRaw<
-        { id: string; title: string; description: string; created_at: Date }[]
+        { id: string; title: string; description: string; createdAt: Date }[]
       >`
-        SELECT id, title, description, created_at
+        SELECT id, title, description, "createdAt"
         FROM rfis
-        WHERE project_id = ${params.projectId}
+        WHERE "projectId" = ${params.projectId}
           AND search_vector @@ plainto_tsquery('russian', ${q})
-        ORDER BY created_at DESC
+        ORDER BY "createdAt" DESC
         LIMIT 5
       `;
       for (const row of rows) {
@@ -87,7 +87,7 @@ export async function GET(
           id: row.id,
           title: row.title,
           excerpt: makeExcerpt(row.description),
-          createdAt: row.created_at.toISOString(),
+          createdAt: row.createdAt.toISOString(),
         });
       }
     }
@@ -95,13 +95,13 @@ export async function GET(
     // Поиск по СЭД
     if (requestedTypes.includes('sed')) {
       const rows = await db.$queryRaw<
-        { id: string; title: string; body: string | null; created_at: Date }[]
+        { id: string; title: string; body: string | null; createdAt: Date }[]
       >`
-        SELECT id, title, body, created_at
+        SELECT id, title, body, "createdAt"
         FROM sed_documents
-        WHERE project_id = ${params.projectId}
+        WHERE "projectId" = ${params.projectId}
           AND search_vector @@ plainto_tsquery('russian', ${q})
-        ORDER BY created_at DESC
+        ORDER BY "createdAt" DESC
         LIMIT 5
       `;
       for (const row of rows) {
@@ -110,7 +110,7 @@ export async function GET(
           id: row.id,
           title: row.title,
           excerpt: makeExcerpt(row.body),
-          createdAt: row.created_at.toISOString(),
+          createdAt: row.createdAt.toISOString(),
         });
       }
     }
