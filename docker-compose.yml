@@ -1,5 +1,15 @@
 version: '3.8'
 services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
   app:
     build:
       context: ./stroydocs
@@ -10,11 +20,14 @@ services:
         - NEXTAUTH_URL=http://localhost:3000
     ports:
       - "${PORT:-3000}:3000"
+    depends_on:
+      redis:
+        condition: service_healthy
     environment:
       - PORT=3000
       - NODE_ENV=${NODE_ENV:-production}
       - DATABASE_URL=${DATABASE_URL:-}
-      - REDIS_URL=${REDIS_URL:-}
+      - REDIS_URL=redis://redis:6379
       - S3_ENDPOINT=${S3_ENDPOINT:-}
       - S3_REGION=${S3_REGION:-}
       - S3_BUCKET=${S3_BUCKET:-}
