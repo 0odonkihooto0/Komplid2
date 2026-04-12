@@ -20,6 +20,8 @@ export function useEstimateTreeView(tree: UseEstimateTreeReturn) {
   const [editDialogItem, setEditDialogItem] = useState<EstimateItemDetail | null>(null);
   const [addingChapter, setAddingChapter] = useState(false);
   const [newChapterName, setNewChapterName] = useState('');
+  const [coefficientsOpen, setCoefficientsOpen] = useState(false);
+  const [additionalCostsOpen, setAdditionalCostsOpen] = useState(false);
 
   // Вход в режим редактирования: статус → EDITING
   const enterEditMode = useCallback(async () => {
@@ -87,5 +89,11 @@ export function useEstimateTreeView(tree: UseEstimateTreeReturn) {
     newChapterName,
     setNewChapterName,
     handleAddChapter,
+
+    // Диалоги ДЗ и коэффициентов
+    coefficientsOpen,
+    setCoefficientsOpen,
+    additionalCostsOpen,
+    setAdditionalCostsOpen,
   };
 }

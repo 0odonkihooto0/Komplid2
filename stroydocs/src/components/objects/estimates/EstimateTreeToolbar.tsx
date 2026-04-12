@@ -20,6 +20,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { EstimateVersionStatus, EstimateCoefficientDetail } from '@/hooks/useEstimateTree';
@@ -54,6 +55,8 @@ interface Props {
   onExportTemplate: () => void;
   onShowHistory: () => void;
   onAddChapter: () => void;
+  onShowCoefficients: () => void;
+  onShowAdditionalCosts: () => void;
 }
 
 /** Тулбар версии сметы: шапка, меню, кнопки действий */
@@ -72,6 +75,8 @@ export function EstimateTreeToolbar({
   onExportTemplate,
   onShowHistory,
   onAddChapter,
+  onShowCoefficients,
+  onShowAdditionalCosts,
 }: Props) {
   const router = useRouter();
   const statusCfg = STATUS_CONFIG[status];
@@ -116,10 +121,16 @@ export function EstimateTreeToolbar({
               </DropdownMenuItem>
             ))
           )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={onShowCoefficients}>
+            Управление коэффициентами
+          </DropdownMenuItem>
         </MenuDropdown>
 
         <MenuDropdown label="Доп. затраты">
-          <DropdownMenuItem disabled>Управление ДЗ (в разработке)</DropdownMenuItem>
+          <DropdownMenuItem onClick={onShowAdditionalCosts}>
+            Управление доп. затратами
+          </DropdownMenuItem>
         </MenuDropdown>
 
         <MenuDropdown label="Виды работ">
@@ -182,7 +193,7 @@ export function EstimateTreeToolbar({
               <PlusCircle className="mr-1.5 h-4 w-4" />
               +Раздел
             </Button>
-            <Button size="sm" variant="outline" disabled>
+            <Button size="sm" variant="outline" onClick={onShowCoefficients}>
               <Settings2 className="mr-1.5 h-4 w-4" />
               Настройки коэффициентов
             </Button>

@@ -47,6 +47,7 @@ import { EstimateSummaryBar } from './EstimateSummaryBar';
 import { EstimateToolbar } from './EstimateToolbar';
 import { EstimateCategoryTree } from './EstimateCategoryTree';
 import { EstimateInfoPanel } from './EstimateInfoPanel';
+import { AdditionalCostsDialog } from './AdditionalCostsDialog';
 import { useEstimateCategories } from './useEstimateCategories';
 import {
   useEstimateList,
@@ -85,6 +86,7 @@ export function EstimateListView({ objectId }: Props) {
   const { toast } = useToast();
   const [importOpen, setImportOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [additionalCostsOpen, setAdditionalCostsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
   const [ctxMenu, setCtxMenu] = useState<ContextMenuState | null>(null);
@@ -330,7 +332,7 @@ export function EstimateListView({ objectId }: Props) {
   // ─── Заглушки тулбара ─────────────────────────────────────────────────────
 
   const handleExportTemplate = () => toast({ title: 'Загрузка шаблона Excel...' });
-  const handleShowAdditionalCosts = () => toast({ title: 'Общие дополнительные затраты' });
+  const handleShowAdditionalCosts = () => setAdditionalCostsOpen(true);
   const handleDeleteSelected = () => toast({ title: 'Выберите версии для удаления' });
   const handleRecalculateSelected = () => toast({ title: 'Выберите версии для пересчёта' });
   const handleReloadSelected = () => toast({ title: 'Выберите версии для перезагрузки' });
@@ -469,6 +471,13 @@ export function EstimateListView({ objectId }: Props) {
         open={createOpen}
         onOpenChange={setCreateOpen}
         onSubmit={async (data) => { await createVersion.mutateAsync(data); }}
+      />
+
+      {/* Диалог общих ДЗ объекта */}
+      <AdditionalCostsDialog
+        open={additionalCostsOpen}
+        onOpenChange={setAdditionalCostsOpen}
+        objectId={objectId}
       />
     </div>
   );
