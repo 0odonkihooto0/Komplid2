@@ -38,6 +38,30 @@ interface EstimateContractData {
   versions: EstimateContractVersion[];
 }
 
+/** Позиция сметы в иерархии для таблицы контракта */
+export interface ContractItem {
+  id: string;
+  sortOrder: number | null;
+  code: string | null;
+  name: string;
+  unit: string | null;
+  volume: number | null;
+  unitPrice: number | null;
+  totalPrice: number | null;
+  laborCost: number | null;
+  versionName: string;
+}
+
+/** Раздел сметы контракта (глава из версии) */
+export interface ContractSection {
+  id: string;
+  code: string | null;
+  name: string;
+  totalAmount: number | null;
+  items: ContractItem[];
+  versionName: string;
+}
+
 export interface ContractKpi {
   total: number;
   labor: number;
@@ -45,25 +69,24 @@ export interface ContractKpi {
   overhead: number;
 }
 
+export interface CreateContractInput {
+  name: string;
+  period?: string;
+  chapter?: string;
+}
+
 // ─── Хук ─────────────────────────────────────────────────────────────────────
 
-const BASE_CONTRACTS = (projectId: string) =>
-  `/api/objects/${projectId}/contracts`;
-
-const BASE_VERSIONS = (projectId: string, contractId: string) =>
-  `/api/objects/${projectId}/contracts/${contractId}/estimate-versions`;
-
-const BASE_ESTIMATE_CONTRACT = (projectId: string, contractId: string) =>
-  `/api/objects/${projectId}/contracts/${contractId}/estimate-contract`;
+const BASE_CONTRACTS = (pid: string) => `/api/objects/${pid}/contracts`;
+const BASE_VERSIONS = (pid: string, cid: string) => `/api/objects/${pid}/contracts/${cid}/estimate-versions`;
+const BASE_ESTIMATE_CONTRACT = (pid: string, cid: string) => `/api/objects/${pid}/contracts/${cid}/estimate-contract`;
 
 export function useEstimateContract(projectId: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
-  // Чекбоксы выбранных версий
   const [checkedVersionIds, setCheckedVersionIds] = useState<Set<string>>(new Set());
-  // Название сметы контракта
   const [contractName, setContractName] = useState('Смета контракта');
 
   // Список договоров объекта
@@ -95,7 +118,7 @@ export function useEstimateContract(projectId: string) {
     enabled: !!selectedContractId,
   });
 
-  // Текущая смета контракта (сохранённый состав версий)
+  // Текущая смета контракта
   const { data: estimateContract } = useQuery<EstimateContractData | null>({
     queryKey: ['estimate-contract', projectId, selectedContractId],
     queryFn: async () => {
@@ -107,7 +130,7 @@ export function useEstimateContract(projectId: string) {
     enabled: !!selectedContractId,
   });
 
-  // Синхронизировать чекбоксы и название при загрузке сохранённой сметы
+  // Синхронизировать чекбоксы и название при загрузке
   useEffect(() => {
     if (estimateContract) {
       const savedIds = new Set(estimateContract.versions.map((v) => v.estimateVersion.id));
@@ -119,7 +142,41 @@ export function useEstimateContract(projectId: string) {
     }
   }, [estimateContract]);
 
-  // KPI по выбранным версиям (реактивно, без round-trip к серверу)
+  // Иерархические данные по выбранным версиям (разделы + позиции)
+  const { data: sectionsData = [] } = useQuery<ContractSection[]>({
+    queryKey: ['contract-sections', projectId, selectedContractId, Array.from(checkedVersionIds).sort().join(',')],
+    queryFn: async () => {
+      if (!selectedContractId || checkedVersionIds.size === 0) return [];
+      const sections: ContractSection[] = [];
+      const ids = Array.from(checkedVersionIds);
+      // Загружаем данные каждой выбранной версии
+      const results = await Promise.all(
+        ids.map(async (vid) => {
+          const res = await fetch(`${BASE_VERSIONS(projectId, selectedContractId)}/${vid}`);
+          const json = await res.json() as { success: boolean; data: { name: string; chapters: Array<{ id: string; code: string | null; name: string; totalAmount: number | null; items: Array<ContractItem> }> } };
+          return json.success ? json.data : null;
+        })
+      );
+      for (const vData of results) {
+        if (!vData) continue;
+        for (const ch of vData.chapters) {
+          sections.push({
+            id: ch.id,
+            code: ch.code,
+            name: ch.name,
+            totalAmount: ch.totalAmount,
+            items: (ch.items ?? []).map((item) => ({ ...item, versionName: vData.name })),
+            versionName: vData.name,
+          });
+        }
+      }
+      return sections;
+    },
+    enabled: !!selectedContractId && checkedVersionIds.size > 0,
+    staleTime: 30_000,
+  });
+
+  // KPI по выбранным версиям
   const kpi: ContractKpi = useMemo(() => {
     const selected = allVersions.filter((v) => checkedVersionIds.has(v.id));
     const total = selected.reduce((s, v) => s + (v.totalAmount ?? 0), 0);
@@ -128,20 +185,16 @@ export function useEstimateContract(projectId: string) {
     return { total, labor, mat, overhead: total - labor - mat };
   }, [allVersions, checkedVersionIds]);
 
-  // Переключить чекбокс версии
   const toggleVersion = (versionId: string) => {
     setCheckedVersionIds((prev) => {
       const next = new Set(prev);
-      if (next.has(versionId)) {
-        next.delete(versionId);
-      } else {
-        next.add(versionId);
-      }
+      if (next.has(versionId)) next.delete(versionId);
+      else next.add(versionId);
       return next;
     });
   };
 
-  // Сохранить состав сметы контракта
+  // Сохранить смету контракта
   const saveContract = useMutation({
     mutationFn: async () => {
       if (!selectedContractId) throw new Error('Договор не выбран');
@@ -163,19 +216,37 @@ export function useEstimateContract(projectId: string) {
     },
   });
 
+  // Создать смету контракта
+  const createContract = useMutation({
+    mutationFn: async (input: CreateContractInput) => {
+      if (!selectedContractId) throw new Error('Договор не выбран');
+      const res = await fetch(BASE_ESTIMATE_CONTRACT(projectId, selectedContractId), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: input.name, period: input.period, versionIds: [] }),
+      });
+      const json = await res.json() as { success: boolean; error?: string };
+      if (!json.success) throw new Error(json.error ?? 'Ошибка создания');
+    },
+    onSuccess: () => {
+      toast({ title: 'Смета контракта создана' });
+      void queryClient.invalidateQueries({ queryKey: ['estimate-contract', projectId, selectedContractId] });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Ошибка', description: err.message, variant: 'destructive' });
+    },
+  });
+
   return {
-    contracts,
-    contractsLoading,
-    selectedContractId,
-    setSelectedContractId,
-    allVersions,
-    versionsLoading,
+    contracts, contractsLoading,
+    selectedContractId, setSelectedContractId,
+    allVersions, versionsLoading,
     estimateContract,
-    checkedVersionIds,
-    toggleVersion,
-    contractName,
-    setContractName,
+    checkedVersionIds, toggleVersion,
+    contractName, setContractName,
+    sections: sectionsData,
     kpi,
     saveContract,
+    createContract,
   };
 }
