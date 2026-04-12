@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { EstimateVersionStatus } from '@prisma/client';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
@@ -71,6 +72,8 @@ const patchVersionSchema = z.object({
   isActual: z.boolean().optional(),
   period: z.string().max(50).nullable().optional(),
   notes: z.string().max(2000).nullable().optional(),
+  categoryId: z.string().uuid().nullable().optional(),
+  status: z.nativeEnum(EstimateVersionStatus).optional(),
 });
 
 /** PATCH — обновить версию (нельзя изменять тип BASELINE) */
@@ -103,6 +106,8 @@ export async function PATCH(
         ...(data.isActual !== undefined && { isActual: data.isActual }),
         ...(data.period !== undefined && { period: data.period }),
         ...(data.notes !== undefined && { notes: data.notes }),
+        ...(data.categoryId !== undefined && { categoryId: data.categoryId }),
+        ...(data.status !== undefined && { status: data.status }),
       },
     });
 

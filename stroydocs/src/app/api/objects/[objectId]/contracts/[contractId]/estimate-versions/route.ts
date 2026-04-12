@@ -8,9 +8,9 @@ import { convertImportToVersion } from '@/lib/estimates/convert-import-to-versio
 
 export const dynamic = 'force-dynamic';
 
-/** GET — список версий смет по договору */
+/** GET — список версий смет по договору (опциональный фильтр по categoryId) */
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { objectId: string; contractId: string } }
 ) {
   try {
@@ -21,13 +21,32 @@ export async function GET(
     });
     if (!project) return errorResponse('Проект не найден', 404);
 
+    const categoryId = req.nextUrl.searchParams.get('categoryId');
+
     const versions = await db.estimateVersion.findMany({
-      where: { contractId: params.contractId },
+      where: {
+        contractId: params.contractId,
+        ...(categoryId && { categoryId }),
+      },
       include: {
         createdBy: {
           select: { id: true, firstName: true, lastName: true },
         },
-        _count: { select: { chapters: true } },
+        category: { select: { id: true, name: true } },
+        contract: {
+          select: {
+            id: true,
+            name: true,
+            number: true,
+            participants: {
+              select: {
+                role: true,
+                organization: { select: { name: true } },
+              },
+            },
+          },
+        },
+        _count: { select: { chapters: true, childVersions: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
