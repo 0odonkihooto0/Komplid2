@@ -739,7 +739,12 @@
 
 **База данных (Модуль 6)**
 - ✅ `EstimateImportItem` (из Фаз 3.5)
-- ⬜ `EstimateChapter`, `EstimateVersion`
+- ✅ `EstimateChapter`, `EstimateVersion` (версионирование, иерархия глав)
+- ✅ `EstimateCategory` — иерархическая группировка смет по папкам (self-ref дерево)
+- ✅ `EstimateVersion.status` (OK/EDITING/RECALCULATING/ERROR), `categoryId`
+- ✅ `EstimateItem`: `isCustomerResource`, `ssrWorkType`, `isExcluded`
+- ✅ `EstimateAdditionalCost` + `EstimateAdditionalCostChapter` + `EstimateAdditionalCostEstimate` — доп. затраты (НР, СП, НДС, зимнее удорожание и т.д.)
+- ✅ `EstimateCoefficient` — коэффициенты пересчёта сметы
 - ⬜ `GesnNorm`, `KsrResource`, `FgisPrice` (финальная фаза)
 
 ---
