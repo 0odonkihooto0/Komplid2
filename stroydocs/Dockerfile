@@ -84,6 +84,8 @@ COPY --from=builder /app/templates ./templates
 # Скомпилированные BullMQ-воркеры (parse-ifc и зависимости)
 COPY --from=builder /app/dist/workers ./dist/workers
 COPY scripts/start.sh ./start.sh
+COPY scripts/check-migration-integrity.js ./scripts/check-migration-integrity.js
+COPY scripts/find-failed-migration.js ./scripts/find-failed-migration.js
 
 RUN sed -i 's/\r//' /app/start.sh
 
