@@ -1,7 +1,10 @@
 import Redis from 'ioredis';
 import type { RedisOptions } from 'ioredis';
 
-const globalForRedis = globalThis as unknown as { redis: Redis | undefined };
+const globalForRedis = globalThis as unknown as {
+  redis: Redis | undefined;
+  redisErrorLogged: boolean | undefined;
+};
 
 function parseRedisUrl(rawUrl: string): RedisOptions {
   try {
@@ -21,10 +24,6 @@ function parseRedisUrl(rawUrl: string): RedisOptions {
   }
 }
 
-// Ограничение частоты логирования ошибок Redis (1 раз в 30 секунд)
-let lastErrorLog = 0;
-const ERROR_LOG_INTERVAL = 30_000;
-
 function createRedisClient(): Redis {
   const options = parseRedisUrl(process.env.REDIS_URL || 'redis://localhost:6379');
   const client = new Redis({
@@ -32,27 +31,34 @@ function createRedisClient(): Redis {
     maxRetriesPerRequest: 3,
     lazyConnect: true,
     retryStrategy(times) {
-      // Остановить после 20 попыток (суммарно ~5 минут с backoff)
-      if (times > 20) return null;
-      // Экспоненциальный backoff: 500ms → 1s → 1.5s → ... → max 30s
+      if (times > 20) {
+        console.warn('[redis] Остановка переподключения после 20 попыток');
+        return null;
+      }
       return Math.min(times * 500, 30_000);
     },
   });
 
-  // Регистрируем обработчик — подавляем «Unhandled error event» из ioredis
+  // Логируем только первую ошибку за цикл отключения.
+  // При восстановлении соединения — сбрасываем флаг.
   client.on('error', (err) => {
-    const now = Date.now();
-    if (process.env.NODE_ENV !== 'test' && now - lastErrorLog > ERROR_LOG_INTERVAL) {
-      lastErrorLog = now;
+    if (process.env.NODE_ENV !== 'test' && !globalForRedis.redisErrorLogged) {
+      globalForRedis.redisErrorLogged = true;
       console.warn('[redis] Connection error:', (err as Error).message ?? err);
     }
+  });
+
+  client.on('connect', () => {
+    if (globalForRedis.redisErrorLogged) {
+      console.log('[redis] Соединение восстановлено');
+    }
+    globalForRedis.redisErrorLogged = false;
   });
 
   return client;
 }
 
+// Синглтон через globalThis — гарантирует один клиент даже если модуль
+// загружен из разных бандлов Next.js (API routes, server components)
 export const redis = globalForRedis.redis ?? createRedisClient();
-
-if (process.env.NODE_ENV !== 'production') {
-  globalForRedis.redis = redis;
-}
+globalForRedis.redis = redis;
