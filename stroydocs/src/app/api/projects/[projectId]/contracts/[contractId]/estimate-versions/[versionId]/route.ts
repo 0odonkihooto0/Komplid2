@@ -71,6 +71,8 @@ const patchVersionSchema = z.object({
   isActual: z.boolean().optional(),
   period: z.string().max(50).nullable().optional(),
   notes: z.string().max(2000).nullable().optional(),
+  status: z.enum(['OK', 'EDITING', 'RECALCULATING', 'ERROR']).optional(),
+  categoryId: z.string().uuid().nullable().optional(),
 });
 
 /** PATCH — обновить версию (нельзя изменять тип BASELINE) */
@@ -103,6 +105,8 @@ export async function PATCH(
         ...(data.isActual !== undefined && { isActual: data.isActual }),
         ...(data.period !== undefined && { period: data.period }),
         ...(data.notes !== undefined && { notes: data.notes }),
+        ...(data.status !== undefined && { status: data.status }),
+        ...(data.categoryId !== undefined && { categoryId: data.categoryId }),
       },
     });
 
@@ -128,6 +132,14 @@ export async function DELETE(
 
     if (version.isBaseline) {
       return errorResponse('Нельзя удалить базовую версию (Baseline)', 400);
+    }
+
+    // Проверяем связь с задачами ГПР через позиции сметы
+    const linkedGanttTasks = await db.ganttTask.count({
+      where: { estimateItem: { chapter: { versionId: params.versionId } } },
+    });
+    if (linkedGanttTasks > 0) {
+      return errorResponse('Версия связана с задачами ГПР, удаление невозможно', 400);
     }
 
     await db.estimateVersion.delete({ where: { id: params.versionId } });
