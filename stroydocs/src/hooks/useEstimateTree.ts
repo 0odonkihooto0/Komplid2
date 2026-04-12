@@ -5,6 +5,17 @@ import { useToast } from '@/hooks/useToast';
 
 // ─── Типы данных ─────────────────────────────────────────────────────────────
 
+export type EstimateVersionStatus = 'OK' | 'EDITING' | 'RECALCULATING' | 'ERROR';
+
+export interface EstimateCoefficientDetail {
+  id: string;
+  name: string;
+  code: string | null;
+  application: string | null;
+  value: number;
+  isEnabled: boolean;
+}
+
 export interface EstimateItemDetail {
   id: string;
   code: string | null;
@@ -16,8 +27,14 @@ export interface EstimateItemDetail {
   laborCost: number | null;
   materialCost: number | null;
   machineryCost: number | null;
+  priceIndex: number | null;
+  overhead: number | null;
+  profit: number | null;
+  itemType: 'WORK' | 'MATERIAL';
   isEdited: boolean;
   isDeleted: boolean;
+  isExcluded: boolean;
+  isCustomerResource: boolean;
   sortOrder: number | null;
 }
 
@@ -45,7 +62,10 @@ export interface EstimateVersionDetail {
   totalAmount: number | null;
   totalLabor: number | null;
   totalMat: number | null;
+  status: EstimateVersionStatus;
   contractId: string;
+  sourceImport: { format: string | null } | null;
+  coefficients: EstimateCoefficientDetail[];
   chapters: EstimateChapterDetail[];
 }
 
@@ -219,6 +239,80 @@ export function useEstimateTree({ projectId, contractId, versionId }: UseEstimat
     },
   });
 
+  // Обновить статус версии (EDITING / OK / RECALCULATING)
+  const updateStatus = useMutation({
+    mutationFn: async (status: EstimateVersionStatus) => {
+      const res = await fetch(`${base(projectId, contractId, versionId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const json = await res.json() as { success: boolean; error?: string };
+      if (!json.success) throw new Error(json.error ?? 'Ошибка обновления статуса');
+    },
+    onSuccess: () => invalidate(),
+    onError: (err: Error) => {
+      toast({ title: 'Ошибка', description: err.message, variant: 'destructive' });
+    },
+  });
+
+  // Пересчитать итоги версии сметы
+  const recalculate = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${base(projectId, contractId, versionId)}/recalculate`, {
+        method: 'POST',
+      });
+      const json = await res.json() as { success: boolean; error?: string };
+      if (!json.success) throw new Error(json.error ?? 'Ошибка пересчёта');
+    },
+    onSuccess: () => {
+      toast({ title: 'Пересчёт завершён' });
+      invalidate();
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Ошибка пересчёта', description: err.message, variant: 'destructive' });
+    },
+  });
+
+  // Перенумеровать позиции последовательно
+  const renumber = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${base(projectId, contractId, versionId)}/renumber`, {
+        method: 'POST',
+      });
+      const json = await res.json() as { success: boolean; error?: string };
+      if (!json.success) throw new Error(json.error ?? 'Ошибка перенумерации');
+    },
+    onSuccess: () => {
+      toast({ title: 'Позиции перенумерованы' });
+      invalidate();
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Ошибка', description: err.message, variant: 'destructive' });
+    },
+  });
+
+  // Экспорт версии в Excel-шаблон (скачивание файла)
+  const exportTemplate = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${base(projectId, contractId, versionId)}/export-template`);
+      if (!res.ok) throw new Error('Ошибка экспорта шаблона');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `estimate-${versionId.slice(0, 8)}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+    onSuccess: () => {
+      toast({ title: 'Файл скачан' });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Ошибка экспорта', description: err.message, variant: 'destructive' });
+    },
+  });
+
   return {
     version,
     isLoading,
@@ -228,5 +322,9 @@ export function useEstimateTree({ projectId, contractId, versionId }: UseEstimat
     addItem,
     updateItem,
     deleteItem,
+    updateStatus,
+    recalculate,
+    renumber,
+    exportTemplate,
   };
 }
