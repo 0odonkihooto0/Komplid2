@@ -120,9 +120,9 @@ export async function POST(req: NextRequest, { params }: Params) {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
 
       const result = await tx.$queryRaw<Array<{ max_num: number | null }>>`
-        SELECT MAX(entry_number) AS max_num
+        SELECT MAX("entryNumber") AS max_num
         FROM special_journal_entries
-        WHERE journal_id = ${params.journalId}
+        WHERE "journalId" = ${params.journalId}
       `;
       const nextNum = (result[0]?.max_num ?? 0) + 1;
 

@@ -78,9 +78,9 @@ export async function GET(
     if (search) {
       const results = await db.$queryRaw<{ id: string }[]>`
         SELECT id FROM sed_documents
-        WHERE project_id = ${params.objectId}
+        WHERE "projectId" = ${params.objectId}
           AND search_vector @@ plainto_tsquery('russian', ${search})
-        ORDER BY created_at DESC
+        ORDER BY "createdAt" DESC
         LIMIT ${limit} OFFSET ${skip}
       `;
       const ids = results.map((r: { id: string }) => r.id);

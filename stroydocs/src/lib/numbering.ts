@@ -26,7 +26,7 @@ export async function getNextCorrespondenceNumber(
     const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
       SELECT MAX(number) AS max_num
       FROM correspondences
-      WHERE project_id = ${projectId}
+      WHERE "projectId" = ${projectId}
         AND number LIKE ${pattern}
     `;
 
@@ -54,7 +54,7 @@ export async function getNextRFINumber(projectId: string): Promise<string> {
     const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
       SELECT MAX(number) AS max_num
       FROM rfis
-      WHERE project_id = ${projectId}
+      WHERE "projectId" = ${projectId}
         AND number LIKE ${pattern}
     `;
 
@@ -82,7 +82,7 @@ export async function getNextSEDNumber(projectId: string): Promise<string> {
     const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
       SELECT MAX(number) AS max_num
       FROM sed_documents
-      WHERE project_id = ${projectId}
+      WHERE "projectId" = ${projectId}
         AND number LIKE ${pattern}
     `;
 
@@ -140,7 +140,7 @@ export async function getNextDesignDocNumber(projectId: string): Promise<string>
     const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
       SELECT MAX(number) AS max_num
       FROM design_documents
-      WHERE project_id = ${projectId}
+      WHERE "projectId" = ${projectId}
         AND number LIKE ${pattern}
     `;
 
@@ -167,7 +167,7 @@ export async function getNextPIRRegistryNumber(projectId: string): Promise<strin
     const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
       SELECT MAX(number) AS max_num
       FROM pir_registries
-      WHERE project_id = ${projectId}
+      WHERE "projectId" = ${projectId}
         AND number LIKE ${pattern}
     `;
 
@@ -194,7 +194,7 @@ export async function getNextPIRClosureNumber(projectId: string): Promise<string
     const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
       SELECT MAX(number) AS max_num
       FROM pir_closure_acts
-      WHERE project_id = ${projectId}
+      WHERE "projectId" = ${projectId}
         AND number LIKE ${pattern}
     `;
 
@@ -237,7 +237,7 @@ export async function getNextDocCommentNumber(docId: string): Promise<number> {
     const results = await tx.$queryRaw<Array<{ cnt: bigint }>>`
       SELECT COUNT(*) AS cnt
       FROM design_doc_comments
-      WHERE doc_id = ${docId}
+      WHERE "docId" = ${docId}
     `;
 
     return Number(results[0]?.cnt ?? 0) + 1;
@@ -263,8 +263,8 @@ export async function getNextSEDWorkflowNumber(projectId: string): Promise<strin
     const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
       SELECT MAX(sw.number) AS max_num
       FROM sed_workflows sw
-      JOIN sed_documents sd ON sw.document_id = sd.id
-      WHERE sd.project_id = ${projectId}
+      JOIN sed_documents sd ON sw."documentId" = sd.id
+      WHERE sd."projectId" = ${projectId}
         AND sw.number LIKE ${pattern}
     `;
 
@@ -312,7 +312,7 @@ export async function getNextJournalNumber(
     const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
       SELECT MAX(number) AS max_num
       FROM special_journals
-      WHERE project_id = ${projectId}
+      WHERE "projectId" = ${projectId}
         AND number LIKE ${pattern}
     `;
 
