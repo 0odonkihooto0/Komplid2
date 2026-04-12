@@ -6,6 +6,8 @@ import type { ContractOption, EstimateVersionItem } from '@/hooks/useEstimateVer
 
 // ─── Типы ответа API сравнения (inline, без импорта server-only модулей) ──────
 
+export type CompareMode = 'default' | 'volumes' | 'cost' | 'contract';
+
 export interface EstimateItemSnapshot {
   id: string;
   name: string;
@@ -36,6 +38,7 @@ export interface VersionCompareResult {
   version2: { id: string; name: string; totalAmount: number | null; totalLabor: number | null; totalMat: number | null };
   diff: VersionDiff;
   summary: { totalDiff: number; laborDiff: number; materialDiff: number };
+  formatted?: unknown;
 }
 
 // ─── URL builders ─────────────────────────────────────────────────────────────
@@ -43,8 +46,8 @@ export interface VersionCompareResult {
 const urlContracts = (pid: string) => `/api/objects/${pid}/contracts`;
 const urlVersions = (pid: string, cid: string) =>
   `/api/objects/${pid}/contracts/${cid}/estimate-versions`;
-const urlCompare = (pid: string, cid: string, v1: string, v2: string) =>
-  `/api/objects/${pid}/contracts/${cid}/estimate-versions/compare?v1=${v1}&v2=${v2}`;
+const urlCompare = (pid: string, cid: string, v1: string, v2: string, mode: CompareMode) =>
+  `/api/objects/${pid}/contracts/${cid}/estimate-versions/compare?v1=${v1}&v2=${v2}&mode=${mode}`;
 
 // ─── Хук ─────────────────────────────────────────────────────────────────────
 
@@ -52,8 +55,9 @@ export function useEstimateCompare(projectId: string) {
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
   const [v1Id, setV1Id] = useState<string | null>(null);
   const [v2Id, setV2Id] = useState<string | null>(null);
+  const [compareMode, setCompareMode] = useState<CompareMode>('default');
   // compareKey устанавливается нажатием кнопки «Сравнить», сбрасывается при смене версий
-  const [compareKey, setCompareKey] = useState<[string, string] | null>(null);
+  const [compareKey, setCompareKey] = useState<[string, string, CompareMode] | null>(null);
 
   // Список договоров (shared cache с useEstimateVersions)
   const { data: contracts = [], isLoading: contractsLoading } = useQuery<ContractOption[]>({
@@ -93,10 +97,10 @@ export function useEstimateCompare(projectId: string) {
 
   // Результат сравнения (запрос идёт только после нажатия кнопки «Сравнить»)
   const { data: compareResult, isLoading: compareLoading } = useQuery<VersionCompareResult>({
-    queryKey: ['estimate-compare', projectId, selectedContractId, compareKey?.[0], compareKey?.[1]],
+    queryKey: ['estimate-compare', projectId, selectedContractId, compareKey?.[0], compareKey?.[1], compareKey?.[2]],
     queryFn: async () => {
       if (!selectedContractId || !compareKey) throw new Error('Нет параметров');
-      const res = await fetch(urlCompare(projectId, selectedContractId, compareKey[0], compareKey[1]));
+      const res = await fetch(urlCompare(projectId, selectedContractId, compareKey[0], compareKey[1], compareKey[2]));
       const json = await res.json() as { success: boolean; data: VersionCompareResult; error?: string };
       if (!json.success) throw new Error(json.error ?? 'Ошибка сравнения');
       return json.data;
@@ -109,7 +113,7 @@ export function useEstimateCompare(projectId: string) {
 
   const runCompare = () => {
     if (canCompare && v1Id && v2Id) {
-      setCompareKey([v1Id, v2Id]);
+      setCompareKey([v1Id, v2Id, compareMode]);
     }
   };
 
@@ -124,6 +128,8 @@ export function useEstimateCompare(projectId: string) {
     setV1Id: (id: string | null) => { setV1Id(id); setCompareKey(null); },
     v2Id,
     setV2Id: (id: string | null) => { setV2Id(id); setCompareKey(null); },
+    compareMode,
+    setCompareMode,
     canCompare,
     runCompare,
     compareResult,
