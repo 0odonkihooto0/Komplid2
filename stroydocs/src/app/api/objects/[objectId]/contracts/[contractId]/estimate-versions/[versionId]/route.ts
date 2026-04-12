@@ -38,6 +38,11 @@ export async function GET(
       where: { id: params.versionId },
       include: {
         createdBy: { select: { id: true, firstName: true, lastName: true } },
+        sourceImport: { select: { format: true } },
+        coefficients: {
+          select: { id: true, name: true, code: true, application: true, value: true, isEnabled: true },
+          orderBy: { name: 'asc' },
+        },
         chapters: {
           orderBy: { order: 'asc' },
           include: {
