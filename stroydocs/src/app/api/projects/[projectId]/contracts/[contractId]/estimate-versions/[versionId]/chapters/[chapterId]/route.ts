@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
+import { recalculateVersion } from '@/lib/estimates/recalculate';
 
 export const dynamic = 'force-dynamic';
 
@@ -100,6 +101,11 @@ export async function DELETE(
     }
 
     await db.estimateChapter.delete({ where: { id: params.chapterId } });
+
+    // Пересчитываем итоги версии после удаления главы (non-blocking)
+    recalculateVersion(params.versionId).catch((err) => {
+      logger.error({ err }, 'Ошибка пересчёта после удаления главы');
+    });
 
     return successResponse({ deleted: true });
   } catch (error) {

@@ -25,6 +25,55 @@ const createItemSchema = z.object({
   sortOrder: z.number().int().min(0).optional(),
 });
 
+/** GET — список позиций главы с пагинацией */
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { projectId: string; contractId: string; versionId: string; chapterId: string } }
+) {
+  try {
+    const session = await getSessionOrThrow();
+
+    const project = await db.buildingObject.findFirst({
+      where: { id: params.projectId, organizationId: session.user.organizationId },
+    });
+    if (!project) return errorResponse('Проект не найден', 404);
+
+    // Проверяем что глава принадлежит версии и контракту
+    const chapter = await db.estimateChapter.findFirst({
+      where: { id: params.chapterId, versionId: params.versionId, version: { contractId: params.contractId } },
+    });
+    if (!chapter) return errorResponse('Глава не найдена', 404);
+
+    const url = new URL(req.url);
+    const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
+    const limit = Math.min(200, Math.max(1, Number(url.searchParams.get('limit')) || 50));
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      db.estimateItem.findMany({
+        where: { chapterId: params.chapterId, isDeleted: false },
+        orderBy: { sortOrder: 'asc' },
+        take: limit,
+        skip,
+      }),
+      db.estimateItem.count({
+        where: { chapterId: params.chapterId, isDeleted: false },
+      }),
+    ]);
+
+    return successResponse(items, {
+      page,
+      pageSize: limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    });
+  } catch (error) {
+    if (error instanceof NextResponse) return error;
+    logger.error({ err: error }, 'Ошибка загрузки позиций главы');
+    return errorResponse('Внутренняя ошибка сервера', 500);
+  }
+}
+
 /** POST — добавить позицию в главу сметы */
 export async function POST(
   req: NextRequest,
