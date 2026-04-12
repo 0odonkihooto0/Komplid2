@@ -21,17 +21,29 @@ function parseRedisUrl(rawUrl: string): RedisOptions {
   }
 }
 
+// Ограничение частоты логирования ошибок Redis (1 раз в 30 секунд)
+let lastErrorLog = 0;
+const ERROR_LOG_INTERVAL = 30_000;
+
 function createRedisClient(): Redis {
   const options = parseRedisUrl(process.env.REDIS_URL || 'redis://localhost:6379');
   const client = new Redis({
     ...options,
     maxRetriesPerRequest: 3,
     lazyConnect: true,
+    retryStrategy(times) {
+      // Остановить после 20 попыток (суммарно ~5 минут с backoff)
+      if (times > 20) return null;
+      // Экспоненциальный backoff: 500ms → 1s → 1.5s → ... → max 30s
+      return Math.min(times * 500, 30_000);
+    },
   });
 
   // Регистрируем обработчик — подавляем «Unhandled error event» из ioredis
   client.on('error', (err) => {
-    if (process.env.NODE_ENV !== 'test') {
+    const now = Date.now();
+    if (process.env.NODE_ENV !== 'test' && now - lastErrorLog > ERROR_LOG_INTERVAL) {
+      lastErrorLog = now;
       console.warn('[redis] Connection error:', (err as Error).message ?? err);
     }
   });
