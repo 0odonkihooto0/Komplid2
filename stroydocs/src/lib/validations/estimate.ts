@@ -18,5 +18,9 @@ export const updateEstimateItemSchema = z.object({
   normativeRefs: z.array(z.string()).optional(),
 });
 
+/** Режимы сравнения версий сметы */
+export const compareModeSchema = z.enum(['default', 'volumes', 'cost', 'contract']);
+export type CompareMode = z.infer<typeof compareModeSchema>;
+
 export type UploadEstimateInput = z.infer<typeof uploadEstimateSchema>;
 export type UpdateEstimateItemInput = z.infer<typeof updateEstimateItemSchema>;
