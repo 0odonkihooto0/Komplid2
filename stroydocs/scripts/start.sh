@@ -40,7 +40,21 @@ for m in \
   20260406120000_add_module11_sk \
   20260407000000_add_module13_tim \
   20260407120000_add_module12_reports \
-  20260408000000_add_object_fields_audit
+  20260408000000_add_object_fields_audit \
+  20260409000000_add_problem_issues \
+  20260409120000_add_info_module_models \
+  20260410120000_add_indicator_file_keys \
+  20260410150000_add_object_participants \
+  20260410165000_add_tc_land_plot_and_file \
+  20260410180000_add_camera_files \
+  20260410190000_add_problem_issue_extended_fields \
+  20260410210000_extend_sed_module \
+  20260411000000_extend_contract_card \
+  20260411010000_add_activity_models \
+  20260411020000_add_planner_hierarchy \
+  20260411030000_extend_pir_module \
+  20260411040000_add_pir_object_type_config \
+  20260411050000_add_rejected_status_to_pir
 do
   node node_modules/prisma/build/index.js migrate resolve --applied "$m" 2>/dev/null || true
 done
