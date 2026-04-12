@@ -1,4 +1,4 @@
-# Build: 2026-04-02-step9-v12
+# Build: 2026-04-12-fix-prisma-engines
 # ── Stage 1: Production dependencies (только runtime-зависимости) ─────────────
 FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat openssl
@@ -13,8 +13,6 @@ RUN npm config set registry https://registry.npmjs.org \
     && npm config set fetch-retry-maxtimeout 120000 \
     && npm config set fetch-retries 5 \
     && PRISMA_SKIP_POSTINSTALL_GENERATE=true npm ci --omit=dev --no-audit
-# Загружаем migration engine для runtime (prisma migrate deploy)
-RUN node_modules/.bin/prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > /dev/null 2>&1 || true
 
 # ── Stage 2: Build ────────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
@@ -73,7 +71,7 @@ RUN adduser --system --uid 1001 nextjs
 # Prod-зависимости из stage deps (без devDeps: typescript, eslint, vitest и т.д.)
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=deps /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 
 # Собранное приложение
