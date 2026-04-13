@@ -11,6 +11,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { useGanttScheduleView, type GanttScheduleTab, type NewTaskForm } from './useGanttScheduleView';
+import type { GroupByField } from './GanttGroupingMenu';
 import { GanttScheduleHeader } from './GanttScheduleHeader';
 import { GanttScheduleSidebar } from './GanttScheduleSidebar';
 import { GanttScheduleToolbar } from './GanttScheduleToolbar';
@@ -44,6 +45,11 @@ export function GanttScheduleView({ objectId }: Props) {
   // Диалог «Заполнить из другой версии» — простой пикер
   const [fillSourceId, setFillSourceId] = useState<string>('');
 
+  // Состояние тулбара ГПР (разделено на уровне Schedule чтобы toolbar знал об активных режимах)
+  const [groupBy, setGroupBy] = useState<GroupByField | null>(null);
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
+  const [isIsolated, setIsIsolated] = useState(false);
+
   function handleConfirmFillFromVersion() {
     if (!fillSourceId) return;
     view.handleFillFromVersion(fillSourceId);
@@ -61,6 +67,16 @@ export function GanttScheduleView({ objectId }: Props) {
       <GanttScheduleToolbar
         versionId={vid}
         onEditVersion={() => view.setEditVersionOpen(true)}
+        groupBy={groupBy}
+        onGroupByChange={setGroupBy}
+        isMultiSelectActive={isMultiSelectMode}
+        onToggleMultiSelect={() => {
+          setIsMultiSelectMode((v) => !v);
+          if (isIsolated) setIsIsolated(false);
+        }}
+        isIsolated={isIsolated}
+        onIsolate={() => setIsIsolated(true)}
+        onShowAll={() => setIsIsolated(false)}
       />
 
       {/* Основная область: боковая панель (версии/стадии) + под-вкладки */}
@@ -100,7 +116,15 @@ export function GanttScheduleView({ objectId }: Props) {
               </TabsList>
 
               <TabsContent value="coordination">
-                <GanttCoordinationView objectId={objectId} versionId={vid} />
+                <GanttCoordinationView
+                  objectId={objectId}
+                  versionId={vid}
+                  groupBy={groupBy}
+                  isMultiSelectMode={isMultiSelectMode}
+                  onMultiSelectModeChange={setIsMultiSelectMode}
+                  isIsolated={isIsolated}
+                  onIsolationChange={setIsIsolated}
+                />
               </TabsContent>
               <TabsContent value="gantt">
                 <GanttChartGPR objectId={objectId} versionId={vid} version={view.selectedVersion} />

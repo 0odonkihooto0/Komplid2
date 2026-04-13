@@ -811,6 +811,10 @@
 - ⬜ `factVolume Float?` в `GanttTask` — нужна Prisma-миграция (заглушка «—» в Координации и Закрытии)
 - ⬜ КС-2 join в `/tasks` endpoint — для колонки «Подтверждённый объём (из КС-2)»
 - ⬜ `delegatedFromOrg` в `/delegated-tasks` API — для колонки «Делегировано от»
+- ✅ `GanttGroupingMenu` — кнопка (≡) группировки ИСР: Единицы (volumeUnit) / Вид работ (workType) / Тип стоимости (costType); виртуальные строки-заголовки групп; клиентская группировка без API; future: Исполнители / Ответственные / Бригады (требуют новых полей GanttTask)
+- ✅ Режим множественного редактирования (☑): чекбоксы + «Выбрать все» в шапке; floating toolbar `GanttMultiSelectToolbar` — Переместить / Объединить / Назначить / ↑↓←→ / Выбрано: N / ✕; `GanttMoveDialog` — выбор целевого раздела; `useGanttCoordinationState` — управление выбором
+- ✅ Изоляция отмеченных (👁/EyeOff): скрыть всё кроме выбранных задач + их предков; `isolatedTaskIds: Set<string>` в `useGanttCoordinationState`; баннер «Показать все»; «Изолировать» из меню строки добавляет задачу в selectedTaskIds
+- ✅ Контекстное меню иконки раздела (📁/📂, правый клик): `GanttContextMenu` — Раскрыть все / Свернуть все / До уровня N (1..5); `collapsedTaskIds: Set<string>` + `isTaskVisible()` в `useGanttCoordinationState`
 
 **База данных (Модуль 7)**
 - ✅ `GanttTask`, `GanttVersion`, `GanttDependency`, `GanttDailyPlan`, `GanttStage`, `GanttTaskExecDoc`

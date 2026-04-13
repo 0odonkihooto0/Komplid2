@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MoreVertical } from 'lucide-react';
+import { MoreVertical, ChevronRight, ChevronDown, Folder, FolderOpen } from 'lucide-react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -38,6 +38,16 @@ interface Props {
   onMilestone?: (taskId: string) => void;
   onIsolate?: (taskId: string) => void;
   onCopy?: (task: GanttTaskItem) => void;
+  // Множественный выбор
+  isMultiSelectMode?: boolean;
+  isSelected?: boolean;
+  onSelectToggle?: (id: string) => void;
+  // Развёртка/свёртка
+  hasChildren?: boolean;
+  isCollapsed?: boolean;
+  onToggleCollapse?: (id: string) => void;
+  // Контекстное меню иконки раздела
+  onContextMenuOpen?: (e: React.MouseEvent, taskId: string) => void;
 }
 
 // Вычисляем количество дней между двумя ISO-датами (включительно)
@@ -65,6 +75,13 @@ export function GanttCoordinationRow({
   onMilestone,
   onIsolate,
   onCopy,
+  isMultiSelectMode,
+  isSelected,
+  onSelectToggle,
+  hasChildren,
+  isCollapsed,
+  onToggleCollapse,
+  onContextMenuOpen,
 }: Props) {
   const [editField, setEditField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -106,12 +123,55 @@ export function GanttCoordinationRow({
   }
 
   const indent = task.level * 16;
+  const isSection = task.level === 0;
 
   return (
-    <TableRow className="text-xs">
-      {/* Наименование + меню */}
+    <TableRow
+      className={`text-xs ${isSelected ? 'bg-primary/5' : ''}`}
+    >
+      {/* Чекбокс в режиме множественного редактирования */}
+      {isMultiSelectMode && (
+        <TableCell className="w-8 pr-0">
+          <input
+            type="checkbox"
+            className="h-3.5 w-3.5 cursor-pointer"
+            checked={isSelected ?? false}
+            onChange={() => onSelectToggle?.(task.id)}
+          />
+        </TableCell>
+      )}
+
+      {/* Наименование + иконки + меню */}
       <TableCell style={{ paddingLeft: `${indent + 4}px` }} className="max-w-56">
         <div className="flex items-center gap-1">
+          {/* Кнопка expand/collapse (только для задач с детьми) */}
+          {hasChildren ? (
+            <button
+              type="button"
+              className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => onToggleCollapse?.(task.id)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                onContextMenuOpen?.(e, task.id);
+              }}
+              aria-label={isCollapsed ? 'Раскрыть' : 'Свернуть'}
+            >
+              {isSection ? (
+                isCollapsed
+                  ? <Folder className="h-3.5 w-3.5 text-amber-500" />
+                  : <FolderOpen className="h-3.5 w-3.5 text-amber-500" />
+              ) : (
+                isCollapsed
+                  ? <ChevronRight className="h-3.5 w-3.5" />
+                  : <ChevronDown className="h-3.5 w-3.5" />
+              )}
+            </button>
+          ) : (
+            /* Пустой placeholder для сохранения отступа */
+            <span className="shrink-0 w-3.5" />
+          )}
+
+          {/* Контекстное меню (⋮) */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -181,6 +241,7 @@ export function GanttCoordinationRow({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
           <span className="truncate">{task.name}</span>
         </div>
         {/* Комментарий под названием */}
