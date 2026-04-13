@@ -878,6 +878,7 @@
 - ✅ `SupplierOrder`, `SupplierOrderItem`
 - ✅ `Warehouse`, `WarehouseItem`, `WarehouseMovement`, `WarehouseMovementLine`
 - ⬜ `SupplierOffer` (тендерный реестр — не реализован)
+- ✅ Расширены поля моделей (миграция `module8_extend_fields`): `MaterialRequest` (+paymentDate, paymentAmount, type), `MaterialRequestItem` (+purchaseUnit, deliveryDate, paymentDeadline, costArticle, purchasePrice, purchaseQty), `SupplierOrder` (+externalNumber, expectedReadyDate, expectedArrivalDate, readinessCorrectionDate, underdeliveryDate, readinessThrough, deliveryConditions, contractType, constructionObject), `WarehouseMovement` (+consignor, consignee, vatType, vatRate, currency, externalNumber, attachmentS3Keys), `WarehouseMovementLine` (+vatAmount, totalWithVat, basis, gtd, country, comment); enum `WarehouseMovementType` +RECEIPT_ORDER, EXPENSE_ORDER
 
 ---
 
