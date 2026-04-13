@@ -103,6 +103,37 @@ export function useCreateReceipt(objectId: string, orderId: string) {
   });
 }
 
+// ─── Хук «Создать на основании» из заказа поставщику ────────────────────────
+
+export function useCreateFrom(objectId: string, orderId: string) {
+  const qc = useQueryClient();
+  const router = useRouter();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async ({ targetType }: { targetType: string }) => {
+      const res = await fetch(
+        `/api/projects/${objectId}/warehouse-movements/create-from`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sourceType: 'SUPPLIER_ORDER', sourceId: orderId, targetType }),
+        }
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? 'Ошибка создания документа');
+      return json.data as { id: string; number: string };
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['supplier-order', objectId, orderId] });
+      toast({ title: `Документ ${data.number} создан`, description: 'Переходим на вкладку склада' });
+      router.push(`/objects/${objectId}/resources/warehouse`);
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Ошибка', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
 // ─── Хук добавления позиции к заказу ─────────────────────────────────────────
 
 export function useAddOrderItem(objectId: string, orderId: string) {

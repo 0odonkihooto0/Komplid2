@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/useToast';
 
 // ─── Типы ────────────────────────────────────────────────────────────────────
@@ -187,6 +188,7 @@ export function useNomenclature(objectId: string, search: string) {
 
 export function useCreateBasedOn(objectId: string) {
   const qc = useQueryClient();
+  const router = useRouter();
   const { toast } = useToast();
   return useMutation({
     mutationFn: async ({ movementId, targetType }: { movementId: string; targetType: WarehouseMovementType }) => {
@@ -204,7 +206,9 @@ export function useCreateBasedOn(objectId: string) {
     },
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['warehouse-movements', objectId] });
-      toast({ title: `Создан документ ${data.number}` });
+      toast({ title: `Создан документ ${data.number}`, description: 'Переходим на вкладку склада' });
+      // Редирект к складскому разделу для просмотра нового документа
+      router.push(`/objects/${objectId}/resources/warehouse`);
     },
     onError: (err: Error) => {
       toast({ title: 'Ошибка', description: err.message, variant: 'destructive' });

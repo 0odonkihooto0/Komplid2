@@ -36,7 +36,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { ChevronDown, PackagePlus, Printer, Trash2, Copy } from 'lucide-react';
 import { useChangeOrderStatus, useDeleteOrder, useCopyOrder } from './useSupplierOrderActions';
-import { useCreateReceipt, useWarehouses, ORDER_STATUS_LABELS } from './useSupplierOrderCard';
+import { useCreateReceipt, useCreateFrom, useWarehouses, ORDER_STATUS_LABELS } from './useSupplierOrderCard';
 import type { SupplierOrderCardData, SupplierOrderStatus } from './useSupplierOrderCard';
 
 interface Props {
@@ -65,6 +65,7 @@ export function SupplierOrderBottomBar({ objectId, orderId, order }: Props) {
   const deleteOrder = useDeleteOrder(objectId, orderId);
   const copyOrder = useCopyOrder(objectId, orderId);
   const createReceipt = useCreateReceipt(objectId, orderId);
+  const createFrom = useCreateFrom(objectId, orderId);
   const { warehouses } = useWarehouses(objectId);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -79,12 +80,25 @@ export function SupplierOrderBottomBar({ objectId, orderId, order }: Props) {
     );
   }
 
+  // Маппинг action (lowercase) → WarehouseMovementType
+  const ACTION_TO_TYPE: Record<string, string> = {
+    shipment:      'SHIPMENT',
+    transfer:      'TRANSFER',
+    receipt_order: 'RECEIPT_ORDER',
+    expense_order: 'EXPENSE_ORDER',
+    writeoff:      'WRITEOFF',
+  };
+
   function handleBasedOn(action: string) {
     if (action === 'receipt') {
+      // Поступление требует выбора склада — открываем диалог
       setReceiptDialogOpen(true);
     } else {
-      // Остальные типы — заглушка (будут реализованы вместе с расширением складских документов)
-      alert(`Создание документа типа «${action}» будет доступно в следующей версии.`);
+      // Остальные типы: склад и контрагенты берутся из реквизитов заказа
+      const targetType = ACTION_TO_TYPE[action];
+      if (targetType) {
+        createFrom.mutate({ targetType });
+      }
     }
   }
 
@@ -126,9 +140,9 @@ export function SupplierOrderBottomBar({ objectId, orderId, order }: Props) {
         {/* Создать на основании */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" disabled={createFrom.isPending}>
               <PackagePlus className="mr-1 h-4 w-4" />
-              Создать на основании
+              {createFrom.isPending ? 'Создание...' : 'Создать на основании'}
               <ChevronDown className="ml-1 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
