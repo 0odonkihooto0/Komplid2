@@ -72,7 +72,7 @@ export async function POST(
     const unmatchedIds: string[] = [];
 
     await db.$transaction(async (tx) => {
-      for (const [targetVersionId, sourceTasks] of byTargetVersion) {
+      for (const [targetVersionId, sourceTasks] of Array.from(byTargetVersion)) {
         // Загрузить задачи целевой версии с sourceTaskId, соответствующим исходным
         const sourceIds = sourceTasks.map((t) => t.id);
         const targetTasks = await tx.ganttTask.findMany({
