@@ -788,12 +788,16 @@
 - ✅ Аналитика ГПР: S-кривая, топ задержек, готовность ИД
 - ✅ Делегирование работ (delegate, delegate-and-merge, sync)
 - ✅ URL /objects/[id]/gpr/ + layout с 8 вкладками
+- ✅ CRUD производственных календарей (GET/POST/PATCH/DELETE + from-template)
+- ✅ Журнал изменений ГПР (changelog endpoint + `logGanttChange` helper, аудит PATCH/DELETE задач)
+- ✅ Разделение задачи на захватки (split: SEQUENTIAL/PARALLEL × COUNT/DURATION)
+- ✅ Настройка видимости колонок (`GanttVersion.columnSettings`)
 
 **База данных (Модуль 7)**
 - ✅ `GanttTask`, `GanttVersion`, `GanttDependency`, `GanttDailyPlan`, `GanttStage`, `GanttTaskExecDoc`
 - ✅ `GanttCalendar`, `GanttChangeLog` — производственные календари и журнал изменений
 - ✅ Делегирование версий между организациями (`delegatedFromOrg`, `delegatedToOrg`, `DelegationTree`)
-- ✅ Настройки версии: метод расчёта, блокировки, округление, доступ
+- ✅ Настройки версии: метод расчёта, блокировки, округление, доступ, видимость колонок (`columnSettings Json?`)
 - ✅ Расширенные поля задач: человеко-часы, машино-часы, НДС, вес, тип стоимости, календарь
 
 ---
