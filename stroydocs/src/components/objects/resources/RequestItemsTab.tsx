@@ -188,9 +188,9 @@ export function RequestItemsTab({ objectId, request }: Props) {
                   <td className="px-3 py-2">
                     <ItemStatusSelect
                       statusId={item.statusId}
-                      onChange={(sid) =>
-                        updateItem.mutateAsync({ itemId: item.id, data: { statusId: sid } })
-                      }
+                      onChange={(sid) => {
+                        updateItem.mutateAsync({ itemId: item.id, data: { statusId: sid } });
+                      }}
                     />
                   </td>
                   <td className="px-3 py-2">

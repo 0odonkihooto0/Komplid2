@@ -117,7 +117,7 @@ export function WorkRecordsTable({ contractId, projectId }: Props) {
                 <EditableCell
                   value={record.date ? record.date.slice(0, 10) : ''}
                   type="date"
-                  onSave={(v) => updateMutation.mutateAsync({ id: record.id, data: { date: v } })}
+                  onSave={async (v) => { await updateMutation.mutateAsync({ id: record.id, data: { date: v } }); }}
                 />
                 <div>
                   <span className="font-mono text-xs text-muted-foreground">{record.workItem.projectCipher}</span>
@@ -125,7 +125,7 @@ export function WorkRecordsTable({ contractId, projectId }: Props) {
                 </div>
                 <EditableCell
                   value={record.location}
-                  onSave={(v) => updateMutation.mutateAsync({ id: record.id, data: { location: v } })}
+                  onSave={async (v) => { await updateMutation.mutateAsync({ id: record.id, data: { location: v } }); }}
                 />
                 <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium w-fit ${RECORD_STATUS_COLORS[record.status]}`}>
                   {WORK_RECORD_STATUS_LABELS[record.status]}
