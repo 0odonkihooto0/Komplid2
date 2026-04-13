@@ -2,7 +2,7 @@
 
 import type { ElementType } from 'react';
 import {
-  Search, CheckSquare, Eye, EyeOff, Maximize2, Columns3, Pencil, ChevronDown,
+  Search, CheckSquare, Eye, EyeOff, Maximize2, Columns3, Pencil, ChevronDown, Clock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,6 +36,8 @@ interface Props {
   isIsolated: boolean;
   onIsolate: () => void;
   onShowAll: () => void;
+  // Журнал изменений
+  onOpenChangeLog?: () => void;
 }
 
 function IconBtn({
@@ -79,6 +81,7 @@ export function GanttScheduleToolbar({
   isIsolated,
   onIsolate,
   onShowAll,
+  onOpenChangeLog,
 }: Props) {
   const disabled = !versionId;
 
@@ -144,6 +147,8 @@ export function GanttScheduleToolbar({
           </TooltipTrigger>
           <TooltipContent side="bottom">Редактировать версию</TooltipContent>
         </Tooltip>
+
+        <IconBtn icon={Clock} label="История изменений" onClick={onOpenChangeLog} disabled={disabled} />
 
         {/* Выпадающее меню «Действия» */}
         <DropdownMenu>

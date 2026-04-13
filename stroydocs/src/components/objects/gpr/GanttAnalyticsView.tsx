@@ -5,12 +5,20 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Settings, TrendingUp } from 'lucide-react';
 import { useGanttStages, useGanttVersionsByProject } from './useGanttStructure';
 import { useGanttAnalytics } from './useGanttAnalytics';
 import { GanttSCurveWidget } from './GanttSCurveWidget';
 import { GanttCurrentProgressWidget } from './GanttCurrentProgressWidget';
 import { GanttDeviationsWidget } from './GanttDeviationsWidget';
 import { GanttIdReadinessWidget } from './GanttIdReadinessWidget';
+import { GanttEvmPanel } from './GanttEvmPanel';
+import {
+  GanttAnalyticsSettingsDialog,
+  DEFAULT_ANALYTICS_SETTINGS,
+  type AnalyticsSettings,
+} from './GanttAnalyticsSettingsDialog';
 
 interface Props {
   objectId: string;
@@ -20,19 +28,22 @@ export function GanttAnalyticsView({ objectId }: Props) {
   const [selectedStageId, setSelectedStageId] = useState<string | null>(null);
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
   const [isCumulative, setIsCumulative] = useState(true);
+  const [reportDate, setReportDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [showSCurve, setShowSCurve] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settings, setSettings] = useState<AnalyticsSettings>(DEFAULT_ANALYTICS_SETTINGS);
 
   // ── Данные стадий и версий ─────────────────────────────────────────────────
   const { stages } = useGanttStages(objectId);
   const { versions, isLoading: versionsLoading } = useGanttVersionsByProject(objectId, selectedStageId);
 
-  // Даты из выбранной версии для S-кривой
   const selectedVersion = versions.find((v) => v.id === selectedVersionId) ?? null;
   const startDate = selectedVersion?.planStart ?? undefined;
   const endDate = selectedVersion?.planEnd ?? undefined;
 
   // ── Аналитика ─────────────────────────────────────────────────────────────
   const { data, isLoading: analyticsLoading } = useGanttAnalytics(
-    objectId, selectedVersionId, startDate, endDate,
+    objectId, selectedVersionId, startDate, endDate, reportDate,
   );
 
   const isLoading = versionsLoading || analyticsLoading;
@@ -44,7 +55,7 @@ export function GanttAnalyticsView({ objectId }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* ── Панель выбора стадии и версии ─────────────────────────────────── */}
+      {/* ── Панель выбора стадии, версии и кнопки ──────────────────────────── */}
       <div className="flex flex-wrap items-center gap-3">
         <Select onValueChange={handleStageChange} defaultValue="all">
           <SelectTrigger className="w-44">
@@ -74,6 +85,29 @@ export function GanttAnalyticsView({ objectId }: Props) {
             ))}
           </SelectContent>
         </Select>
+
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant={showSCurve ? 'default' : 'outline'}
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            onClick={() => setShowSCurve((p) => !p)}
+            disabled={!selectedVersionId}
+          >
+            <TrendingUp className="h-3.5 w-3.5" />
+            S-кривая проекта
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            onClick={() => setSettingsOpen(true)}
+            disabled={!selectedVersionId}
+          >
+            <Settings className="h-3.5 w-3.5" />
+            Настройки
+          </Button>
+        </div>
       </div>
 
       {/* ── Заглушка до выбора версии ─────────────────────────────────────── */}
@@ -87,26 +121,49 @@ export function GanttAnalyticsView({ objectId }: Props) {
 
       {/* ── Скелетон загрузки ─────────────────────────────────────────────── */}
       {selectedVersionId && isLoading && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-64 w-full rounded-lg" />
-          ))}
+        <div className="flex gap-4">
+          <Skeleton className="h-[400px] flex-1 rounded-lg" />
+          <Skeleton className="h-[400px] w-80 shrink-0 rounded-lg" />
         </div>
       )}
 
-      {/* ── 4 виджета в сетке 2×2 ────────────────────────────────────────── */}
+      {/* ── Основной лейаут: S-кривая слева + EVM панель справа ──────────── */}
       {selectedVersionId && !isLoading && data && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <GanttSCurveWidget
-            sCurve={data.sCurve}
-            cumulative={isCumulative}
-            onCumulativeChange={setIsCumulative}
-          />
-          <GanttCurrentProgressWidget sCurve={data.sCurve} />
-          <GanttDeviationsWidget deviations={data.deviations} />
-          <GanttIdReadinessWidget idReadiness={data.idReadiness} />
+        <div className="flex gap-4 items-start">
+          {/* Левая часть — S-кривая + доп. виджеты */}
+          <div className="flex-1 min-w-0 space-y-4">
+            {showSCurve && (
+              <GanttSCurveWidget
+                sCurve={data.sCurve}
+                cumulative={isCumulative}
+                onCumulativeChange={setIsCumulative}
+              />
+            )}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <GanttCurrentProgressWidget sCurve={data.sCurve} />
+              <GanttDeviationsWidget deviations={data.deviations} />
+              <GanttIdReadinessWidget idReadiness={data.idReadiness} />
+            </div>
+          </div>
+
+          {/* Правая часть — панель EVM-показателей */}
+          <div className="w-80 shrink-0">
+            <GanttEvmPanel
+              data={data}
+              reportDate={reportDate}
+              onReportDateChange={setReportDate}
+            />
+          </div>
         </div>
       )}
+
+      {/* Диалог настроек */}
+      <GanttAnalyticsSettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        settings={settings}
+        onApply={setSettings}
+      />
     </div>
   );
 }
