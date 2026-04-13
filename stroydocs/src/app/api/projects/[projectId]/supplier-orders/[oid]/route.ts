@@ -4,13 +4,14 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
-import { SupplierOrderStatus } from '@prisma/client';
+import { SupplierOrderStatus, SupplierOrderType } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
 // Схема обновления заказа — все поля опциональны
 const updateOrderSchema = z.object({
   status: z.nativeEnum(SupplierOrderStatus).optional(),
+  type: z.nativeEnum(SupplierOrderType).optional(),
   deliveryDate: z.string().datetime().optional().nullable(),
   totalAmount: z.number().nonnegative().optional().nullable(),
   notes: z.string().max(2000).optional().nullable(),
@@ -93,13 +94,14 @@ export async function PATCH(
       return errorResponse('Ошибка валидации', 400, parsed.error.issues);
     }
 
-    const { status, deliveryDate, totalAmount, notes, supplierOrgId, warehouseId } =
+    const { status, type, deliveryDate, totalAmount, notes, supplierOrgId, warehouseId } =
       parsed.data;
 
     const updated = await db.supplierOrder.update({
       where: { id: params.oid },
       data: {
         ...(status !== undefined ? { status } : {}),
+        ...(type !== undefined ? { type } : {}),
         ...(deliveryDate !== undefined
           ? { deliveryDate: deliveryDate ? new Date(deliveryDate) : null }
           : {}),
