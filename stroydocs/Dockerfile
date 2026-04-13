@@ -12,7 +12,11 @@ RUN npm config set registry https://registry.npmjs.org \
     && npm config set fetch-retry-mintimeout 20000 \
     && npm config set fetch-retry-maxtimeout 120000 \
     && npm config set fetch-retries 5 \
-    && PRISMA_SKIP_POSTINSTALL_GENERATE=true npm ci --omit=dev --no-audit
+    && for attempt in 1 2 3 4 5; do \
+         echo "==> npm install (deps) attempt $attempt/5" && \
+         PRISMA_SKIP_POSTINSTALL_GENERATE=true npm ci --omit=dev --no-audit && break || \
+         { echo "Attempt $attempt failed, waiting 30s..."; sleep 30; }; \
+       done
 
 # ── Stage 2: Build ────────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
@@ -28,7 +32,11 @@ RUN npm config set registry https://registry.npmjs.org \
     && npm config set fetch-retry-mintimeout 20000 \
     && npm config set fetch-retry-maxtimeout 120000 \
     && npm config set fetch-retries 5 \
-    && PRISMA_SKIP_POSTINSTALL_GENERATE=true npm ci --no-audit
+    && for attempt in 1 2 3 4 5; do \
+         echo "==> npm install (builder) attempt $attempt/5" && \
+         PRISMA_SKIP_POSTINSTALL_GENERATE=true npm ci --no-audit && break || \
+         { echo "Attempt $attempt failed, waiting 30s..."; sleep 30; }; \
+       done
 
 # Копируем исходники
 COPY . .
