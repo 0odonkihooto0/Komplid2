@@ -14,11 +14,13 @@ import {
 export type SectionId = WarehouseMovementType | 'balances';
 
 export const MOVEMENT_SECTIONS: Array<{ id: WarehouseMovementType; label: string }> = [
-  { id: 'RECEIPT',  label: 'Поступление' },
-  { id: 'SHIPMENT', label: 'Отгрузка' },
-  { id: 'TRANSFER', label: 'Перемещение' },
-  { id: 'WRITEOFF', label: 'Списание' },
-  { id: 'RETURN',   label: 'Возврат поставщику' },
+  { id: 'RECEIPT',       label: 'Поступление' },
+  { id: 'SHIPMENT',      label: 'Отгрузка' },
+  { id: 'TRANSFER',      label: 'Перемещение' },
+  { id: 'WRITEOFF',      label: 'Списание' },
+  { id: 'RETURN',        label: 'Возврат поставщику' },
+  { id: 'RECEIPT_ORDER', label: 'Приходный ордер' },
+  { id: 'EXPENSE_ORDER', label: 'Расходный ордер' },
 ];
 
 // ─── Хук состояния вкладки «Склад» ──────────────────────────────────────────
@@ -68,8 +70,10 @@ export function useWarehouseView(objectId: string) {
   }
 
   // Определяем обязательность складов для каждого типа движения
-  const needsFrom = activeSection === 'SHIPMENT' || activeSection === 'WRITEOFF' || activeSection === 'RETURN' || activeSection === 'TRANSFER';
-  const needsTo   = activeSection === 'RECEIPT' || activeSection === 'TRANSFER';
+  // EXPENSE_ORDER нужен склад-источник (аналог WRITEOFF)
+  const needsFrom = activeSection === 'SHIPMENT' || activeSection === 'WRITEOFF' || activeSection === 'RETURN' || activeSection === 'TRANSFER' || activeSection === 'EXPENSE_ORDER';
+  // RECEIPT_ORDER нужен склад-назначение (аналог RECEIPT)
+  const needsTo   = activeSection === 'RECEIPT' || activeSection === 'TRANSFER' || activeSection === 'RECEIPT_ORDER';
 
   return {
     activeSection,

@@ -5,7 +5,9 @@ import { useToast } from '@/hooks/useToast';
 
 // ─── Типы ────────────────────────────────────────────────────────────────────
 
-export type WarehouseMovementType = 'RECEIPT' | 'SHIPMENT' | 'TRANSFER' | 'WRITEOFF' | 'RETURN';
+export type WarehouseMovementType =
+  'RECEIPT' | 'SHIPMENT' | 'TRANSFER' | 'WRITEOFF' | 'RETURN'
+  | 'RECEIPT_ORDER' | 'EXPENSE_ORDER';
 export type MovementStatus = 'DRAFT' | 'CONDUCTED' | 'CANCELLED';
 
 export interface MovementListItem {

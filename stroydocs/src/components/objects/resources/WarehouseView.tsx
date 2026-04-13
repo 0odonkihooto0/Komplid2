@@ -162,6 +162,7 @@ export function WarehouseView({ objectId }: Props) {
           objectId={objectId}
           movementId={vm.selectedMovementId}
           onClose={() => vm.setSelectedMovementId(null)}
+          onMovementCreated={(id) => vm.setSelectedMovementId(id)}
         />
       )}
 

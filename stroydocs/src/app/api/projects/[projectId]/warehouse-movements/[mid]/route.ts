@@ -44,6 +44,7 @@ export async function GET(
         toWarehouse: { select: { id: true, name: true, location: true } },
         order: { select: { id: true, number: true, status: true } },
         createdBy: { select: { id: true, firstName: true, lastName: true, email: true } },
+        project: { select: { name: true } },
       },
     });
 
@@ -114,6 +115,40 @@ export async function PATCH(
   } catch (error) {
     if (error instanceof NextResponse) return error;
     logger.error({ err: error }, 'Ошибка обновления складского движения');
+    return errorResponse('Внутренняя ошибка сервера', 500);
+  }
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: { projectId: string; mid: string } }
+) {
+  try {
+    const session = await getSessionOrThrow();
+
+    const project = await db.buildingObject.findFirst({
+      where: { id: params.projectId, organizationId: session.user.organizationId },
+      select: { id: true },
+    });
+    if (!project) return errorResponse('Объект не найден', 404);
+
+    const existing = await db.warehouseMovement.findFirst({
+      where: { id: params.mid, projectId: params.projectId },
+      select: { id: true, status: true },
+    });
+    if (!existing) return errorResponse('Движение не найдено', 404);
+
+    // Удаление разрешено только для черновиков
+    if (existing.status !== 'DRAFT') {
+      return errorResponse('Удаление разрешено только для черновых движений', 409);
+    }
+
+    await db.warehouseMovement.delete({ where: { id: params.mid } });
+
+    return successResponse({ deleted: true });
+  } catch (error) {
+    if (error instanceof NextResponse) return error;
+    logger.error({ err: error }, 'Ошибка удаления складского движения');
     return errorResponse('Внутренняя ошибка сервера', 500);
   }
 }

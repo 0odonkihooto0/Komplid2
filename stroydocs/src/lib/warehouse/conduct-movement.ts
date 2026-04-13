@@ -128,6 +128,25 @@ export async function conductMovement(movementId: string): Promise<void> {
           break;
         }
 
+        case WarehouseMovementType.RECEIPT_ORDER: {
+          // Приходный ордер: приход на склад-назначение (аналог RECEIPT)
+          if (!movement.toWarehouseId) {
+            throw new Error(`RECEIPT_ORDER: не указан склад-назначение (toWarehouseId) в движении ${movement.number}`);
+          }
+          await upsertWarehouseItem(tx, movement.toWarehouseId, nomenclatureId, quantity);
+          await createBatchFromReceipt(tx, movement.projectId, nomenclatureId, quantity, movement.number, movement.movementDate);
+          break;
+        }
+
+        case WarehouseMovementType.EXPENSE_ORDER: {
+          // Расходный ордер: расход из склада-источника (аналог WRITEOFF)
+          if (!movement.fromWarehouseId) {
+            throw new Error(`EXPENSE_ORDER: не указан склад-источник (fromWarehouseId) в движении ${movement.number}`);
+          }
+          await upsertWarehouseItem(tx, movement.fromWarehouseId, nomenclatureId, -quantity);
+          break;
+        }
+
         default:
           // Защита на случай расширения enum
           logger.warn({ movementType: movement.movementType }, 'Неизвестный тип движения — строка пропущена');

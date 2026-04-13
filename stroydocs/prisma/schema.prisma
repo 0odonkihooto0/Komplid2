@@ -3856,6 +3856,7 @@ model WarehouseMovement {
   vatRate          Float?    // Ставка НДС (0, 10, 20)
   currency         String    @default("RUB") // Валюта документа
   externalNumber   String?   // Внешний номер
+  arrivalDate      DateTime? // Дата прибытия
   attachmentS3Keys String[]  @default([]) // Прикреплённые файлы
 
   // Склад-источник (для перемещения и отгрузки)
@@ -3894,12 +3895,15 @@ model WarehouseMovementLine {
   unitPrice  Float?
   totalPrice   Float?
   notes        String?
-  vatAmount    Float?  // Сумма НДС
-  totalWithVat Float?  // Сумма с НДС
-  basis        String? // Основание (ссылка на документ)
-  gtd          String? // ГТД
-  country      String? // Страна
-  comment      String? // Комментарий
+  vatAmount        Float?  // Сумма НДС
+  totalWithVat     Float?  // Сумма с НДС
+  basis            String? // Основание (ссылка на документ)
+  gtd              String? // ГТД
+  country          String? // Страна
+  comment          String? // Комментарий
+  discount         Float?  // Скидка %
+  lineVatRate      Float?  // Ставка НДС по строке
+  recipientAddress String? // Адрес получателя
 
   movementId String
   movement   WarehouseMovement @relation(fields: [movementId], references: [id], onDelete: Cascade)

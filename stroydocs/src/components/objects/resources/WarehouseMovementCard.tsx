@@ -14,6 +14,7 @@ import { CheckCheck } from 'lucide-react';
 import { WarehouseMovDocTab } from './WarehouseMovDocTab';
 import { WarehouseMovItemsTab } from './WarehouseMovItemsTab';
 import { ResourceAttachments } from './ResourceAttachments';
+import { MovementActionPanel } from './MovementActionPanel';
 import {
   useMovementDetail,
   useConductMovement,
@@ -25,6 +26,7 @@ interface Props {
   objectId: string;
   movementId: string;
   onClose: () => void;
+  onMovementCreated?: (id: string) => void;
 }
 
 // Варианты бэджей для каждого статуса движения
@@ -43,7 +45,7 @@ const STATUS_VARIANTS: Record<
   CANCELLED: 'destructive',
 };
 
-export function WarehouseMovementCard({ objectId, movementId, onClose }: Props) {
+export function WarehouseMovementCard({ objectId, movementId, onClose, onMovementCreated }: Props) {
   const { movement, isLoading } = useMovementDetail(objectId, movementId);
   const conduct = useConductMovement(objectId);
   const [tab, setTab] = useState('doc');
@@ -138,6 +140,16 @@ export function WarehouseMovementCard({ objectId, movementId, onClose }: Props) 
                 />
               </TabsContent>
             </Tabs>
+
+            <MovementActionPanel
+              objectId={objectId}
+              movement={movement}
+              onDeleted={onClose}
+              onCreatedBased={(id) => {
+                onClose();
+                onMovementCreated?.(id);
+              }}
+            />
           </div>
         )}
       </SheetContent>
