@@ -786,6 +786,7 @@
 - ✅ Импорт Primavera P6 (XER) / MS Project (XML) / Excel-шаблон ГПР
 - ✅ Экспорт ГПР в Excel (с зависимостями) и PDF
 - ✅ Аналитика ГПР: S-кривая, топ задержек, готовность ИД
+- ✅ EVM-аналитика (EV, AC, PV, BAC, CPI, SPI и др.)
 - ✅ Делегирование работ (delegate, delegate-and-merge, sync)
 - ✅ URL /objects/[id]/gpr/ + layout с 8 вкладками
 - ✅ CRUD производственных календарей (GET/POST/PATCH/DELETE + from-template)
