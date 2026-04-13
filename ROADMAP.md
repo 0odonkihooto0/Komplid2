@@ -788,6 +788,10 @@
 
 **База данных (Модуль 7)**
 - ✅ `GanttTask`, `GanttVersion`, `GanttDependency`, `GanttDailyPlan`, `GanttStage`, `GanttTaskExecDoc`
+- ✅ `GanttCalendar`, `GanttChangeLog` — производственные календари и журнал изменений
+- ✅ Делегирование версий между организациями (`delegatedFromOrg`, `delegatedToOrg`, `DelegationTree`)
+- ✅ Настройки версии: метод расчёта, блокировки, округление, доступ
+- ✅ Расширенные поля задач: человеко-часы, машино-часы, НДС, вес, тип стоимости, календарь
 
 ---
 

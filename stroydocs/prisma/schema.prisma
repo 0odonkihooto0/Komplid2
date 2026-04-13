@@ -153,6 +153,10 @@ model Organization {
   approvalTemplates     ApprovalTemplate[]
   stampTitles           StampTitle[]
 
+  // Модуль 7 — ГПР (делегирование)
+  ganttVersionsDelegatedFrom GanttVersion[] @relation("GanttVersionDelegatedFrom")
+  ganttVersionsDelegatedTo   GanttVersion[] @relation("GanttVersionDelegatedTo")
+
   // Модуль 8 — Ресурсы
   supplierRequests MaterialRequest[]      @relation("RequestSupplier")
   supplierOrders   SupplierOrder[]        @relation("OrderSupplier")
@@ -262,6 +266,7 @@ model User {
   // Модуль 7 — ГПР
   ganttDailyPlans       GanttDailyPlan[]   @relation("GanttDailyPlanCreator")
   ganttTaskExecDocLinks GanttTaskExecDoc[] @relation("GanttTaskExecDocCreator")
+  ganttChangeLogs       GanttChangeLog[]   @relation("GanttChangeLogUser")
 
   // Модуль 8 — Ресурсы
   requestsManaged     MaterialRequest[]   @relation("RequestManager")
@@ -403,8 +408,9 @@ model BuildingObject {
   pirClosureActs PIRClosureAct[]
 
   // Модуль 7 — ГПР
-  ganttStages   GanttStage[]
-  ganttVersions GanttVersion[] @relation("ObjectGanttVersions")
+  ganttStages    GanttStage[]
+  ganttVersions  GanttVersion[]  @relation("ObjectGanttVersions")
+  ganttCalendars GanttCalendar[]
 
   // Модуль 8 — Ресурсы
   materialRequests   MaterialRequest[]
@@ -518,6 +524,7 @@ model Contract {
   idRegistries      IdRegistry[]
   ganttVersions     GanttVersion[]
   ganttTasks        GanttTask[]
+  ganttTaskContracts GanttTask[]   @relation("GanttTaskContract")
   defects           Defect[]
   dailyLogs         DailyLog[]
   changeOrders      ChangeOrder[]
@@ -1554,17 +1561,44 @@ model GanttVersion {
   project     BuildingObject? @relation("ObjectGanttVersions", fields: [projectId], references: [id])
   description String?
 
+  // Делегирование между организациями
+  delegatedFromOrgId     String?
+  delegatedFromOrg       Organization?  @relation("GanttVersionDelegatedFrom", fields: [delegatedFromOrgId], references: [id], onDelete: SetNull)
+  delegatedToOrgId       String?
+  delegatedToOrg         Organization?  @relation("GanttVersionDelegatedTo", fields: [delegatedToOrgId], references: [id], onDelete: SetNull)
+
+  // Дерево делегирования (самоссылка)
+  delegatedFromVersionId String?
+  delegatedFromVersion   GanttVersion?  @relation("DelegationTree", fields: [delegatedFromVersionId], references: [id], onDelete: SetNull)
+  delegatedToVersions    GanttVersion[] @relation("DelegationTree")
+
+  // Настройки версии
+  calculationMethod     String?  @default("MANUAL") // Вручную/Объем/Суммы/Человеко-часы/Машино-часы/Трудовые ресурсы
+  allowOverplan         Boolean  @default(false) // Разрешить перевыполнение плана
+  showSummaryRow        Boolean  @default(false) // Суммарная запись проекта
+  lockWorks             Boolean  @default(false) // Блокировка работ
+  lockPlan              Boolean  @default(false) // Блокировка плана
+  lockFact              Boolean  @default(false) // Блокировка факта
+  disableVolumeRounding Boolean  @default(true) // Отключение округления объёмов
+  linkedVersionIds      String[] @default([]) // ID связанных версий для сборной версии
+  accessOrgIds          String[] @default([]) // ID организаций с доступом
+
   createdById String
   createdBy   User   @relation(fields: [createdById], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tasks GanttTask[]
+  tasks      GanttTask[]
+  calendars  GanttCalendar[]
+  changeLogs GanttChangeLog[]
 
   @@index([contractId])
   @@index([contractId, isActive])
   @@index([projectId])
+  @@index([delegatedFromOrgId])
+  @@index([delegatedToOrgId])
+  @@index([delegatedFromVersionId])
   @@map("gantt_versions")
 }
 
@@ -1619,6 +1653,24 @@ model GanttTask {
   estimateItemId           String?
   estimateItem             EstimateItem? @relation(fields: [estimateItemId], references: [id])
 
+  // Расширенные поля задачи (делегирование и настройки)
+  manHours             Float? // Человеко-часы
+  machineHours         Float? // Машино-часы
+  amountVat            Float? // Сумма НДС
+  deadline             DateTime? // Крайний срок
+  comment              String? // Комментарий (отображается под названием)
+  costType             String? // Тип стоимости: CONSTRUCTION/MOUNTING/EQUIPMENT/OTHER
+  workType             String? // Вид работ
+  basis                String? // Основание (ссылка на смету)
+  materialDistribution String?  @default("UNIFORM") // Характер распределения: UNIFORM/PER_UNIT/FIRST_DAY/LAST_DAY
+  weight               Float    @default(0) // Вес задачи в суммарной
+  delegatedToVersionId String? // В какую версию делегирована задача
+  attachmentS3Keys     String[] @default([]) // Прикреплённые файлы
+
+  // Контракт задачи (отдельно от контракта версии)
+  taskContractId String?
+  taskContract   Contract? @relation("GanttTaskContract", fields: [taskContractId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1632,6 +1684,9 @@ model GanttTask {
   // Связанные исполнительные документы
   execDocs GanttTaskExecDoc[]
 
+  // Календари задачи
+  calendars GanttCalendar[]
+
   // Модуль 8 — Ресурсы
   requestItems MaterialRequestItem[]
 
@@ -1641,6 +1696,7 @@ model GanttTask {
   @@index([parentId])
   @@index([workItemId])
   @@index([estimateItemId])
+  @@index([taskContractId])
   @@map("gantt_tasks")
 }
 
@@ -1721,6 +1777,50 @@ model GanttDailyPlan {
   @@index([taskId])
   @@index([planDate])
   @@map("gantt_daily_plans")
+}
+
+/// Производственный календарь (для версии или отдельной задачи)
+model GanttCalendar {
+  id              String  @id @default(uuid())
+  name            String // Название календаря
+  isTemplate      Boolean @default(false) // Шаблон для переиспользования
+  workDays        Json // { mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false }
+  workHoursPerDay Float   @default(8) // Рабочих часов в день
+  holidays        Json    @default("[]") // Массив дат-исключений
+
+  versionId String?
+  version   GanttVersion? @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  taskId    String?
+  task      GanttTask?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  projectId String
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([versionId])
+  @@index([taskId])
+  @@index([projectId])
+  @@map("gantt_calendars")
+}
+
+/// Журнал изменений ГПР (аудит)
+model GanttChangeLog {
+  id        String       @id @default(uuid())
+  versionId String
+  version   GanttVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  taskId    String? // Если изменение относится к конкретной задаче
+  userId    String
+  user      User         @relation("GanttChangeLogUser", fields: [userId], references: [id])
+  action    String // CREATE / UPDATE / DELETE
+  fieldName String? // Какое поле изменено
+  oldValue  String? // Старое значение
+  newValue  String? // Новое значение
+  createdAt DateTime     @default(now())
+
+  @@index([versionId])
+  @@index([userId])
+  @@map("gantt_change_logs")
 }
 
 // ─────────────────────────────────────────────────────────────────
