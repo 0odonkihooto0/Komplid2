@@ -221,6 +221,7 @@ export function GanttChartGPR({ objectId, versionId }: Props) {
           task={selectedTask}
           objectId={objectId}
           versionId={versionId}
+          allTasks={data.tasks}
           onClose={() => setSelectedTask(null)}
           onExecDocsOpen={() => setExecDocsTaskId(selectedTask.id)}
         />

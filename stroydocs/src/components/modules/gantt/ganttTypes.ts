@@ -33,12 +33,32 @@ export interface GanttTaskItem {
   factEnd: string | null;
   progress: number;
   isCritical: boolean;
+  isMilestone: boolean;
   linkedExecutionDocsCount: number;
   versionId: string;
   parentId: string | null;
   workItemId: string | null;
   contractId: string | null;
   workItem: { id: string; name: string; projectCipher: string } | null;
+  // Расширенные поля задачи ГПР
+  volume: number | null;
+  volumeUnit: string | null;
+  amount: number | null;
+  amountVat: number | null;
+  weight: number;
+  manHours: number | null;
+  machineHours: number | null;
+  deadline: string | null;
+  comment: string | null;
+  costType: string | null;
+  workType: string | null;
+  basis: string | null;
+  materialDistribution: string;
+  calcType: string | null;
+  taskContractId: string | null;
+  estimateItemId: string | null;
+  attachmentS3Keys: string[];
+  calendarType: string | null;
 }
 
 export interface GanttDependencyItem {
