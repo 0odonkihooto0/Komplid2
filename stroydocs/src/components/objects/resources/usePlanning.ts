@@ -61,6 +61,38 @@ export interface GanttVersionOption {
   taskCount: number;
 }
 
+// ─── Типы ресурсов ГПР ───────────────────────────────────────────────────────
+
+export type GprResourceType = 'machines' | 'works' | 'labor';
+
+export interface GprMachineItem {
+  ganttTaskId: string;
+  ganttTaskName: string;
+  planStart: string | null;
+  planEnd: string | null;
+  machineHours: number;
+}
+
+export interface GprWorkItem {
+  ganttTaskId: string;
+  ganttTaskName: string;
+  workType: string | null;
+  volume: number | null;
+  volumeUnit: string | null;
+  planStart: string | null;
+  planEnd: string | null;
+  status: string;
+  workItemName: string | null;
+}
+
+export interface GprLaborItem {
+  ganttTaskId: string;
+  ganttTaskName: string;
+  planStart: string | null;
+  planEnd: string | null;
+  manHours: number;
+}
+
 // ─── Хуки для ЛРВ ────────────────────────────────────────────────────────────
 
 export function useRequests(objectId: string, filters?: RequestsFilter) {
@@ -135,7 +167,7 @@ export function useCreateFromGpr(objectId: string) {
   });
 }
 
-// ─── Хуки для ГПР ────────────────────────────────────────────────────────────
+// ─── Хуки для ГПР и ресурсов ─────────────────────────────────────────────────
 
 export function useGanttVersions(objectId: string) {
   const { data, isLoading } = useQuery<GanttVersionOption[]>({
@@ -170,4 +202,33 @@ export function useGprMaterials(
     enabled: !!objectId && !!ganttVersionId,
   });
   return { materials: data?.materials ?? [], total: data?.total ?? 0, isLoading };
+}
+
+export function useGprResources<T>(
+  objectId: string,
+  params: {
+    ganttVersionId: string | null;
+    resourceType: GprResourceType;
+    from?: string;
+    to?: string;
+  }
+) {
+  const { ganttVersionId, resourceType, from, to } = params;
+  const { data, isLoading } = useQuery<{ items: T[]; total: number }>({
+    queryKey: ['gpr-resources', objectId, ganttVersionId, resourceType, from, to],
+    queryFn: async () => {
+      const sp = new URLSearchParams({
+        ganttVersionId: ganttVersionId!,
+        resourceType,
+      });
+      if (from) sp.set('from', from);
+      if (to) sp.set('to', to);
+      const res = await fetch(`/api/projects/${objectId}/gpr-resources?${sp}`);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? 'Ошибка загрузки ресурсов ГПР');
+      return json.data;
+    },
+    enabled: !!objectId && !!ganttVersionId,
+  });
+  return { items: data?.items ?? [], total: data?.total ?? 0, isLoading };
 }
