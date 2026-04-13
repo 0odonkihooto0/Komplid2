@@ -784,6 +784,7 @@
 - ✅ Стадии реализации (CRUD, drag-and-drop порядок)
 - ✅ Импорт из сметы (EstimateVersion → GanttTask)
 - ✅ Аналитика ГПР: S-кривая, топ задержек, готовность ИД
+- ✅ Делегирование работ (delegate, delegate-and-merge, sync)
 - ✅ URL /objects/[id]/gpr/ + layout с 8 вкладками
 
 **База данных (Модуль 7)**
