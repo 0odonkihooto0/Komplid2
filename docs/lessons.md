@@ -241,5 +241,16 @@ BullMQ воркеры: `maxRetriesPerRequest: null` (требование BullMQ
 
 ---
 
+**`mutationFn` body type не включает поле → TS2353 при вызове `.mutate()` с новым полем.**
+`useCreateTaskGPR` объявлял тип тела без `sortOrder`. `handleAddBelow` и `handleCopy`
+передавали `sortOrder: task.sortOrder + 1` → ошибка сборки `Object literal may only
+specify known properties, and 'sortOrder' does not exist in type`.
+API-роут уже принимал поле через Zod-схему — несоответствие было только в типе хука.
+**Правило**: при добавлении нового поля в вызов `.mutate()` **сразу** добавлять его
+в тип `mutationFn` тела. Проверять: тип body хука ↔ Zod-схема API-роута ↔ фактические
+вызовы `.mutate()` в компонентах должны быть синхронизированы.
+
+---
+
 > Правило: после каждой исправленной ошибки добавить урок сюда.
 > Команда: "Добавь урок в docs/lessons.md: [описание ошибки]"
