@@ -6,7 +6,9 @@ import { useToast } from '@/hooks/useToast';
 // ─── Типы ────────────────────────────────────────────────────────────────────
 
 export type MovementStatus = 'DRAFT' | 'CONDUCTED' | 'CANCELLED';
-export type WarehouseMovementType = 'RECEIPT' | 'SHIPMENT' | 'TRANSFER' | 'WRITEOFF' | 'RETURN';
+export type WarehouseMovementType =
+  'RECEIPT' | 'SHIPMENT' | 'TRANSFER' | 'WRITEOFF' | 'RETURN'
+  | 'RECEIPT_ORDER' | 'EXPENSE_ORDER';
 
 export interface MovementLine {
   id: string;
@@ -16,6 +18,15 @@ export interface MovementLine {
   totalPrice: number | null;
   notes: string | null;
   nomenclature: { id: string; name: string; unit: string | null } | null;
+  vatAmount: number | null;
+  totalWithVat: number | null;
+  basis: string | null;
+  gtd: string | null;
+  country: string | null;
+  comment: string | null;
+  discount: number | null;
+  lineVatRate: number | null;
+  recipientAddress: string | null;
 }
 
 export interface MovementDetail {
@@ -30,6 +41,13 @@ export interface MovementDetail {
   lines: MovementLine[];
   attachmentS3Keys: string[];
   createdBy: { id: string; firstName: string; lastName: string } | null;
+  consignor: string | null;
+  consignee: string | null;
+  arrivalDate: string | null;
+  vatType: string | null;
+  vatRate: number | null;
+  currency: string;
+  project: { name: string } | null;
 }
 
 export interface NomenclatureOption {
@@ -46,6 +64,8 @@ export const MOV_TYPE_LABELS: Record<WarehouseMovementType, string> = {
   TRANSFER: 'Перемещение',
   WRITEOFF: 'Списание',
   RETURN: 'Возврат поставщику',
+  RECEIPT_ORDER: 'Приходный ордер',
+  EXPENSE_ORDER: 'Расходный ордер',
 };
 
 // ─── Хук загрузки деталей движения ───────────────────────────────────────────
@@ -161,4 +181,87 @@ export function useNomenclature(objectId: string, search: string) {
     enabled: !!objectId && search.length > 1,
   });
   return { options: data ?? [], isLoading };
+}
+
+// ─── Хук «Создать на основании» ──────────────────────────────────────────────
+
+export function useCreateBasedOn(objectId: string) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async ({ movementId, targetType }: { movementId: string; targetType: WarehouseMovementType }) => {
+      const res = await fetch(
+        `/api/projects/${objectId}/warehouse-movements/${movementId}/create-based-on`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targetType }),
+        }
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? 'Ошибка создания документа');
+      return json.data as { id: string; number: string };
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['warehouse-movements', objectId] });
+      toast({ title: `Создан документ ${data.number}` });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Ошибка', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
+// ─── Хук удаления движения ────────────────────────────────────────────────────
+
+export function useDeleteMovement(objectId: string) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (movementId: string) => {
+      const res = await fetch(
+        `/api/projects/${objectId}/warehouse-movements/${movementId}`,
+        { method: 'DELETE' }
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? 'Ошибка удаления движения');
+      return movementId;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['warehouse-movements', objectId] });
+      toast({ title: 'Движение удалено' });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Ошибка', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
+// ─── Хук копирования движения ─────────────────────────────────────────────────
+
+export function useCopyMovement(objectId: string) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async ({ movementId, targetType }: { movementId: string; targetType: WarehouseMovementType }) => {
+      const res = await fetch(
+        `/api/projects/${objectId}/warehouse-movements/${movementId}/create-based-on`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targetType }),
+        }
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? 'Ошибка копирования движения');
+      return json.data as { id: string; number: string };
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['warehouse-movements', objectId] });
+      toast({ title: `Копия создана: ${data.number}` });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Ошибка', description: err.message, variant: 'destructive' });
+    },
+  });
 }

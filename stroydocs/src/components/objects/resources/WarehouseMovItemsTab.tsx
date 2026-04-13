@@ -12,8 +12,7 @@ interface Props {
   movement: MovementDetail;
 }
 
-// Форматирование денежного значения
-function formatMoney(value: number | null): string {
+function fmt(value: number | null | undefined): string {
   if (value == null) return '—';
   return value.toLocaleString('ru-RU', { maximumFractionDigits: 2 });
 }
@@ -22,7 +21,6 @@ export function WarehouseMovItemsTab({ objectId, movement }: Props) {
   const addLine = useAddLine(objectId, movement.id);
   const deleteLine = useDeleteLine(objectId, movement.id);
 
-  // Состояние формы добавления строки
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState('');
   const [quantity, setQuantity] = useState('1');
@@ -30,13 +28,10 @@ export function WarehouseMovItemsTab({ objectId, movement }: Props) {
   const { options } = useNomenclature(objectId, search);
   const isDraft = movement.status === 'DRAFT';
 
-  // Вычисление итоговой суммы по всем строкам
-  const grandTotal = movement.lines.reduce((sum, line) => {
-    if (line.totalPrice != null) return sum + line.totalPrice;
-    if (line.quantity != null && line.unitPrice != null)
-      return sum + line.quantity * line.unitPrice;
-    return sum;
-  }, 0);
+  // Итоги по таблице
+  const totalSumNoVat = movement.lines.reduce((s, l) => s + (l.totalPrice ?? 0), 0);
+  const totalVatAmount = movement.lines.reduce((s, l) => s + (l.vatAmount ?? 0), 0);
+  const totalWithVat = movement.lines.reduce((s, l) => s + (l.totalWithVat ?? 0), 0);
 
   function handleAdd() {
     if (!selectedId || !quantity) return;
@@ -52,101 +47,110 @@ export function WarehouseMovItemsTab({ objectId, movement }: Props) {
     );
   }
 
+  const colCount = isDraft ? 14 : 13;
+
   return (
     <div className="space-y-3 pt-2">
-      {/* Таблица строк движения */}
       <div className="rounded-md border overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm" style={{ minWidth: '900px' }}>
           <thead>
             <tr className="border-b bg-muted/50">
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground w-8">#</th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground min-w-[180px]">
-                Номенклатура
-              </th>
-              <th className="px-3 py-2 text-right font-medium text-muted-foreground min-w-[70px]">
-                Кол-во
-              </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground min-w-[60px]">
-                Ед.
-              </th>
-              <th className="px-3 py-2 text-right font-medium text-muted-foreground min-w-[90px]">
-                Цена, ₽
-              </th>
-              <th className="px-3 py-2 text-right font-medium text-muted-foreground min-w-[90px]">
-                Итого, ₽
-              </th>
-              {/* Колонка удаления — только для черновика */}
-              {isDraft && <th className="px-3 py-2 w-8" />}
+              <th className="px-2 py-2 text-left font-medium text-muted-foreground w-7">#</th>
+              <th className="px-2 py-2 text-left font-medium text-muted-foreground min-w-[160px]">Номенклатура</th>
+              <th className="px-2 py-2 text-right font-medium text-muted-foreground min-w-[60px]">Кол-во</th>
+              <th className="px-2 py-2 text-left font-medium text-muted-foreground min-w-[50px]">Ед.</th>
+              <th className="px-2 py-2 text-right font-medium text-muted-foreground min-w-[80px]">Цена, ₽</th>
+              <th className="px-2 py-2 text-right font-medium text-muted-foreground min-w-[60px]">Скидка %</th>
+              <th className="px-2 py-2 text-right font-medium text-muted-foreground min-w-[90px]">Сумма без НДС</th>
+              <th className="px-2 py-2 text-right font-medium text-muted-foreground min-w-[70px]">Ставка НДС</th>
+              <th className="px-2 py-2 text-right font-medium text-muted-foreground min-w-[80px]">Сумма НДС</th>
+              <th className="px-2 py-2 text-right font-medium text-muted-foreground min-w-[90px]">Сумма с НДС</th>
+              <th className="px-2 py-2 text-left font-medium text-muted-foreground min-w-[80px]">Основание</th>
+              <th className="px-2 py-2 text-left font-medium text-muted-foreground min-w-[80px]">Комментарий</th>
+              <th className="px-2 py-2 text-left font-medium text-muted-foreground min-w-[70px]">ГТД</th>
+              {isDraft && <th className="px-2 py-2 w-8" />}
             </tr>
           </thead>
           <tbody>
             {movement.lines.length === 0 ? (
               <tr>
                 <td
-                  colSpan={isDraft ? 7 : 6}
+                  colSpan={colCount}
                   className="px-3 py-8 text-center text-muted-foreground text-sm"
                 >
                   Строк нет. {isDraft ? 'Добавьте номенклатуру ниже.' : ''}
                 </td>
               </tr>
             ) : (
-              movement.lines.map((line, idx) => (
-                <tr key={line.id} className="border-b last:border-b-0 hover:bg-muted/30">
-                  <td className="px-3 py-2 text-muted-foreground text-xs">{idx + 1}</td>
-                  <td className="px-3 py-2">
-                    {line.nomenclature ? (
-                      <span>{line.nomenclature.name}</span>
-                    ) : (
-                      <span className="italic text-muted-foreground">Без номенклатуры</span>
-                    )}
-                    {line.notes && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{line.notes}</p>
-                    )}
-                  </td>
-                  <td className="px-3 py-2 text-right">{line.quantity}</td>
-                  <td className="px-3 py-2">
-                    {line.unit ?? line.nomenclature?.unit ?? '—'}
-                  </td>
-                  <td className="px-3 py-2 text-right text-muted-foreground">
-                    {formatMoney(line.unitPrice)}
-                  </td>
-                  <td className="px-3 py-2 text-right text-muted-foreground">
-                    {line.totalPrice != null
-                      ? formatMoney(line.totalPrice)
-                      : line.unitPrice != null
-                        ? formatMoney(line.quantity * line.unitPrice)
-                        : '—'}
-                  </td>
-                  {isDraft && (
-                    <td className="px-3 py-2">
-                      <button
-                        onClick={() => deleteLine.mutate(line.id)}
-                        disabled={deleteLine.isPending}
-                        className="text-muted-foreground hover:text-destructive transition-colors"
-                        aria-label="Удалить строку"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+              movement.lines.map((line, idx) => {
+                const effectiveVatRate = line.lineVatRate ?? movement.vatRate;
+                return (
+                  <tr key={line.id} className="border-b last:border-b-0 hover:bg-muted/30">
+                    <td className="px-2 py-2 text-muted-foreground text-xs">{idx + 1}</td>
+                    <td className="px-2 py-2">
+                      {line.nomenclature ? (
+                        <div>
+                          <span>{line.nomenclature.name}</span>
+                          {line.country && <p className="text-xs text-muted-foreground">Страна: {line.country}</p>}
+                          {line.recipientAddress && <p className="text-xs text-muted-foreground truncate max-w-[180px]">{line.recipientAddress}</p>}
+                        </div>
+                      ) : (
+                        <span className="italic text-muted-foreground">Без номенклатуры</span>
+                      )}
                     </td>
-                  )}
-                </tr>
-              ))
+                    <td className="px-2 py-2 text-right">{line.quantity}</td>
+                    <td className="px-2 py-2">{line.unit ?? line.nomenclature?.unit ?? '—'}</td>
+                    <td className="px-2 py-2 text-right text-muted-foreground">{fmt(line.unitPrice)}</td>
+                    <td className="px-2 py-2 text-right text-muted-foreground">
+                      {line.discount != null ? `${line.discount}%` : '—'}
+                    </td>
+                    <td className="px-2 py-2 text-right">{fmt(line.totalPrice)}</td>
+                    <td className="px-2 py-2 text-right text-muted-foreground">
+                      {effectiveVatRate != null ? `${effectiveVatRate}%` : '—'}
+                    </td>
+                    <td className="px-2 py-2 text-right text-muted-foreground">{fmt(line.vatAmount)}</td>
+                    <td className="px-2 py-2 text-right font-medium">{fmt(line.totalWithVat)}</td>
+                    <td className="px-2 py-2 text-muted-foreground text-xs">{line.basis ?? '—'}</td>
+                    <td className="px-2 py-2 text-muted-foreground text-xs">{line.comment ?? '—'}</td>
+                    <td className="px-2 py-2 text-muted-foreground text-xs">{line.gtd ?? '—'}</td>
+                    {isDraft && (
+                      <td className="px-2 py-2">
+                        <button
+                          onClick={() => deleteLine.mutate(line.id)}
+                          disabled={deleteLine.isPending}
+                          className="text-muted-foreground hover:text-destructive transition-colors"
+                          aria-label="Удалить строку"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })
             )}
           </tbody>
+          {/* Итоговая строка */}
+          {movement.lines.length > 0 && (
+            <tfoot>
+              <tr className="border-t bg-muted/30 font-medium">
+                <td colSpan={6} className="px-2 py-2 text-right text-xs text-muted-foreground">
+                  Итого:
+                </td>
+                <td className="px-2 py-2 text-right">{fmt(totalSumNoVat)}</td>
+                <td />
+                <td className="px-2 py-2 text-right text-muted-foreground">{fmt(totalVatAmount)}</td>
+                <td className="px-2 py-2 text-right">{fmt(totalWithVat)}</td>
+                <td colSpan={isDraft ? 4 : 3} />
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
-
-      {/* Итого */}
-      {movement.lines.length > 0 && grandTotal > 0 && (
-        <div className="text-right text-sm font-medium pr-2">
-          Итого: {grandTotal.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽
-        </div>
-      )}
 
       {/* Форма добавления строки — только для черновика */}
       {isDraft && (
         <div className="flex flex-wrap items-end gap-2 pt-1">
-          {/* Поле поиска номенклатуры */}
           <div className="flex flex-col gap-1 min-w-[200px] flex-1">
             <label className="text-xs text-muted-foreground">Номенклатура</label>
             <div className="relative">
@@ -159,7 +163,6 @@ export function WarehouseMovItemsTab({ objectId, movement }: Props) {
                 }}
                 className="text-sm"
               />
-              {/* Выпадающий список совпадений */}
               {options.length > 0 && !selectedId && (
                 <div className="absolute z-10 top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto rounded-md border bg-popover shadow-md">
                   {options.map((opt) => (
@@ -174,9 +177,7 @@ export function WarehouseMovItemsTab({ objectId, movement }: Props) {
                     >
                       {opt.name}
                       {opt.unit && (
-                        <span className="ml-1 text-xs text-muted-foreground">
-                          ({opt.unit})
-                        </span>
+                        <span className="ml-1 text-xs text-muted-foreground">({opt.unit})</span>
                       )}
                     </button>
                   ))}
@@ -184,8 +185,6 @@ export function WarehouseMovItemsTab({ objectId, movement }: Props) {
               )}
             </div>
           </div>
-
-          {/* Количество */}
           <div className="flex flex-col gap-1 w-24">
             <label className="text-xs text-muted-foreground">Количество</label>
             <Input
@@ -198,7 +197,6 @@ export function WarehouseMovItemsTab({ objectId, movement }: Props) {
               className="text-sm"
             />
           </div>
-
           <Button
             size="sm"
             variant="outline"

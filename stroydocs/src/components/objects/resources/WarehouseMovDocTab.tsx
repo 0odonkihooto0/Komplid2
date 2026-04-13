@@ -9,7 +9,6 @@ interface Props {
   movement: MovementDetail;
 }
 
-// Вспомогательный компонент read-only поля
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div>
@@ -19,13 +18,28 @@ function Field({ label, value }: { label: string; value: string | null | undefin
   );
 }
 
+// Метки типа НДС
+const VAT_TYPE_LABELS: Record<string, string> = {
+  'ABOVE': 'НДС сверху',
+  'INCLUDED': 'НДС в сумме',
+};
+
+// Метки валюты
+const CURRENCY_LABELS: Record<string, string> = {
+  'RUB': 'Рубли (₽)',
+  'USD': 'Доллар (USD)',
+  'EUR': 'Евро (EUR)',
+};
+
 export function WarehouseMovDocTab({ movement }: Props) {
-  // Форматирование даты движения
   const formattedDate = movement.movementDate
     ? format(new Date(movement.movementDate), 'd MMM yyyy', { locale: ru })
     : '—';
 
-  // Наименование склада с адресом
+  const formattedArrivalDate = movement.arrivalDate
+    ? format(new Date(movement.arrivalDate), 'd MMM yyyy', { locale: ru })
+    : null;
+
   const fromWarehouseLabel = movement.fromWarehouse
     ? movement.fromWarehouse.location
       ? `${movement.fromWarehouse.name} — ${movement.fromWarehouse.location}`
@@ -38,22 +52,31 @@ export function WarehouseMovDocTab({ movement }: Props) {
       : movement.toWarehouse.name
     : null;
 
-  // ФИО создавшего документ
   const createdByLabel = movement.createdBy
     ? `${movement.createdBy.firstName} ${movement.createdBy.lastName}`
     : null;
+
+  const vatTypeLabel = movement.vatType ? (VAT_TYPE_LABELS[movement.vatType] ?? movement.vatType) : null;
+  const vatRateLabel = movement.vatRate != null ? `${movement.vatRate}%` : null;
+  const currencyLabel = movement.currency ? (CURRENCY_LABELS[movement.currency] ?? movement.currency) : 'Рубли (₽)';
 
   return (
     <div className="pt-2 max-w-lg">
       <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
         <Field label="Тип движения" value={MOV_TYPE_LABELS[movement.movementType]} />
         <Field label="Дата" value={formattedDate} />
+        <Field label="Дата прибытия" value={formattedArrivalDate} />
+        <Field label="Объект строительства" value={movement.project?.name} />
         <Field label="Склад (откуда)" value={fromWarehouseLabel} />
         <Field label="Склад (куда)" value={toWarehouseLabel} />
+        <Field label="Грузоотправитель" value={movement.consignor} />
+        <Field label="Грузополучатель" value={movement.consignee} />
+        <Field label="Тип НДС" value={vatTypeLabel} />
+        <Field label="Ставка НДС" value={vatRateLabel} />
+        <Field label="Валюта" value={currencyLabel} />
         <Field label="Создал" value={createdByLabel} />
       </dl>
 
-      {/* Примечание — в полную ширину */}
       {movement.notes && (
         <div className="mt-4">
           <p className="text-xs text-muted-foreground">Примечание</p>
