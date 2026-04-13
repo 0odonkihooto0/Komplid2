@@ -12,6 +12,12 @@ const updateItemSchema = z.object({
   quantity: z.number().positive().optional(),
   unit: z.string().max(50).optional().nullable(),
   unitPrice: z.number().nonnegative().optional().nullable(),
+  discount: z.number().min(0).max(100).optional().nullable(),
+  vatRate: z.number().min(0).max(100).optional().nullable(),
+  vatAmount: z.number().nonnegative().optional().nullable(),
+  weight: z.number().nonnegative().optional().nullable(),
+  volume: z.number().nonnegative().optional().nullable(),
+  basis: z.string().max(500).optional().nullable(),
 });
 
 /**
@@ -49,7 +55,7 @@ export async function PATCH(
       return errorResponse('Ошибка валидации', 400, parsed.error.issues);
     }
 
-    const { quantity, unit, unitPrice } = parsed.data;
+    const { quantity, unit, unitPrice, discount, vatRate, vatAmount, weight, volume, basis } = parsed.data;
 
     // Пересчёт итоговой суммы позиции при изменении количества или цены
     const newQty = quantity ?? existing.quantity;
@@ -64,6 +70,12 @@ export async function PATCH(
         ...(unit !== undefined ? { unit } : {}),
         ...(unitPrice !== undefined ? { unitPrice } : {}),
         ...(totalPrice !== undefined ? { totalPrice } : {}),
+        ...(discount !== undefined ? { discount } : {}),
+        ...(vatRate !== undefined ? { vatRate } : {}),
+        ...(vatAmount !== undefined ? { vatAmount } : {}),
+        ...(weight !== undefined ? { weight } : {}),
+        ...(volume !== undefined ? { volume } : {}),
+        ...(basis !== undefined ? { basis } : {}),
       },
       include: {
         nomenclature: { select: { id: true, name: true, unit: true } },

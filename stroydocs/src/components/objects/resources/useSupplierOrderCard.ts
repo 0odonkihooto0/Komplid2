@@ -3,83 +3,32 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/useToast';
+import type {
+  SupplierOrderCardData,
+  SupplierOrderItemData,
+  WarehouseOption,
+  UpdateOrderBody,
+  UpdateItemData,
+} from './supplierOrderTypes';
 
-// ─── Типы ────────────────────────────────────────────────────────────────────
-
-export type SupplierOrderStatus =
-  | 'DRAFT'
-  | 'SENT'
-  | 'CONFIRMED'
-  | 'DELIVERED'
-  | 'COMPLETED'
-  | 'CANCELLED';
-
-export interface SupplierOrderItemData {
-  id: string;
-  quantity: number;
-  unit: string | null;
-  unitPrice: number | null;
-  totalPrice: number | null;
-  nomenclatureId: string | null;
-  nomenclature: { id: string; name: string; unit: string | null } | null;
-}
-
-export interface WarehouseMovementRef {
-  id: string;
-  number: string;
-  movementType: string;
-  status: string;
-  movementDate: string | null;
-}
-
-export interface SupplierOrderCardData {
-  id: string;
-  number: string;
-  status: SupplierOrderStatus;
-  totalAmount: number | null;
-  deliveryDate: string | null;
-  notes: string | null;
-  supplierOrgId: string | null;
-  customerOrgId: string | null;
-  warehouseId: string | null;
-  createdAt: string;
-  updatedAt: string;
-  items: SupplierOrderItemData[];
-  movements: WarehouseMovementRef[];
-  supplierOrg: { id: string; name: string } | null;
-  customerOrg: { id: string; name: string } | null;
-  createdBy: { id: string; firstName: string; lastName: string } | null;
-}
-
-export interface WarehouseOption {
-  id: string;
-  name: string;
-  location: string | null;
-  isDefault: boolean;
-}
-
-// ─── Метки статусов ──────────────────────────────────────────────────────────
-
-export const ORDER_STATUS_LABELS: Record<SupplierOrderStatus, string> = {
-  DRAFT: 'Черновик',
-  SENT: 'Отправлен',
-  CONFIRMED: 'Подтверждён',
-  DELIVERED: 'Доставлен',
-  COMPLETED: 'Завершён',
-  CANCELLED: 'Отменён',
-};
-
-export const ORDER_STATUS_VARIANTS: Record<
+// Реэкспорт типов и констант для обратной совместимости компонентов
+export type {
   SupplierOrderStatus,
-  'secondary' | 'default' | 'outline' | 'destructive'
-> = {
-  DRAFT: 'secondary',
-  SENT: 'default',
-  CONFIRMED: 'default',
-  DELIVERED: 'outline',
-  COMPLETED: 'secondary',
-  CANCELLED: 'destructive',
-};
+  DeliveryCondition,
+  SupplierOrderItemData,
+  ApprovalStepData,
+  ApprovalRouteData,
+  WarehouseMovementRef,
+  SupplierOrderCardData,
+  WarehouseOption,
+  UpdateOrderBody,
+  UpdateItemData,
+} from './supplierOrderTypes';
+export {
+  ORDER_STATUS_LABELS,
+  ORDER_STATUS_VARIANTS,
+  DELIVERY_CONDITION_LABELS,
+} from './supplierOrderTypes';
 
 // ─── Хук загрузки карточки заказа ────────────────────────────────────────────
 
@@ -103,12 +52,7 @@ export function useUpdateOrder(objectId: string, orderId: string) {
   const qc = useQueryClient();
   const { toast } = useToast();
   return useMutation({
-    mutationFn: async (body: Partial<{
-      supplierOrgId: string | null;
-      warehouseId: string | null;
-      deliveryDate: string | null;
-      notes: string | null;
-    }>) => {
+    mutationFn: async (body: UpdateOrderBody) => {
       const res = await fetch(`/api/projects/${objectId}/supplier-orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -121,32 +65,6 @@ export function useUpdateOrder(objectId: string, orderId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['supplier-order', objectId, orderId] });
       qc.invalidateQueries({ queryKey: ['supplier-orders', objectId] });
-    },
-    onError: (err: Error) => {
-      toast({ title: 'Ошибка', description: err.message, variant: 'destructive' });
-    },
-  });
-}
-
-// ─── Хук «Провести» заказ (DRAFT → SENT) ─────────────────────────────────────
-
-export function useConduct(objectId: string, orderId: string) {
-  const qc = useQueryClient();
-  const { toast } = useToast();
-  return useMutation({
-    mutationFn: async () => {
-      const res = await fetch(
-        `/api/projects/${objectId}/supplier-orders/${orderId}/conduct`,
-        { method: 'POST' }
-      );
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Ошибка проведения заказа');
-      return json.data as SupplierOrderCardData;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['supplier-order', objectId, orderId] });
-      qc.invalidateQueries({ queryKey: ['supplier-orders', objectId] });
-      toast({ title: 'Заказ отправлен поставщику' });
     },
     onError: (err: Error) => {
       toast({ title: 'Ошибка', description: err.message, variant: 'destructive' });
@@ -177,7 +95,6 @@ export function useCreateReceipt(objectId: string, orderId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['supplier-order', objectId, orderId] });
       toast({ title: 'Поступление создано', description: 'Переходим на вкладку склада' });
-      // Переходим на вкладку Склад
       router.push(`/objects/${objectId}/resources/warehouse`);
     },
     onError: (err: Error) => {
@@ -220,17 +137,7 @@ export function useUpdateOrderItem(objectId: string, orderId: string) {
   const qc = useQueryClient();
   const { toast } = useToast();
   return useMutation({
-    mutationFn: async ({
-      itemId,
-      data,
-    }: {
-      itemId: string;
-      data: Partial<{
-        quantity: number;
-        unit: string | null;
-        unitPrice: number | null;
-      }>;
-    }) => {
+    mutationFn: async ({ itemId, data }: { itemId: string; data: UpdateItemData }) => {
       const res = await fetch(
         `/api/projects/${objectId}/supplier-orders/${orderId}/items/${itemId}`,
         {

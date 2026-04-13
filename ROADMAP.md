@@ -858,6 +858,7 @@
 - ✅ Три типа документов: «Заказ поставщику» / «Заявка на склад» / «Запрос поставщику» (`SupplierOrderType` enum, `?section=` URL-синхронизация, счётчики по разделам, единая таблица для всех типов)
 - ✅ Справочник номенклатуры (MaterialNomenclature, API на уровне организации)
 - ✅ Система комментариев к заявкам (MaterialRequestComment): вложенные ответы (parentId), редактирование/удаление своих, вкладка «Ответы» в карточке заявки с badge счётчика
+- ✅ **Расширение карточки заказа до ЦУС (2026-04-13)**: 6 вкладок (Документ, Товары, Согласование, Подписание, Элементы ТИМ, Связанные документы); OrgSearchInput для Исполнителя и Заказчика; Склад-Select; поля: Внешний номер, Условия поставки (EXW/FOB/CIF/DAP), Тип контракта, даты готовности (4 поля), Готовность через, Объект строительства; в таблице товаров: Скидка %, Сумма без НДС, Ставка НДС, Сумма НДС, Сумма с НДС, Вес, Объём, Основание + итоговая строка; нижняя панель: Сменить статус, Заполнить из, Создать на основании (6 типов), Печать, Действия (Удалить, Копировать); маршрут согласования через ApprovalRoute; миграция `expand_supplier_order`
 - ⬜ Тендерный реестр: несколько предложений поставщиков (SupplierOffer — не реализован)
 
 ### Склад ✅
@@ -878,7 +879,7 @@
 **База данных (Модуль 8)**
 - ✅ `Material`, `MaterialDocument`, `MaterialBatch`, `MaterialWriteoff`
 - ✅ `MaterialNomenclature`, `MaterialRequest`, `MaterialRequestItem`
-- ✅ `SupplierOrder`, `SupplierOrderItem`
+- ✅ `SupplierOrder` (расширен: approvalRouteId, все поля ЦУС), `SupplierOrderItem` (расширен: discount, vatRate, vatAmount, weight, volume, basis)
 - ✅ `Warehouse`, `WarehouseItem`, `WarehouseMovement`, `WarehouseMovementLine`
 - ✅ `MaterialRequestComment` (комментарии к заявкам, parentId для вложенности, миграция `add_request_comments`)
 - ✅ Прикрепление файлов к заявкам (MaterialRequest.attachmentS3Keys) и складским документам (WarehouseMovement.attachmentS3Keys) — вкладка «Файлы» в карточках, компонент ResourceAttachments, миграция `add_request_attachments`
