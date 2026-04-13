@@ -50,7 +50,7 @@ export async function GET(
       } : {}),
     };
 
-    const [data, total] = await db.$transaction([
+    const [requests, total] = await db.$transaction([
       db.materialRequest.findMany({
         where,
         skip,
@@ -64,6 +64,22 @@ export async function GET(
       }),
       db.materialRequest.count({ where }),
     ]);
+
+    // Определяем у каких заявок есть позиции без статуса (необработанные)
+    const requestIds = requests.map((r) => r.id);
+    const unprocessed = requestIds.length > 0
+      ? await db.materialRequestItem.findMany({
+          where: { requestId: { in: requestIds }, statusId: null },
+          select: { requestId: true },
+          distinct: ['requestId'],
+        })
+      : [];
+    const unprocessedSet = new Set(unprocessed.map((u) => u.requestId));
+
+    const data = requests.map((r) => ({
+      ...r,
+      hasUnprocessedItems: unprocessedSet.has(r.id),
+    }));
 
     return successResponse(data, { total, page, pageSize: limit, totalPages: Math.ceil(total / limit) });
   } catch (error) {

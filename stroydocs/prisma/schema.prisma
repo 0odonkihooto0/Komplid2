@@ -158,10 +158,11 @@ model Organization {
   ganttVersionsDelegatedTo   GanttVersion[] @relation("GanttVersionDelegatedTo")
 
   // Модуль 8 — Ресурсы
-  supplierRequests MaterialRequest[]      @relation("RequestSupplier")
-  supplierOrders   SupplierOrder[]        @relation("OrderSupplier")
-  customerOrders   SupplierOrder[]        @relation("OrderCustomer")
-  nomenclature     MaterialNomenclature[]
+  supplierRequests    MaterialRequest[]           @relation("RequestSupplier")
+  supplierOrders      SupplierOrder[]             @relation("OrderSupplier")
+  customerOrders      SupplierOrder[]             @relation("OrderCustomer")
+  nomenclature        MaterialNomenclature[]
+  requestItemStatuses MaterialRequestItemStatus[]
 
   // Модуль 12 — Отчёты
   reportTemplates ReportTemplate[]
@@ -3629,7 +3630,8 @@ model MaterialRequestItem {
   unit            String?
   unitPrice       Float? // Закупочная цена
   notes           String?
-  status          String? // Не обработана / В работе / Поставлена
+  statusId        String?   // FK → MaterialRequestItemStatus
+  itemStatus      MaterialRequestItemStatus? @relation(fields: [statusId], references: [id])
   purchaseUnit    String?   // Закупочная единица измерения
   deliveryDate    DateTime? // Срок поставки позиции
   paymentDeadline DateTime? // Срок оплаты
@@ -3677,6 +3679,20 @@ model MaterialRequestComment {
 
   @@index([requestId])
   @@map("material_request_comments")
+}
+
+/// Справочник статусов позиций заявки (настраивается на уровне организации)
+model MaterialRequestItemStatus {
+  id             String       @id @default(uuid())
+  name           String
+  color          String?      // Hex-цвет (напр. "#2563EB")
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  items MaterialRequestItem[]
+
+  @@index([organizationId])
+  @@map("material_request_item_statuses")
 }
 
 // ─────────────────────────────────────────────

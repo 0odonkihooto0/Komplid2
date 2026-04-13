@@ -21,7 +21,8 @@ export interface RequestItemData {
   unit: string | null;
   unitPrice: number | null;
   notes: string | null;
-  status: string | null;
+  statusId: string | null;
+  itemStatus: { id: string; name: string; color: string | null } | null;
   nomenclatureId: string | null;
   nomenclature: { id: string; name: string; unit: string | null } | null;
 }
@@ -159,7 +160,7 @@ export function useUpdateItem(objectId: string, requestId: string) {
         unit: string | null;
         unitPrice: number | null;
         notes: string | null;
-        status: string | null;
+        statusId: string | null;
       }>;
     }) => {
       const res = await fetch(
@@ -200,6 +201,38 @@ export function useDeleteItem(objectId: string, requestId: string) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['material-request', objectId, requestId] });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Ошибка', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
+// ─── Хук переноса позиций в новую заявку ────────────────────────────────────
+
+export function useTransferItems(objectId: string, requestId: string) {
+  const qc = useQueryClient();
+  const router = useRouter();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (body: { itemIds: string[] }) => {
+      const res = await fetch(
+        `/api/projects/${objectId}/material-requests/${requestId}/transfer-items`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? 'Ошибка переноса позиций');
+      return json.data as { newRequestId: string };
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['material-request', objectId, requestId] });
+      qc.invalidateQueries({ queryKey: ['material-requests', objectId] });
+      toast({ title: 'Позиции перенесены в новую заявку' });
+      router.push(`/objects/${objectId}/resources/requests/${data.newRequestId}`);
     },
     onError: (err: Error) => {
       toast({ title: 'Ошибка', description: err.message, variant: 'destructive' });
