@@ -108,6 +108,33 @@ const columns: ColumnDef<MaterialRequestItem>[] = [
       ),
   },
   {
+    id: 'approvalStatus',
+    header: 'Согласование',
+    cell: ({ row }) => {
+      const status = row.original.approvalStatus;
+      if (!status) {
+        return <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600">Не начато</span>;
+      }
+      const APPROVAL_CLASS: Record<string, string> = {
+        PENDING:  'bg-blue-100 text-blue-700',
+        APPROVED: 'bg-green-100 text-green-800',
+        REJECTED: 'bg-red-100 text-red-700',
+        RESET:    'bg-gray-100 text-gray-600',
+      };
+      const APPROVAL_LABEL: Record<string, string> = {
+        PENDING:  'В процессе',
+        APPROVED: 'Согласовано',
+        REJECTED: 'Отклонено',
+        RESET:    'Сброшено',
+      };
+      return (
+        <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', APPROVAL_CLASS[status] ?? 'bg-gray-100 text-gray-600')}>
+          {APPROVAL_LABEL[status] ?? status}
+        </span>
+      );
+    },
+  },
+  {
     accessorKey: 'createdAt',
     header: 'Создана',
     cell: ({ row }) => (
@@ -173,6 +200,25 @@ export function RequestsView({ objectId }: RequestsViewProps) {
             value={vm.dateTo}
             onChange={(e) => vm.setDateTo(e.target.value)}
           />
+        </div>
+
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">Согласование</Label>
+          <Select
+            value={vm.approvalStatusFilter}
+            onValueChange={(v) => vm.setApprovalStatusFilter(v)}
+          >
+            <SelectTrigger className="w-44 h-9">
+              <SelectValue placeholder="Все" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Все</SelectItem>
+              <SelectItem value="none">Не начато</SelectItem>
+              <SelectItem value="PENDING">В процессе</SelectItem>
+              <SelectItem value="APPROVED">Согласовано</SelectItem>
+              <SelectItem value="REJECTED">Отклонено</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {vm.hasFilters && (

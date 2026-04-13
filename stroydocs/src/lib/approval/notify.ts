@@ -10,6 +10,8 @@ interface NotifyApprovalParams {
   event: 'approved' | 'rejected' | 'approval_required';
   // ID пользователя для уведомления (следующий согласующий или автор документа)
   targetUserId: string;
+  // Тип сущности для уведомления (по умолчанию — ExecutionDoc)
+  entityType?: string;
 }
 
 // Создаёт персональное Notification в БД и ставит email в BullMQ-очередь
@@ -19,6 +21,7 @@ export async function notifyApprovalEvent({
   actorName,
   event,
   targetUserId,
+  entityType = 'ExecutionDoc',
 }: NotifyApprovalParams): Promise<void> {
   const type =
     event === 'approved'
@@ -56,7 +59,7 @@ export async function notifyApprovalEvent({
       type,
       title,
       body,
-      entityType: 'ExecutionDoc',
+      entityType,
       entityId: docId,
       entityName: docName,
     },
@@ -69,7 +72,7 @@ export async function notifyApprovalEvent({
     type,
     title,
     body,
-    entityType: 'ExecutionDoc',
+    entityType,
     entityId: docId,
     entityName: docName,
   });

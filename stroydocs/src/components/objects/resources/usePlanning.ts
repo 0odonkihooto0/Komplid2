@@ -26,6 +26,7 @@ export interface RequestsFilter {
   status?: MaterialRequestStatus | '';
   from?: string;
   to?: string;
+  approvalStatus?: string;
 }
 
 export interface MaterialRequestItem {
@@ -38,6 +39,7 @@ export interface MaterialRequestItem {
   supplierOrg: { id: string; name: string } | null;
   _count: { items: number };
   hasUnprocessedItems: boolean;
+  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'RESET' | null;
 }
 
 export interface GprMaterialItem {
@@ -104,6 +106,7 @@ export function useRequests(objectId: string, filters?: RequestsFilter) {
       if (filters?.status) sp.set('status', filters.status);
       if (filters?.from) sp.set('from', filters.from);
       if (filters?.to) sp.set('to', filters.to);
+      if (filters?.approvalStatus) sp.set('approvalStatus', filters.approvalStatus);
       const query = sp.toString() ? `?${sp.toString()}` : '';
       const res = await fetch(`/api/projects/${objectId}/material-requests${query}`);
       const json = await res.json();
