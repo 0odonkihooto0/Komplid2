@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { X, AlertTriangle, FileText } from 'lucide-react';
+import { X, AlertTriangle, FileText, Pencil } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ import {
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog';
 import type { GanttTaskItem } from '@/components/modules/gantt/ganttTypes';
 import { useUpdateTaskGPR, useDeleteTaskGPR } from './useGanttScheduleHooks';
+import { GanttTaskEditDialog } from './GanttTaskEditDialog';
 
 const STATUS_LABELS: Record<string, string> = {
   NOT_STARTED: 'Не начата',
@@ -49,12 +50,14 @@ interface Props {
   task: GanttTaskItem;
   objectId: string;
   versionId: string;
+  allTasks: GanttTaskItem[];
   onClose: () => void;
   onExecDocsOpen?: () => void;
 }
 
-export function GanttTaskPanelGPR({ task, objectId, versionId, onClose, onExecDocsOpen }: Props) {
+export function GanttTaskPanelGPR({ task, objectId, versionId, allTasks, onClose, onExecDocsOpen }: Props) {
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const updateTask = useUpdateTaskGPR(objectId, versionId);
   const deleteTask = useDeleteTaskGPR(objectId, versionId);
 
@@ -115,6 +118,16 @@ export function GanttTaskPanelGPR({ task, objectId, versionId, onClose, onExecDo
               КП
             </Badge>
           )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setEditDialogOpen(true)}
+            aria-label="Подробное редактирование"
+            title="Подробнее"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} aria-label="Закрыть">
             <X className="h-4 w-4" />
           </Button>
@@ -231,6 +244,16 @@ export function GanttTaskPanelGPR({ task, objectId, versionId, onClose, onExecDo
           deleteTask.mutate(task.id, { onSuccess: onClose });
           setDeleteOpen(false);
         }}
+      />
+
+      {/* Диалог расширенного редактирования */}
+      <GanttTaskEditDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        task={task}
+        objectId={objectId}
+        versionId={versionId}
+        allTasks={allTasks}
       />
     </div>
   );

@@ -1664,6 +1664,7 @@ model GanttTask {
   workType             String? // Вид работ
   basis                String? // Основание (ссылка на смету)
   materialDistribution String?  @default("UNIFORM") // Характер распределения: UNIFORM/PER_UNIT/FIRST_DAY/LAST_DAY
+  calcType             String? // Тип расчёта: DEFAULT/VOLUME/AMOUNT/MAN_HOURS/MACHINE_HOURS/LABOR
   weight               Float    @default(0) // Вес задачи в суммарной
   delegatedToVersionId String? // В какую версию делегирована задача
   sourceTaskId         String? // ID исходной задачи при делегировании (для sync)

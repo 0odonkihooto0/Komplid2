@@ -20,6 +20,25 @@ const updateTaskSchema = z.object({
   workItemId: z.string().uuid().nullable().optional(),
   parentId: z.string().uuid().nullable().optional(),
   sortOrder: z.number().int().optional(),
+  // Расширенные поля задачи ГПР
+  volume: z.number().nullable().optional(),
+  volumeUnit: z.string().max(20).nullable().optional(),
+  amount: z.number().nullable().optional(),
+  amountVat: z.number().nullable().optional(),
+  weight: z.number().min(0).optional(),
+  manHours: z.number().nullable().optional(),
+  machineHours: z.number().nullable().optional(),
+  deadline: z.string().datetime().nullable().optional(),
+  comment: z.string().max(2000).nullable().optional(),
+  isCritical: z.boolean().optional(),
+  isMilestone: z.boolean().optional(),
+  costType: z.enum(['CONSTRUCTION', 'MOUNTING', 'EQUIPMENT', 'OTHER']).nullable().optional(),
+  workType: z.string().max(200).nullable().optional(),
+  basis: z.string().max(500).nullable().optional(),
+  materialDistribution: z.enum(['UNIFORM', 'PER_UNIT', 'FIRST_DAY', 'LAST_DAY']).optional(),
+  calcType: z.enum(['DEFAULT', 'VOLUME', 'AMOUNT', 'MAN_HOURS', 'MACHINE_HOURS', 'LABOR']).nullable().optional(),
+  taskContractId: z.string().uuid().nullable().optional(),
+  attachmentS3Keys: z.array(z.string()).optional(),
 });
 
 export async function PATCH(
@@ -43,7 +62,7 @@ export async function PATCH(
     const parsed = updateTaskSchema.safeParse(body);
     if (!parsed.success) return errorResponse('Ошибка валидации', 400, parsed.error.issues);
 
-    const { planStart, planEnd, factStart, factEnd, ...rest } = parsed.data;
+    const { planStart, planEnd, factStart, factEnd, deadline, ...rest } = parsed.data;
 
     const updated = await db.ganttTask.update({
       where: { id: params.taskId },
@@ -53,18 +72,20 @@ export async function PATCH(
         ...(planEnd !== undefined && { planEnd: new Date(planEnd) }),
         ...(factStart !== undefined && { factStart: factStart ? new Date(factStart) : null }),
         ...(factEnd !== undefined && { factEnd: factEnd ? new Date(factEnd) : null }),
+        ...(deadline !== undefined && { deadline: deadline ? new Date(deadline) : null }),
       },
       include: { workItem: { select: { id: true, name: true, projectCipher: true } } },
     });
 
     // Логируем изменения в журнал ГПР (fire-and-forget)
-    const { planStart: _ps, planEnd: _pe, factStart: _fs, factEnd: _fe, ...restFields } = parsed.data;
+    const { planStart: _ps, planEnd: _pe, factStart: _fs, factEnd: _fe, deadline: _dl, ...restFields } = parsed.data;
     const loggableFields: Record<string, unknown> = {
       ...(restFields as Record<string, unknown>),
       ...(planStart !== undefined && { planStart }),
       ...(planEnd !== undefined && { planEnd }),
       ...(factStart !== undefined && { factStart: factStart ?? null }),
       ...(factEnd !== undefined && { factEnd: factEnd ?? null }),
+      ...(deadline !== undefined && { deadline: deadline ?? null }),
     };
     for (const [field, newRaw] of Object.entries(loggableFields)) {
       if (newRaw === undefined) continue;

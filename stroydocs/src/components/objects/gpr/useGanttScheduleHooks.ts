@@ -55,6 +55,25 @@ export function useCreateTaskGPR(objectId: string, versionId: string) {
   });
 }
 
+/** Контракты объекта для выбора в карточке задачи */
+export function useObjectContracts(objectId: string) {
+  const { data, isLoading } = useQuery<{ id: string; number: string; name: string }[]>({
+    queryKey: ['object-contracts', objectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${objectId}/contracts`);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? 'Ошибка загрузки контрактов');
+      return (json.data as Array<{ id: string; number: string; name: string }>).map((c) => ({
+        id: c.id,
+        number: c.number,
+        name: c.name,
+      }));
+    },
+    enabled: !!objectId,
+  });
+  return { contracts: data ?? [], isLoading };
+}
+
 export function useUpdateTaskGPR(objectId: string, versionId: string) {
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -73,6 +92,27 @@ export function useUpdateTaskGPR(objectId: string, versionId: string) {
         progress: number;
         status: string;
         workItemId: string | null;
+        parentId: string | null;
+        sortOrder: number;
+        // Расширенные поля ГПР
+        volume: number | null;
+        volumeUnit: string | null;
+        amount: number | null;
+        amountVat: number | null;
+        weight: number;
+        manHours: number | null;
+        machineHours: number | null;
+        deadline: string | null;
+        comment: string | null;
+        isCritical: boolean;
+        isMilestone: boolean;
+        costType: string | null;
+        workType: string | null;
+        basis: string | null;
+        materialDistribution: string;
+        calcType: string | null;
+        taskContractId: string | null;
+        attachmentS3Keys: string[];
       }>;
     }) => {
       const res = await fetch(`${gprBase(objectId, versionId)}/tasks/${taskId}`, {
