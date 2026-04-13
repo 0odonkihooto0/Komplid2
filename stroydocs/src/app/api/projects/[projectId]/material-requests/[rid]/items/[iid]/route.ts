@@ -13,7 +13,7 @@ const updateItemSchema = z.object({
   unit: z.string().max(50).nullable().optional(),
   unitPrice: z.number().nonnegative().nullable().optional(),
   notes: z.string().max(2000).nullable().optional(),
-  status: z.string().max(100).nullable().optional(),
+  statusId: z.string().uuid().nullable().optional(),
   quantityOrdered: z.number().nonnegative().optional(),
 });
 
@@ -61,6 +61,7 @@ export async function PATCH(
       include: {
         nomenclature: true,
         material: true,
+        itemStatus: true,
       },
     });
 

@@ -37,6 +37,7 @@ export interface MaterialRequestItem {
   createdAt: string;
   supplierOrg: { id: string; name: string } | null;
   _count: { items: number };
+  hasUnprocessedItems: boolean;
 }
 
 export interface GprMaterialItem {

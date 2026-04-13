@@ -860,6 +860,9 @@
 - ✅ Справочник номенклатуры (MaterialNomenclature, API на уровне организации)
 - ✅ Система комментариев к заявкам (MaterialRequestComment): вложенные ответы (parentId), редактирование/удаление своих, вкладка «Ответы» в карточке заявки с badge счётчика
 - ✅ **Расширение карточки заказа до ЦУС (2026-04-13)**: 6 вкладок (Документ, Товары, Согласование, Подписание, Элементы ТИМ, Связанные документы); OrgSearchInput для Исполнителя и Заказчика; Склад-Select; поля: Внешний номер, Условия поставки (EXW/FOB/CIF/DAP), Тип контракта, даты готовности (4 поля), Готовность через, Объект строительства; в таблице товаров: Скидка %, Сумма без НДС, Ставка НДС, Сумма НДС, Сумма с НДС, Вес, Объём, Основание + итоговая строка; нижняя панель: Сменить статус, Заполнить из, Создать на основании (6 типов), Печать, Действия (Удалить, Копировать); маршрут согласования через ApprovalRoute; миграция `expand_supplier_order`
+- ✅ **Статусы позиций заявки (2026-04-13)**: настраиваемый справочник `MaterialRequestItemStatus` на уровне организации (GET/POST/PATCH/DELETE `/api/organizations/[orgId]/request-item-statuses`); Select с inline-созданием (`ItemStatusSelect.tsx`) в таблице позиций карточки заявки (ЦУС стр. 215)
+- ✅ **Индикатор необработанной заявки (2026-04-13)**: колонка «Обработана» (✅/⚠️) в реестре заявок — заявка необработана если хотя бы одна позиция без статуса; batch-запрос без N+1 (ЦУС стр. 215)
+- ✅ **Перенос позиций в новую заявку (2026-04-13)**: чекбоксы в таблице позиций + кнопка «Перенести в новую заявку» + `POST /transfer-items`; новая заявка DRAFT создаётся в транзакции (ЦУС стр. 215)
 - ⬜ Тендерный реестр: несколько предложений поставщиков (SupplierOffer — не реализован)
 
 ### Склад ✅
@@ -886,6 +889,8 @@
 - ✅ `MaterialRequestComment` (комментарии к заявкам, parentId для вложенности, миграция `add_request_comments`)
 - ✅ Прикрепление файлов к заявкам (MaterialRequest.attachmentS3Keys) и складским документам (WarehouseMovement.attachmentS3Keys) — вкладка «Файлы» в карточках, компонент ResourceAttachments, миграция `add_request_attachments`
 - ⬜ `SupplierOffer` (тендерный реестр — не реализован)
+- ✅ `MaterialRequestItemStatus` (id, name, color?, organizationId) — справочник статусов позиций; миграция `add_request_item_statuses`
+- ✅ `MaterialRequestItem.statusId` FK → `MaterialRequestItemStatus` (замена `status String?`)
 - ✅ Расширены поля моделей (миграция `module8_extend_fields`): `MaterialRequest` (+paymentDate, paymentAmount, type), `MaterialRequestItem` (+purchaseUnit, deliveryDate, paymentDeadline, costArticle, purchasePrice, purchaseQty), `SupplierOrder` (+externalNumber, expectedReadyDate, expectedArrivalDate, readinessCorrectionDate, underdeliveryDate, readinessThrough, deliveryConditions, contractType, constructionObject), `WarehouseMovement` (+consignor, consignee, vatType, vatRate, currency, externalNumber, attachmentS3Keys), `WarehouseMovementLine` (+vatAmount, totalWithVat, basis, gtd, country, comment); enum `WarehouseMovementType` +RECEIPT_ORDER, EXPENSE_ORDER
 
 ---

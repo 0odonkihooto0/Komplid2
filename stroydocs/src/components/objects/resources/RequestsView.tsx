@@ -98,6 +98,16 @@ const columns: ColumnDef<MaterialRequestItem>[] = [
     ),
   },
   {
+    id: 'processed',
+    header: 'Обработана',
+    cell: ({ row }) =>
+      row.original.hasUnprocessedItems ? (
+        <span title="Есть позиции без статуса" className="text-base">⚠️</span>
+      ) : (
+        <span title="Все позиции обработаны" className="text-base">✅</span>
+      ),
+  },
+  {
     accessorKey: 'createdAt',
     header: 'Создана',
     cell: ({ row }) => (
