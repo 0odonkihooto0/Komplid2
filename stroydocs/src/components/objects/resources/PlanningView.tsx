@@ -5,16 +5,20 @@ import { cn } from '@/lib/utils';
 import { LrvSection } from './LrvSection';
 import { LrvWizard } from './LrvWizard';
 import { GprMaterialsPanel } from './GprMaterialsPanel';
+import { GprMachinesPanel } from './GprMachinesPanel';
+import { GprWorksPanel } from './GprWorksPanel';
+import { GprLaborPanel } from './GprLaborPanel';
 
 // ─── Разделы левой панели ─────────────────────────────────────────────────────
 
-type SectionId = 'lrv' | 'materials' | 'machines' | 'works';
+type SectionId = 'lrv' | 'materials' | 'machines' | 'works' | 'labor';
 
 const SECTIONS: Array<{ id: SectionId; label: string }> = [
   { id: 'lrv', label: 'Лимитно-разделительные ведомости' },
   { id: 'materials', label: 'Материалы' },
   { id: 'machines', label: 'Машины и механизмы' },
   { id: 'works', label: 'Работы' },
+  { id: 'labor', label: 'Рабочая сила и кадры' },
 ];
 
 // ─── Компонент ────────────────────────────────────────────────────────────────
@@ -71,12 +75,16 @@ export function PlanningView({ objectId }: PlanningViewProps) {
           <GprMaterialsPanel objectId={objectId} />
         )}
 
-        {(activeSection === 'machines' || activeSection === 'works') && (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <p className="text-muted-foreground text-sm">
-              Раздел «{SECTIONS.find((s) => s.id === activeSection)?.label}» в разработке
-            </p>
-          </div>
+        {activeSection === 'machines' && (
+          <GprMachinesPanel objectId={objectId} />
+        )}
+
+        {activeSection === 'works' && (
+          <GprWorksPanel objectId={objectId} />
+        )}
+
+        {activeSection === 'labor' && (
+          <GprLaborPanel objectId={objectId} />
         )}
       </div>
     </div>

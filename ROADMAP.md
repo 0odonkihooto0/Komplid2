@@ -851,6 +851,7 @@
 ### Планирование и закупки ✅
 - ✅ Планирование потребности из ВОР + ГПР (вкладка «Планирование», GprMaterialsPanel)
 - ✅ Создание ЛРВ из ГПР — многошаговый Wizard (LrvWizard)
+- ✅ Разделы ресурсов ГПР в PlanningView: Машины и механизмы (machineHours), Работы (задачи ГПР level>0), Рабочая сила и кадры (manHours) — readonly таблицы с фильтрами версии/периода, кнопка «Экспорт в Excel» (заглушка); API `GET /api/projects/[id]/gpr-resources?resourceType=machines|works|labor` (2026-04-13)
 - ✅ Заявки на материал (DRAFT → SUBMITTED → APPROVED → IN_PROGRESS → DELIVERED)
 - ✅ Карточка заявки с позициями, inline-редактирование
 - ✅ Заказы поставщику (DRAFT → SENT → CONFIRMED → DELIVERED → COMPLETED)
