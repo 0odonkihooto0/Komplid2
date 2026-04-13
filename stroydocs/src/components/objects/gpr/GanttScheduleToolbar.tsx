@@ -2,7 +2,7 @@
 
 import type { ElementType } from 'react';
 import {
-  Search, PencilLine, Filter, Maximize2, Columns3, Pencil, ChevronDown,
+  Search, CheckSquare, Eye, EyeOff, Maximize2, Columns3, Pencil, ChevronDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,17 +21,46 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { GanttGroupingMenu, type GroupByField } from './GanttGroupingMenu';
 
 interface Props {
   versionId: string | null;
   onEditVersion: () => void;
+  // Группировка
+  groupBy: GroupByField | null;
+  onGroupByChange: (v: GroupByField | null) => void;
+  // Режим множественного редактирования
+  isMultiSelectActive: boolean;
+  onToggleMultiSelect: () => void;
+  // Изоляция
+  isIsolated: boolean;
+  onIsolate: () => void;
+  onShowAll: () => void;
 }
 
-function IconBtn({ icon: Icon, label }: { icon: ElementType; label: string }) {
+function IconBtn({
+  icon: Icon,
+  label,
+  onClick,
+  active,
+  disabled,
+}: {
+  icon: ElementType;
+  label: string;
+  onClick?: () => void;
+  active?: boolean;
+  disabled?: boolean;
+}) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8" disabled={true}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`h-8 w-8 ${active ? 'text-primary bg-primary/10' : ''}`}
+          onClick={onClick}
+          disabled={disabled}
+        >
           <Icon className="h-4 w-4" />
         </Button>
       </TooltipTrigger>
@@ -40,17 +69,66 @@ function IconBtn({ icon: Icon, label }: { icon: ElementType; label: string }) {
   );
 }
 
-export function GanttScheduleToolbar({ versionId, onEditVersion }: Props) {
+export function GanttScheduleToolbar({
+  versionId,
+  onEditVersion,
+  groupBy,
+  onGroupByChange,
+  isMultiSelectActive,
+  onToggleMultiSelect,
+  isIsolated,
+  onIsolate,
+  onShowAll,
+}: Props) {
   const disabled = !versionId;
 
   return (
     <TooltipProvider>
       <div className="flex items-center gap-1 flex-wrap">
-        <IconBtn icon={Search} label="Поиск" />
-        <IconBtn icon={PencilLine} label="Множественное редактирование" />
-        <IconBtn icon={Filter} label="Изолировать отмеченные" />
-        <IconBtn icon={Maximize2} label="Полноэкранный режим" />
-        <IconBtn icon={Columns3} label="Настроить колонки" />
+        <IconBtn icon={Search} label="Поиск" disabled={true} />
+
+        {/* Множественное редактирование */}
+        <IconBtn
+          icon={CheckSquare}
+          label={isMultiSelectActive ? 'Выйти из режима выбора' : 'Множественное редактирование'}
+          onClick={onToggleMultiSelect}
+          active={isMultiSelectActive}
+          disabled={disabled}
+        />
+
+        {/* Изоляция / Показать все */}
+        {isIsolated ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-primary bg-primary/10"
+                onClick={onShowAll}
+              >
+                <EyeOff className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Показать все задачи</TooltipContent>
+          </Tooltip>
+        ) : (
+          <IconBtn
+            icon={Eye}
+            label="Изолировать отмеченные"
+            onClick={onIsolate}
+            disabled={disabled}
+          />
+        )}
+
+        {/* Группировка */}
+        <GanttGroupingMenu
+          value={groupBy}
+          onChange={onGroupByChange}
+          disabled={disabled}
+        />
+
+        <IconBtn icon={Maximize2} label="Полноэкранный режим" disabled={true} />
+        <IconBtn icon={Columns3}  label="Настроить колонки"  disabled={true} />
 
         <Tooltip>
           <TooltipTrigger asChild>
