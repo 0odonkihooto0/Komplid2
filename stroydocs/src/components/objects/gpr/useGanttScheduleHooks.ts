@@ -35,6 +35,7 @@ export function useCreateTaskGPR(objectId: string, versionId: string) {
       parentId?: string;
       workItemId?: string;
       level?: number;
+      sortOrder?: number;
     }) => {
       const res = await fetch(`${gprBase(objectId, versionId)}/tasks`, {
         method: 'POST',
