@@ -30,6 +30,7 @@ import { GanttVersionEditDialog } from './GanttVersionEditDialog';
 import { GanttChangeLogDialog } from './GanttChangeLogDialog';
 import { GanttImportDialog } from './GanttImportDialog';
 import { ImportFromEstimateDialog } from './ImportFromEstimateDialog';
+import { EstimateChangesPreviewDialog } from './EstimateChangesPreviewDialog';
 import { useGanttExport, type ImportFormat } from './useGanttImport';
 
 // Метки под-вкладок страницы «График» (ЦУС: Координация, Диаграмма, План-факт, Закрытие, ИД и СК, Делегирование)
@@ -63,6 +64,7 @@ export function GanttScheduleView({ objectId }: Props) {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [importFormat, setImportFormat] = useState<ImportFormat>('EXCEL');
   const [estimateDialogOpen, setEstimateDialogOpen] = useState(false);
+  const [estimateChangesPreviewOpen, setEstimateChangesPreviewOpen] = useState(false);
   const { downloadExport } = useGanttExport(objectId, vid);
 
   const taskCount = view.selectedVersion?.taskCount ?? 0;
@@ -105,6 +107,8 @@ export function GanttScheduleView({ objectId }: Props) {
         onExportExcel={() => downloadExport('excel')}
         onExportExcelDeps={() => downloadExport('excel_deps')}
         onExportPdf={() => downloadExport('pdf')}
+        onFillFromEstimate={() => setEstimateDialogOpen(true)}
+        onEstimateChangesPreview={() => setEstimateChangesPreviewOpen(true)}
       />
 
       {/* Основная область: боковая панель (версии/стадии) + под-вкладки */}
@@ -183,6 +187,7 @@ export function GanttScheduleView({ objectId }: Props) {
                   onMultiSelectModeChange={setIsMultiSelectMode}
                   isIsolated={isIsolated}
                   onIsolationChange={setIsIsolated}
+                  onEstimatePreview={() => setEstimateChangesPreviewOpen(true)}
                 />
               </TabsContent>
               <TabsContent value="gantt">
@@ -299,6 +304,15 @@ export function GanttScheduleView({ objectId }: Props) {
           objectId={objectId}
           versionId={vid}
           onClose={() => setEstimateDialogOpen(false)}
+        />
+      )}
+
+      {/* Диалог предпросмотра изменений при обновлении сметы */}
+      {estimateChangesPreviewOpen && vid && (
+        <EstimateChangesPreviewDialog
+          objectId={objectId}
+          versionId={vid}
+          onClose={() => setEstimateChangesPreviewOpen(false)}
         />
       )}
     </div>

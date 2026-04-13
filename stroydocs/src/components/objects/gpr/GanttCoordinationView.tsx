@@ -50,6 +50,7 @@ interface Props {
   onMultiSelectModeChange: (v: boolean) => void;
   isIsolated: boolean;
   onIsolationChange: (v: boolean) => void;
+  onEstimatePreview?: () => void;
 }
 
 export function GanttCoordinationView({
@@ -60,6 +61,7 @@ export function GanttCoordinationView({
   onMultiSelectModeChange,
   isIsolated,
   onIsolationChange,
+  onEstimatePreview,
 }: Props) {
   const { data, isLoading } = useGanttTasksGPR(objectId, versionId);
   const updateTask = useUpdateTaskGPR(objectId, versionId);
@@ -362,6 +364,7 @@ export function GanttCoordinationView({
                   onMilestone={handleMilestone}
                   onIsolate={handleIsolateTask}
                   onCopy={handleCopy}
+                  onEstimatePreview={onEstimatePreview ? () => onEstimatePreview() : undefined}
                   // Multi-select
                   isMultiSelectMode={isMultiSelectMode}
                   isSelected={state.selectedTaskIds.has(row.id)}

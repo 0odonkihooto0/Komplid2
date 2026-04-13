@@ -44,6 +44,9 @@ interface Props {
   onExportExcel?: () => void;
   onExportExcelDeps?: () => void;
   onExportPdf?: () => void;
+  // Сметы
+  onFillFromEstimate?: () => void;
+  onEstimateChangesPreview?: () => void;
 }
 
 function IconBtn({
@@ -92,6 +95,8 @@ export function GanttScheduleToolbar({
   onExportExcel,
   onExportExcelDeps,
   onExportPdf,
+  onFillFromEstimate,
+  onEstimateChangesPreview,
 }: Props) {
   const disabled = !versionId;
 
@@ -191,8 +196,8 @@ export function GanttScheduleToolbar({
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>Сметы</DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
-                <DropdownMenuItem disabled>Заполнить из смет</DropdownMenuItem>
-                <DropdownMenuItem disabled>Обновить загруженные</DropdownMenuItem>
+                <DropdownMenuItem onClick={onFillFromEstimate}>Заполнить из смет</DropdownMenuItem>
+                <DropdownMenuItem onClick={onEstimateChangesPreview}>Обновить загруженные</DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuSub>
 
