@@ -13,6 +13,7 @@ import {
 import { CheckCheck } from 'lucide-react';
 import { WarehouseMovDocTab } from './WarehouseMovDocTab';
 import { WarehouseMovItemsTab } from './WarehouseMovItemsTab';
+import { ResourceAttachments } from './ResourceAttachments';
 import {
   useMovementDetail,
   useConductMovement,
@@ -112,6 +113,14 @@ export function WarehouseMovementCard({ objectId, movementId, onClose }: Props) 
                     </span>
                   )}
                 </TabsTrigger>
+                <TabsTrigger value="files">
+                  Файлы
+                  {movement.attachmentS3Keys.length > 0 && (
+                    <span className="ml-1.5 text-xs text-muted-foreground">
+                      {movement.attachmentS3Keys.length}
+                    </span>
+                  )}
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="doc">
@@ -120,6 +129,13 @@ export function WarehouseMovementCard({ objectId, movementId, onClose }: Props) 
 
               <TabsContent value="items">
                 <WarehouseMovItemsTab objectId={objectId} movement={movement} />
+              </TabsContent>
+
+              <TabsContent value="files">
+                <ResourceAttachments
+                  apiBasePath={`/api/projects/${objectId}/warehouse-movements/${movementId}`}
+                  parentQueryKey={['warehouse-movement', objectId, movementId]}
+                />
               </TabsContent>
             </Tabs>
           </div>

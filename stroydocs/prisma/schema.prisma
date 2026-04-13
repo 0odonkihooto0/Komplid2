@@ -3612,6 +3612,8 @@ model MaterialRequest {
   orders   SupplierOrder[] // Заказы созданные из этой заявки
   comments MaterialRequestComment[]
 
+  attachmentS3Keys String[] @default([]) // Прикреплённые файлы
+
   @@index([projectId])
   @@map("material_requests")
 }

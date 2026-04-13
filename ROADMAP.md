@@ -871,6 +871,7 @@
 - ✅ Layout с 4 вкладками: Планирование / Заявки / Закупки и логистика / Склад
 - ✅ 30 компонентов: PlanningView, RequestsView, ProcurementView, WarehouseView и др.
 - ✅ Хуки: usePlanning, useRequestCard, useProcurement, useWarehouse и др.
+- ✅ Компонент ResourceAttachments (drag-and-drop загрузка файлов к заявкам и складским документам)
 - ✅ Loading / Error boundaries
 
 **База данных (Модуль 8)**
@@ -879,6 +880,7 @@
 - ✅ `SupplierOrder`, `SupplierOrderItem`
 - ✅ `Warehouse`, `WarehouseItem`, `WarehouseMovement`, `WarehouseMovementLine`
 - ✅ `MaterialRequestComment` (комментарии к заявкам, parentId для вложенности, миграция `add_request_comments`)
+- ✅ Прикрепление файлов к заявкам (MaterialRequest.attachmentS3Keys) и складским документам (WarehouseMovement.attachmentS3Keys) — вкладка «Файлы» в карточках, компонент ResourceAttachments, миграция `add_request_attachments`
 - ⬜ `SupplierOffer` (тендерный реестр — не реализован)
 - ✅ Расширены поля моделей (миграция `module8_extend_fields`): `MaterialRequest` (+paymentDate, paymentAmount, type), `MaterialRequestItem` (+purchaseUnit, deliveryDate, paymentDeadline, costArticle, purchasePrice, purchaseQty), `SupplierOrder` (+externalNumber, expectedReadyDate, expectedArrivalDate, readinessCorrectionDate, underdeliveryDate, readinessThrough, deliveryConditions, contractType, constructionObject), `WarehouseMovement` (+consignor, consignee, vatType, vatRate, currency, externalNumber, attachmentS3Keys), `WarehouseMovementLine` (+vatAmount, totalWithVat, basis, gtd, country, comment); enum `WarehouseMovementType` +RECEIPT_ORDER, EXPENSE_ORDER
 
