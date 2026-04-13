@@ -170,8 +170,8 @@ export function useGanttCoordinationState() {
     if (isIsolated && selectedTaskIds.size > 0) {
       // Показываем выбранные задачи + всех их предков (для контекста иерархии)
       const visibleIds = new Set<string>();
-      for (const id of selectedTaskIds) {
-        for (const aid of getAncestorIds(id, allTasks)) {
+      for (const id of Array.from(selectedTaskIds)) {
+        for (const aid of Array.from(getAncestorIds(id, allTasks))) {
           visibleIds.add(aid);
         }
       }
