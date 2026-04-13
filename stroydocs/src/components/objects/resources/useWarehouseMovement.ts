@@ -28,6 +28,7 @@ export interface MovementDetail {
   fromWarehouse: { id: string; name: string; location: string | null } | null;
   toWarehouse: { id: string; name: string; location: string | null } | null;
   lines: MovementLine[];
+  attachmentS3Keys: string[];
   createdBy: { id: string; firstName: string; lastName: string } | null;
 }
 

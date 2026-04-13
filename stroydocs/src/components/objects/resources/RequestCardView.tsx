@@ -9,6 +9,7 @@ import { ArrowLeft, SendHorizontal, ShoppingCart } from 'lucide-react';
 import { RequestInfoTab } from './RequestInfoTab';
 import { RequestItemsTab } from './RequestItemsTab';
 import { RequestCommentsTab } from './RequestCommentsTab';
+import { ResourceAttachments } from './ResourceAttachments';
 import {
   useRequestCard,
   useUpdateRequest,
@@ -118,6 +119,14 @@ export function RequestCardView({ objectId, requestId }: Props) {
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="files">
+            Файлы
+            {request.attachmentS3Keys.length > 0 && (
+              <span className="ml-1.5 text-xs text-muted-foreground">
+                {request.attachmentS3Keys.length}
+              </span>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="info">
@@ -130,6 +139,13 @@ export function RequestCardView({ objectId, requestId }: Props) {
 
         <TabsContent value="comments">
           <RequestCommentsTab objectId={objectId} requestId={requestId} />
+        </TabsContent>
+
+        <TabsContent value="files">
+          <ResourceAttachments
+            apiBasePath={`/api/projects/${objectId}/material-requests/${requestId}`}
+            parentQueryKey={['material-request', objectId, requestId]}
+          />
         </TabsContent>
       </Tabs>
     </div>

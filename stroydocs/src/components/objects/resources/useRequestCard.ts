@@ -38,6 +38,8 @@ export interface RequestCardData {
   createdAt: string;
   updatedAt: string;
   items: RequestItemData[];
+  // Ключи S3 прикреплённых файлов — возвращаются из include автоматически
+  attachmentS3Keys: string[];
   _count: { items: number; orders: number; comments: number };
 }
 
