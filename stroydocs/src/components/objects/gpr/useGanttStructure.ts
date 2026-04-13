@@ -21,10 +21,23 @@ export interface GanttVersionSummary {
   name: string;
   description: string | null;
   stageId: string | null;
+  contractId: string | null;
   projectId: string | null;
   isDirective: boolean;
   isActive: boolean;
   isBaseline: boolean;
+  delegatedFromOrgId: string | null;
+  delegatedToOrgId: string | null;
+  accessOrgIds: string[];
+  linkedVersionIds: string[];
+  lockWorks: boolean;
+  lockPlan: boolean;
+  lockFact: boolean;
+  calculationMethod: string;
+  disableVolumeRounding: boolean;
+  allowOverplan: boolean;
+  showSummaryRow: boolean;
+  columnSettings: { visibleColumns: string[] } | null;
   stage: { id: string; name: string } | null;
   taskCount: number;
   planStart: string | null;
@@ -34,6 +47,27 @@ export interface GanttVersionSummary {
   createdAt: string;
   updatedAt: string;
 }
+
+export type VersionUpdatePayload = Partial<{
+  name: string;
+  description: string | null;
+  stageId: string | null;
+  contractId: string | null;
+  isActive: boolean;
+  isBaseline: boolean;
+  isDirective: boolean;
+  delegatedFromOrgId: string | null;
+  delegatedToOrgId: string | null;
+  accessOrgIds: string[];
+  linkedVersionIds: string[];
+  lockWorks: boolean;
+  lockPlan: boolean;
+  lockFact: boolean;
+  calculationMethod: string;
+  disableVolumeRounding: boolean;
+  allowOverplan: boolean;
+  showSummaryRow: boolean;
+}>;
 
 // ── Стадии ────────────────────────────────────────────────────────────────────
 
@@ -95,7 +129,7 @@ export function useCreateVersion(objectId: string) {
   const qc = useQueryClient();
   const { toast } = useToast();
   return useMutation({
-    mutationFn: async (body: { name: string; stageId?: string }) => {
+    mutationFn: async (body: VersionUpdatePayload & { name: string }) => {
       const res = await fetch(`/api/projects/${objectId}/gantt-versions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -213,6 +247,50 @@ export function useDeleteStage(objectId: string) {
     },
     onError: (err: Error) =>
       toast({ title: 'Ошибка', description: err.message, variant: 'destructive' }),
+  });
+}
+
+export function useUpdateVersion(objectId: string) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async ({ versionId, ...data }: VersionUpdatePayload & { versionId: string }) => {
+      const res = await fetch(`/api/projects/${objectId}/gantt-versions/${versionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? 'Ошибка обновления версии');
+      return json.data as GanttVersionSummary;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['gantt-versions-project', objectId] });
+      toast({ title: 'Версия ГПР обновлена' });
+    },
+    onError: (err: Error) => toast({ title: 'Ошибка', description: err.message, variant: 'destructive' }),
+  });
+}
+
+export function useFillFromVersion(objectId: string) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async ({ versionId, sourceVersionId }: { versionId: string; sourceVersionId: string }) => {
+      const res = await fetch(`/api/projects/${objectId}/gantt-versions/${versionId}/fill-from-version`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sourceVersionId }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? 'Ошибка заполнения из версии');
+      return json.data as { copied: number };
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['gantt-versions-project', objectId] });
+      toast({ title: `Заполнено задач: ${data.copied}` });
+    },
+    onError: (err: Error) => toast({ title: 'Ошибка', description: err.message, variant: 'destructive' }),
   });
 }
 

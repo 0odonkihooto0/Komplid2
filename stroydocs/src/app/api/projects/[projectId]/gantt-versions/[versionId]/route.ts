@@ -11,7 +11,21 @@ const updateVersionSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   description: z.string().max(1000).optional().nullable(),
   stageId: z.string().uuid().optional().nullable(),
+  contractId: z.string().uuid().optional().nullable(),
   isActive: z.boolean().optional(),
+  isBaseline: z.boolean().optional(),
+  isDirective: z.boolean().optional(),
+  delegatedFromOrgId: z.string().uuid().optional().nullable(),
+  delegatedToOrgId: z.string().uuid().optional().nullable(),
+  accessOrgIds: z.array(z.string().uuid()).optional(),
+  linkedVersionIds: z.array(z.string().uuid()).optional(),
+  lockWorks: z.boolean().optional(),
+  lockPlan: z.boolean().optional(),
+  lockFact: z.boolean().optional(),
+  calculationMethod: z.enum(['MANUAL', 'VOLUME', 'AMOUNT', 'MAN_HOURS', 'MACHINE_HOURS', 'LABOR']).optional(),
+  disableVolumeRounding: z.boolean().optional(),
+  allowOverplan: z.boolean().optional(),
+  showSummaryRow: z.boolean().optional(),
 });
 
 async function getVersionOrError(
@@ -56,13 +70,37 @@ export async function PATCH(
       if (!stage) return errorResponse('Стадия не найдена', 404);
     }
 
+    const d = parsed.data;
+
+    // При установке «Актуальная» — архивируем все другие активные версии проекта
+    if (d.isActive === true) {
+      await db.ganttVersion.updateMany({
+        where: { projectId: params.projectId, id: { not: params.versionId }, isActive: true },
+        data: { isActive: false, isBaseline: false },
+      });
+    }
+
     const updated = await db.ganttVersion.update({
       where: { id: params.versionId },
       data: {
-        ...(parsed.data.name !== undefined && { name: parsed.data.name }),
-        ...(parsed.data.description !== undefined && { description: parsed.data.description }),
-        ...(parsed.data.stageId !== undefined && { stageId: parsed.data.stageId }),
-        ...(parsed.data.isActive !== undefined && { isActive: parsed.data.isActive }),
+        ...(d.name !== undefined && { name: d.name }),
+        ...(d.description !== undefined && { description: d.description }),
+        ...(d.stageId !== undefined && { stageId: d.stageId }),
+        ...(d.contractId !== undefined && { contractId: d.contractId }),
+        ...(d.isActive !== undefined && { isActive: d.isActive }),
+        ...(d.isBaseline !== undefined && { isBaseline: d.isBaseline }),
+        ...(d.isDirective !== undefined && { isDirective: d.isDirective }),
+        ...(d.delegatedFromOrgId !== undefined && { delegatedFromOrgId: d.delegatedFromOrgId }),
+        ...(d.delegatedToOrgId !== undefined && { delegatedToOrgId: d.delegatedToOrgId }),
+        ...(d.accessOrgIds !== undefined && { accessOrgIds: d.accessOrgIds }),
+        ...(d.linkedVersionIds !== undefined && { linkedVersionIds: d.linkedVersionIds }),
+        ...(d.lockWorks !== undefined && { lockWorks: d.lockWorks }),
+        ...(d.lockPlan !== undefined && { lockPlan: d.lockPlan }),
+        ...(d.lockFact !== undefined && { lockFact: d.lockFact }),
+        ...(d.calculationMethod !== undefined && { calculationMethod: d.calculationMethod }),
+        ...(d.disableVolumeRounding !== undefined && { disableVolumeRounding: d.disableVolumeRounding }),
+        ...(d.allowOverplan !== undefined && { allowOverplan: d.allowOverplan }),
+        ...(d.showSummaryRow !== undefined && { showSummaryRow: d.showSummaryRow }),
       },
       include: {
         stage: { select: { id: true, name: true } },

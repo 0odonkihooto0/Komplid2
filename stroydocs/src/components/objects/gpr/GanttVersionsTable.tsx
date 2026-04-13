@@ -174,6 +174,7 @@ export function GanttVersionsTable({
       <CreateVersionDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
+        objectId={objectId}
         stages={stages}
         selectedStageId={selectedStageId}
         isCreating={isCreating}

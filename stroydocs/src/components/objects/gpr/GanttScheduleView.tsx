@@ -1,6 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 import { useGanttScheduleView, type GanttScheduleTab, type NewTaskForm } from './useGanttScheduleView';
 import { GanttScheduleHeader } from './GanttScheduleHeader';
 import { GanttScheduleSidebar } from './GanttScheduleSidebar';
@@ -12,6 +21,7 @@ import { GanttPlanFactView } from './GanttPlanFactView';
 import { GanttClosureView } from './GanttClosureView';
 import { GanttIdSkView } from './GanttIdSkView';
 import { GanttDelegationView } from './GanttDelegationView';
+import { GanttVersionEditDialog } from './GanttVersionEditDialog';
 
 // Метки под-вкладок страницы «График» (ЦУС: Координация, Диаграмма, План-факт, Закрытие, ИД и СК, Делегирование)
 const SCHEDULE_TABS = [
@@ -31,18 +41,26 @@ export function GanttScheduleView({ objectId }: Props) {
   const view = useGanttScheduleView(objectId);
   const vid = view.selectedVersionId;
 
+  // Диалог «Заполнить из другой версии» — простой пикер
+  const [fillSourceId, setFillSourceId] = useState<string>('');
+
+  function handleConfirmFillFromVersion() {
+    if (!fillSourceId) return;
+    view.handleFillFromVersion(fillSourceId);
+  }
+
   return (
     <div className="space-y-2">
       {/* Строка: название версии + Badge статуса + кнопка редактировать */}
       <GanttScheduleHeader
         version={view.selectedVersion}
-        onEditVersion={() => {/* TODO: открыть диалог редактирования версии */}}
+        onEditVersion={() => view.setEditVersionOpen(true)}
       />
 
       {/* Тулбар: иконки + кнопка «Действия» с вложенным меню */}
       <GanttScheduleToolbar
         versionId={vid}
-        onEditVersion={() => {/* TODO: открыть диалог редактирования версии */}}
+        onEditVersion={() => view.setEditVersionOpen(true)}
       />
 
       {/* Основная область: боковая панель (версии/стадии) + под-вкладки */}
@@ -56,7 +74,11 @@ export function GanttScheduleView({ objectId }: Props) {
           versionsLoading={view.versionsLoading}
           onStageChange={view.setSelectedStageId}
           onVersionChange={view.setSelectedVersionId}
-          onCreateVersion={() => view.setCreateOpen(true)}
+          onCreateVersion={() => view.setCreateVersionOpen(true)}
+          onFillFromDirective={view.handleFillFromDirective}
+          onFillFromVersion={() => { setFillSourceId(''); view.setFillFromVersionOpen(true); }}
+          onOpenVersionSettings={() => view.setEditVersionOpen(true)}
+          fillFromVersionPending={view.fillFromVersionPending}
         />
 
         <div className="flex-1 min-w-0">
@@ -81,7 +103,7 @@ export function GanttScheduleView({ objectId }: Props) {
                 <GanttCoordinationView objectId={objectId} versionId={vid} />
               </TabsContent>
               <TabsContent value="gantt">
-                <GanttChartGPR objectId={objectId} versionId={vid} />
+                <GanttChartGPR objectId={objectId} versionId={vid} version={view.selectedVersion} />
               </TabsContent>
               <TabsContent value="planfact">
                 <GanttPlanFactView objectId={objectId} versionId={vid} />
@@ -109,6 +131,62 @@ export function GanttScheduleView({ objectId }: Props) {
         onSubmit={view.handleCreateTask}
         isPending={view.createTaskPending}
       />
+
+      {/* Диалог создания новой версии ГПР */}
+      <GanttVersionEditDialog
+        open={view.createVersionOpen}
+        onOpenChange={view.setCreateVersionOpen}
+        objectId={objectId}
+        version={null}
+        defaultStageId={view.selectedStageId}
+      />
+
+      {/* Диалог редактирования существующей версии ГПР */}
+      <GanttVersionEditDialog
+        open={view.editVersionOpen}
+        onOpenChange={view.setEditVersionOpen}
+        objectId={objectId}
+        version={view.selectedVersion}
+        defaultStageId={view.selectedStageId}
+      />
+
+      {/* Диалог «Заполнить из другой версии» */}
+      <Dialog open={view.fillFromVersionOpen} onOpenChange={view.setFillFromVersionOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Заполнить из другой версии</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <Label>Исходная версия</Label>
+            <Select value={fillSourceId} onValueChange={setFillSourceId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Выберите версию-источник" />
+              </SelectTrigger>
+              <SelectContent>
+                {view.versions
+                  .filter((v) => v.id !== vid)
+                  .map((v) => (
+                    <SelectItem key={v.id} value={v.id}>
+                      {v.stage?.name ? `[${v.stage.name}] ` : ''}{v.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Задачи текущей версии будут заменены задачами из выбранной.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => view.setFillFromVersionOpen(false)}>Отмена</Button>
+            <Button
+              disabled={!fillSourceId || view.fillFromVersionPending}
+              onClick={handleConfirmFillFromVersion}
+            >
+              Заполнить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

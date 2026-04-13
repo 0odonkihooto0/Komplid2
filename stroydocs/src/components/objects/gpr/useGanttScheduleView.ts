@@ -4,6 +4,7 @@ import { useState, type Dispatch, type SetStateAction } from 'react';
 import {
   useGanttStages,
   useGanttVersionsByProject,
+  useFillFromVersion,
   type GanttStageItem,
   type GanttVersionSummary,
 } from './useGanttStructure';
@@ -49,6 +50,18 @@ export interface UseGanttScheduleViewResult {
   // Автозаполнение из видов работ
   handleAutoFill: () => void;
   autoFillPending: boolean;
+  // Диалог создания версии (version=null)
+  createVersionOpen: boolean;
+  setCreateVersionOpen: (v: boolean) => void;
+  // Диалог редактирования версии (version=selectedVersion)
+  editVersionOpen: boolean;
+  setEditVersionOpen: (v: boolean) => void;
+  // Диалог заполнения из версии
+  fillFromVersionOpen: boolean;
+  setFillFromVersionOpen: (v: boolean) => void;
+  handleFillFromDirective: () => void;
+  handleFillFromVersion: (sourceVersionId: string) => void;
+  fillFromVersionPending: boolean;
 }
 
 export function useGanttScheduleView(objectId: string): UseGanttScheduleViewResult {
@@ -56,6 +69,9 @@ export function useGanttScheduleView(objectId: string): UseGanttScheduleViewResu
   const [selectedVersionId, setSelectedVersionIdState] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<GanttScheduleTab>('coordination');
   const [createOpen, setCreateOpen] = useState(false);
+  const [createVersionOpen, setCreateVersionOpen] = useState(false);
+  const [editVersionOpen, setEditVersionOpen] = useState(false);
+  const [fillFromVersionOpen, setFillFromVersionOpen] = useState(false);
   const [form, setForm] = useState<NewTaskForm>({
     name: '',
     planStart: new Date().toISOString().slice(0, 10),
@@ -70,6 +86,7 @@ export function useGanttScheduleView(objectId: string): UseGanttScheduleViewResu
 
   const createTask = useCreateTaskGPR(objectId, selectedVersionId ?? '');
   const autoFill = useAutoFillFromWorkItems(objectId, selectedVersionId ?? '');
+  const fillFromVersionMut = useFillFromVersion(objectId);
 
   // Сбрасываем версию при смене стадии
   function setSelectedStageId(id: string | null) {
@@ -101,6 +118,23 @@ export function useGanttScheduleView(objectId: string): UseGanttScheduleViewResu
     autoFill.mutate();
   }
 
+  // Заполнить из директивной: ищем директивную версию проекта и копируем в текущую
+  function handleFillFromDirective() {
+    if (!selectedVersionId) return;
+    // allVersions загружаются без фильтра стадии — директивная может быть в любой стадии
+    const directiveVersion = versions.find((v: GanttVersionSummary) => v.isDirective);
+    if (!directiveVersion) return;
+    fillFromVersionMut.mutate({ versionId: selectedVersionId, sourceVersionId: directiveVersion.id });
+  }
+
+  function handleFillFromVersion(sourceVersionId: string) {
+    if (!selectedVersionId || !sourceVersionId) return;
+    fillFromVersionMut.mutate(
+      { versionId: selectedVersionId, sourceVersionId },
+      { onSuccess: () => setFillFromVersionOpen(false) },
+    );
+  }
+
   return {
     stages,
     versions,
@@ -121,5 +155,14 @@ export function useGanttScheduleView(objectId: string): UseGanttScheduleViewResu
     createTaskPending: createTask.isPending,
     handleAutoFill,
     autoFillPending: autoFill.isPending,
+    createVersionOpen,
+    setCreateVersionOpen,
+    editVersionOpen,
+    setEditVersionOpen,
+    fillFromVersionOpen,
+    setFillFromVersionOpen,
+    handleFillFromDirective,
+    handleFillFromVersion,
+    fillFromVersionPending: fillFromVersionMut.isPending,
   };
 }

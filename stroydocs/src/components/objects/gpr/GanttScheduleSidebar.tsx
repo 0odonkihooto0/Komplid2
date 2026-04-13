@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, GitBranch, ArrowDownToLine, Copy, List, Settings } from 'lucide-react';
+import { Plus, ArrowDownToLine, Copy, List, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -23,6 +23,10 @@ interface Props {
   onStageChange: (id: string | null) => void;
   onVersionChange: (id: string | null) => void;
   onCreateVersion: () => void;
+  onFillFromDirective?: () => void;
+  onFillFromVersion?: () => void;
+  onOpenVersionSettings?: () => void;
+  fillFromVersionPending?: boolean;
 }
 
 export function GanttScheduleSidebar({
@@ -35,7 +39,14 @@ export function GanttScheduleSidebar({
   onStageChange,
   onVersionChange,
   onCreateVersion,
+  onFillFromDirective,
+  onFillFromVersion,
+  onOpenVersionSettings,
+  fillFromVersionPending,
 }: Props) {
+  const hasDirective = versions.some((v: GanttVersionSummary) => v.isDirective);
+  const hasSelection = !!selectedVersionId;
+
   return (
     <div className="flex flex-col gap-2 w-48 shrink-0 border-r pr-3">
       {/* Выбор стадии */}
@@ -98,20 +109,35 @@ export function GanttScheduleSidebar({
         <Button variant="ghost" size="sm" className="h-7 text-xs justify-start gap-1.5" onClick={onCreateVersion}>
           <Plus className="h-3.5 w-3.5" /> Создать версию
         </Button>
-        <Button variant="ghost" size="sm" className="h-7 text-xs justify-start gap-1.5" disabled title="Требует директивной версии">
+        <Button
+          variant="ghost" size="sm"
+          className="h-7 text-xs justify-start gap-1.5"
+          disabled={!hasSelection || !hasDirective || fillFromVersionPending}
+          title={!hasDirective ? 'Нет директивной версии' : 'Заполнить из директивной'}
+          onClick={onFillFromDirective}
+        >
           <ArrowDownToLine className="h-3.5 w-3.5" /> Из директивной
         </Button>
-        <Button variant="ghost" size="sm" className="h-7 text-xs justify-start gap-1.5" disabled title="Выберите версию-источник">
+        <Button
+          variant="ghost" size="sm"
+          className="h-7 text-xs justify-start gap-1.5"
+          disabled={!hasSelection}
+          title="Заполнить из другой версии"
+          onClick={onFillFromVersion}
+        >
           <Copy className="h-3.5 w-3.5" /> Из другой версии
         </Button>
-        <Button variant="ghost" size="sm" className="h-7 text-xs justify-start gap-1.5" disabled>
-          <GitBranch className="h-3.5 w-3.5" /> Версии
+        <Button
+          variant="ghost" size="sm"
+          className="h-7 text-xs justify-start gap-1.5"
+          disabled={!hasSelection}
+          title="Настройки версии"
+          onClick={onOpenVersionSettings}
+        >
+          <Settings className="h-3.5 w-3.5" /> Настройки
         </Button>
         <Button variant="ghost" size="sm" className="h-7 text-xs justify-start gap-1.5" disabled>
           <List className="h-3.5 w-3.5" /> Функции
-        </Button>
-        <Button variant="ghost" size="sm" className="h-7 text-xs justify-start gap-1.5" disabled>
-          <Settings className="h-3.5 w-3.5" /> Настройки
         </Button>
       </div>
     </div>
