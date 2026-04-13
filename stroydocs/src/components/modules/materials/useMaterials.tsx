@@ -101,7 +101,7 @@ export function useMaterials(contractId: string) {
       cell: ({ row }) => (
         <EditableCell
           value={row.original.name}
-          onSave={(v) => updateNameMutation.mutateAsync({ id: row.original.id, name: v })}
+          onSave={async (v) => { await updateNameMutation.mutateAsync({ id: row.original.id, name: v }); }}
         />
       ),
     },
