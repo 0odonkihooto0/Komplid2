@@ -1158,6 +1158,9 @@ model ApprovalRoute {
   // СЭД — Карточка документооборота
   sedWorkflow SEDWorkflow? @relation("SEDWorkflowApproval")
 
+  // Модуль 8 — Заказ поставщику (FK на стороне SupplierOrder)
+  supplierOrder SupplierOrder? @relation("SupplierOrderApproval")
+
   @@map("approval_routes")
 }
 
@@ -3731,6 +3734,10 @@ model SupplierOrder {
   requestId String?
   request   MaterialRequest? @relation(fields: [requestId], references: [id])
 
+  // Маршрут согласования
+  approvalRouteId String?        @unique
+  approvalRoute   ApprovalRoute? @relation("SupplierOrderApproval", fields: [approvalRouteId], references: [id])
+
   projectId String
   project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
@@ -3746,6 +3753,7 @@ model SupplierOrder {
   @@index([projectId])
   @@index([requestId])
   @@index([type])
+  @@index([approvalRouteId])
   @@map("supplier_orders")
 }
 
@@ -3756,6 +3764,12 @@ model SupplierOrderItem {
   unit       String?
   unitPrice  Float?
   totalPrice Float?
+  discount   Float?  // Скидка, %
+  vatRate    Float?  // Ставка НДС, %
+  vatAmount  Float?  // Сумма НДС
+  weight     Float?  // Вес, кг
+  volume     Float?  // Объём, м³
+  basis      String? // Основание (номер договора / заявки)
 
   nomenclatureId String?
   nomenclature   MaterialNomenclature? @relation(fields: [nomenclatureId], references: [id])
