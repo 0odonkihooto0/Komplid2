@@ -6,6 +6,24 @@ import { useToast } from '@/hooks/useToast';
 
 // ─── Типы ────────────────────────────────────────────────────────────────────
 
+interface ApprovalStepData {
+  id: string;
+  stepIndex: number;
+  role: string;
+  status: string;
+  comment: string | null;
+  decidedAt: string | null;
+  userId: string | null;
+  user: { id: string; firstName: string; lastName: string } | null;
+}
+
+interface ApprovalRouteData {
+  id: string;
+  status: string;
+  currentStepIdx: number;
+  steps: ApprovalStepData[];
+}
+
 export type MaterialRequestStatus =
   | 'DRAFT'
   | 'SUBMITTED'
@@ -42,6 +60,8 @@ export interface RequestCardData {
   // Ключи S3 прикреплённых файлов — возвращаются из include автоматически
   attachmentS3Keys: string[];
   _count: { items: number; orders: number; comments: number };
+  // Маршрут согласования — null если ещё не запущен
+  approvalRoute: ApprovalRouteData | null;
 }
 
 // ─── Метки статусов ──────────────────────────────────────────────────────────
@@ -238,6 +258,33 @@ export function useTransferItems(objectId: string, requestId: string) {
       toast({ title: 'Ошибка', description: err.message, variant: 'destructive' });
     },
   });
+}
+
+// ─── Хук запуска/перезапуска согласования ───────────────────────────────────
+
+export function useRequestWorkflow(objectId: string, requestId: string) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+
+  const startWorkflow = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(
+        `/api/projects/${objectId}/material-requests/${requestId}/workflow`,
+        { method: 'POST' }
+      );
+      const json = await res.json() as { error?: string };
+      if (!res.ok) throw new Error(json.error ?? 'Ошибка запуска согласования');
+      return json;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['material-request', objectId, requestId] });
+      qc.invalidateQueries({ queryKey: ['material-requests', objectId] });
+      toast({ title: 'Заявка направлена на согласование' });
+    },
+    onError: (err: Error) => toast({ title: 'Ошибка', description: err.message, variant: 'destructive' }),
+  });
+
+  return { startWorkflow };
 }
 
 // ─── Хук создания заказа поставщику ─────────────────────────────────────────

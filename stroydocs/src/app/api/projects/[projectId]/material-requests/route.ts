@@ -37,6 +37,7 @@ export async function GET(
     const status = req.nextUrl.searchParams.get('status') ?? undefined;
     const from = req.nextUrl.searchParams.get('from') ?? undefined;
     const to = req.nextUrl.searchParams.get('to') ?? undefined;
+    const approvalStatus = req.nextUrl.searchParams.get('approvalStatus') ?? undefined;
 
     const where = {
       projectId: params.projectId,
@@ -47,6 +48,11 @@ export async function GET(
           ...(from ? { gte: new Date(from) } : {}),
           ...(to ? { lte: new Date(to) } : {}),
         },
+      } : {}),
+      // Фильтрация по статусу согласования
+      ...(approvalStatus === 'none' ? { approvalRouteId: null } : {}),
+      ...(approvalStatus && approvalStatus !== 'none' ? {
+        approvalRoute: { status: approvalStatus as import('@prisma/client').ApprovalRouteStatus },
       } : {}),
     };
 
@@ -60,6 +66,7 @@ export async function GET(
           // Включаем количество позиций и данные поставщика
           _count: { select: { items: true } },
           supplierOrg: { select: { id: true, name: true } },
+          approvalRoute: { select: { status: true } },
         },
       }),
       db.materialRequest.count({ where }),
@@ -79,6 +86,7 @@ export async function GET(
     const data = requests.map((r) => ({
       ...r,
       hasUnprocessedItems: unprocessedSet.has(r.id),
+      approvalStatus: r.approvalRoute?.status ?? null,
     }));
 
     return successResponse(data, { total, page, pageSize: limit, totalPages: Math.ceil(total / limit) });

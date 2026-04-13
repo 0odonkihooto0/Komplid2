@@ -5,18 +5,21 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { ArrowLeft, SendHorizontal, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, ClipboardCheck, SendHorizontal, ShoppingCart } from 'lucide-react';
 import { RequestInfoTab } from './RequestInfoTab';
 import { RequestItemsTab } from './RequestItemsTab';
 import { RequestCommentsTab } from './RequestCommentsTab';
 import { ResourceAttachments } from './ResourceAttachments';
+import { RequestApprovalTab } from './RequestApprovalTab';
 import {
   useRequestCard,
   useUpdateRequest,
   useCreateOrder,
+  useRequestWorkflow,
   STATUS_LABELS,
   STATUS_VARIANTS,
 } from './useRequestCard';
+import { useSession } from 'next-auth/react';
 
 interface Props {
   objectId: string;
@@ -25,9 +28,12 @@ interface Props {
 
 export function RequestCardView({ objectId, requestId }: Props) {
   const router = useRouter();
+  const { data: session } = useSession();
+  const currentUserId = session?.user?.id ?? '';
   const { request, isLoading } = useRequestCard(objectId, requestId);
   const updateRequest = useUpdateRequest(objectId, requestId);
   const createOrder = useCreateOrder(objectId, requestId);
+  const requestWorkflow = useRequestWorkflow(objectId, requestId);
 
   const [tab, setTab] = useState('info');
 
@@ -86,6 +92,17 @@ export function RequestCardView({ objectId, requestId }: Props) {
               Подать заявку
             </Button>
           )}
+          {canSubmit && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => requestWorkflow.startWorkflow.mutate()}
+              disabled={requestWorkflow.startWorkflow.isPending}
+            >
+              <ClipboardCheck className="h-4 w-4 mr-1" />
+              {requestWorkflow.startWorkflow.isPending ? 'Запуск...' : 'На согласование'}
+            </Button>
+          )}
           {canCreateOrder && (
             <Button
               size="sm"
@@ -127,6 +144,12 @@ export function RequestCardView({ objectId, requestId }: Props) {
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="approval">
+            Согласование
+            {request.approvalRoute?.status === 'PENDING' && (
+              <span className="ml-1.5 h-2 w-2 rounded-full bg-blue-500 inline-block" />
+            )}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="info">
@@ -145,6 +168,15 @@ export function RequestCardView({ objectId, requestId }: Props) {
           <ResourceAttachments
             apiBasePath={`/api/projects/${objectId}/material-requests/${requestId}`}
             parentQueryKey={['material-request', objectId, requestId]}
+          />
+        </TabsContent>
+
+        <TabsContent value="approval">
+          <RequestApprovalTab
+            objectId={objectId}
+            requestId={requestId}
+            request={request}
+            currentUserId={currentUserId}
           />
         </TabsContent>
       </Tabs>

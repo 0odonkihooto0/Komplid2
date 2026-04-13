@@ -17,11 +17,13 @@ export function useRequestsView(objectId: string) {
   const [statusFilter, setStatusFilter] = useState<MaterialRequestStatus | ''>('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [approvalStatusFilter, setApprovalStatusFilter] = useState<string>('');
 
   const filters: RequestsFilter = {
     status: statusFilter || undefined,
     from: dateFrom || undefined,
     to: dateTo || undefined,
+    approvalStatus: approvalStatusFilter || undefined,
   };
 
   const { requests, isLoading } = useRequests(objectId, filters);
@@ -34,6 +36,7 @@ export function useRequestsView(objectId: string) {
     setStatusFilter('');
     setDateFrom('');
     setDateTo('');
+    setApprovalStatusFilter('');
   }
 
   return {
@@ -43,9 +46,11 @@ export function useRequestsView(objectId: string) {
     setDateFrom,
     dateTo,
     setDateTo,
+    approvalStatusFilter,
+    setApprovalStatusFilter,
     requests,
     isLoading,
-    hasFilters: !!(statusFilter || dateFrom || dateTo),
+    hasFilters: !!(statusFilter || dateFrom || dateTo || approvalStatusFilter),
     handleRowClick,
     handleReset,
   };

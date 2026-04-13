@@ -50,6 +50,17 @@ export async function GET(
           orderBy: { id: 'asc' },
         },
         _count: { select: { items: true, orders: true, comments: true } },
+        // Включаем маршрут согласования с шагами
+        approvalRoute: {
+          include: {
+            steps: {
+              orderBy: { stepIndex: 'asc' },
+              include: {
+                user: { select: { id: true, firstName: true, lastName: true } },
+              },
+            },
+          },
+        },
       },
     });
 
