@@ -17,7 +17,7 @@ type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline' | 'succe
 function getVersionBadge(version: GanttVersionSummary): { label: string; variant: BadgeVariant } {
   if (version.isDirective) return { label: 'Директивная', variant: 'warning' };
   if (version.isActive) return { label: 'Актуальная', variant: 'success' };
-  if (version.isBaseline) return { label: 'Базовая', variant: 'secondary' };
+  if (version.isBaseline) return { label: 'Черновик', variant: 'secondary' };
   return { label: 'Архив', variant: 'secondary' };
 }
 

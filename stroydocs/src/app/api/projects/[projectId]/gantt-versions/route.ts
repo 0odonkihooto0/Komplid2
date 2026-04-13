@@ -9,8 +9,23 @@ export const dynamic = 'force-dynamic';
 
 const createVersionSchema = z.object({
   name: z.string().min(1, 'Название обязательно').max(200),
-  stageId: z.string().uuid().optional(),
-  description: z.string().max(1000).optional(),
+  stageId: z.string().uuid().optional().nullable(),
+  contractId: z.string().uuid().optional().nullable(),
+  description: z.string().max(1000).optional().nullable(),
+  isDirective: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+  isBaseline: z.boolean().optional(),
+  delegatedFromOrgId: z.string().uuid().optional().nullable(),
+  delegatedToOrgId: z.string().uuid().optional().nullable(),
+  accessOrgIds: z.array(z.string().uuid()).optional(),
+  linkedVersionIds: z.array(z.string().uuid()).optional(),
+  lockWorks: z.boolean().optional(),
+  lockPlan: z.boolean().optional(),
+  lockFact: z.boolean().optional(),
+  calculationMethod: z.enum(['MANUAL', 'VOLUME', 'AMOUNT', 'MAN_HOURS', 'MACHINE_HOURS', 'LABOR']).optional(),
+  disableVolumeRounding: z.boolean().optional(),
+  allowOverplan: z.boolean().optional(),
+  showSummaryRow: z.boolean().optional(),
 });
 
 export async function GET(
@@ -103,15 +118,42 @@ export async function POST(
       if (!stage) return errorResponse('Стадия не найдена', 404);
     }
 
+    const {
+      name, description, stageId, contractId, isDirective, isActive, isBaseline,
+      delegatedFromOrgId, delegatedToOrgId, accessOrgIds, linkedVersionIds,
+      lockWorks, lockPlan, lockFact, calculationMethod,
+      disableVolumeRounding, allowOverplan, showSummaryRow,
+    } = parsed.data;
+
+    // При установке «Актуальная» — архивируем все другие активные версии проекта
+    if (isActive) {
+      await db.ganttVersion.updateMany({
+        where: { projectId: params.projectId, isActive: true },
+        data: { isActive: false, isBaseline: false },
+      });
+    }
+
     const version = await db.ganttVersion.create({
       data: {
-        name: parsed.data.name,
-        description: parsed.data.description ?? null,
-        stageId: parsed.data.stageId ?? null,
+        name,
+        description: description ?? null,
+        stageId: stageId ?? null,
+        contractId: contractId ?? null,
         projectId: params.projectId,
-        isDirective: false,
-        isActive: true,
-        isBaseline: false,
+        isDirective: isDirective ?? false,
+        isActive: isActive ?? true,
+        isBaseline: isBaseline ?? false,
+        delegatedFromOrgId: delegatedFromOrgId ?? null,
+        delegatedToOrgId: delegatedToOrgId ?? null,
+        accessOrgIds: accessOrgIds ?? [],
+        linkedVersionIds: linkedVersionIds ?? [],
+        lockWorks: lockWorks ?? false,
+        lockPlan: lockPlan ?? false,
+        lockFact: lockFact ?? false,
+        calculationMethod: calculationMethod ?? 'MANUAL',
+        disableVolumeRounding: disableVolumeRounding ?? true,
+        allowOverplan: allowOverplan ?? false,
+        showSummaryRow: showSummaryRow ?? false,
         createdById: session.user.id,
       },
       include: {

@@ -4,13 +4,19 @@ import { useState, useRef, useCallback } from 'react';
 import { Gantt, ViewMode } from 'gantt-task-react';
 import 'gantt-task-react/dist/index.css';
 import type { Task } from 'gantt-task-react';
+import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { GanttTaskListHeader } from '@/components/modules/gantt/GanttTaskListHeader';
 import { GanttTaskPanelGPR } from './GanttTaskPanelGPR';
 import { GanttExecDocsSheet } from './GanttExecDocsSheet';
+import { GanttColumnSettingsSheet } from './GanttColumnSettingsSheet';
 import type { GanttTaskItem, GanttDependencyItem } from '@/components/modules/gantt/ganttTypes';
+import type { GanttVersionSummary } from './useGanttStructure';
 import { convertToGanttLibTasks } from '@/lib/gantt/converters';
 import {
   useGanttTasksGPR,
@@ -28,6 +34,7 @@ const VIEW_MODE_LABELS: Record<string, string> = {
 interface Props {
   objectId: string;
   versionId: string;
+  version?: GanttVersionSummary | null;
 }
 
 interface PendingUpdate {
@@ -87,10 +94,11 @@ function computeFsCascade(
   return result;
 }
 
-export function GanttChartGPR({ objectId, versionId }: Props) {
+export function GanttChartGPR({ objectId, versionId, version }: Props) {
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Week);
   const [selectedTask, setSelectedTask] = useState<GanttTaskItem | null>(null);
   const [execDocsTaskId, setExecDocsTaskId] = useState<string | null>(null);
+  const [columnSettingsOpen, setColumnSettingsOpen] = useState(false);
 
   const { data, isLoading } = useGanttTasksGPR(objectId, versionId);
   const updateBulk = useUpdateTasksBulkGPR(objectId, versionId);
@@ -185,6 +193,18 @@ export function GanttChartGPR({ objectId, versionId }: Props) {
           <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
             ● Выполнено
           </Badge>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setColumnSettingsOpen(true)}>
+                Настроить колонки
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Диаграмма */}
@@ -238,6 +258,15 @@ export function GanttChartGPR({ objectId, versionId }: Props) {
           onClose={() => setExecDocsTaskId(null)}
         />
       )}
+
+      {/* Настройка колонок */}
+      <GanttColumnSettingsSheet
+        open={columnSettingsOpen}
+        onOpenChange={setColumnSettingsOpen}
+        objectId={objectId}
+        versionId={versionId}
+        currentSettings={version?.columnSettings ?? null}
+      />
     </div>
   );
 }

@@ -817,6 +817,11 @@
 - ✅ `GanttCalendar`, `GanttChangeLog` — производственные календари и журнал изменений
 - ✅ Делегирование версий между организациями (`delegatedFromOrg`, `delegatedToOrg`, `DelegationTree`)
 - ✅ Настройки версии: метод расчёта, блокировки, округление, доступ, видимость колонок (`columnSettings Json?`)
+- ✅ `GanttVersionEditDialog` — расширенный диалог создания/редактирования версии (4 вкладки: Основные / Участники / Настройки / Объединение версий; inline-создание стадии; combobox контракта с авто-заполнением орг; маппинг актуальности Черновик/Актуальная/Архив; MultiSelect орг для доступа; MultiSelect версий для объединения)
+- ✅ `GanttScheduleSidebar` — боковая панель инструментов: кнопки «Из директивной» и «Из другой версии» включены; «Настройки версии» открывает `GanttVersionEditDialog`
+- ✅ `fill-from-version` API (`POST /gantt-versions/[versionId]/fill-from-version`) — копирование задач из версии-источника с восстановлением иерархии через 2-pass (idMap)
+- ✅ `GanttColumnSettingsSheet` — Sheet «Настроить колонки» (⋮ → пункт меню); 16 колонок с checkboxes; `PATCH /column-settings`; синхронизация с `GanttVersion.columnSettings`
+- ✅ `gantt-orgs` API (`GET /api/projects/[projectId]/gantt-orgs`) — список организаций из участников контрактов объекта + собственная организация (для Combobox в диалоге версии)
 - ✅ Расширенные поля задач: человеко-часы, машино-часы, НДС, вес, тип стоимости, тип расчёта, календарь, вложения S3
 
 ---
