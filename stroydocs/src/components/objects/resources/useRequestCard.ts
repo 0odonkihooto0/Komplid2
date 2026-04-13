@@ -38,7 +38,7 @@ export interface RequestCardData {
   createdAt: string;
   updatedAt: string;
   items: RequestItemData[];
-  _count: { items: number; orders: number };
+  _count: { items: number; orders: number; comments: number };
 }
 
 // ─── Метки статусов ──────────────────────────────────────────────────────────

@@ -48,7 +48,7 @@ export async function GET(
           },
           orderBy: { id: 'asc' },
         },
-        _count: { select: { items: true, orders: true } },
+        _count: { select: { items: true, orders: true, comments: true } },
       },
     });
 
@@ -98,7 +98,7 @@ export async function PATCH(
         }),
       },
       include: {
-        _count: { select: { items: true, orders: true } },
+        _count: { select: { items: true, orders: true, comments: true } },
       },
     });
 

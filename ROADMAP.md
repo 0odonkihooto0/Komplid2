@@ -856,6 +856,7 @@
 - ✅ Заказы поставщику (DRAFT → SENT → CONFIRMED → DELIVERED → COMPLETED)
 - ✅ Создание заказа из заявки (create-order)
 - ✅ Справочник номенклатуры (MaterialNomenclature, API на уровне организации)
+- ✅ Система комментариев к заявкам (MaterialRequestComment): вложенные ответы (parentId), редактирование/удаление своих, вкладка «Ответы» в карточке заявки с badge счётчика
 - ⬜ Тендерный реестр: несколько предложений поставщиков (SupplierOffer — не реализован)
 
 ### Склад ✅
@@ -877,6 +878,7 @@
 - ✅ `MaterialNomenclature`, `MaterialRequest`, `MaterialRequestItem`
 - ✅ `SupplierOrder`, `SupplierOrderItem`
 - ✅ `Warehouse`, `WarehouseItem`, `WarehouseMovement`, `WarehouseMovementLine`
+- ✅ `MaterialRequestComment` (комментарии к заявкам, parentId для вложенности, миграция `add_request_comments`)
 - ⬜ `SupplierOffer` (тендерный реестр — не реализован)
 - ✅ Расширены поля моделей (миграция `module8_extend_fields`): `MaterialRequest` (+paymentDate, paymentAmount, type), `MaterialRequestItem` (+purchaseUnit, deliveryDate, paymentDeadline, costArticle, purchasePrice, purchaseQty), `SupplierOrder` (+externalNumber, expectedReadyDate, expectedArrivalDate, readinessCorrectionDate, underdeliveryDate, readinessThrough, deliveryConditions, contractType, constructionObject), `WarehouseMovement` (+consignor, consignee, vatType, vatRate, currency, externalNumber, attachmentS3Keys), `WarehouseMovementLine` (+vatAmount, totalWithVat, basis, gtd, country, comment); enum `WarehouseMovementType` +RECEIPT_ORDER, EXPENSE_ORDER
 
