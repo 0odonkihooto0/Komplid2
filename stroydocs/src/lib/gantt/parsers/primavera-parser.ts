@@ -94,7 +94,7 @@ export function parsePrimaveraXer(buffer: Buffer): ParseResult {
     });
   }
   // Связываем родительские узлы с дочерними
-  for (const node of wbsMap.values()) {
+  for (const node of Array.from(wbsMap.values())) {
     if (node.parentWbsId) {
       wbsMap.get(node.parentWbsId)?.children.push(node.wbsId);
     }
@@ -121,7 +121,7 @@ export function parsePrimaveraXer(buffer: Buffer): ParseResult {
   const tasks: ParsedTask[] = [];
   const wbsTaskMap = new Map<string, string>(); // wbs_id → externalId секции
 
-  for (const node of wbsMap.values()) {
+  for (const node of Array.from(wbsMap.values())) {
     // Секция = WBS с дочерними WBS или с привязанными задачами
     if (node.children.length === 0 && !wbsWithTasks.has(node.wbsId)) continue;
     const parentNode = node.parentWbsId ? wbsMap.get(node.parentWbsId) : null;

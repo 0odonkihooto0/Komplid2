@@ -40,7 +40,7 @@ function buildGroupedRows(tasks: GanttTaskItem[], field: GroupByField): DisplayR
 
   const result: DisplayRow[] = [];
   const prefix = GROUP_LABELS[field];
-  for (const [key, group] of groups) {
+  for (const [key, group] of Array.from(groups)) {
     result.push({
       _isGroupHeader: true,
       groupKey: key,
