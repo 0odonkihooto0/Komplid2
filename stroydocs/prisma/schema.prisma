@@ -3574,8 +3574,11 @@ model MaterialRequest {
   id           String                @id @default(uuid())
   number       String // Номер (авто или вручную)
   status       MaterialRequestStatus @default(DRAFT)
-  deliveryDate DateTime? // Срок поставки
-  notes        String?
+  deliveryDate  DateTime? // Срок поставки
+  notes         String?
+  paymentDate   DateTime? // Дата оплаты
+  paymentAmount Float?    // Сумма оплаты
+  type          String    @default("REQUEST") // REQUEST | LRV
 
   // Поставщик
   supplierOrgId String?
@@ -3620,6 +3623,12 @@ model MaterialRequestItem {
   unitPrice       Float? // Закупочная цена
   notes           String?
   status          String? // Не обработана / В работе / Поставлена
+  purchaseUnit    String?   // Закупочная единица измерения
+  deliveryDate    DateTime? // Срок поставки позиции
+  paymentDeadline DateTime? // Срок оплаты
+  costArticle     String?   // Статья затрат
+  purchasePrice   Float?    // Закупочная цена
+  purchaseQty     Float?    // Закупочное кол-во
 
   nomenclatureId String?
   nomenclature   MaterialNomenclature? @relation(fields: [nomenclatureId], references: [id])
@@ -3660,8 +3669,17 @@ model SupplierOrder {
   status       SupplierOrderStatus @default(DRAFT)
   orderDate    DateTime            @default(now())
   deliveryDate DateTime?
-  totalAmount  Float?
-  notes        String?
+  totalAmount             Float?
+  notes                   String?
+  externalNumber          String?   // Внешний номер документа
+  expectedReadyDate       DateTime? // Ожидаемая дата готовности
+  expectedArrivalDate     DateTime? // Ожидаемая дата прибытия
+  readinessCorrectionDate DateTime? // Коррекция даты готовности
+  underdeliveryDate       DateTime? // Дата готовности недопоставленного
+  readinessThrough        String?   // Готовность через
+  deliveryConditions      String?   // Условия поставки
+  contractType            String?   // Тип контракта
+  constructionObject      String?   // Объект строительства (текстовый override)
 
   // Поставщик (Исполнитель)
   supplierOrgId String?
@@ -3763,8 +3781,10 @@ enum WarehouseMovementType {
   RECEIPT // Поступление (приход от поставщика)
   SHIPMENT // Отгрузка
   TRANSFER // Перемещение между складами
-  WRITEOFF // Списание в производство
-  RETURN // Возврат поставщику
+  WRITEOFF      // Списание в производство
+  RETURN        // Возврат поставщику
+  RECEIPT_ORDER // Приходный ордер
+  EXPENSE_ORDER // Расходный ордер
 }
 
 enum WarehouseMovStatus {
@@ -3779,8 +3799,15 @@ model WarehouseMovement {
   number       String
   movementType WarehouseMovementType
   status       WarehouseMovStatus    @default(DRAFT)
-  movementDate DateTime              @default(now())
-  notes        String?
+  movementDate     DateTime              @default(now())
+  notes            String?
+  consignor        String?   // Грузоотправитель
+  consignee        String?   // Грузополучатель
+  vatType          String?   // Тип НДС (НДС сверху / НДС в сумме)
+  vatRate          Float?    // Ставка НДС (0, 10, 20)
+  currency         String    @default("RUB") // Валюта документа
+  externalNumber   String?   // Внешний номер
+  attachmentS3Keys String[]  @default([]) // Прикреплённые файлы
 
   // Склад-источник (для перемещения и отгрузки)
   fromWarehouseId String?
@@ -3816,8 +3843,14 @@ model WarehouseMovementLine {
   quantity   Float
   unit       String?
   unitPrice  Float?
-  totalPrice Float?
-  notes      String?
+  totalPrice   Float?
+  notes        String?
+  vatAmount    Float?  // Сумма НДС
+  totalWithVat Float?  // Сумма с НДС
+  basis        String? // Основание (ссылка на документ)
+  gtd          String? // ГТД
+  country      String? // Страна
+  comment      String? // Комментарий
 
   movementId String
   movement   WarehouseMovement @relation(fields: [movementId], references: [id], onDelete: Cascade)
