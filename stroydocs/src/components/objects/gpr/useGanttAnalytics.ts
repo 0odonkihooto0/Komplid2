@@ -30,7 +30,33 @@ export interface CriticalTask {
   name: string;
 }
 
+export interface EvmPoint {
+  date: string;
+  pv: number;
+  ev: number;
+  ac: number;
+}
+
 export interface GanttAnalyticsData {
+  // EVM-показатели
+  ev: number;
+  ac: number;
+  pv: number;
+  bac: number;
+  sac: string | null; // ISO дата завершения проекта
+  tac: number;        // Продолжительность проекта (дни)
+  at: number;         // Фактическое время (дни)
+  cv: number;         // Cost Variance
+  sv: number;         // Schedule Variance
+  tv: number;         // Time Variance (дни)
+  cpi: number | null; // Cost Performance Index
+  spi: number | null; // Schedule Performance Index
+  planPercent: number;
+  factPercent: number;
+  forecastPercent: number;
+  deviationPercent: number;
+  sCurveData: EvmPoint[]; // Накопленные PV/EV/AC по неделям (рубли)
+  // Существующие поля
   sCurve: SCurvePoint[];
   deviations: DeviationItem[];
   criticalPath: { tasks: CriticalTask[] };
@@ -47,9 +73,10 @@ export function useGanttAnalytics(
   versionId: string | null,
   startDate?: string,
   endDate?: string,
+  reportDate?: string,
 ) {
   return useQuery<GanttAnalyticsData>({
-    queryKey: ['gantt-analytics', objectId, versionId, startDate, endDate],
+    queryKey: ['gantt-analytics', objectId, versionId, startDate, endDate, reportDate],
     queryFn: async () => {
       const url = new URL(
         `/api/objects/${objectId}/gantt-versions/${versionId}/analytics`,
@@ -57,6 +84,7 @@ export function useGanttAnalytics(
       );
       if (startDate) url.searchParams.set('startDate', startDate);
       if (endDate) url.searchParams.set('endDate', endDate);
+      if (reportDate) url.searchParams.set('reportDate', reportDate);
       const res = await fetch(url.toString());
       const json = (await res.json()) as { data: GanttAnalyticsData; error?: string };
       if (!res.ok) throw new Error(json.error ?? 'Ошибка загрузки аналитики');

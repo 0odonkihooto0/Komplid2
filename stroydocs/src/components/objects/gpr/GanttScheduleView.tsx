@@ -23,6 +23,7 @@ import { GanttClosureView } from './GanttClosureView';
 import { GanttIdSkView } from './GanttIdSkView';
 import { GanttDelegationView } from './GanttDelegationView';
 import { GanttVersionEditDialog } from './GanttVersionEditDialog';
+import { GanttChangeLogDialog } from './GanttChangeLogDialog';
 
 // Метки под-вкладок страницы «График» (ЦУС: Координация, Диаграмма, План-факт, Закрытие, ИД и СК, Делегирование)
 const SCHEDULE_TABS = [
@@ -49,6 +50,7 @@ export function GanttScheduleView({ objectId }: Props) {
   const [groupBy, setGroupBy] = useState<GroupByField | null>(null);
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [isIsolated, setIsIsolated] = useState(false);
+  const [changeLogOpen, setChangeLogOpen] = useState(false);
 
   function handleConfirmFillFromVersion() {
     if (!fillSourceId) return;
@@ -77,6 +79,7 @@ export function GanttScheduleView({ objectId }: Props) {
         isIsolated={isIsolated}
         onIsolate={() => setIsIsolated(true)}
         onShowAll={() => setIsIsolated(false)}
+        onOpenChangeLog={() => setChangeLogOpen(true)}
       />
 
       {/* Основная область: боковая панель (версии/стадии) + под-вкладки */}
@@ -173,6 +176,16 @@ export function GanttScheduleView({ objectId }: Props) {
         version={view.selectedVersion}
         defaultStageId={view.selectedStageId}
       />
+
+      {/* Диалог «История изменений» */}
+      {vid && (
+        <GanttChangeLogDialog
+          open={changeLogOpen}
+          onOpenChange={setChangeLogOpen}
+          objectId={objectId}
+          versionId={vid}
+        />
+      )}
 
       {/* Диалог «Заполнить из другой версии» */}
       <Dialog open={view.fillFromVersionOpen} onOpenChange={view.setFillFromVersionOpen}>
