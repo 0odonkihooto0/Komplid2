@@ -274,7 +274,8 @@ model User {
   requestsApproved    MaterialRequest[]   @relation("RequestApprover")
   requestsCreated     MaterialRequest[]   @relation("RequestCreator")
   ordersCreated       SupplierOrder[]     @relation("OrderCreator")
-  movementsCreated    WarehouseMovement[] @relation("MovementCreator")
+  movementsCreated            WarehouseMovement[]        @relation("MovementCreator")
+  materialRequestComments     MaterialRequestComment[]   @relation("RequestCommentAuthor")
 
   // Модуль 9 — Журналы
   journalsResponsible    SpecialJournal[]      @relation("JournalResponsible")
@@ -3607,8 +3608,9 @@ model MaterialRequest {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  items  MaterialRequestItem[]
-  orders SupplierOrder[] // Заказы созданные из этой заявки
+  items    MaterialRequestItem[]
+  orders   SupplierOrder[] // Заказы созданные из этой заявки
+  comments MaterialRequestComment[]
 
   @@index([projectId])
   @@map("material_requests")
@@ -3647,6 +3649,29 @@ model MaterialRequestItem {
   @@index([requestId])
   @@index([nomenclatureId])
   @@map("material_request_items")
+}
+
+/// Комментарий (ответ) к заявке на материал
+model MaterialRequestComment {
+  id        String   @id @default(uuid())
+  text      String
+
+  requestId String
+  request   MaterialRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("RequestCommentAuthor", fields: [authorId], references: [id])
+
+  // Вложенные ответы (один уровень вложенности)
+  parentId String?
+  parent   MaterialRequestComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  MaterialRequestComment[] @relation("CommentReplies")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([requestId])
+  @@map("material_request_comments")
 }
 
 // ─────────────────────────────────────────────
