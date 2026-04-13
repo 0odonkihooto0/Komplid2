@@ -815,6 +815,7 @@
 - ✅ Обогащённые индикаторы ИСР: С/М/О/П (тип стоимости), 🏛 (основание), ♦ (веха), ⚠ (критический путь), 📋 (контракт задачи), 📅 (кастомный календарь)
 - ✅ `calcType String?` в `GanttTask` — тип расчёта прогресса (DEFAULT/VOLUME/AMOUNT/MAN_HOURS/MACHINE_HOURS/LABOR)
 - ✅ API: `POST/DELETE /gantt-versions/[versionId]/tasks/[taskId]/attachments` — загрузка/удаление вложений в Timeweb S3
+- ✅ Предпросмотр изменений при загрузке корректировочной сметы в ГПР (`estimate-changes-preview` API + `EstimateChangesPreviewDialog` + экспорт Excel + режим замены `replace` в `import-from-estimate`)
 - ⬜ `factVolume Float?` в `GanttTask` — нужна Prisma-миграция (заглушка «—» в Координации и Закрытии)
 - ⬜ КС-2 join в `/tasks` endpoint — для колонки «Подтверждённый объём (из КС-2)»
 - ⬜ `delegatedFromOrg` в `/delegated-tasks` API — для колонки «Делегировано от»

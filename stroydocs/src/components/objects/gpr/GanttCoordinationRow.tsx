@@ -38,6 +38,7 @@ interface Props {
   onMilestone?: (taskId: string) => void;
   onIsolate?: (taskId: string) => void;
   onCopy?: (task: GanttTaskItem) => void;
+  onEstimatePreview?: (task: GanttTaskItem) => void;
   // Множественный выбор
   isMultiSelectMode?: boolean;
   isSelected?: boolean;
@@ -75,6 +76,7 @@ export function GanttCoordinationRow({
   onMilestone,
   onIsolate,
   onCopy,
+  onEstimatePreview,
   isMultiSelectMode,
   isSelected,
   onSelectToggle,
@@ -216,6 +218,11 @@ export function GanttCoordinationRow({
               <DropdownMenuItem onClick={() => onEdit?.(task)}>
                 Редактировать
               </DropdownMenuItem>
+              {task.estimateItemId && (
+                <DropdownMenuItem onClick={() => onEstimatePreview?.(task)}>
+                  Показать изменения сметы
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => onMilestone?.(task.id)}>
                 Сделать вехой
