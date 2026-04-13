@@ -14,10 +14,16 @@ export type SupplierOrderStatus =
   | 'COMPLETED'
   | 'CANCELLED';
 
+export type SupplierOrderType =
+  | 'SUPPLIER_ORDER'
+  | 'WAREHOUSE_REQUEST'
+  | 'SUPPLIER_INQUIRY';
+
 export interface SupplierOrderListItem {
   id: string;
   number: string;
   status: SupplierOrderStatus;
+  type: SupplierOrderType;
   totalAmount: number | null;
   deliveryDate: string | null;
   createdAt: string;
@@ -47,12 +53,17 @@ export const ORDER_STATUS_CLASS: Record<SupplierOrderStatus, string> = {
 
 // ─── Хук загрузки списка заказов ─────────────────────────────────────────────
 
-export function useOrders(objectId: string, status?: SupplierOrderStatus | '') {
+export function useOrders(
+  objectId: string,
+  status?: SupplierOrderStatus | '',
+  type?: SupplierOrderType
+) {
   const { data, isLoading } = useQuery<{ data: SupplierOrderListItem[]; total: number }>({
-    queryKey: ['supplier-orders', objectId, status],
+    queryKey: ['supplier-orders', objectId, status, type],
     queryFn: async () => {
       const sp = new URLSearchParams();
       if (status) sp.set('status', status);
+      if (type) sp.set('type', type);
       const query = sp.toString() ? `?${sp.toString()}` : '';
       const res = await fetch(`/api/projects/${objectId}/supplier-orders${query}`);
       const json = await res.json();
@@ -64,6 +75,24 @@ export function useOrders(objectId: string, status?: SupplierOrderStatus | '') {
   return { orders: data?.data ?? [], total: data?.total ?? 0, isLoading };
 }
 
+// ─── Хук счётчиков документов по типам ───────────────────────────────────────
+
+export type OrderCounts = Record<SupplierOrderType, number>;
+
+export function useOrderCounts(objectId: string) {
+  const { data } = useQuery<{ data: OrderCounts }>({
+    queryKey: ['supplier-orders-counts', objectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${objectId}/supplier-orders/counts`);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? 'Ошибка загрузки счётчиков');
+      return json;
+    },
+    enabled: !!objectId,
+  });
+  return data?.data ?? { SUPPLIER_ORDER: 0, WAREHOUSE_REQUEST: 0, SUPPLIER_INQUIRY: 0 };
+}
+
 // ─── Хук создания заказа поставщику ─────────────────────────────────────────
 
 export function useCreateOrder(objectId: string) {
@@ -73,6 +102,7 @@ export function useCreateOrder(objectId: string) {
   return useMutation({
     mutationFn: async (body: {
       number?: string;
+      type?: SupplierOrderType;
       supplierOrgId?: string;
       warehouseId?: string;
       deliveryDate?: string;
@@ -89,7 +119,8 @@ export function useCreateOrder(objectId: string) {
     },
     onSuccess: (order) => {
       qc.invalidateQueries({ queryKey: ['supplier-orders', objectId] });
-      toast({ title: 'Заказ создан' });
+      qc.invalidateQueries({ queryKey: ['supplier-orders-counts', objectId] });
+      toast({ title: 'Документ создан' });
       // Переходим в карточку заказа
       router.push(`/objects/${objectId}/resources/procurement/${order.id}`);
     },
@@ -121,6 +152,7 @@ export function useCreateOrderFromRequest(objectId: string) {
     },
     onSuccess: (order) => {
       qc.invalidateQueries({ queryKey: ['supplier-orders', objectId] });
+      qc.invalidateQueries({ queryKey: ['supplier-orders-counts', objectId] });
       toast({ title: 'Заказ создан из заявки' });
       router.push(`/objects/${objectId}/resources/procurement/${order.id}`);
     },

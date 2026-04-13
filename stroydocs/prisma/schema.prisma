@@ -3680,6 +3680,12 @@ model MaterialRequestComment {
 // ЗАКАЗЫ ПОСТАВЩИКУ
 // ─────────────────────────────────────────────
 
+enum SupplierOrderType {
+  SUPPLIER_ORDER    // Заказ поставщику (по умолчанию)
+  WAREHOUSE_REQUEST // Заявка на склад
+  SUPPLIER_INQUIRY  // Запрос поставщику
+}
+
 enum SupplierOrderStatus {
   DRAFT // Черновик
   SENT // Отправлен поставщику
@@ -3694,6 +3700,7 @@ model SupplierOrder {
   id           String              @id @default(uuid())
   number       String
   status       SupplierOrderStatus @default(DRAFT)
+  type         SupplierOrderType   @default(SUPPLIER_ORDER)
   orderDate    DateTime            @default(now())
   deliveryDate DateTime?
   totalAmount             Float?
@@ -3738,6 +3745,7 @@ model SupplierOrder {
 
   @@index([projectId])
   @@index([requestId])
+  @@index([type])
   @@map("supplier_orders")
 }
 

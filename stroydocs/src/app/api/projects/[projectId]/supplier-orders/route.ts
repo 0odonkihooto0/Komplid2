@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
-import { SupplierOrderStatus } from '@prisma/client';
+import { SupplierOrderStatus, SupplierOrderType } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +19,7 @@ const orderItemSchema = z.object({
 // Схема создания заказа поставщику
 const createOrderSchema = z.object({
   number: z.string().min(1).max(100).optional(),
+  type: z.nativeEnum(SupplierOrderType).optional(),
   supplierOrgId: z.string().uuid().optional(),
   customerOrgId: z.string().uuid().optional(),
   warehouseId: z.string().uuid().optional(),
@@ -47,11 +48,13 @@ export async function GET(
     const limit = Math.min(Number(req.nextUrl.searchParams.get('limit') ?? 50), 200);
     const skip = (page - 1) * limit;
 
-    // Опциональный фильтр по статусу заказа
+    // Опциональные фильтры по статусу и типу заказа
     const statusParam = req.nextUrl.searchParams.get('status');
+    const typeParam = req.nextUrl.searchParams.get('type');
     const where = {
       projectId: params.projectId,
       ...(statusParam ? { status: statusParam as SupplierOrderStatus } : {}),
+      ...(typeParam ? { type: typeParam as SupplierOrderType } : {}),
     };
 
     const [data, total] = await db.$transaction([
@@ -99,6 +102,7 @@ export async function POST(
 
     const {
       number,
+      type,
       supplierOrgId,
       customerOrgId,
       warehouseId,
@@ -116,6 +120,7 @@ export async function POST(
       data: {
         number: orderNumber,
         status: 'DRAFT',
+        type: type ?? 'SUPPLIER_ORDER',
         projectId: params.projectId,
         createdById: session.user.id,
         ...(supplierOrgId ? { supplierOrgId } : {}),
