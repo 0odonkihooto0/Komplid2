@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { GanttGroupingMenu, type GroupByField } from './GanttGroupingMenu';
+import type { ImportFormat } from './useGanttImport';
 
 interface Props {
   versionId: string | null;
@@ -38,6 +39,11 @@ interface Props {
   onShowAll: () => void;
   // Журнал изменений
   onOpenChangeLog?: () => void;
+  // Импорт / Экспорт
+  onImport?: (format: ImportFormat) => void;
+  onExportExcel?: () => void;
+  onExportExcelDeps?: () => void;
+  onExportPdf?: () => void;
 }
 
 function IconBtn({
@@ -82,6 +88,10 @@ export function GanttScheduleToolbar({
   onIsolate,
   onShowAll,
   onOpenChangeLog,
+  onImport,
+  onExportExcel,
+  onExportExcelDeps,
+  onExportPdf,
 }: Props) {
   const disabled = !versionId;
 
@@ -198,19 +208,19 @@ export function GanttScheduleToolbar({
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>Импорт</DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
-                <DropdownMenuItem disabled>MS Excel</DropdownMenuItem>
-                <DropdownMenuItem disabled>Primavera P6</DropdownMenuItem>
-                <DropdownMenuItem disabled>MS Project</DropdownMenuItem>
-                <DropdownMenuItem disabled>Spider Project</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onImport?.('EXCEL')}>MS Excel</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onImport?.('PRIMAVERA')}>Primavera P6</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onImport?.('MS_PROJECT')}>MS Project</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onImport?.('SPIDER')}>Spider Project</DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuSub>
 
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>Экспорт</DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
-                <DropdownMenuItem disabled>Excel</DropdownMenuItem>
-                <DropdownMenuItem disabled>Excel с зависимостями</DropdownMenuItem>
-                <DropdownMenuItem disabled>PDF</DropdownMenuItem>
+                <DropdownMenuItem onClick={onExportExcel}>Выгрузить ГПР в файл Excel</DropdownMenuItem>
+                <DropdownMenuItem onClick={onExportExcelDeps}>Выгрузить ГПР в файл Excel с зависимостями</DropdownMenuItem>
+                <DropdownMenuItem onClick={onExportPdf}>Выгрузить ГПР в PDF</DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuSub>
 

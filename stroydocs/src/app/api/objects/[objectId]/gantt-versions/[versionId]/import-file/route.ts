@@ -38,17 +38,18 @@ export async function POST(
     });
     if (!version) return errorResponse('Версия ГПР не найдена', 404);
 
-    // Проверка что версия пустая
+    // Извлечение файла и формата из form-data
+    const formData = await req.formData();
+
+    // Проверка что версия пустая или запрошена замена
+    const replace = formData.get('replace') === 'true';
     const existingTasks = await db.ganttTask.count({ where: { versionId: params.versionId } });
-    if (existingTasks > 0) {
+    if (existingTasks > 0 && !replace) {
       return errorResponse(
         'Версия ГПР уже содержит задачи. Используйте пустую версию для импорта.',
         409,
       );
     }
-
-    // Извлечение файла и формата из form-data
-    const formData = await req.formData();
     const file = formData.get('file');
     if (!file || !(file instanceof Blob)) {
       return errorResponse('Файл не загружен', 400);
@@ -87,9 +88,17 @@ export async function POST(
       return errorResponse('В файле не найдены задачи', 400);
     }
 
-    // Запись в БД в транзакции
+    // Запись в БД в транзакции (при replace удаляем существующие данные)
     const result = await db.$transaction(
-      async (tx) => importFromParsedFile(tx, params.versionId, parsed, { withVat }),
+      async (tx) => {
+        if (replace && existingTasks > 0) {
+          await tx.ganttDependency.deleteMany({
+            where: { predecessor: { versionId: params.versionId } },
+          });
+          await tx.ganttTask.deleteMany({ where: { versionId: params.versionId } });
+        }
+        return importFromParsedFile(tx, params.versionId, parsed, { withVat });
+      },
       { timeout: 30000 },
     );
 
