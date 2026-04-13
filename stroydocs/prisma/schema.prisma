@@ -1582,6 +1582,7 @@ model GanttVersion {
   disableVolumeRounding Boolean  @default(true) // Отключение округления объёмов
   linkedVersionIds      String[] @default([]) // ID связанных версий для сборной версии
   accessOrgIds          String[] @default([]) // ID организаций с доступом
+  columnSettings        Json?    // Настройки видимости колонок: { visibleColumns: string[] }
 
   createdById String
   createdBy   User   @relation(fields: [createdById], references: [id])

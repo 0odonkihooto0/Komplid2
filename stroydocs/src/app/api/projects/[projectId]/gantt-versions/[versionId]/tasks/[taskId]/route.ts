@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { calculateCriticalPath } from '@/lib/gantt/critical-path';
+import { logGanttChange } from '@/lib/gantt/log-change';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,6 +57,33 @@ export async function PATCH(
       include: { workItem: { select: { id: true, name: true, projectCipher: true } } },
     });
 
+    // Логируем изменения в журнал ГПР (fire-and-forget)
+    const { planStart: _ps, planEnd: _pe, factStart: _fs, factEnd: _fe, ...restFields } = parsed.data;
+    const loggableFields: Record<string, unknown> = {
+      ...(restFields as Record<string, unknown>),
+      ...(planStart !== undefined && { planStart }),
+      ...(planEnd !== undefined && { planEnd }),
+      ...(factStart !== undefined && { factStart: factStart ?? null }),
+      ...(factEnd !== undefined && { factEnd: factEnd ?? null }),
+    };
+    for (const [field, newRaw] of Object.entries(loggableFields)) {
+      if (newRaw === undefined) continue;
+      const oldRaw = task[field as keyof typeof task];
+      const oldVal = oldRaw != null ? String(oldRaw) : null;
+      const newVal = newRaw != null ? String(newRaw) : null;
+      if (oldVal !== newVal) {
+        void logGanttChange({
+          versionId: params.versionId,
+          userId: session.user.id,
+          action: 'UPDATE',
+          taskId: params.taskId,
+          fieldName: field,
+          oldValue: oldVal,
+          newValue: newVal,
+        });
+      }
+    }
+
     // Пересчитываем критический путь при изменении плановых дат
     if (planStart !== undefined || planEnd !== undefined) {
       const [allTasks, allDeps] = await Promise.all([
@@ -99,6 +127,15 @@ export async function DELETE(
     if (!task) return errorResponse('Задача не найдена', 404);
 
     await deleteTaskRecursive(params.taskId);
+
+    // Логируем удаление в журнал ГПР (fire-and-forget)
+    void logGanttChange({
+      versionId: params.versionId,
+      userId: session.user.id,
+      action: 'DELETE',
+      taskId: params.taskId,
+      oldValue: task.name,
+    });
 
     return successResponse({ ok: true });
   } catch (error) {
