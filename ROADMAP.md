@@ -783,6 +783,8 @@
 - ✅ Раздел «ИД и СК»: индикатор готовности ИД по позиции ГПР
 - ✅ Стадии реализации (CRUD, drag-and-drop порядок)
 - ✅ Импорт из сметы (EstimateVersion → GanttTask)
+- ✅ Импорт Primavera P6 (XER) / MS Project (XML) / Excel-шаблон ГПР
+- ✅ Экспорт ГПР в Excel (с зависимостями) и PDF
 - ✅ Аналитика ГПР: S-кривая, топ задержек, готовность ИД
 - ✅ Делегирование работ (delegate, delegate-and-merge, sync)
 - ✅ URL /objects/[id]/gpr/ + layout с 8 вкладками
