@@ -1,8 +1,11 @@
-// Страница-заглушка для вкладки ЖВК (Журнал входного контроля)
-export default function JvkPage() {
-  return (
-    <div className="p-6 text-muted-foreground text-center">
-      Раздел ЖВК в разработке
-    </div>
-  );
+import { JvkListView } from '@/components/objects/journals/JvkListView';
+
+export const dynamic = 'force-dynamic';
+
+export default function JvkPage({
+  params,
+}: {
+  params: { objectId: string };
+}) {
+  return <JvkListView objectId={params.objectId} />;
 }
