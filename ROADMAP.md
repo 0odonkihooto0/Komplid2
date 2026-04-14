@@ -972,6 +972,19 @@
 - ✅ Иконка `Link2` у записей со связями (`_count.sourceLinks + targetLinks > 0`)
 - ✅ `JournalEntryLinkDialog.tsx` — двухшаговый выбор: журнал ЖВК → запись; мутации `createLinkMutation` и `createExecDocMutation` в `useJournalCard.ts`
 
+### Добавлено (2026-04-14) — Вложения, bulk-delete, дублирование, контекстное меню записей
+- ✅ `SpecialJournalEntry.attachmentS3Keys String[] @default([])` — миграция `20260414050000_add_journal_attachments`
+- ✅ `POST/DELETE .../entries/[eid]/attachments` — загрузка и удаление вложений (Timeweb S3, паттерн: Gantt-вложения)
+- ✅ `POST .../entries/[eid]/duplicate` — дублирование записи (новый номер, статус DRAFT, автор = текущий пользователь)
+- ✅ `DELETE .../entries/bulk-delete` — массовое удаление (до 50 записей, только DRAFT, чистит S3)
+- ✅ Одиночный DELETE обновлён: удаляет вложения из S3 перед удалением записи
+- ✅ Drag-and-drop зона в `CreateEntryDialog` (react-dropzone, staged files → upload after create)
+- ✅ Чекбоксы выбора в `JournalEntryList` + кнопка «Удалить выбранные (N)» + «выбрать все» header
+- ✅ Расширенное контекстное меню записи: Информация, Редактировать, Замечания, Добавить связь, Создать АОСР, Дублировать, Скопировать ссылку, Удалить
+- ✅ `journal-entry-columns.tsx` — `makeEntryColumns()` вынесен из `JournalEntryList.tsx` (правило <300 строк)
+- ✅ `JournalCard.tsx` разбит: `JournalCardHeader.tsx` + `JournalEntriesTab.tsx` (правило >300 строк)
+- ✅ `useJournalCard.ts` расширен: `selectedIds`, `deleteEntryMutation`, `duplicateMutation`, `bulkDeleteMutation`, `handleCreateEntry`
+
 ### Добавлено (2026-04-14) — Excel-импорт и Печать
 - ✅ `GET .../journals/[jid]/excel-template` — скачать пустой xlsx-шаблон с колонками по типу журнала (8 общих + type-specific для бетонных/сварочных/авторского надзора)
 - ✅ `POST .../journals/[jid]/import-excel[?preview=true]` — импорт записей из xlsx: `?preview=true` возвращает строки без записи в БД; без параметра — `createMany` с авто-нумерацией

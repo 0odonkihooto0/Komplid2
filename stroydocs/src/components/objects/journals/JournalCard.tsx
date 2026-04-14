@@ -3,25 +3,21 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { ArrowLeft, Plus, Lock, Unlock, Upload } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { JournalStatusBadge } from './JournalStatusBadge';
-import { JournalTypeBadge } from './JournalTypeBadge';
 import { StorageModeBanner } from './StorageModeBanner';
-import { JournalEntryList } from './JournalEntryList';
+import { JournalCardHeader } from './JournalCardHeader';
+import { JournalEntriesTab } from './JournalEntriesTab';
 import { JournalRequisitesTab } from './JournalRequisitesTab';
 import { JournalSectionsView } from './JournalSectionsView';
 import { JournalRemarksTab } from './JournalRemarksTab';
 import { JournalApprovalTab } from './JournalApprovalTab';
-import { CreateEntryDialog } from './CreateEntryDialog';
 import { JournalEntryLinkDialog } from './JournalEntryLinkDialog';
 import { ExcelImportDialog } from './ExcelImportDialog';
-import { JournalPrintMenu } from './JournalPrintMenu';
 import { useJournalCard } from './useJournalCard';
-import { JOURNAL_TYPE_LABELS } from './journal-constants';
 import type { JournalEntryItem } from './journal-constants';
 
 interface Props {
@@ -75,72 +71,18 @@ export function JournalCard({ objectId, journalId }: Props) {
       {!vm.isActive && <StorageModeBanner />}
 
       {/* Шапка журнала */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-xl font-semibold">{j.number}</h2>
-            <JournalTypeBadge type={j.type} />
-            <JournalStatusBadge status={j.status} />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {j.title || JOURNAL_TYPE_LABELS[j.type]}
-          </p>
-          {j.normativeRef && (
-            <p className="text-xs text-muted-foreground">{j.normativeRef}</p>
-          )}
-        </div>
-
-        {/* Кнопки действий */}
-        <div className="flex flex-wrap gap-2">
-          {vm.isActive && (
-            <Button size="sm" onClick={() => setEntryDialogOpen(true)}>
-              <Plus className="mr-1 h-4 w-4" />
-              Добавить запись
-            </Button>
-          )}
-          {vm.isActive && (
-            <Button variant="outline" size="sm" onClick={() => setImportDialogOpen(true)}>
-              <Upload className="mr-1 h-4 w-4" />
-              Импорт Excel
-            </Button>
-          )}
-          {vm.isActive && !j.approvalRoute && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => vm.startApprovalMutation.mutate()}
-              disabled={vm.startApprovalMutation.isPending}
-            >
-              На согласование
-            </Button>
-          )}
-          <JournalPrintMenu
-            objectId={objectId}
-            journalId={journalId}
-            journalNumber={j.number}
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              vm.storageMutation.mutate(vm.isActive ? 'DEACTIVATE' : 'ACTIVATE')
-            }
-            disabled={vm.storageMutation.isPending || j.status === 'CLOSED'}
-          >
-            {vm.isActive ? (
-              <>
-                <Lock className="mr-1 h-4 w-4" />
-                На хранение
-              </>
-            ) : (
-              <>
-                <Unlock className="mr-1 h-4 w-4" />
-                Активировать
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
+      <JournalCardHeader
+        objectId={objectId}
+        journalId={journalId}
+        journal={j}
+        isActive={vm.isActive}
+        onAddEntry={() => setEntryDialogOpen(true)}
+        onImportExcel={() => setImportDialogOpen(true)}
+        onStartApproval={() => vm.startApprovalMutation.mutate()}
+        isStartingApproval={vm.startApprovalMutation.isPending}
+        onToggleStorage={() => vm.storageMutation.mutate(vm.isActive ? 'DEACTIVATE' : 'ACTIVATE')}
+        isTogglingStorage={vm.storageMutation.isPending}
+      />
 
       {/* Информационная сетка */}
       <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
@@ -222,25 +164,41 @@ export function JournalCard({ objectId, journalId }: Props) {
         )}
 
         <TabsContent value="entries">
-          <div className="space-y-2 pt-4">
-            <JournalEntryList
-              entries={vm.entries}
-              isLoading={vm.isEntriesLoading}
-              statusFilter={vm.statusFilter}
-              onStatusFilterChange={vm.setStatusFilter}
-              hasFilters={vm.hasFilters}
-              onResetFilters={vm.handleResetFilters}
-              onRowClick={vm.handleEntryClick}
-              journalType={j.type}
-              onCreateLink={(entry) => {
-                setLinkSourceEntry(entry);
-                setLinkDialogOpen(true);
-              }}
-              onCreateExecDoc={(entry) => {
-                vm.createExecDocMutation.mutate(entry.id);
-              }}
-            />
-          </div>
+          <JournalEntriesTab
+            objectId={objectId}
+            journalId={journalId}
+            journalType={j.type}
+            isActive={vm.isActive}
+            entries={vm.entries}
+            isEntriesLoading={vm.isEntriesLoading}
+            statusFilter={vm.statusFilter}
+            onStatusFilterChange={vm.setStatusFilter}
+            hasFilters={vm.hasFilters}
+            onResetFilters={vm.handleResetFilters}
+            selectedIds={vm.selectedIds}
+            onSelectionChange={vm.setSelectedIds}
+            onBulkDelete={(ids) => vm.bulkDeleteMutation.mutate(ids)}
+            onDelete={(entry) => vm.deleteEntryMutation.mutate(entry.id)}
+            onDuplicate={(entry) => vm.duplicateMutation.mutate(entry.id)}
+            onCreateLink={(entry) => {
+              setLinkSourceEntry(entry);
+              setLinkDialogOpen(true);
+            }}
+            onCreateExecDoc={(entry) => vm.createExecDocMutation.mutate(entry.id)}
+            entryDialogOpen={entryDialogOpen}
+            onEntryDialogChange={(open) => {
+              setEntryDialogOpen(open);
+              if (!open) setSectionIdForEntry(undefined);
+            }}
+            isCreatingEntry={vm.createEntryMutation.isPending}
+            onCreateEntry={(payload, files, sid) =>
+              void vm.handleCreateEntry(payload, files, sid).then(() => {
+                setEntryDialogOpen(false);
+                setSectionIdForEntry(undefined);
+              })
+            }
+            sectionIdForEntry={sectionIdForEntry}
+          />
         </TabsContent>
 
         <TabsContent value="remarks">
@@ -251,25 +209,6 @@ export function JournalCard({ objectId, journalId }: Props) {
           <JournalApprovalTab objectId={objectId} journalId={journalId} journal={j} />
         </TabsContent>
       </Tabs>
-
-      {/* Диалог создания записи */}
-      {vm.journal && (
-        <CreateEntryDialog
-          open={entryDialogOpen}
-          onOpenChange={(open) => {
-            setEntryDialogOpen(open);
-            if (!open) setSectionIdForEntry(undefined);
-          }}
-          journalType={j.type}
-          isPending={vm.createEntryMutation.isPending}
-          onSubmit={(payload) => {
-            vm.createEntryMutation.mutate(
-              { ...payload, sectionId: sectionIdForEntry },
-              { onSuccess: () => { setEntryDialogOpen(false); setSectionIdForEntry(undefined); } },
-            );
-          }}
-        />
-      )}
 
       {/* Диалог импорта записей из Excel */}
       <ExcelImportDialog

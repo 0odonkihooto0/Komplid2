@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -23,7 +25,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   journalType: SpecialJournalType;
   isPending: boolean;
-  onSubmit: (payload: CreateJournalEntryInput) => void;
+  onSubmit: (payload: CreateJournalEntryInput, files: File[]) => void;
 }
 
 export function CreateEntryDialog({
@@ -41,6 +43,14 @@ export function CreateEntryDialog({
   const [normativeRef, setNormativeRef] = useState('');
   const [inspectionDate, setInspectionDate] = useState('');
   const [data, setData] = useState<Record<string, unknown>>({});
+  const [stagedFiles, setStagedFiles] = useState<File[]>([]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop: (accepted: File[]) => {
+      setStagedFiles((prev) => [...prev, ...accepted]);
+    },
+    maxSize: 20 * 1024 * 1024, // 20 МБ
+  });
 
   const resetForm = () => {
     setDate('');
@@ -51,6 +61,7 @@ export function CreateEntryDialog({
     setNormativeRef('');
     setInspectionDate('');
     setData({});
+    setStagedFiles([]);
   };
 
   const handleOpenChange = (v: boolean) => {
@@ -73,7 +84,11 @@ export function CreateEntryDialog({
       data: Object.keys(data).length > 0 ? data : undefined,
     };
 
-    onSubmit(payload);
+    onSubmit(payload, stagedFiles);
+  };
+
+  const removeFile = (index: number) => {
+    setStagedFiles((prev) => prev.filter((_, j) => j !== index));
   };
 
   // Динамические поля по типу журнала
@@ -169,6 +184,40 @@ export function CreateEntryDialog({
 
           {/* Специфичные поля по типу журнала */}
           {renderTypeFields()}
+
+          {/* Вложения */}
+          <div className="space-y-1.5">
+            <Label>Вложения</Label>
+            <div
+              {...getRootProps()}
+              className={`border-2 border-dashed rounded-md p-3 text-center cursor-pointer transition-colors ${
+                isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+              }`}
+            >
+              <input {...getInputProps()} />
+              <Upload className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">
+                {isDragActive ? 'Отпустите файлы...' : 'Перетащите файлы или нажмите (до 20 МБ)'}
+              </p>
+            </div>
+            {stagedFiles.length > 0 && (
+              <ul className="space-y-1 mt-2">
+                {stagedFiles.map((f, i) => (
+                  <li key={i} className="flex items-center justify-between text-xs bg-gray-50 rounded px-2 py-1">
+                    <span className="truncate max-w-[240px]">{f.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(i)}
+                      className="ml-2 text-gray-400 hover:text-gray-700"
+                      aria-label={`Удалить файл ${f.name}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>

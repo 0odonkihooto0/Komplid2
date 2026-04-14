@@ -251,6 +251,7 @@ export interface EntryDetail {
   temperature: number | null;
   data: Record<string, unknown> | null;
   inspectionDate: string | null;
+  attachmentS3Keys: string[];
   createdAt: string;
   updatedAt: string;
   author: { id: string; firstName: string | null; lastName: string | null };
@@ -284,6 +285,7 @@ export interface JournalEntryItem {
   temperature: number | null;
   data: Record<string, unknown> | null;
   inspectionDate: string | null;
+  attachmentS3Keys: string[];
   executionDocId: string | null;
   journalId: string;
   authorId: string;

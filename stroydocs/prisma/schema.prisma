@@ -4075,6 +4075,9 @@ model SpecialJournalEntry {
   authorId String
   author   User   @relation("JournalEntryAuthor", fields: [authorId], references: [id])
 
+  // Вложения к записи — ключи S3 (аналогично JournalEntryRemark.attachmentS3Keys)
+  attachmentS3Keys String[] @default([])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
