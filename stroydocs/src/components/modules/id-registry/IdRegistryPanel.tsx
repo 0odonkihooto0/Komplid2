@@ -78,6 +78,10 @@ export function IdRegistryPanel({ projectId, contractId }: Props) {
     if (!registry.s3Key) return;
     const res = await fetch(`/api/files/download?key=${encodeURIComponent(registry.s3Key)}`);
     const json = await res.json();
+    if (!json.success) {
+      toast({ title: json.error ?? 'Ошибка получения ссылки', variant: 'destructive' });
+      return;
+    }
     if (json.data?.url) window.open(json.data.url, '_blank');
   };
 

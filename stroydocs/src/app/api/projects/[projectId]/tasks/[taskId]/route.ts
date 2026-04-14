@@ -4,14 +4,15 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
+import { TaskStatus, TaskPriority } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
 const taskUpdateSchema = z.object({
   title:       z.string().min(1).max(300).optional(),
   description: z.string().max(2000).nullable().optional(),
-  status:      z.enum(['OPEN', 'IN_PROGRESS', 'DONE', 'CANCELLED']).optional(),
-  priority:    z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
+  status:      z.nativeEnum(TaskStatus).optional(),
+  priority:    z.nativeEnum(TaskPriority).optional(),
   deadline:    z.string().datetime({ offset: true }).nullable().optional(),
   assigneeId:  z.string().uuid().nullable().optional(),
 });

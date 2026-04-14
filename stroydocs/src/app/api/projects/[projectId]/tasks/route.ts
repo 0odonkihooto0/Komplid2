@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
+import { TaskPriority, TaskSource } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,11 +13,11 @@ const VALID_STATUSES = ['OPEN', 'IN_PROGRESS', 'DONE', 'CANCELLED'] as const;
 const taskCreateSchema = z.object({
   title:       z.string().min(1).max(300),
   description: z.string().max(2000).optional(),
-  priority:    z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).default('MEDIUM'),
+  priority:    z.nativeEnum(TaskPriority).default(TaskPriority.MEDIUM),
   deadline:    z.string().datetime({ offset: true }).optional(),
   assigneeId:  z.string().uuid().optional(),
   contractId:  z.string().uuid().optional(),
-  sourceType:  z.enum(['MANUAL', 'DEFECT', 'COMMENT']).default('MANUAL'),
+  sourceType:  z.nativeEnum(TaskSource).default(TaskSource.MANUAL),
 });
 
 export async function GET(
