@@ -4000,6 +4000,9 @@ model SpecialJournal {
   normativeRef String? // Ссылка на ГОСТ/СП
   openedAt     DateTime           @default(now())
   closedAt     DateTime?
+  requisites   Json?              // Реквизиты журнала (Заказчик, Генподрядчик и т.д.)
+  startDate    DateTime?          // Дата начала работ журнала
+  endDate      DateTime?          // Дата окончания работ журнала
 
   projectId String
   project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)

@@ -57,6 +57,9 @@ export const updateJournalSchema = z.object({
   contractId: z.string().uuid().optional().nullable(),
   responsibleId: z.string().uuid().optional(),
   normativeRef: z.string().optional().nullable(),
+  requisites: z.record(z.string(), z.unknown()).optional().nullable(),
+  startDate: z.string().optional().nullable(),
+  endDate: z.string().optional().nullable(),
 });
 
 /** Создание записи журнала */

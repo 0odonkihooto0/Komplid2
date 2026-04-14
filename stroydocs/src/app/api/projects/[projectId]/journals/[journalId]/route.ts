@@ -1,4 +1,5 @@
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
@@ -68,7 +69,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       return errorResponse('Ошибка валидации', 400, parsed.error.issues);
     }
 
-    const { title, contractId, responsibleId, normativeRef } = parsed.data;
+    const { title, contractId, responsibleId, normativeRef, requisites, startDate, endDate } = parsed.data;
 
     // Проверка ответственного
     if (responsibleId) {
@@ -95,6 +96,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         ...(contractId !== undefined ? { contractId } : {}),
         ...(responsibleId !== undefined ? { responsibleId } : {}),
         ...(normativeRef !== undefined ? { normativeRef } : {}),
+        ...(requisites !== undefined ? { requisites: requisites ?? Prisma.JsonNull } : {}),
+        ...(startDate !== undefined ? { startDate: startDate ? new Date(startDate) : null } : {}),
+        ...(endDate !== undefined ? { endDate: endDate ? new Date(endDate) : null } : {}),
       },
       include: {
         responsible: { select: { id: true, firstName: true, lastName: true } },

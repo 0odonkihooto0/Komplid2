@@ -942,6 +942,13 @@
 - 🐛 Создана миграция `20260414000000_fix_estimate_categories` — таблица `estimate_categories` и FK `categoryId` в `estimate_versions` (P2021 при обращении к модулю смет)
 - 🐛 Исправлены 4 вхождения `<SelectItem value="">` в `JournalRegistry`, `JournalEntryList`, `CreateJournalDialog` — заменены на сентинелы `"ALL"` / `"NONE"` (Radix UI v2.2.6 запрещает пустую строку)
 
+### Добавлено (2026-04-14)
+- ✅ Вкладка «Реквизиты» первой в `JournalCard`: Заказчик, Генподрядчик, Стройконтроль, Авторский надзор, Гос.надзор + даты начала/окончания работ
+- ✅ Поля `SpecialJournal.requisites (Json?)`, `.startDate (DateTime?)`, `.endDate (DateTime?)` — миграция `20260414020000_add_journal_requisites`
+- ✅ `PATCH /api/projects/[pid]/journals/[jid]` расширен: `requisites`, `startDate`, `endDate`
+- ✅ `POST /api/projects/[pid]/journals/[jid]/fill-requisites` — автозаполнение из `ObjectOrganization` + `ObjectPerson` по ролям (regex-маппинг)
+- ✅ `JournalRequisitesTab.tsx` + `useJournalRequisites.ts` — Select из участников объекта, Input[type=date]
+
 ---
 
 ## МОДУЛЬ 10 — Исполнительная документация (ИД) ✅
