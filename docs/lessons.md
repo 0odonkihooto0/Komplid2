@@ -72,6 +72,38 @@ PostgreSQL складывает unquoted идентификаторы в lowerca
 
 ## TypeScript / ESLint
 
+**`Record<string, unknown>` не совместим с Prisma `InputJsonValue` — ошибка сборки.**
+`z.record(z.string(), z.unknown())` даёт тип `Record<string, unknown>`. При передаче в Prisma
+JSON-поле TypeScript ругается: «Type 'Record<string, unknown>' is missing the following
+properties from type 'readonly (InputJsonValue | null)[]'». Причина: Prisma ожидает
+`InputJsonValue = string | number | boolean | InputJsonObject | InputJsonArray`, а `unknown`
+не совместим ни с одной веткой.
+Правило: при записи `z.record(z.string(), z.unknown())` в Prisma JSON-поле — **всегда** приводить:
+```typescript
+// Nullable JSON-поле:
+requisites: requisites !== null ? (requisites as Prisma.InputJsonValue) : Prisma.JsonNull
+// Опциональное JSON-поле:
+data: data !== undefined ? data as Prisma.InputJsonValue : undefined
+// Обязательное JSON-поле:
+blockDefinitions: blockDefinitions as Prisma.InputJsonValue
+```
+Никогда не делать просто `requisites ?? Prisma.JsonNull` без явного `as Prisma.InputJsonValue` —
+TypeScript не может вывести что `Record<string, unknown>` это валидный `InputJsonValue`.
+Зафиксировано в `journals/[journalId]/route.ts` → поле `requisites`.
+
+**Prisma nullable FK с `null` в update `data` — union type conflict.**
+Prisma генерирует для `data` в `update()` union: relation form (`ModelUpdateInput`) | raw-FK form
+(`ModelUncheckedUpdateInput`). В relation form сырые FK-поля должны быть `undefined`, не `null`.
+Zod `.optional().nullable()` даёт `string | null | undefined`. Когда `null` попадает в объект
+без явной типизации, TypeScript пытается оба варианта union и падает на `null ≠ undefined`.
+Правило: при наличии хотя бы одного nullable FK-поля (`contractId`, `assigneeId` и т.п.) в
+объекте update data — **всегда** типизировать его явно:
+```typescript
+const updateData: Prisma.ModelUncheckedUpdateInput = { ... };
+await db.model.update({ where: ..., data: updateData, ... });
+```
+Зафиксировано в `journals/route.ts` (`contractId`), `rfi/route.ts` (`assigneeId`).
+
 **FK-поле без `@relation` в Prisma schema → `include` падает на деплое.**
 Поля `responsibleOrgId`/`responsibleUserId` существовали как `String?` без `@relation`.
 Код делал `include: { responsibleOrg, responsibleUser }` — Prisma-клиент таких связей
