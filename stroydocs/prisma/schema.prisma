@@ -293,6 +293,7 @@ model User {
 
   // Модуль 10 — ИД
   closurePackagesCreated IdClosurePackage[] @relation("ClosurePackageCreator")
+  savedFieldValues       SavedFieldValue[]
 
   // Модуль 11 — Строительный контроль
   inspectionsAsInspector   Inspection[]           @relation("InspectionInspector")
@@ -434,7 +435,8 @@ model BuildingObject {
   specialJournals SpecialJournal[]
 
   // Модуль 10 — ИД
-  closurePackages IdClosurePackage[]
+  closurePackages  IdClosurePackage[]
+  savedFieldValues SavedFieldValue[]
 
   // Модуль 11 — Строительный контроль
   inspections     Inspection[]
@@ -1103,6 +1105,7 @@ model ExecutionDoc {
   qrCodeS3Key   String? // Ключ PNG QR-кода в S3
   storageMode   Boolean     @default(false) // Режим хранения (запрет редактирования)
   storageModeAt DateTime? // Дата перевода в хранение
+  factVolume    Float? // Фактический объём работ по документу (для проверки ГПР)
   idCategory    IdCategory? // Классификация по ГОСТ Р 70108-2025
 
   // Пользовательская категория ИД (иерархическое дерево проекта)
@@ -5368,4 +5371,22 @@ model IdDocCategory {
   @@index([organizationId])
   @@index([parentId])
   @@map("id_doc_categories")
+}
+
+// === Автодополнение полей АОСР ===
+
+/// Сохранённое значение поля для автодополнения (per-объект строительства)
+model SavedFieldValue {
+  id        String         @id @default(uuid())
+  fieldName String // Имя поля (zakazchik, stroiteli, projectirovshik, stroiteli11, stroiteli3 и др.)
+  value     String // Сохранённое значение
+  projectId String // Привязка к объекту строительства
+  project   BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
+
+  @@unique([fieldName, value, projectId])
+  @@index([fieldName, projectId])
+  @@map("saved_field_values")
 }

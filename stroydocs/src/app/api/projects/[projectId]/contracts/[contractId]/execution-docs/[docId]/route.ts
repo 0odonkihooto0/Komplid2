@@ -185,6 +185,37 @@ export async function PATCH(
       );
     }
 
+    // Проверка ограничений ГПР при проведении (DRAFT → IN_REVIEW)
+    if (doc.status === 'DRAFT' && parsed.data.status === 'IN_REVIEW' && doc.factVolume) {
+      const ganttLinks = await db.ganttTaskExecDoc.findMany({
+        where: { execDocId: params.docId },
+        include: { ganttTask: { select: { id: true, volume: true } } },
+      });
+
+      for (const link of ganttLinks) {
+        const task = link.ganttTask;
+        if (!task.volume) continue;
+
+        // Сумма factVolume всех других проведённых документов этой задачи
+        const otherDocs = await db.executionDoc.aggregate({
+          where: {
+            ganttLinks: { some: { ganttTaskId: task.id } },
+            id: { not: params.docId },
+            status: { in: ['IN_REVIEW', 'SIGNED'] },
+          },
+          _sum: { factVolume: true },
+        });
+
+        const sumConducted = (otherDocs._sum.factVolume ?? 0) + doc.factVolume;
+        if (sumConducted > task.volume) {
+          return errorResponse(
+            'Фактический объём превышает максимально допустимый по задаче ГПР',
+            400
+          );
+        }
+      }
+    }
+
     const updated = await db.executionDoc.update({
       where: { id: params.docId },
       data: { status: parsed.data.status },

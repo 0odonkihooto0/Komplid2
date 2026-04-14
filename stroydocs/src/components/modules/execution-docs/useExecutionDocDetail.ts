@@ -150,5 +150,22 @@ export function useExecutionDocDetail(projectId: string, contractId: string, doc
     },
   });
 
-  return { doc, isLoading, generatePdfMutation, updateStatusMutation, autofillFromAosrMutation, generateQrMutation, exportXmlMutation };
+  const unpostMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${baseUrl}/unpost`, { method: 'POST' });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
+      return json.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['execution-doc', docId] });
+      queryClient.invalidateQueries({ queryKey: ['execution-docs', contractId] });
+      toast({ title: 'Проведение отменено — документ возвращён в черновик' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Ошибка отмены проведения', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  return { doc, isLoading, generatePdfMutation, updateStatusMutation, autofillFromAosrMutation, generateQrMutation, exportXmlMutation, unpostMutation };
 }
