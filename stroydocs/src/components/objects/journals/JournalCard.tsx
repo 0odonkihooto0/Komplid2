@@ -6,10 +6,12 @@ import { ru } from 'date-fns/locale';
 import { ArrowLeft, Plus, Lock, Unlock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { JournalStatusBadge } from './JournalStatusBadge';
 import { JournalTypeBadge } from './JournalTypeBadge';
 import { StorageModeBanner } from './StorageModeBanner';
 import { JournalEntryList } from './JournalEntryList';
+import { JournalRequisitesTab } from './JournalRequisitesTab';
 import { CreateEntryDialog } from './CreateEntryDialog';
 import { useJournalCard } from './useJournalCard';
 import { JOURNAL_TYPE_LABELS } from './journal-constants';
@@ -129,21 +131,31 @@ export function JournalCard({ objectId, journalId }: Props) {
 
       <Separator />
 
-      {/* Список записей */}
-      <div className="space-y-2">
-        <h3 className="text-base font-semibold">
-          Записи ({vm.entriesTotal})
-        </h3>
-        <JournalEntryList
-          entries={vm.entries}
-          isLoading={vm.isEntriesLoading}
-          statusFilter={vm.statusFilter}
-          onStatusFilterChange={vm.setStatusFilter}
-          hasFilters={vm.hasFilters}
-          onResetFilters={vm.handleResetFilters}
-          onRowClick={vm.handleEntryClick}
-        />
-      </div>
+      {/* Вкладки: Реквизиты / Записи */}
+      <Tabs defaultValue="requisites">
+        <TabsList>
+          <TabsTrigger value="requisites">Реквизиты</TabsTrigger>
+          <TabsTrigger value="entries">Записи ({vm.entriesTotal})</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="requisites">
+          <JournalRequisitesTab objectId={objectId} journalId={journalId} journal={j} />
+        </TabsContent>
+
+        <TabsContent value="entries">
+          <div className="space-y-2 pt-4">
+            <JournalEntryList
+              entries={vm.entries}
+              isLoading={vm.isEntriesLoading}
+              statusFilter={vm.statusFilter}
+              onStatusFilterChange={vm.setStatusFilter}
+              hasFilters={vm.hasFilters}
+              onResetFilters={vm.handleResetFilters}
+              onRowClick={vm.handleEntryClick}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Диалог создания записи */}
       {vm.journal && (

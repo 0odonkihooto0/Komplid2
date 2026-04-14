@@ -155,6 +155,24 @@ export interface JournalListItem {
   _count: { entries: number };
 }
 
+// === Тип реквизитов журнала ===
+
+/** Одна запись реквизита — юрлицо или физлицо */
+export interface JournalRequisiteEntry {
+  orgId?: string;    // ObjectOrganization.id
+  personId?: string; // ObjectPerson.id
+  name: string;      // Отображаемое название
+}
+
+/** Реквизиты журнала (Заказчик, Генподрядчик и т.д.) */
+export interface JournalRequisites {
+  customer?: JournalRequisiteEntry;
+  generalContractor?: JournalRequisiteEntry;
+  constructionControl?: JournalRequisiteEntry;
+  authorSupervision?: JournalRequisiteEntry;
+  stateSupervision?: JournalRequisiteEntry;
+}
+
 // === Тип карточки журнала (GET /journals/[journalId]) ===
 
 export interface JournalDetail {
@@ -166,6 +184,9 @@ export interface JournalDetail {
   normativeRef: string | null;
   openedAt: string;
   closedAt: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  requisites: JournalRequisites | null;
   createdAt: string;
   responsible: { id: string; firstName: string | null; lastName: string | null };
   createdBy: { id: string; firstName: string | null; lastName: string | null };
