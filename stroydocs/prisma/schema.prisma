@@ -334,6 +334,9 @@ model User {
   commentResponsibilities DocComment[]      @relation("CommentResponsible")
   commentReplies          DocCommentReply[] @relation("ReplyAuthor")
 
+  // Маршруты подписания (КриптоПро)
+  signingSteps SigningStep[]
+
   @@index([organizationId])
   @@map("users")
 }
@@ -1062,6 +1065,20 @@ enum ApprovalStepStatus {
   REJECTED // Отклонено
 }
 
+/// Статус маршрута подписания (КриптоПро)
+enum SigningRouteStatus {
+  PENDING  // На подписании
+  SIGNED   // Подписан всеми
+  REJECTED // Отклонён
+}
+
+/// Статус шага подписания
+enum SigningStepStatus {
+  WAITING  // Ожидает подписи
+  SIGNED   // Подписано
+  REJECTED // Отклонено
+}
+
 /// Статус акта КС-2 / КС-3
 enum Ks2Status {
   DRAFT // Черновик
@@ -1134,6 +1151,7 @@ model ExecutionDoc {
   signatures    Signature[]
   comments      DocComment[]
   approvalRoute ApprovalRoute?
+  signingRoute  SigningRoute?
   ganttLinks    GanttTaskExecDoc[]
 
   // Модуль 9 — Журналы
@@ -1168,6 +1186,37 @@ model ExecutionDocLink {
   @@index([sourceDocId])
   @@index([targetDocId])
   @@map("execution_doc_links")
+}
+
+/// Маршрут подписания ИД (подготовка к интеграции КриптоПро CSP)
+model SigningRoute {
+  id             String            @id @default(uuid())
+  status         SigningRouteStatus @default(PENDING)
+  executionDocId String            @unique
+  executionDoc   ExecutionDoc      @relation(fields: [executionDocId], references: [id], onDelete: Cascade)
+  steps          SigningStep[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@map("signing_routes")
+}
+
+/// Шаг маршрута подписания
+model SigningStep {
+  id              String           @id @default(uuid())
+  stepIndex       Int
+  status          SigningStepStatus @default(WAITING)
+  signedAt        DateTime?
+  certificateInfo String? // Информация о сертификате КриптоПро (заполняется при подписании)
+  userId          String
+  user            User             @relation(fields: [userId], references: [id])
+  routeId         String
+  route           SigningRoute      @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  createdAt       DateTime         @default(now())
+
+  @@index([routeId])
+  @@index([userId])
+  @@map("signing_steps")
 }
 
 /// Структурированные данные формы КС-11 / КС-14 (Акт приёмки законченного строительством объекта)
