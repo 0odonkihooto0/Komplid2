@@ -965,6 +965,15 @@
 - ✅ Иконка `Link2` у записей со связями (`_count.sourceLinks + targetLinks > 0`)
 - ✅ `JournalEntryLinkDialog.tsx` — двухшаговый выбор: журнал ЖВК → запись; мутации `createLinkMutation` и `createExecDocMutation` в `useJournalCard.ts`
 
+### Добавлено (2026-04-14) — Excel-импорт и Печать
+- ✅ `GET .../journals/[jid]/excel-template` — скачать пустой xlsx-шаблон с колонками по типу журнала (8 общих + type-specific для бетонных/сварочных/авторского надзора)
+- ✅ `POST .../journals/[jid]/import-excel[?preview=true]` — импорт записей из xlsx: `?preview=true` возвращает строки без записи в БД; без параметра — `createMany` с авто-нумерацией
+- ✅ `POST .../journals/[jid]/print?format=pdf|doc|xls` — унифицированная генерация файла печати: PDF (Puppeteer), DOC (Handlebars→HTML с `Content-Type: application/msword`), XLS (ExcelJS)
+- ✅ `src/lib/journal-excel-generator.ts` — `buildJournalColumns()`, `generateJournalTemplate()`, `generateJournalXls()`
+- ✅ `ExcelImportDialog.tsx` — 3-шаговый диалог: скачать шаблон → дроп файла → предпросмотр строк → подтверждение импорта
+- ✅ `JournalPrintMenu.tsx` — DropdownMenu «Печать» (.pdf / .doc / .xls) в шапке `JournalCard`
+- ✅ `renderJournalHtml()` добавлен в `journal-pdf-generator.ts` (переиспользует кэш Handlebars-шаблонов для DOC)
+
 ---
 
 ## МОДУЛЬ 10 — Исполнительная документация (ИД) ✅
