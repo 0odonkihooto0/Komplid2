@@ -29,11 +29,21 @@ export function usePdfStampPreview({ objectId, currentPage }: UsePdfStampPreview
   const [editingStamp, setEditingStamp] = useState<PdfStamp | null>(null);
   const [editText, setEditText] = useState('');
 
+  // Мутация фоновой перегенерации PDF со штампом (fire-and-forget)
+  const applyMutation = useMutation({
+    mutationFn: async (sid: string) => {
+      await fetch(`/api/projects/${objectId}/stamps/${sid}/apply`, {
+        method: 'PATCH',
+      });
+    },
+    // Ошибки не показываем — фоновая операция, не блокирует UX
+  });
+
   // Мутация перемещения штампа
   const moveMutation = useMutation({
     mutationFn: async ({ sid, x, y }: { sid: string; x: number; y: number }) => {
       const res = await fetch(`/api/projects/${objectId}/stamps/${sid}/move`, {
-        method: 'POST',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         // page передаётся как 0-based (currentPage - 1)
         body: JSON.stringify({ positionX: x, positionY: y, page: currentPage - 1 }),
@@ -43,9 +53,10 @@ export function usePdfStampPreview({ objectId, currentPage }: UsePdfStampPreview
       if (!json.success) throw new Error(json.error ?? 'Ошибка перемещения штампа');
       return json.data;
     },
-    onSuccess: () => {
-      // Инвалидируем по частичному ключу, чтобы обновить все связанные запросы
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['stamps', objectId] });
+      // Фоновая перегенерация PDF с новой позицией штампа
+      applyMutation.mutate(variables.sid);
     },
     onError: (err: Error) => {
       toast({ title: 'Ошибка перемещения', description: err.message, variant: 'destructive' });
@@ -56,7 +67,7 @@ export function usePdfStampPreview({ objectId, currentPage }: UsePdfStampPreview
   const resizeMutation = useMutation({
     mutationFn: async ({ sid, w, h }: { sid: string; w: number; h: number }) => {
       const res = await fetch(`/api/projects/${objectId}/stamps/${sid}/resize`, {
-        method: 'POST',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ width: w, height: h }),
       });
@@ -65,8 +76,10 @@ export function usePdfStampPreview({ objectId, currentPage }: UsePdfStampPreview
       if (!json.success) throw new Error(json.error ?? 'Ошибка изменения размера штампа');
       return json.data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['stamps', objectId] });
+      // Фоновая перегенерация PDF с новым размером штампа
+      applyMutation.mutate(variables.sid);
     },
     onError: (err: Error) => {
       toast({ title: 'Ошибка изменения размера', description: err.message, variant: 'destructive' });

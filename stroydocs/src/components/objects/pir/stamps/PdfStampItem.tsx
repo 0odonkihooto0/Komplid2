@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, Pencil, Move, Maximize2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { PdfStamp } from './types';
@@ -37,9 +38,12 @@ export function PdfStampItem({
 }: PdfStampItemProps) {
   // Локальная позиция для оптимистичного обновления во время перетаскивания
   const [localPos, setLocalPos] = useState({ x: stamp.positionX, y: stamp.positionY });
-
   // Локальный размер для оптимистичного обновления во время ресайза
   const [localSize, setLocalSize] = useState({ w: stamp.width, h: stamp.height });
+  // Состояние hover-панели и режимов
+  const [isHovered, setIsHovered] = useState(false);
+  const [isDragMode, setIsDragMode] = useState(false);
+  const [isResizeMode, setIsResizeMode] = useState(false);
 
   // Refs для перетаскивания
   const isDragging = useRef(false);
@@ -50,6 +54,8 @@ export function PdfStampItem({
   const isResizing = useRef(false);
   const resizeStartPointer = useRef({ x: 0, y: 0 });
   const resizeStartSize = useRef({ w: 0, h: 0 });
+  // Направление ресайза: se | sw | ne | nw
+  const resizeDirection = useRef<'se' | 'sw' | 'ne' | 'nw'>('se');
 
   // Синхронизируем локальную позицию с пропсами когда не тащим
   useEffect(() => {
@@ -100,11 +106,15 @@ export function PdfStampItem({
 
   // --- Обработчики изменения размера ---
 
-  const handleResizePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+  const handleResizePointerDown = (
+    e: React.PointerEvent<HTMLDivElement>,
+    dir: 'se' | 'sw' | 'ne' | 'nw',
+  ) => {
     e.stopPropagation();
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
     isResizing.current = true;
+    resizeDirection.current = dir;
     resizeStartPointer.current = { x: e.clientX, y: e.clientY };
     resizeStartSize.current = { w: localSize.w, h: localSize.h };
   };
@@ -114,9 +124,13 @@ export function PdfStampItem({
     e.stopPropagation();
     const dw = e.clientX - resizeStartPointer.current.x;
     const dh = e.clientY - resizeStartPointer.current.y;
+    // Для левых ручек (sw, nw) дельта ширины инвертирована
+    const wSign = resizeDirection.current === 'sw' || resizeDirection.current === 'nw' ? -1 : 1;
+    // Для верхних ручек (ne, nw) дельта высоты инвертирована
+    const hSign = resizeDirection.current === 'ne' || resizeDirection.current === 'nw' ? -1 : 1;
     setLocalSize({
-      w: Math.max(60, resizeStartSize.current.w + dw),
-      h: Math.max(30, resizeStartSize.current.h + dh),
+      w: Math.max(60, resizeStartSize.current.w + dw * wSign),
+      h: Math.max(30, resizeStartSize.current.h + dh * hSign),
     });
   };
 
@@ -126,11 +140,34 @@ export function PdfStampItem({
     isResizing.current = false;
     const dw = e.clientX - resizeStartPointer.current.x;
     const dh = e.clientY - resizeStartPointer.current.y;
-    const finalW = Math.max(60, resizeStartSize.current.w + dw);
-    const finalH = Math.max(30, resizeStartSize.current.h + dh);
+    const wSign = resizeDirection.current === 'sw' || resizeDirection.current === 'nw' ? -1 : 1;
+    const hSign = resizeDirection.current === 'ne' || resizeDirection.current === 'nw' ? -1 : 1;
+    const finalW = Math.max(60, resizeStartSize.current.w + dw * wSign);
+    const finalH = Math.max(30, resizeStartSize.current.h + dh * hSign);
     setLocalSize({ w: finalW, h: finalH });
     onResizeEnd(stamp.id, finalW, finalH);
   };
+
+  /** Стили ручки ресайза */
+  const resizeHandle = (
+    dir: 'se' | 'sw' | 'ne' | 'nw',
+    pos: { bottom?: number; top?: number; left?: number; right?: number },
+  ) => (
+    <div
+      style={{
+        position: 'absolute',
+        width: 10,
+        height: 10,
+        backgroundColor: 'rgba(37,99,235,0.7)',
+        borderRadius: 2,
+        cursor: `${dir}-resize`,
+        ...pos,
+      }}
+      onPointerDown={(e) => handleResizePointerDown(e, dir)}
+      onPointerMove={handleResizePointerMove}
+      onPointerUp={handleResizePointerUp}
+    />
+  );
 
   return (
     <div
@@ -140,15 +177,81 @@ export function PdfStampItem({
         top: localPos.y * 100 + '%',
         width: localSize.w + 'px',
         height: localSize.h + 'px',
-        cursor: isDragging.current ? 'grabbing' : 'grab',
+        cursor: isDragging.current ? 'grabbing' : isDragMode ? 'grab' : 'default',
+        // Не обрезаем hover-панель которая торчит сверху
+        overflow: 'visible',
       }}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => {
+        // Не скрываем панель во время активного перетаскивания или ресайза
+        if (!isDragging.current && !isResizing.current) {
+          setIsHovered(false);
+        }
+      }}
     >
+      {/* Плавающая контекстная панель — показывается при hover */}
+      {isHovered && (
+        <div
+          className="absolute flex gap-0.5 bg-white border border-gray-200 rounded shadow-md p-0.5 z-50"
+          style={{ top: -34, left: 0, whiteSpace: 'nowrap' }}
+          // Предотвращаем скрытие панели при наведении на неё
+          onMouseEnter={() => setIsHovered(true)}
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-xs gap-1"
+            onClick={() => onEdit(stamp)}
+          >
+            <Pencil className="h-3 w-3" />
+            Редактировать
+          </Button>
+          <Button
+            variant={isDragMode ? 'secondary' : 'ghost'}
+            size="sm"
+            className="h-6 px-2 text-xs gap-1"
+            onClick={() => {
+              setIsDragMode((v) => !v);
+              setIsResizeMode(false);
+            }}
+          >
+            <Move className="h-3 w-3" />
+            Передвинуть
+          </Button>
+          <Button
+            variant={isResizeMode ? 'secondary' : 'ghost'}
+            size="sm"
+            className="h-6 px-2 text-xs gap-1"
+            onClick={() => {
+              setIsResizeMode((v) => !v);
+              setIsDragMode(false);
+            }}
+          >
+            <Maximize2 className="h-3 w-3" />
+            Изменить размер
+          </Button>
+          <div className="w-px bg-gray-200 mx-0.5" />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-xs gap-1 text-destructive hover:text-destructive"
+            onClick={() => onDelete(stamp.id)}
+          >
+            <Trash2 className="h-3 w-3" />
+            Удалить
+          </Button>
+        </div>
+      )}
+
       {/* Заголовочная панель — захватывает перетаскивание */}
       <div
-        className="h-5 bg-primary/80 text-white text-xs flex items-center px-1.5 gap-1 rounded-t select-none"
+        className={`h-5 text-white text-xs flex items-center px-1.5 gap-1 rounded-t select-none ${
+          isDragMode ? 'bg-blue-600' : 'bg-primary/80'
+        }`}
         onPointerDown={handleDragPointerDown}
+        style={{ cursor: isDragMode ? 'grab' : 'default' }}
       >
         <span className="truncate flex-1 text-[10px]">стр. {stamp.page + 1}</span>
 
@@ -156,18 +259,43 @@ export function PdfStampItem({
         <div onPointerDown={(e) => e.stopPropagation()}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-4 w-4 ml-auto shrink-0 text-white hover:bg-white/20 hover:text-white">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-4 w-4 ml-auto shrink-0 text-white hover:bg-white/20 hover:text-white"
+              >
                 <MoreHorizontal className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onEdit(stamp)}>
+                <Pencil className="h-3 w-3 mr-2" />
                 Редактировать текст
               </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setIsDragMode((v) => !v);
+                  setIsResizeMode(false);
+                }}
+              >
+                <Move className="h-3 w-3 mr-2" />
+                {isDragMode ? 'Выйти из режима перемещения' : 'Передвинуть'}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setIsResizeMode((v) => !v);
+                  setIsDragMode(false);
+                }}
+              >
+                <Maximize2 className="h-3 w-3 mr-2" />
+                {isResizeMode ? 'Скрыть ручки ресайза' : 'Изменить размер'}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive"
                 onClick={() => onDelete(stamp.id)}
               >
+                <Trash2 className="h-3 w-3 mr-2" />
                 Удалить
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -176,28 +304,22 @@ export function PdfStampItem({
       </div>
 
       {/* Тело штампа с текстом */}
-      <div className="flex-1 bg-primary/10 border border-primary/30 rounded-b px-1.5 py-1 text-xs overflow-hidden"
+      <div
+        className="flex-1 bg-primary/10 border border-primary/30 rounded-b px-1.5 py-1 text-xs overflow-hidden"
         style={{ height: `calc(100% - 1.25rem)` }}
       >
         <span className="line-clamp-3 break-words">{stamp.stampText}</span>
       </div>
 
-      {/* Ручка изменения размера в правом нижнем углу */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          right: 0,
-          width: 8,
-          height: 8,
-          cursor: 'se-resize',
-          backgroundColor: 'rgba(0,0,0,0.3)',
-          borderRadius: 2,
-        }}
-        onPointerDown={handleResizePointerDown}
-        onPointerMove={handleResizePointerMove}
-        onPointerUp={handleResizePointerUp}
-      />
+      {/* Ручки изменения размера — всегда se + остальные только в режиме ресайза */}
+      {resizeHandle('se', { bottom: 0, right: 0 })}
+      {isResizeMode && (
+        <>
+          {resizeHandle('sw', { bottom: 0, left: 0 })}
+          {resizeHandle('ne', { top: 0, right: 0 })}
+          {resizeHandle('nw', { top: 0, left: 0 })}
+        </>
+      )}
     </div>
   );
 }
