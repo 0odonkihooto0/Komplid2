@@ -82,14 +82,14 @@ export function ProjectPlannerView({ projectId }: Props) {
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600">Версия УП:</span>
           <Select
-            value={effectiveVersionId ?? ''}
-            onValueChange={(v) => setSelectedVersionId(v || undefined)}
+            value={effectiveVersionId ?? 'ALL'}
+            onValueChange={(v) => setSelectedVersionId(v === 'ALL' ? undefined : v)}
           >
             <SelectTrigger className="w-48 h-8 text-sm">
               <SelectValue placeholder="Все задачи" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Все задачи</SelectItem>
+              <SelectItem value="ALL">Все задачи</SelectItem>
               {versions.map((v) => (
                 <SelectItem key={v.id} value={v.id}>
                   {v.name}

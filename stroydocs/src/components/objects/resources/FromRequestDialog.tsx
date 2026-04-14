@@ -52,7 +52,7 @@ export function FromRequestDialog({
               </SelectTrigger>
               <SelectContent>
                 {requestOptions.length === 0 ? (
-                  <SelectItem value="" disabled>
+                  <SelectItem value="__PLACEHOLDER__" disabled>
                     Нет доступных заявок
                   </SelectItem>
                 ) : (

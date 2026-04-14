@@ -195,14 +195,14 @@ export function CreateTaskDialog({
               Исполнитель <span className="text-muted-foreground">(необязательно)</span>
             </Label>
             <Select
-              defaultValue={editTask?.assigneeId ?? ''}
-              onValueChange={(v) => setValue('assigneeId', v)}
+              defaultValue={editTask?.assigneeId ?? 'NONE'}
+              onValueChange={(v) => setValue('assigneeId', v === 'NONE' ? '' : v)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Не назначен" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Не назначен</SelectItem>
+                <SelectItem value="NONE">Не назначен</SelectItem>
                 {employees.map((e) => (
                   <SelectItem key={e.id} value={e.id}>
                     {[e.lastName, e.firstName].filter(Boolean).join(' ')}
@@ -219,12 +219,12 @@ export function CreateTaskDialog({
               <Label>
                 Договор <span className="text-muted-foreground">(необязательно)</span>
               </Label>
-              <Select onValueChange={(v) => setValue('contractId', v)}>
+              <Select onValueChange={(v) => setValue('contractId', v === 'NONE' ? '' : v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Без привязки к договору" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Без привязки</SelectItem>
+                  <SelectItem value="NONE">Без привязки</SelectItem>
                   {contracts.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.number} — {c.name}

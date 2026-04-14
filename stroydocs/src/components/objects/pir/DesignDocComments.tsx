@@ -246,12 +246,12 @@ export function DesignDocComments({ projectId, docId, sessionUserId }: Props) {
             </div>
             <div className="space-y-1.5">
               <Label>Ответственный</Label>
-              <Select value={newAssigneeId} onValueChange={setNewAssigneeId}>
+              <Select value={newAssigneeId || 'NONE'} onValueChange={(v) => setNewAssigneeId(v === 'NONE' ? '' : v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Выберите сотрудника" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">— Не выбрано —</SelectItem>
+                  <SelectItem value="NONE">— Не выбрано —</SelectItem>
                   {employees.map((e) => (
                     <SelectItem key={e.id} value={e.id}>
                       {e.lastName} {e.firstName}

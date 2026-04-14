@@ -168,7 +168,7 @@ export default function PIRRegistryDetailPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {availableDocs.length === 0 && (
-                    <SelectItem value="" disabled>Нет доступных документов</SelectItem>
+                    <SelectItem value="__PLACEHOLDER__" disabled>Нет доступных документов</SelectItem>
                   )}
                   {availableDocs.map((d) => (
                     <SelectItem key={d.id} value={d.id}>
@@ -197,12 +197,12 @@ export default function PIRRegistryDetailPage() {
         <div className="max-w-md space-y-4 rounded-md border p-4">
           <div className="space-y-1.5">
             <Label htmlFor="exStatus">Статус экспертизы</Label>
-            <Select value={exStatus} onValueChange={(v) => setExStatus(v as ExpertiseStatus | '')}>
+            <Select value={exStatus || 'NONE'} onValueChange={(v) => setExStatus(v === 'NONE' ? '' : v as ExpertiseStatus)}>
               <SelectTrigger id="exStatus">
                 <SelectValue placeholder="Выберите статус" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">— Не указано —</SelectItem>
+                <SelectItem value="NONE">— Не указано —</SelectItem>
                 {(Object.keys(EXPERTISE_LABELS) as ExpertiseStatus[]).map((s) => (
                   <SelectItem key={s} value={s}>{EXPERTISE_LABELS[s]}</SelectItem>
                 ))}

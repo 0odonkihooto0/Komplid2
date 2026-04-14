@@ -55,10 +55,10 @@ export function SupplierOrderDocTab({ objectId, order }: Props) {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-1">
             <Label>Склад-получатель</Label>
-            <Select value={form.warehouseId} onValueChange={form.setWarehouseId}>
+            <Select value={form.warehouseId || 'NONE'} onValueChange={(v) => form.setWarehouseId(v === 'NONE' ? '' : v)}>
               <SelectTrigger><SelectValue placeholder="Выберите склад..." /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">— Не указан —</SelectItem>
+                <SelectItem value="NONE">— Не указан —</SelectItem>
                 {warehouses.map((w) => (
                   <SelectItem key={w.id} value={w.id}>
                     {w.name}{w.isDefault && ' (основной)'}{w.location ? ` — ${w.location}` : ''}

@@ -133,12 +133,12 @@ export function GanttVersionEditDialog({ open, onOpenChange, objectId, version, 
                     <div className="space-y-1">
                       <Label>Стадия</Label>
                       <div className="flex gap-2">
-                        <Select value={stageId ?? ''} onValueChange={(v) => setValue('stageId', v || null)}>
+                        <Select value={stageId ?? 'NONE'} onValueChange={(v) => setValue('stageId', v === 'NONE' ? null : v)}>
                           <SelectTrigger className="flex-1">
                             <SelectValue placeholder="Не выбрана" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">— Не выбрана —</SelectItem>
+                            <SelectItem value="NONE">— Не выбрана —</SelectItem>
                             {stages.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                           </SelectContent>
                         </Select>
@@ -149,12 +149,12 @@ export function GanttVersionEditDialog({ open, onOpenChange, objectId, version, 
                     </div>
                     <div className="space-y-1">
                       <Label>Контракт</Label>
-                      <Select value={watch('contractId') ?? ''} onValueChange={(v) => setValue('contractId', v || null)}>
+                      <Select value={watch('contractId') ?? 'NONE'} onValueChange={(v) => setValue('contractId', v === 'NONE' ? null : v)}>
                         <SelectTrigger>
                           <SelectValue placeholder="Не привязан" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">— Не привязан —</SelectItem>
+                          <SelectItem value="NONE">— Не привязан —</SelectItem>
                           {contracts.map((c) => (
                             <SelectItem key={c.id} value={c.id}>{c.number} {c.name}</SelectItem>
                           ))}
@@ -188,20 +188,20 @@ export function GanttVersionEditDialog({ open, onOpenChange, objectId, version, 
                   <div className="space-y-3 pr-3">
                     <div className="space-y-1">
                       <Label>Заказчик</Label>
-                      <Select value={watch('delegatedFromOrgId') ?? ''} onValueChange={(v) => setValue('delegatedFromOrgId', v || null)}>
+                      <Select value={watch('delegatedFromOrgId') ?? 'NONE'} onValueChange={(v) => setValue('delegatedFromOrgId', v === 'NONE' ? null : v)}>
                         <SelectTrigger><SelectValue placeholder="Не выбран" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">— Не выбран —</SelectItem>
+                          <SelectItem value="NONE">— Не выбран —</SelectItem>
                           {orgs.map((o) => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-1">
                       <Label>Подрядчик</Label>
-                      <Select value={watch('delegatedToOrgId') ?? ''} onValueChange={(v) => setValue('delegatedToOrgId', v || null)}>
+                      <Select value={watch('delegatedToOrgId') ?? 'NONE'} onValueChange={(v) => setValue('delegatedToOrgId', v === 'NONE' ? null : v)}>
                         <SelectTrigger><SelectValue placeholder="Не выбран" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">— Не выбран —</SelectItem>
+                          <SelectItem value="NONE">— Не выбран —</SelectItem>
                           {orgs.map((o) => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
                         </SelectContent>
                       </Select>

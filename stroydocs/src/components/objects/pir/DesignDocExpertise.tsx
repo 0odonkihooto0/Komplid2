@@ -84,14 +84,14 @@ export function DesignDocExpertise({ projectId, docId, expertiseStatus, expertis
       <div className="space-y-1.5">
         <Label htmlFor="expertiseStatus">Статус экспертизы</Label>
         <Select
-          value={status}
-          onValueChange={(v) => setStatus(v as ExpertiseStatus | '')}
+          value={status || 'NONE'}
+          onValueChange={(v) => setStatus(v === 'NONE' ? '' : v as ExpertiseStatus)}
         >
           <SelectTrigger id="expertiseStatus">
             <SelectValue placeholder="Выберите статус" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">— Не указано —</SelectItem>
+            <SelectItem value="NONE">— Не указано —</SelectItem>
             {(Object.keys(EXPERTISE_STATUS_LABELS) as ExpertiseStatus[]).map((s) => (
               <SelectItem key={s} value={s}>
                 <span className={EXPERTISE_STATUS_CLASSES[s]}>

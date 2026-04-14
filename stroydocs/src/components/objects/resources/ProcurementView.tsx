@@ -152,14 +152,14 @@ export function ProcurementView({ objectId }: Props) {
             )}
 
             <Select
-              value={vm.statusFilter}
-              onValueChange={(v) => vm.setStatusFilter(v as SupplierOrderStatus | '')}
+              value={vm.statusFilter || 'ALL'}
+              onValueChange={(v) => vm.setStatusFilter(v === 'ALL' ? '' : v as SupplierOrderStatus | '')}
             >
               <SelectTrigger className="w-44 h-9 ml-auto">
                 <SelectValue placeholder="Все статусы" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Все статусы</SelectItem>
+                <SelectItem value="ALL">Все статусы</SelectItem>
                 {(Object.keys(ORDER_STATUS_LABELS) as SupplierOrderStatus[]).map((s) => (
                   <SelectItem key={s} value={s}>
                     {ORDER_STATUS_LABELS[s]}
