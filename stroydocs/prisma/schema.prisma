@@ -1438,9 +1438,18 @@ model Ks2Act {
   items          Ks2Item[]
   ks3Certificate Ks3Certificate?
 
+  // ДЗ сметы: исключённые допзатраты
+  excludedAdditionalCostIds String[] @default([])
+
+  // Корректировочный акт: ссылка на исходный КС-2
+  correctionToKs2Id String?
+  correctionToKs2   Ks2Act?  @relation("Ks2Correction", fields: [correctionToKs2Id], references: [id])
+  correctionActs    Ks2Act[] @relation("Ks2Correction")
+
   @@index([contractId])
   @@index([createdById])
   @@index([categoryId])
+  @@index([correctionToKs2Id])
   @@map("ks2_acts")
 }
 

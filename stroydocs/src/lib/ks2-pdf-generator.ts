@@ -92,6 +92,11 @@ export interface Ks2PdfData {
     representativeName: string;
     position: string;
   }>;
+  /** Корректировочный акт: флаг, номер исходного КС-2, суммы */
+  isCorrection?: boolean;
+  correctionToNumber?: string;
+  originalTotalAmount?: string;
+  diffAmount?: string;
 }
 
 export interface Ks3PdfData {

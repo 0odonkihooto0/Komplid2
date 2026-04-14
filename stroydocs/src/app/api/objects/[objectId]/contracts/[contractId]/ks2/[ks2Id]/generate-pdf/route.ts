@@ -33,6 +33,9 @@ export async function POST(_req: NextRequest, { params }: Params) {
             },
           },
         },
+        correctionToKs2: {
+          select: { number: true, totalAmount: true, periodEnd: true },
+        },
       },
     });
     if (!act) return errorResponse('Акт КС-2 не найден', 404);
@@ -74,6 +77,13 @@ export async function POST(_req: NextRequest, { params }: Params) {
       laborCost: act.laborCost.toLocaleString('ru-RU', { minimumFractionDigits: 2 }),
       totalAmountWords: `${totalAmountFormatted} рублей`,
       participants,
+      // Параметры корректировочного акта
+      isCorrection: !!act.correctionToKs2Id,
+      correctionToNumber: act.correctionToKs2?.number ?? '',
+      originalTotalAmount: act.correctionToKs2?.totalAmount.toLocaleString('ru-RU', { minimumFractionDigits: 2 }) ?? '0,00',
+      diffAmount: act.correctionToKs2
+        ? (act.totalAmount - act.correctionToKs2.totalAmount).toLocaleString('ru-RU', { minimumFractionDigits: 2 })
+        : '0,00',
     });
 
     const fileName = `ks2-${act.number.replace(/[^a-zA-Z0-9-]/g, '_')}.pdf`;
