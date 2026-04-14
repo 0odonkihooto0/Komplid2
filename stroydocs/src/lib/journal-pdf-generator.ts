@@ -163,3 +163,13 @@ export async function generateJournalPdf(
   const html = template(data);
   return htmlToPdf(html);
 }
+
+/** Сгенерировать HTML журнала по типу (для DOC-формата печати) */
+export async function renderJournalHtml(
+  type: SpecialJournalType,
+  data: JournalPdfData
+): Promise<string> {
+  const templateFile = TEMPLATE_MAP[type];
+  const template = await getTemplate(templateFile);
+  return template(data);
+}

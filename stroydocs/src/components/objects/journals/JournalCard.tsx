@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { ArrowLeft, Plus, Lock, Unlock } from 'lucide-react';
+import { ArrowLeft, Plus, Lock, Unlock, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -17,6 +17,8 @@ import { JournalSectionsView } from './JournalSectionsView';
 import { JournalRemarksTab } from './JournalRemarksTab';
 import { CreateEntryDialog } from './CreateEntryDialog';
 import { JournalEntryLinkDialog } from './JournalEntryLinkDialog';
+import { ExcelImportDialog } from './ExcelImportDialog';
+import { JournalPrintMenu } from './JournalPrintMenu';
 import { useJournalCard } from './useJournalCard';
 import { JOURNAL_TYPE_LABELS } from './journal-constants';
 import type { JournalEntryItem } from './journal-constants';
@@ -32,6 +34,7 @@ export function JournalCard({ objectId, journalId }: Props) {
   const [sectionIdForEntry, setSectionIdForEntry] = useState<string | undefined>(undefined);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkSourceEntry, setLinkSourceEntry] = useState<JournalEntryItem | null>(null);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   const isOzr = vm.journal?.type === 'OZR_1026PR';
 
@@ -94,6 +97,17 @@ export function JournalCard({ objectId, journalId }: Props) {
               Добавить запись
             </Button>
           )}
+          {vm.isActive && (
+            <Button variant="outline" size="sm" onClick={() => setImportDialogOpen(true)}>
+              <Upload className="mr-1 h-4 w-4" />
+              Импорт Excel
+            </Button>
+          )}
+          <JournalPrintMenu
+            objectId={objectId}
+            journalId={journalId}
+            journalNumber={j.number}
+          />
           <Button
             variant="outline"
             size="sm"
@@ -220,6 +234,16 @@ export function JournalCard({ objectId, journalId }: Props) {
           }}
         />
       )}
+
+      {/* Диалог импорта записей из Excel */}
+      <ExcelImportDialog
+        objectId={objectId}
+        journalId={journalId}
+        journalType={j.type}
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        onSuccess={() => {}}
+      />
 
       {/* Диалог добавления связи с записью ЖВК */}
       {linkSourceEntry && (
