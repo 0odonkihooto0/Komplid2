@@ -182,3 +182,67 @@ function drawStampBox(
     page.drawText(line, { x, y: lineY, size, font, color: TEXT_COLOR });
   });
 }
+
+/**
+ * Наложение произвольного текстового штампа на PDF (для ПИР-штампов).
+ *
+ * @param pdfBuffer - буфер исходного PDF-файла
+ * @param pageIndex - индекс страницы (0-based)
+ * @param xNorm - нормализованная X-координата (0–1, от левого края)
+ * @param yNorm - нормализованная Y-координата (0–1, от верхнего края)
+ * @param text - текст штампа
+ * @param widthPx - ширина штампа в пикселях
+ * @param heightPx - высота штампа в пикселях
+ * @returns буфер PDF с наложенным штампом
+ */
+export async function overlayTextStamp(
+  pdfBuffer: Buffer,
+  pageIndex: number,
+  xNorm: number,
+  yNorm: number,
+  text: string,
+  widthPx: number,
+  heightPx: number,
+): Promise<Buffer> {
+  const pdfDoc = await PDFDocument.load(pdfBuffer);
+  pdfDoc.registerFontkit(fontkit);
+
+  const pages = pdfDoc.getPages();
+  if (pageIndex < 0 || pageIndex >= pages.length) {
+    throw new Error(
+      `Страница ${pageIndex} не найдена. Всего страниц: ${pages.length}`,
+    );
+  }
+
+  // Загрузка шрифтов Liberation Sans (кириллица, свободная лицензия)
+  const [regularFontBytes, boldFontBytes] = await Promise.all([
+    getRegularFont(),
+    getBoldFont(),
+  ]);
+  const regularFont = await pdfDoc.embedFont(regularFontBytes);
+  const boldFont = await pdfDoc.embedFont(boldFontBytes);
+
+  const page = pages[pageIndex];
+  const pageWidth = page.getWidth();
+  const pageHeight = page.getHeight();
+
+  // Перевод нормализованных координат в PDF-пункты (Y инвертирован в PDF)
+  // 1px ≈ 0.75pt (96dpi → 72dpi)
+  const PX_TO_PT = 0.75;
+  const heightPt = heightPx * PX_TO_PT;
+  const xPt = xNorm * pageWidth;
+  // PDF считает Y от нижнего края; yNorm от верхнего → инвертируем
+  const yPt = (1 - yNorm) * pageHeight - heightPt;
+
+  // Разбиваем текст на строки по переносам
+  const lines = text.split('\n').filter(Boolean);
+  if (lines.length === 0) {
+    const resultBytes = await pdfDoc.save();
+    return Buffer.from(resultBytes);
+  }
+
+  drawStampBox(page, xPt, yPt, lines, regularFont, boldFont);
+
+  const resultBytes = await pdfDoc.save();
+  return Buffer.from(resultBytes);
+}

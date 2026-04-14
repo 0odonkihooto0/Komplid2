@@ -606,6 +606,7 @@
 - ✅ `PIRObjectTypeConfig`, `PIRCategoryConfig` — конфигурация категорий ПИР по типу объекта (@@unique projectId, parentCode для дерева)
 - ✅ Миграция `20260411030000_extend_pir_module`
 - ✅ UI штампов ПИР: `PdfStampManager` + `PdfQrManager` на каждом файле карточки документа; drag-and-drop позиционирование в `PdfStampPreview`; `AddStampDialog` (выбор/создание `StampTitle`, произвольный текст, страница); `AddQrDialog` с выбором шаблона (Только QR / QR+название / QR+дата) и click-позиционированием на PDF
+- ✅ Улучшенный UI штампов ПИР: hover-панель с кнопками «Редактировать / Передвинуть / Изменить размер»; режим явного drag и 4-угловые ручки ресайза; endpoints move/resize переведены с POST на PATCH; фоновая перегенерация PDF с наложенным штампом через `overlayTextStamp` → S3 (PATCH `stamps/[sid]/apply`)
 - ✅ `PIRObjectTypeConfig` + `PIRCategoryConfig` — настройка разделов ПД/РД по типу объекта строительства (ПП РФ №87)
 - ✅ `ConfigurePIRCategoriesDialog` — 2-шаговый диалог: выбор типа объекта → чекбоксы включения разделов
 - ✅ Дерево категорий в левой панели «Документация» (`PIRCategoryTree`): навигация по разделам, кнопка «+» для пользовательских разделов

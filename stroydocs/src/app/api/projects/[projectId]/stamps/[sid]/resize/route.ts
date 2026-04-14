@@ -15,11 +15,11 @@ const resizeSchema = z.object({
 type Params = { params: { projectId: string; sid: string } };
 
 /**
- * POST /api/projects/[projectId]/stamps/[sid]/resize
+ * PATCH /api/projects/[projectId]/stamps/[sid]/resize
  * Изменить размер штампа.
  * Body: { width, height }
  */
-export async function POST(req: NextRequest, { params }: Params) {
+export async function PATCH(req: NextRequest, { params }: Params) {
   try {
     const session = await getSessionOrThrow();
 

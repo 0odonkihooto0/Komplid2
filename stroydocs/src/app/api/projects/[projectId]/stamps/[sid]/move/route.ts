@@ -16,11 +16,11 @@ const moveSchema = z.object({
 type Params = { params: { projectId: string; sid: string } };
 
 /**
- * POST /api/projects/[projectId]/stamps/[sid]/move
+ * PATCH /api/projects/[projectId]/stamps/[sid]/move
  * Обновить позицию штампа на странице PDF.
  * Body: { positionX, positionY, page }
  */
-export async function POST(req: NextRequest, { params }: Params) {
+export async function PATCH(req: NextRequest, { params }: Params) {
   try {
     const session = await getSessionOrThrow();
 
