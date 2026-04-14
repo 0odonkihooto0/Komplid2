@@ -56,7 +56,7 @@ export async function GET(req: NextRequest, { params }: Params) {
         orderBy: { entryNumber: 'asc' },
         include: {
           author: { select: { id: true, firstName: true, lastName: true } },
-          _count: { select: { remarks: true } },
+          _count: { select: { remarks: true, sourceLinks: true, targetLinks: true } },
         },
       }),
       db.specialJournalEntry.count({ where }),
@@ -153,7 +153,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         },
         include: {
           author: { select: { id: true, firstName: true, lastName: true } },
-          _count: { select: { remarks: true } },
+          _count: { select: { remarks: true, sourceLinks: true, targetLinks: true } },
         },
       });
     });

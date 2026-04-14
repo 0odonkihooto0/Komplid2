@@ -1,4 +1,4 @@
-import type { JournalEntryStatus, JournalStatus, SpecialJournalType } from '@prisma/client';
+import type { JournalEntryStatus, JournalLinkType, JournalStatus, SpecialJournalType } from '@prisma/client';
 
 // === Лейблы типов журналов ===
 
@@ -274,5 +274,30 @@ export interface JournalEntryItem {
   journalId: string;
   authorId: string;
   author: { id: string; firstName: string | null; lastName: string | null };
-  _count: { remarks: number };
+  _count: { remarks: number; sourceLinks: number; targetLinks: number };
+}
+
+// === Тип связи записей журналов (GET .../entries/[eid]/links) ===
+
+export interface JournalEntryLinkItem {
+  id: string;
+  linkType: JournalLinkType;
+  sourceEntryId: string;
+  targetEntryId: string;
+  createdAt: string;
+  createdBy: { id: string; firstName: string | null; lastName: string | null };
+  sourceEntry?: {
+    id: string;
+    entryNumber: number;
+    description: string;
+    date: string;
+    journal: { id: string; type: SpecialJournalType; title: string };
+  };
+  targetEntry?: {
+    id: string;
+    entryNumber: number;
+    description: string;
+    date: string;
+    journal: { id: string; type: SpecialJournalType; title: string };
+  };
 }

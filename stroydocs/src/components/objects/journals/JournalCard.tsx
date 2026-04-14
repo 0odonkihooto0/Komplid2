@@ -16,8 +16,10 @@ import { JournalRequisitesTab } from './JournalRequisitesTab';
 import { JournalSectionsView } from './JournalSectionsView';
 import { JournalRemarksTab } from './JournalRemarksTab';
 import { CreateEntryDialog } from './CreateEntryDialog';
+import { JournalEntryLinkDialog } from './JournalEntryLinkDialog';
 import { useJournalCard } from './useJournalCard';
 import { JOURNAL_TYPE_LABELS } from './journal-constants';
+import type { JournalEntryItem } from './journal-constants';
 
 interface Props {
   objectId: string;
@@ -28,6 +30,8 @@ export function JournalCard({ objectId, journalId }: Props) {
   const vm = useJournalCard(objectId, journalId);
   const [entryDialogOpen, setEntryDialogOpen] = useState(false);
   const [sectionIdForEntry, setSectionIdForEntry] = useState<string | undefined>(undefined);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkSourceEntry, setLinkSourceEntry] = useState<JournalEntryItem | null>(null);
 
   const isOzr = vm.journal?.type === 'OZR_1026PR';
 
@@ -181,6 +185,14 @@ export function JournalCard({ objectId, journalId }: Props) {
               hasFilters={vm.hasFilters}
               onResetFilters={vm.handleResetFilters}
               onRowClick={vm.handleEntryClick}
+              journalType={j.type}
+              onCreateLink={(entry) => {
+                setLinkSourceEntry(entry);
+                setLinkDialogOpen(true);
+              }}
+              onCreateExecDoc={(entry) => {
+                vm.createExecDocMutation.mutate(entry.id);
+              }}
             />
           </div>
         </TabsContent>
@@ -204,6 +216,31 @@ export function JournalCard({ objectId, journalId }: Props) {
             vm.createEntryMutation.mutate(
               { ...payload, sectionId: sectionIdForEntry },
               { onSuccess: () => { setEntryDialogOpen(false); setSectionIdForEntry(undefined); } },
+            );
+          }}
+        />
+      )}
+
+      {/* Диалог добавления связи с записью ЖВК */}
+      {linkSourceEntry && (
+        <JournalEntryLinkDialog
+          open={linkDialogOpen}
+          onClose={() => {
+            setLinkDialogOpen(false);
+            setLinkSourceEntry(null);
+          }}
+          objectId={objectId}
+          sourceEntryId={linkSourceEntry.id}
+          isLoading={vm.createLinkMutation.isPending}
+          onConfirm={(targetEntryId, linkType) => {
+            vm.createLinkMutation.mutate(
+              { sourceEntryId: linkSourceEntry.id, targetEntryId, linkType },
+              {
+                onSuccess: () => {
+                  setLinkDialogOpen(false);
+                  setLinkSourceEntry(null);
+                },
+              },
             );
           }}
         />

@@ -286,6 +286,7 @@ model User {
   journalRemarksResolved JournalEntryRemark[]  @relation("RemarkResolver")
   journalRemarksIssued   JournalEntryRemark[]  @relation("RemarkIssuedBy")
   journalRemarkReplies   JournalRemarkReply[]  @relation("RemarkReplyAuthor")
+  journalLinks           JournalEntryLink[]    @relation("JournalLinkCreator")
 
   // Модуль 10 — ИД
   closurePackagesCreated IdClosurePackage[] @relation("ClosurePackageCreator")
@@ -3992,6 +3993,13 @@ enum JournalEntryStatus {
   REJECTED // Отклонена
 }
 
+/// Тип связи между записями журналов (Модуль 9)
+enum JournalLinkType {
+  OZR_TO_JVK  // ОЖР → ЖВК (входной контроль)
+  OZR_TO_AOSR // ОЖР → АОСР
+  GENERIC     // Произвольная связь
+}
+
 /// Специальный журнал работ (Модуль 9)
 model SpecialJournal {
   id           String             @id @default(uuid())
@@ -4070,7 +4078,9 @@ model SpecialJournalEntry {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  remarks JournalEntryRemark[]
+  remarks     JournalEntryRemark[]
+  sourceLinks JournalEntryLink[]   @relation("SourceLinks")
+  targetLinks JournalEntryLink[]   @relation("TargetLinks")
 
   @@unique([journalId, entryNumber])
   @@index([journalId, date])
@@ -4154,6 +4164,28 @@ model JournalSection {
   @@unique([journalId, sectionNumber])
   @@index([journalId])
   @@map("journal_sections")
+}
+
+/// Связь между записями журналов (ОЖР ↔ ЖВК, ОЖР → АОСР и т.д.) — Модуль 9
+model JournalEntryLink {
+  id       String          @id @default(uuid())
+  linkType JournalLinkType @default(GENERIC)
+
+  sourceEntryId String
+  sourceEntry   SpecialJournalEntry @relation("SourceLinks", fields: [sourceEntryId], references: [id], onDelete: Cascade)
+
+  targetEntryId String
+  targetEntry   SpecialJournalEntry @relation("TargetLinks", fields: [targetEntryId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation("JournalLinkCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([sourceEntryId, targetEntryId])
+  @@index([sourceEntryId])
+  @@index([targetEntryId])
+  @@map("journal_entry_links")
 }
 
 // === Модели Модуля 10 — Расширение ИД ===

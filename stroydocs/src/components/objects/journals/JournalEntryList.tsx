@@ -3,7 +3,7 @@
 import { type ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { MessageSquare } from 'lucide-react';
+import { Link2, MessageSquare, MoreHorizontal, Plus, FileText } from 'lucide-react';
 import { DataTable } from '@/components/shared/DataTable';
 import { Label } from '@/components/ui/label';
 import {
@@ -14,89 +14,158 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import type { JournalEntryStatus } from '@prisma/client';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import type { JournalEntryStatus, SpecialJournalType } from '@prisma/client';
 import {
   ENTRY_STATUS_LABELS,
   ENTRY_STATUS_CLASS,
   type JournalEntryItem,
 } from './journal-constants';
 
-// === Колонки таблицы записей ===
+// === Функция-конструктор колонок (принимает коллбэки из компонента) ===
 
-const columns: ColumnDef<JournalEntryItem>[] = [
-  {
-    accessorKey: 'entryNumber',
-    header: '№',
-    cell: ({ row }) => (
-      <span className="font-medium text-sm">{row.original.entryNumber}</span>
-    ),
-  },
-  {
-    accessorKey: 'date',
-    header: 'Дата',
-    cell: ({ row }) => (
-      <span className="text-sm">
-        {format(new Date(row.original.date), 'd MMM yyyy', { locale: ru })}
-      </span>
-    ),
-  },
-  {
-    accessorKey: 'description',
-    header: 'Описание',
-    cell: ({ row }) => (
-      <span className="text-sm line-clamp-2 max-w-xs">
-        {row.original.description}
-      </span>
-    ),
-  },
-  {
-    accessorKey: 'location',
-    header: 'Место',
-    cell: ({ row }) => (
-      <span className="text-sm text-muted-foreground">
-        {row.original.location ?? '—'}
-      </span>
-    ),
-  },
-  {
-    accessorKey: 'status',
-    header: 'Статус',
-    cell: ({ row }) => {
-      const s = row.original.status;
-      return (
-        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${ENTRY_STATUS_CLASS[s]}`}>
-          {ENTRY_STATUS_LABELS[s]}
-        </span>
-      );
+function makeColumns(
+  journalType: SpecialJournalType | undefined,
+  onCreateLink: (entry: JournalEntryItem) => void,
+  onCreateExecDoc: (entry: JournalEntryItem) => void,
+): ColumnDef<JournalEntryItem>[] {
+  return [
+    {
+      accessorKey: 'entryNumber',
+      header: '№',
+      cell: ({ row }) => (
+        <span className="font-medium text-sm">{row.original.entryNumber}</span>
+      ),
     },
-  },
-  {
-    id: 'author',
-    header: 'Автор',
-    cell: ({ row }) => {
-      const a = row.original.author;
-      return (
+    {
+      accessorKey: 'date',
+      header: 'Дата',
+      cell: ({ row }) => (
+        <span className="text-sm">
+          {format(new Date(row.original.date), 'd MMM yyyy', { locale: ru })}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'description',
+      header: 'Описание',
+      cell: ({ row }) => {
+        const hasLinks =
+          row.original._count.sourceLinks + row.original._count.targetLinks > 0;
+        return (
+          <span className="inline-flex items-center gap-1 text-sm line-clamp-2 max-w-xs">
+            {hasLinks && (
+              <Link2
+                className="h-3.5 w-3.5 shrink-0 text-blue-500"
+                aria-label="Есть связанные записи"
+              />
+            )}
+            {row.original.description}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: 'location',
+      header: 'Место',
+      cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">
-          {[a.lastName, a.firstName].filter(Boolean).join(' ') || '—'}
+          {row.original.location ?? '—'}
         </span>
-      );
+      ),
     },
-  },
-  {
-    id: 'remarks',
-    header: 'Замечания',
-    cell: ({ row }) => {
-      const count = row.original._count.remarks;
-      if (count === 0) return <span className="text-sm text-muted-foreground">—</span>;
-      return (
-        <span className="inline-flex items-center gap-1 text-sm text-amber-700">
-          <MessageSquare className="h-3.5 w-3.5" />
-          {count}
-        </span>
-      );
+    {
+      accessorKey: 'status',
+      header: 'Статус',
+      cell: ({ row }) => {
+        const s = row.original.status;
+        return (
+          <span
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${ENTRY_STATUS_CLASS[s]}`}
+          >
+            {ENTRY_STATUS_LABELS[s]}
+          </span>
+        );
+      },
     },
-  },
-];
+    {
+      id: 'author',
+      header: 'Автор',
+      cell: ({ row }) => {
+        const a = row.original.author;
+        return (
+          <span className="text-sm text-muted-foreground">
+            {[a.lastName, a.firstName].filter(Boolean).join(' ') || '—'}
+          </span>
+        );
+      },
+    },
+    {
+      id: 'remarks',
+      header: 'Замечания',
+      cell: ({ row }) => {
+        const count = row.original._count.remarks;
+        if (count === 0) return <span className="text-sm text-muted-foreground">—</span>;
+        return (
+          <span className="inline-flex items-center gap-1 text-sm text-amber-700">
+            <MessageSquare className="h-3.5 w-3.5" />
+            {count}
+          </span>
+        );
+      },
+    },
+    {
+      id: 'actions',
+      header: '',
+      cell: ({ row }) => {
+        const entry = row.original;
+        const isOzr = journalType === 'OZR_1026PR';
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={(e) => e.stopPropagation()}
+                aria-label="Действия с записью"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.stopPropagation();
+                  onCreateLink(entry);
+                }}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Добавить связь → ЖВК
+              </DropdownMenuItem>
+              {isOzr && (
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.stopPropagation();
+                    onCreateExecDoc(entry);
+                  }}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Создать АОСР
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+}
 
 const STATUS_OPTIONS = Object.keys(ENTRY_STATUS_LABELS) as JournalEntryStatus[];
 
@@ -110,6 +179,9 @@ interface Props {
   hasFilters: boolean;
   onResetFilters: () => void;
   onRowClick: (entry: JournalEntryItem) => void;
+  journalType?: SpecialJournalType;
+  onCreateLink: (entry: JournalEntryItem) => void;
+  onCreateExecDoc: (entry: JournalEntryItem) => void;
 }
 
 export function JournalEntryList({
@@ -120,7 +192,12 @@ export function JournalEntryList({
   hasFilters,
   onResetFilters,
   onRowClick,
+  journalType,
+  onCreateLink,
+  onCreateExecDoc,
 }: Props) {
+  const columns = makeColumns(journalType, onCreateLink, onCreateExecDoc);
+
   return (
     <div className="space-y-3">
       {/* Фильтры */}
@@ -129,7 +206,9 @@ export function JournalEntryList({
           <Label className="text-xs text-muted-foreground">Статус записи</Label>
           <Select
             value={statusFilter || 'ALL'}
-            onValueChange={(v) => onStatusFilterChange(v === 'ALL' ? '' : v as JournalEntryStatus)}
+            onValueChange={(v) =>
+              onStatusFilterChange(v === 'ALL' ? '' : (v as JournalEntryStatus))
+            }
           >
             <SelectTrigger className="w-44 h-9">
               <SelectValue placeholder="Все статусы" />
@@ -160,7 +239,9 @@ export function JournalEntryList({
       ) : entries.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <p className="text-muted-foreground text-sm">
-            {hasFilters ? 'Записей по фильтру не найдено' : 'Записей пока нет. Добавьте первую запись.'}
+            {hasFilters
+              ? 'Записей по фильтру не найдено'
+              : 'Записей пока нет. Добавьте первую запись.'}
           </p>
         </div>
       ) : (
