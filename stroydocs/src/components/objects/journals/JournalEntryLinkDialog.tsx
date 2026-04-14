@@ -62,6 +62,7 @@ export function JournalEntryLinkDialog({
       );
       if (!res.ok) throw new Error('Ошибка загрузки журналов');
       const json: ApiResponse<JournalOption[]> = await res.json();
+      if (!json.success) throw new Error(json.error);
       return json.data ?? [];
     },
     enabled: open,
@@ -76,6 +77,7 @@ export function JournalEntryLinkDialog({
       );
       if (!res.ok) throw new Error('Ошибка загрузки записей');
       const json: ApiResponse<JournalEntryItem[]> = await res.json();
+      if (!json.success) throw new Error(json.error);
       return json.data ?? [];
     },
     enabled: open && !!selectedJournalId,
