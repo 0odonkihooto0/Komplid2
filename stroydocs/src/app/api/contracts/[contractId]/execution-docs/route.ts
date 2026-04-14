@@ -5,7 +5,8 @@ import { getSessionOrThrow } from '@/lib/auth-utils';
 import { createExecutionDocSchema } from '@/lib/validations/execution-doc';
 import { successResponse, errorResponse } from '@/utils/api';
 import { EXECUTION_DOC_TYPE_LABELS } from '@/utils/constants';
-import type { ExecutionDocType, IdCategory } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import type { ExecutionDocType, IdCategory, ExecutionDocStatus } from '@prisma/client';
 import { classifyExecutionDoc } from '@/lib/id-classification';
 
 export const dynamic = 'force-dynamic';
@@ -27,31 +28,74 @@ export async function GET(
     if (!contract) return errorResponse('Договор не найден', 404);
 
     const searchParams = req.nextUrl.searchParams;
-    const type = searchParams.get('type') as ExecutionDocType | null;
-    const status = searchParams.get('status');
+
+    // Совместимость: type (устаревший) + types (новый множественный)
+    const typeSingle = searchParams.get('type') as ExecutionDocType | null;
+    const typesParam = searchParams.get('types');
+    const types: ExecutionDocType[] | null = typesParam
+      ? (typesParam.split(',') as ExecutionDocType[])
+      : typeSingle
+      ? [typeSingle]
+      : null;
+
+    // Статусы (множественный выбор)
+    const statusesParam = searchParams.get('statuses');
+    const statuses: ExecutionDocStatus[] | null = statusesParam
+      ? (statusesParam.split(',') as ExecutionDocStatus[])
+      : searchParams.get('status')
+      ? [searchParams.get('status') as ExecutionDocStatus]
+      : null;
+
     const idCategory = searchParams.get('idCategory') as IdCategory | null;
-    // Пользовательская иерархическая категория ИД
     const categoryId = searchParams.get('categoryId');
+    const authorId = searchParams.get('authorId');
+    const dateFrom = searchParams.get('dateFrom'); // YYYY-MM-DD
+    const dateTo = searchParams.get('dateTo');
 
     // Пагинация (лимит 50, макс 200)
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1'));
     const limit = Math.min(200, Math.max(1, parseInt(searchParams.get('limit') ?? '50')));
     const skip = (page - 1) * limit;
 
-    const where = {
+    // Строим фильтр явно для type-safety
+    const where: Prisma.ExecutionDocWhereInput = {
       contractId: params.contractId,
-      ...(type && { type }),
-      ...(status && { status: status as 'DRAFT' | 'IN_REVIEW' | 'SIGNED' | 'REJECTED' }),
-      ...(idCategory && { idCategory }),
-      ...(categoryId && { categoryId }),
     };
+    if (types && types.length > 0) where.type = { in: types };
+    if (statuses && statuses.length > 0) where.status = { in: statuses };
+    if (idCategory) where.idCategory = idCategory;
+    if (categoryId) where.categoryId = categoryId;
+    if (authorId) where.createdById = authorId;
+    if (dateFrom || dateTo) {
+      where.createdAt = {
+        ...(dateFrom ? { gte: new Date(dateFrom) } : {}),
+        ...(dateTo ? { lte: new Date(`${dateTo}T23:59:59.999Z`) } : {}),
+      };
+    }
 
     const [docs, total] = await Promise.all([
       db.executionDoc.findMany({
         where,
         include: {
           createdBy: { select: { id: true, firstName: true, lastName: true } },
-          _count: { select: { signatures: true, comments: true } },
+          // Пользовательская иерархическая категория ИД
+          category: { select: { id: true, name: true } },
+          // Маршрут согласования (статус + дата начала)
+          approvalRoute: { select: { status: true, createdAt: true } },
+          // Агрегированные счётчики
+          _count: {
+            select: {
+              signatures: true,
+              comments: true,
+              linksAsSource: true,
+              linksAsTarget: true,
+            },
+          },
+          // Открытые замечания — для расчёта openCommentsCount
+          comments: {
+            where: { status: 'OPEN' },
+            select: { id: true },
+          },
         },
         orderBy: { createdAt: 'desc' },
         take: limit,
@@ -60,7 +104,13 @@ export async function GET(
       db.executionDoc.count({ where }),
     ]);
 
-    return successResponse(docs, { total, page, pageSize: limit, totalPages: Math.ceil(total / limit) });
+    // DTO: вычисляем openCommentsCount, убираем сырой массив замечаний из ответа
+    const data = docs.map((doc) => {
+      const { comments, ...rest } = doc;
+      return { ...rest, openCommentsCount: comments.length };
+    });
+
+    return successResponse(data, { total, page, pageSize: limit, totalPages: Math.ceil(total / limit) });
   } catch (error) {
     if (error instanceof NextResponse) return error;
     logger.error({ err: error }, 'Ошибка получения исполнительных документов');

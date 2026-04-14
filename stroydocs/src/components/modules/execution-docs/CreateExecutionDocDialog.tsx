@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
@@ -19,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { EXECUTION_DOC_TYPE_LABELS } from '@/utils/constants';
-import { useExecutionDocs } from './useExecutionDocs';
+import { useToast } from '@/hooks/useToast';
 import { useWorkRecords } from '@/components/modules/work-records/useWorkRecords';
 import type { ExecutionDocType } from '@prisma/client';
 
@@ -30,7 +31,27 @@ interface Props {
 }
 
 export function CreateExecutionDocDialog({ open, onOpenChange, contractId }: Props) {
-  const { createMutation } = useExecutionDocs(contractId);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const createMutation = useMutation({
+    mutationFn: async (data: { type: ExecutionDocType; workRecordId?: string; title?: string }) => {
+      const res = await fetch(`/api/contracts/${contractId}/execution-docs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
+      return json.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['execution-docs', contractId] });
+      toast({ title: 'Документ создан' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Ошибка', description: error.message, variant: 'destructive' });
+    },
+  });
   const { records } = useWorkRecords(contractId);
 
   const [type, setType] = useState<ExecutionDocType | ''>('');

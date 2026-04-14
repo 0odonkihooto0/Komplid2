@@ -952,6 +952,16 @@
 - ✅ **Ограничение объёма ГПР**: при переводе ИД в IN_REVIEW проверяется `factVolume` документа vs `GanttTask.volume` (maxAllowedVolume); если сумма всех проведённых ИД по задаче превышает плановый объём → ошибка «Фактический объём превышает максимально допустимый по задаче ГПР»
 - ✅ Миграция `20260414100000_add_saved_field_values`: `ALTER TABLE execution_docs ADD COLUMN "factVolume"`, создание таблицы `saved_field_values` с `@@unique[fieldName, value, projectId]`
 
+### Добавлено (2026-04-14) — Расширение таблицы ИД
+
+- ✅ **8 новых колонок** в `ExecutionDocsTable`: Штамп (иконка), Связанные документы (счётчик), Дата документа, Категория (пользовательская), Версия/правки (`lastEditedAt`), Статус согласования, Активные замечания (только OPEN), Дата начала согласования
+- ✅ **Настройка видимости колонок** — кнопка «Колонки» → Dialog с чекбоксами; выбор сохраняется в `localStorage['execution-docs-visible-columns']`
+- ✅ **Фильтры с URL query params** — тип (мульти), статус (мульти), Группа ИД, период создания; параметры: `filterTypes`, `filterStatus`, `filterIdCategory`, `filterDateFrom`, `filterDateTo`
+- ✅ **Экспорт таблицы** — кнопка «Экспорт» → Excel (ExcelJS) или PDF (Puppeteer); `POST /api/contracts/[cid]/execution-docs/export-table?format=xlsx|pdf`; только выбранные колонки, максимум 200 строк
+- ✅ **Исправлен баг**: хук передавал `?types=AOSR,OZR`, API читал только `?type` (ед.ч.) — теперь GET поддерживает оба варианта
+- ✅ **Расширен GET API** — дополнительные include: `category`, `approvalRoute`, `_count(linksAsSource, linksAsTarget)`, агрегация открытых замечаний через `openCommentsCount`
+- ✅ Новые файлы: `execution-docs-columns.tsx` (типы + колонки), `ColumnVisibilityDialog.tsx`, `ExecutionDocsFilterBar.tsx`, `ExportTableButton.tsx`; рефактор `useExecutionDocs.tsx` + `ExecutionDocsTable.tsx`
+
 ### Добавлено (2026-04-14) — Специализированные формы КС-11 и КС-14
 - ✅ **Prisma**: `KsActFormData` — новая модель (1:1 к `ExecutionDoc`); поля пп.3,7,9-15; JSON-разделы: `participants`, `indicators`, `workList`, `commissionMembers` (только КС-14); миграция `20260414110000_add_ks_act_form_data`
 - ✅ **API** (`/api/objects/[oid]/contracts/[cid]/ks-acts/`):
