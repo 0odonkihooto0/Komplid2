@@ -28,7 +28,19 @@ export async function GET(req: NextRequest, { params }: Params) {
         createdBy: { select: { id: true, firstName: true, lastName: true } },
         contract: { select: { id: true, number: true, name: true } },
         _count: { select: { entries: true } },
-        approvalRoute: { select: { id: true, status: true } },
+        approvalRoute: {
+          select: {
+            id: true,
+            status: true,
+            currentStepIdx: true,
+            steps: {
+              orderBy: { stepIndex: 'asc' },
+              include: {
+                user: { select: { id: true, firstName: true, lastName: true } },
+              },
+            },
+          },
+        },
       },
     });
     if (!journal) return errorResponse('Журнал не найден', 404);

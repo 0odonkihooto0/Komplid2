@@ -15,6 +15,7 @@ import { JournalEntryList } from './JournalEntryList';
 import { JournalRequisitesTab } from './JournalRequisitesTab';
 import { JournalSectionsView } from './JournalSectionsView';
 import { JournalRemarksTab } from './JournalRemarksTab';
+import { JournalApprovalTab } from './JournalApprovalTab';
 import { CreateEntryDialog } from './CreateEntryDialog';
 import { JournalEntryLinkDialog } from './JournalEntryLinkDialog';
 import { ExcelImportDialog } from './ExcelImportDialog';
@@ -103,6 +104,16 @@ export function JournalCard({ objectId, journalId }: Props) {
               Импорт Excel
             </Button>
           )}
+          {vm.isActive && !j.approvalRoute && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => vm.startApprovalMutation.mutate()}
+              disabled={vm.startApprovalMutation.isPending}
+            >
+              На согласование
+            </Button>
+          )}
           <JournalPrintMenu
             objectId={objectId}
             journalId={journalId}
@@ -169,6 +180,27 @@ export function JournalCard({ objectId, journalId }: Props) {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="approval" className="flex items-center gap-1">
+            Согласование
+            {j.approvalRoute && (
+              <Badge
+                variant="secondary"
+                className={`ml-1 h-5 px-1.5 text-xs ${
+                  j.approvalRoute.status === 'APPROVED'
+                    ? 'bg-green-100 text-green-800'
+                    : j.approvalRoute.status === 'REJECTED'
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}
+              >
+                {j.approvalRoute.status === 'APPROVED'
+                  ? 'Согласован'
+                  : j.approvalRoute.status === 'REJECTED'
+                  ? 'Отклонён'
+                  : 'На согласовании'}
+              </Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="requisites">
@@ -213,6 +245,10 @@ export function JournalCard({ objectId, journalId }: Props) {
 
         <TabsContent value="remarks">
           <JournalRemarksTab objectId={objectId} journalId={journalId} journal={j} />
+        </TabsContent>
+
+        <TabsContent value="approval">
+          <JournalApprovalTab objectId={objectId} journalId={journalId} journal={j} />
         </TabsContent>
       </Tabs>
 
