@@ -15,13 +15,14 @@ import { useExecutionDocs } from './useExecutionDocs';
 import { useDeleteExecutionDoc } from '@/hooks/useDeleteExecutionDoc';
 import { canDelete } from '@/utils/can-delete';
 import { ID_CATEGORY_LABELS } from '@/utils/constants';
-import type { ExecutionDocStatus, IdCategory } from '@prisma/client';
+import type { ExecutionDocStatus, ExecutionDocType, IdCategory } from '@prisma/client';
 
 interface Props {
   contractId: string;
   projectId: string;
   /** Фильтр по пользовательской категории ИД (IdDocCategory.id) */
   categoryId?: string | null;
+  types?: ExecutionDocType[];
 }
 
 interface DocRow {
@@ -32,8 +33,8 @@ interface DocRow {
   createdBy: { id: string; firstName: string; lastName: string };
 }
 
-export function ExecutionDocsTable({ contractId, projectId, categoryId }: Props) {
-  const { docs, columns, isLoading } = useExecutionDocs(contractId, categoryId);
+export function ExecutionDocsTable({ contractId, projectId, categoryId, types }: Props) {
+  const { docs, columns, isLoading } = useExecutionDocs(contractId, categoryId, types);
   const { data: session } = useSession();
   const router = useRouter();
   const deleteMutation = useDeleteExecutionDoc(projectId, contractId);
