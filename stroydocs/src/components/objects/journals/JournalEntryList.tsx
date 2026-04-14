@@ -128,14 +128,14 @@ export function JournalEntryList({
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">Статус записи</Label>
           <Select
-            value={statusFilter}
-            onValueChange={(v) => onStatusFilterChange(v as JournalEntryStatus | '')}
+            value={statusFilter || 'ALL'}
+            onValueChange={(v) => onStatusFilterChange(v === 'ALL' ? '' : v as JournalEntryStatus)}
           >
             <SelectTrigger className="w-44 h-9">
               <SelectValue placeholder="Все статусы" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Все статусы</SelectItem>
+              <SelectItem value="ALL">Все статусы</SelectItem>
               {STATUS_OPTIONS.map((s) => (
                 <SelectItem key={s} value={s}>
                   {ENTRY_STATUS_LABELS[s]}

@@ -122,14 +122,14 @@ export function JournalRegistry({ objectId }: Props) {
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">Тип</Label>
           <Select
-            value={vm.typeFilter}
-            onValueChange={(v) => vm.setTypeFilter(v as SpecialJournalType | '')}
+            value={vm.typeFilter || 'ALL'}
+            onValueChange={(v) => vm.setTypeFilter(v === 'ALL' ? '' : v as SpecialJournalType)}
           >
             <SelectTrigger className="w-52 h-9">
               <SelectValue placeholder="Все типы" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Все типы</SelectItem>
+              <SelectItem value="ALL">Все типы</SelectItem>
               {TYPE_OPTIONS.map((t) => (
                 <SelectItem key={t} value={t}>
                   {JOURNAL_TYPE_LABELS[t]}
@@ -142,14 +142,14 @@ export function JournalRegistry({ objectId }: Props) {
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">Статус</Label>
           <Select
-            value={vm.statusFilter}
-            onValueChange={(v) => vm.setStatusFilter(v as JournalStatus | '')}
+            value={vm.statusFilter || 'ALL'}
+            onValueChange={(v) => vm.setStatusFilter(v === 'ALL' ? '' : v as JournalStatus)}
           >
             <SelectTrigger className="w-40 h-9">
               <SelectValue placeholder="Все статусы" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Все статусы</SelectItem>
+              <SelectItem value="ALL">Все статусы</SelectItem>
               {STATUS_OPTIONS.map((s) => (
                 <SelectItem key={s} value={s}>
                   {JOURNAL_STATUS_LABELS[s]}

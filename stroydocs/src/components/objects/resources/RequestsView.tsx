@@ -165,14 +165,14 @@ export function RequestsView({ objectId }: RequestsViewProps) {
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">Статус</Label>
           <Select
-            value={vm.statusFilter}
-            onValueChange={(v) => vm.setStatusFilter(v as MaterialRequestStatus | '')}
+            value={vm.statusFilter || 'ALL'}
+            onValueChange={(v) => vm.setStatusFilter(v === 'ALL' ? '' : v as MaterialRequestStatus | '')}
           >
             <SelectTrigger className="w-44 h-9">
               <SelectValue placeholder="Все статусы" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Все статусы</SelectItem>
+              <SelectItem value="ALL">Все статусы</SelectItem>
               {(Object.keys(STATUS_LABELS) as MaterialRequestStatus[]).map((s) => (
                 <SelectItem key={s} value={s}>
                   {STATUS_LABELS[s]}
@@ -205,14 +205,14 @@ export function RequestsView({ objectId }: RequestsViewProps) {
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">Согласование</Label>
           <Select
-            value={vm.approvalStatusFilter}
-            onValueChange={(v) => vm.setApprovalStatusFilter(v)}
+            value={vm.approvalStatusFilter || 'ALL'}
+            onValueChange={(v) => vm.setApprovalStatusFilter(v === 'ALL' ? '' : v)}
           >
             <SelectTrigger className="w-44 h-9">
               <SelectValue placeholder="Все" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Все</SelectItem>
+              <SelectItem value="ALL">Все</SelectItem>
               <SelectItem value="none">Не начато</SelectItem>
               <SelectItem value="PENDING">В процессе</SelectItem>
               <SelectItem value="APPROVED">Согласовано</SelectItem>

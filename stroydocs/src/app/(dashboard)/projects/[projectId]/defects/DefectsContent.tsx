@@ -125,12 +125,12 @@ export function DefectsContent({ projectId, embedded }: Props) {
 
       {/* Фильтры */}
       <div className="flex flex-wrap items-center gap-3">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter || 'ALL'} onValueChange={(v) => setStatusFilter(v === 'ALL' ? '' : v)}>
           <SelectTrigger className="w-44">
             <SelectValue placeholder="Все статусы" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Все статусы</SelectItem>
+            <SelectItem value="ALL">Все статусы</SelectItem>
             <SelectItem value="OPEN">Открыт</SelectItem>
             <SelectItem value="IN_PROGRESS">В работе</SelectItem>
             <SelectItem value="RESOLVED">Устранён</SelectItem>
@@ -139,12 +139,12 @@ export function DefectsContent({ projectId, embedded }: Props) {
           </SelectContent>
         </Select>
 
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+        <Select value={categoryFilter || 'ALL'} onValueChange={(v) => setCategoryFilter(v === 'ALL' ? '' : v)}>
           <SelectTrigger className="w-44">
             <SelectValue placeholder="Все категории" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Все категории</SelectItem>
+            <SelectItem value="ALL">Все категории</SelectItem>
             <SelectItem value="QUALITY_VIOLATION">Нарушение ОТ</SelectItem>
             <SelectItem value="TECHNOLOGY_VIOLATION">Нарушение технологии</SelectItem>
             <SelectItem value="FIRE_SAFETY">Пожарная безопасность</SelectItem>

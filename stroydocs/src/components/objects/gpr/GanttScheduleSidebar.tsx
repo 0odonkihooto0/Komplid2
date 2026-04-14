@@ -89,7 +89,7 @@ export function GanttScheduleSidebar({
             </SelectTrigger>
             <SelectContent>
               {versions.length === 0 ? (
-                <SelectItem value="" disabled className="text-xs">
+                <SelectItem value="__PLACEHOLDER__" disabled className="text-xs">
                   Нет версий
                 </SelectItem>
               ) : (

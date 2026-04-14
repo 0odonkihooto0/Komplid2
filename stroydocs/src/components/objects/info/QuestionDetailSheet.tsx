@@ -107,10 +107,10 @@ export function QuestionDetailSheet({ objectId, questionId, onClose }: Props) {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <Label>Исполнитель</Label>
-                      <Select value={assigneeOrgId} onValueChange={setAssigneeOrgId}>
+                      <Select value={assigneeOrgId || 'NONE'} onValueChange={(v) => setAssigneeOrgId(v === 'NONE' ? '' : v)}>
                         <SelectTrigger><SelectValue placeholder="Не указан" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">— не указан —</SelectItem>
+                          <SelectItem value="NONE">— не указан —</SelectItem>
                           {orgs.map((o) => (
                             <SelectItem key={o.organizationId} value={o.organizationId}>
                               {o.organization.name}
@@ -121,10 +121,10 @@ export function QuestionDetailSheet({ objectId, questionId, onClose }: Props) {
                     </div>
                     <div className="space-y-1">
                       <Label>Проверяющий</Label>
-                      <Select value={verifierOrgId} onValueChange={setVerifierOrgId}>
+                      <Select value={verifierOrgId || 'NONE'} onValueChange={(v) => setVerifierOrgId(v === 'NONE' ? '' : v)}>
                         <SelectTrigger><SelectValue placeholder="Не указан" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">— не указан —</SelectItem>
+                          <SelectItem value="NONE">— не указан —</SelectItem>
                           {orgs.map((o) => (
                             <SelectItem key={o.organizationId} value={o.organizationId}>
                               {o.organization.name}

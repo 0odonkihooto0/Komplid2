@@ -85,7 +85,7 @@ export function GanttDailyView({ objectId }: Props) {
               </SelectTrigger>
               <SelectContent>
                 {versions.length === 0 ? (
-                  <SelectItem value="" disabled>
+                  <SelectItem value="__PLACEHOLDER__" disabled>
                     Нет версий
                   </SelectItem>
                 ) : (

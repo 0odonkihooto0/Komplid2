@@ -144,7 +144,7 @@ export function GanttMasteringView({ objectId }: Props) {
               </SelectTrigger>
               <SelectContent>
                 {versions.length === 0 ? (
-                  <SelectItem value="" disabled>Нет версий</SelectItem>
+                  <SelectItem value="__PLACEHOLDER__" disabled>Нет версий</SelectItem>
                 ) : (
                   versions.map((v) => (
                     <SelectItem key={v.id} value={v.id}>

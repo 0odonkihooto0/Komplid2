@@ -209,14 +209,14 @@ export function CreatePlannerTaskDialog({
               <span className="text-muted-foreground">(необязательно)</span>
             </Label>
             <Select
-              defaultValue={defaultParentId ?? initialTask?.parentTaskId ?? ''}
-              onValueChange={(v) => setValue('parentTaskId', v || undefined)}
+              defaultValue={defaultParentId ?? initialTask?.parentTaskId ?? 'NONE'}
+              onValueChange={(v) => setValue('parentTaskId', v === 'NONE' ? undefined : v)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Без родителя" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Без родителя</SelectItem>
+                <SelectItem value="NONE">Без родителя</SelectItem>
                 {/* Отступ отражает уровень вложенности задачи в дереве */}
                 {tasks
                   .filter((t) => t.id !== initialTask?.id)
@@ -236,14 +236,14 @@ export function CreatePlannerTaskDialog({
               <span className="text-muted-foreground">(необязательно)</span>
             </Label>
             <Select
-              defaultValue={versionId ?? initialTask?.versionId ?? ''}
-              onValueChange={(v) => setValue('versionId', v || undefined)}
+              defaultValue={versionId ?? initialTask?.versionId ?? 'NONE'}
+              onValueChange={(v) => setValue('versionId', v === 'NONE' ? undefined : v)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Без версии" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Без версии</SelectItem>
+                <SelectItem value="NONE">Без версии</SelectItem>
                 {versions.map((v) => (
                   <SelectItem key={v.id} value={v.id}>
                     {v.name}

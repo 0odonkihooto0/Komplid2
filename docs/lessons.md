@@ -148,6 +148,19 @@ HTTP 200 — дефолт, явно передавать не нужно.
 
 ## React / Next.js
 
+**`<SelectItem value="">` — runtime-ошибка во всём проекте (28 вхождений в 18 файлах).**
+Radix UI `@radix-ui/react-select` v2.2.6+ добавил валидацию: `value` не может быть пустой строкой.
+Ошибка: «A \<Select.Item /> must have a value prop that is not an empty string».
+Срабатывает при рендере — даже для `disabled`-элементов, даже если они никогда не выбираются.
+Причина распространения: паттерн `<SelectItem value="">Все</SelectItem>` был скопирован при создании
+новых фильтров и диалогов по всему проекту без проверки версии Radix UI.
+Правило:
+- Фильтр «Все/Сбросить»: `value="ALL"`, `<Select value={state || 'ALL'} onValueChange={(v) => setState(v === 'ALL' ? '' : v)}>`
+- Необязательное поле «Не указан/Без привязки»: `value="NONE"`, аналогичный адаптер
+- Disabled-заглушка «Нет данных»: `value="__PLACEHOLDER__"`, стейт не трогать
+- Внутренний стейт (`''` = нет фильтра) и вся логика `state || undefined` / `if (state)` не меняются.
+Зафиксировано в `docs/patterns.md` в разделе «Известные ловушки TypeScript / React».
+
 **`Failed to find Server Action` у пользователей после деплоя.**
 У пользователей с открытыми вкладками устаревают Server Action ID.
 Решение уже в `src/app/error.tsx` — `window.location.reload()` при этой ошибке.
