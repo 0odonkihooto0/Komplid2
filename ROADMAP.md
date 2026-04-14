@@ -198,22 +198,9 @@
 - ✅ Прикрепление файлов к показателям (fileKeys String[] → Timeweb S3)
 - ⬜ Дефицит ИД детализация: «Бетонные работы — выполнено 80%, ИД 30%, нехватает АОСР: 12 шт.»
 
-### Вкладка «Строительный контроль» (в паспорте)
-- ✅ Сводка по дефектам: открытые / в работе / устранённые (PassportSkView)
-- ✅ Сводка по предписаниям: активные / закрытые
-- ✅ Последние события СК (проверки, акты)
-
-### Вкладка «Проблемные вопросы» (в паспорте)
-- ✅ Реестр проблемных вопросов по объекту (ProblemsView с CRUD)
-- ✅ Типы: ПСД, земельно-правовые, производственные, финансирование, поставки, сроки и др. (ProblemIssueType)
-- ✅ Статусы: Активно / Закрыто; причины, меры, дата решения, исполнитель, проверяющий
-
 ### Вкладка «Финансирование»
 - ✅ Реестр источников (бюджет, внебюджет, кредиты) — FundingView с CRUD
-- ⬜ Лимиты по периодам, риски неосвоения (реализованы в Модуле 3 — /info/limit-risks/)
-- ⬜ UI для FundingRecord (план/факт по годам с разбивкой: фед/рег/мест/собств/внебюдж)
-- ⬜ UI для рисков неосвоения лимитов (LimitRisk)
-- ✅ Риски неосвоения лимитов — отдельная вкладка info/limit-risks
+- ✅ Риски неосвоения лимитов — отдельная вкладка /info/limit-risks (реализована в Модуле 3)
 
 ### Вкладка «Риски неосвоения лимитов» ✅
 - ✅ Таблица (DataTable): год, статус, сумма, 5 бюджетных полей (фед./рег./местный/внебюдж./собств.), причина риска, предложения по исключению, контракт, возможная дата завершения освоения
@@ -230,26 +217,20 @@
 - ✅ Задачи по объекту (ответственный, срок, статус) — TasksView с полным CRUD
 - ⬜ Создание задачи из замечания СК (автосвязь)
 
-### Вкладка «Строительный контроль» ✅ (2026-04-10)
+### Вкладка «Строительный контроль» ✅
 - ✅ Read-only реестр недостатков из модуля СК (PassportSkView)
 - ✅ Левая панель (200px): счётчики по статусам — Всего / Открыто / В работе / Устранено / Подтверждено
-- ✅ TanStack Table: №, Кем выдано, Описание недостатка, Срок устранения, Контроль устранения, Статус (Badge), Мероприятия по устранению
-- ✅ Данные из GET /api/projects/[pid]/defects (переиспользование существующего API Модуля 11)
-- ✅ Маршрут: `/objects/[objectId]/passport/sk` → `passport/sk/page.tsx`
+- ✅ TanStack Table: №, Кем выдано, Описание недостатка, Срок устранения, Контроль устранения, Статус (Badge), Мероприятия
+- ✅ Данные из GET /api/projects/[pid]/defects (переиспользование API Модуля 11)
+- ✅ Маршрут: `/objects/[objectId]/passport/sk`
+
 ### Вкладка «Проблемные вопросы» ✅
 - ✅ Реестр проблемных вопросов (CRUD) по 7 типам (ГОСТ Р 70108-2025 / ЦУС стр. 30)
-- ✅ Типы: Корректировка ПСД, Земельно-правовые, Производственные, Организационно-правовые, Договорная работа, Финансовые, Прочие
-- ✅ Статусы: Актуальный (ACTIVE) / Закрыт (CLOSED), дата закрытия автофиксируется
-- ✅ Двухпанельный UI: сводка по типам (Закрытые | Актуальные) + TanStack DataTable
-- ✅ Колонки таблицы: Тип, Статус, Дата, Проблемный вопрос, Исполнитель, Проверено
+- ✅ Типы: Корректировка ПСД, Земельно-правовые, Производственные, Орг.-правовые, Договорная работа, Финансовые, Прочие
+- ✅ Статусы: ACTIVE / CLOSED с автоматической фиксацией `closedAt`
+- ✅ Двухпанельный UI: сводка по типам + TanStack DataTable
 - ✅ Диалог создания: Select тип, Textarea описание, Input исполнитель, DatePicker срок
 - ✅ API: GET/POST `/api/projects/[projectId]/problem-issues/` + PATCH/DELETE `…/[id]/`
-### Вкладка «Проблемные вопросы» ✅ (2026-04-09)
-- ✅ Реестр проблемных вопросов по объекту (ЦУС стр. 30)
-- ✅ 7 типов: Корректировка ПСД, Земельно-правовые, Производственные, Орг.-правовые, Договорная работа, Финансовые, Прочие
-- ✅ Статусы: ACTIVE / CLOSED с автоматической фиксацией `closedAt`
-- ✅ Поля: описание, пути решения, ответственный, срок, автор
-- ✅ API: GET (с фильтром ?status= и пагинацией), POST, PATCH, DELETE
 - ✅ Multi-tenancy: проверка organizationId через BuildingObject
 
 ### Вкладка «Фотогалерея»
@@ -270,22 +251,15 @@
 - ✅ Tab-навигация паспорта: `passport/layout.tsx` (Задачи / Проблемные вопросы / Фотогалерея)
 
 **База данных (Модуль 2)**
-- ⬜ `ObjectPassport` отдельная модель (поля cadastralNumber, area и др. добавлены в BuildingObject напрямую)
+- ⬜ `ObjectPassport` отдельная модель (поля добавлены в BuildingObject напрямую)
 - ✅ `BuildingObject` расширен: `constructionType`, `region`, `stroyka`, `shortName`, `latitude`, `longitude`, `actualStartDate`, `actualEndDate`, `fillDatesFromGpr`, `parentId` + самосвязь `ObjectHierarchy` — миграция `add_object_fields_audit`
-- ✅ `FundingSource` (projectId, type, amount, period) — модель в schema.prisma
-- ✅ `FundingRecord` (projectId, year, recordType ALLOCATED/DELIVERED, federal/regional/local/own/extraBudget)
+- ✅ `FundingSource` (projectId, type, amount, period)
+- ✅ `FundingRecord` (projectId, year, recordType ALLOCATED/DELIVERED, federal/regional/local/own/extraBudget) + enum `FundingRecordType`
 - ✅ `LimitRisk` (projectId, contractId?, year, totalAmount, бюджеты по источникам, riskReason, resolutionProposal)
-- ✅ enum `FundingRecordType` (ALLOCATED, DELIVERED)
-- ✅ `Task` (projectId, contractId, assigneeId, title, status, deadline, priority) — модель в schema.prisma
-- ✅ `ProblemIssue` (type, status, description, causes, measuresTaken, resolutionDate, assigneeOrgId, verifierOrgId)
-- ✅ `ProjectIndicator` (type, value, source: MANUAL/AUTO, period)
-- ✅ `ProjectIndicator` (groupName, indicatorName, value, comment, maxValue, fileKeys[], sourceType, projectId) — конфигурируемые показатели ЦУС
-- ✅ `IndicatorSource` enum (MANUAL / AUTO)
-- ✅ `ProjectCoordinate` (projectId, latitude, longitude, constructionPhase?) — миграция 20260409120000_add_info_module_models
-- ✅ `ProblemIssue` (projectId, type, status, description, resolution, responsible, deadline, closedAt, authorId) + enum `ProblemIssueType` (7 значений) + `ProblemIssueStatus`
-- ✅ `ProblemIssue` (projectId, type, status, description, resolution, responsible, deadline, closedAt, authorId) — миграция `20260409000000_add_problem_issues`
-- ✅ `ProblemIssueType` enum (7 значений), `ProblemIssueStatus` enum (ACTIVE / CLOSED)
-- ✅ Расширенные реквизиты `BuildingObject`: constructionType, region, stroyka, shortName, latitude, longitude, actualStartDate, actualEndDate, fillDatesFromGpr, parentId — миграция `20260408000000_add_object_fields_audit`
+- ✅ `Task` (projectId, contractId, assigneeId, title, status, deadline, priority) + расширение: parentTaskId, order, level, versionId — модель в schema.prisma
+- ✅ `ProblemIssue` (projectId, type, status, description, resolution, responsible, deadline, closedAt, authorId) + enum `ProblemIssueType` (7 значений) + `ProblemIssueStatus` — миграция `20260409000000_add_problem_issues`
+- ✅ `ProjectIndicator` (groupName, indicatorName, value, comment, maxValue, fileKeys[], sourceType MANUAL/AUTO, projectId) + enum `IndicatorSource`
+- ✅ `ProjectCoordinate` (projectId, latitude, longitude, constructionPhase?) — миграция `20260409120000`
 
 ---
 
@@ -359,60 +333,6 @@
 - ✅ Реестр организаций с ролями (переиспользуется)
 - ⬜ Автопроверка членства в СРО (реестр НОСТРОЙ)
 - ⬜ Проверка специалистов в НРС
-
-### Вкладка «Земельные участки» (ЦУС)
-- ⬜ UI реестра земельных участков объекта (LandPlot)
-- ⬜ Карточка ЗУ: кадастровый номер, площадь, категория, вид использования
-- ⬜ Блок обременений / ограничений / объектов сноса
-- ⬜ ГПЗУ: номер, дата, прикреплённый файл (gpzuS3Key)
-- ⬜ Привязка собственника и арендатора (ownerOrg / tenantOrg)
-
-### Вкладка «Технические условия» (ЦУС)
-- ⬜ UI реестра ТУ (TechnicalCondition)
-- ⬜ Типы: Водоснабжение, Электроснабжение, Газоснабжение, Теплоснабжение, Канализация, Связь
-- ⬜ Поля: номер ТУ, дата выдачи, срок действия, выдавший орган, условия подключения
-
-### Вкладка «Видеонаблюдение» (ЦУС)
-- ⬜ UI реестра камер (VideoCamera)
-- ⬜ RTSP-поток и HTTP URL трансляции
-- ⬜ Статус камеры: Работает / Не работает / На обслуживании
-- ⬜ Встроенный плеер трансляции в браузере
-
-### Вкладка «Показатели объекта» (ЦУС)
-- ⬜ UI таблицы конфигурируемых показателей (ProjectIndicator)
-- ⬜ Группы: Общая информация, Контракты ПИР, Договоры СМР, Финансирование и др.
-- ⬜ Источник значения: Ручной (MANUAL) / Авто из поля БД (AUTO)
-
-### Вкладка «Координаты» (ЦУС)
-- ⬜ UI управления точками контура объекта (ProjectCoordinate)
-- ⬜ Визуализация контура на карте (Яндекс.Карты / Leaflet)
-- ⬜ Поддержка нескольких очередей строительства
-
-### Вкладка «Деловая переписка»
-### Вкладка «Файловое хранилище» (/info/files)
-- ⬜ Документарий с категориями и папочной структурой
-
-### Вкладка «Финансирование» (/info/funding)
-- ✅ Реестр источников (бюджет, внебюджет, кредиты) — FundingView с CRUD
-- ⬜ Лимиты по периодам, риски неосвоения
-
-### Вкладка «Риски неосвоения лимитов» (/info/limit-risks)
-- ⬜ Анализ рисков неосвоения финансовых лимитов по периодам
-
-### Вкладка «Земельные участки и ТУ» (/info/land-and-tu)
-- ⬜ Реестр земельных участков (кадастровые номера, площадь, категория)
-- ⬜ Технические условия (электроснабжение, водоснабжение, канализация)
-
-### Вкладка «Фотогалерея» (/info/photos)
-- ✅ Фотоотчёты с GPS, аннотации (PhotosContent)
-- ⬜ Хронологическая лента, сравнение «было / стало»
-
-### Вкладка «Видеонаблюдение» (/info/video)
-- ⬜ Интеграция с IP-камерами, онлайн-трансляция
-
-### Вкладка «Вопросы» (/info/questions)
-- ⬜ Перенос логики RFI из `/info/rfi` → `/info/questions`
-- ✅ Существующий `/info/rfi` (не в основных табах): запросы на разъяснение, назначение ответственного, сроки
 
 ### Вкладка «Задачи» (/info/tasks)
 - ✅ Задачи по объекту (ответственный, срок, статус) — TasksView с полным CRUD
@@ -519,51 +439,28 @@
 - ✅ Полнотекстовый поиск (PostgreSQL tsvector)
 
 **База данных (Модуль 3)**
-- ✅ `Correspondence`, `CorrespondenceAttachment` (с tsvector-поиском)
+- ✅ `Correspondence`, `CorrespondenceAttachment` (tsvector-поиск)
 - ✅ `RFI`, `RFIAttachment`
-- ✅ `SEDDocument`, `SEDAttachment` (с tsvector-поиском, расширена: incomingNumber, outgoingNumber, date, senderUser, receiverUser, receiverOrg, isRead, readAt, observers)
-- ✅ `SEDFolder`, `SEDDocumentFolder` (папки, many-to-many)
-- ✅ `SEDWorkflow`, `SEDWorkflowMessage`, `SEDDocumentBasis` (карточки ДО)
-- ✅ `WorkflowRegulation` (регламент/шаблон маршрута)
-- ✅ `SEDLink` (полиморфные связи с сущностями)
-- ✅ Enum `WorkflowType` (7 типов: DELEGATION, APPROVAL, REDIRECT, MULTI_APPROVAL, MULTI_SIGNING, DIGITAL_SIGNING, REVIEW)
-- ✅ Enum `SEDWorkflowStatus` (5 статусов: CREATED, IN_PROGRESS, APPROVED, REJECTED, COMPLETED)
-- ✅ Миграция `20260410210000_extend_sed_module`
-- ✅ `SEDDocument`, `SEDAttachment` (с tsvector-поиском)
-- ✅ `SEDFolder`, `SEDDocumentFolder` (папочная структура)
-- ✅ `SEDLink` (полиморфные связи: SEDDocument ↔ Contract, ExecutionDoc и др.)
-- ✅ `SEDWorkflow` (workflowType, status, participants[], observers[], approvalRouteId, regulationId)
-- ✅ `SEDWorkflowMessage` (сообщения в карточке ДО)
-- ✅ `SEDDocumentBasis` (связь ДО-основание ↔ новое ДО)
-- ✅ `WorkflowRegulation` (organizationId, stepsTemplate Json [{role, userId?}])
-- ✅ Enum: `WorkflowType` (DELEGATION | APPROVAL | REDIRECT | MULTI_APPROVAL | MULTI_SIGNING | DIGITAL_SIGNING | REVIEW)
-- ✅ Enum: `SEDWorkflowStatus` (CREATED | IN_PROGRESS | APPROVED | REJECTED | COMPLETED)
+- ✅ `SEDDocument` (incomingNumber, outgoingNumber, date, senderUser, receiverUser, receiverOrg, isRead, readAt, observers), `SEDAttachment` (tsvector-поиск)
 - ✅ `SEDFolder`, `SEDDocumentFolder` (папки с иерархией parentId, many-to-many)
-- ✅ `SEDLink` (полиморфная связь: entityType + entityId, @@unique constraint)
-- ✅ `SEDWorkflow`, `SEDWorkflowMessage`, `WorkflowRegulation`, `SEDDocumentBasis` (карточки ДО)
+- ✅ `SEDLink` (полиморфная связь entityType + entityId, @@unique constraint)
+- ✅ `SEDWorkflow` (workflowType, status, participants[], observers[], approvalRouteId, regulationId)
+- ✅ `SEDWorkflowMessage`, `SEDDocumentBasis` (основание ДО→ДО)
+- ✅ `WorkflowRegulation` (organizationId, stepsTemplate Json [{role, userId?}])
+- ✅ Enum `WorkflowType` (DELEGATION | APPROVAL | REDIRECT | MULTI_APPROVAL | MULTI_SIGNING | DIGITAL_SIGNING | REVIEW)
+- ✅ Enum `SEDWorkflowStatus` (CREATED | IN_PROGRESS | APPROVED | REJECTED | COMPLETED)
 - ✅ `ChatMessage`
-- ✅ `LandPlot` (кадастровый номер, площадь, категория, обременения, арендатор)
-- ✅ `TechnicalCondition` (тип, выдавшая организация, срок действия, статус)
-- ✅ `FundingRecord` (year, recordType: ALLOCATED/DELIVERED, федеральный/региональный/местный/внебюджет)
-- ✅ `LimitRisk` (год, сумма, причина, предложение, привязка к договору)
-- ✅ `VideoCamera` (название, URL потока, локация)
-- ✅ `ObjectOrganization`, `ObjectPerson` (прямая привязка участников к объекту, не через договоры)
-- ✅ `ProjectCoordinate` (широта, долгота, название точки)
-- ✅ `ProjectIndicator` (type, value, source: MANUAL/AUTO, period)
 - ✅ `LandPlot` (cadastralNumber, area, landCategory, ГПЗУ, ЕГРН, обременения, ownerOrg/tenantOrg)
 - ✅ `TechnicalCondition` (type, number, issueDate, expirationDate, issuingAuthority, responsibleOrg)
+- ✅ `FundingRecord` (year, recordType ALLOCATED/DELIVERED, федеральный/региональный/местный/внебюджет) + `LimitRisk` (год, сумма, причина, предложение, привязка к договору)
 - ✅ `VideoCamera` (rtspUrl, httpUrl, operationalStatus, cameraModel, authorId)
-- ✅ `ProjectCoordinate` (latitude, longitude, constructionPhase)
-- ✅ `ProjectIndicator` (groupName, indicatorName, value, sourceType MANUAL/AUTO, autoSourceField)
-- ✅ enum `IndicatorSource` (MANUAL, AUTO)
-- ✅ Миграция: `20260409120000_add_info_module_models`
 - ✅ `ObjectOrganization` (прямая привязка юрлица к объекту, @@unique[buildingObjectId, organizationId])
-- ✅ `ObjectPerson` (физлицо на объекте: ФИО, опц. привязка к org и User)
-- ✅ `ObjectParticipantRole` (роль участника: XOR orgParticipantId / personId)
-- ✅ `PersonAppointment` (документ о назначении физлица, опц. файл в S3)
+- ✅ `ObjectPerson` (ФИО, привязка к org и User) + `ObjectParticipantRole` + `PersonAppointment` (документ о назначении, файл S3)
 - ✅ enum `AppointmentDocType` (ORDER, POWER_OF_ATTORNEY, DECREE, REGULATION, DECISION, CHARTER)
-- ✅ `FundingSource` (projectId, type, amount, period) — перенесён из Модуля 2
-- ✅ `Task` (projectId, contractId, assigneeId, title, status, deadline, priority) — перенесён из Модуля 2
+- ✅ `ProjectCoordinate` (latitude, longitude, constructionPhase)
+- ✅ `ProjectIndicator` (groupName, indicatorName, value, sourceType MANUAL/AUTO, autoSourceField) + enum `IndicatorSource`
+- ✅ `FundingSource`, `Task` — перенесены из Модуля 2
+- ✅ Миграции: `20260409120000_add_info_module_models`, `20260410210000_extend_sed_module`
 
 ---
 
@@ -1113,305 +1010,82 @@
 ---
 
 ## МОДУЛЬ 13 — ТИМ ✅
-## МОДУЛЬ 13 — ТИМ ✅ (2026-04-10)
-
-> **Аналог:** ЦУС → Модуль «ТИМ»
-> **Ориентир:** 4–6 недель (после основных модулей)
-> **Статус:** ✅ Завершён
-
-### 3D-вьюер и модели
-- ✅ Загрузка IFC-модели, 3D-вьюер в браузере (web-ifc-viewer / three.js)
-- ✅ Оригинальные IFC-цвета из модели (материалы сохраняются из IFC, не перекрашиваются)
-- ✅ Привязка АОСР к элементу модели (ИД ↔ IFC GUID)
-- ✅ Цветовая индикация по статусу ИД: серый / зелёный / красный
-- ✅ Цветовая индикация по ГПР: план/факт/отклонение (Timeline palette)
-- ✅ nanoCAD BIM, Renga, Pilot-BIM — совместимость форматов
-
-### Панели и инструменты
-- ✅ Панель «Структура модели» — иерархия IFC-элементов (IfcProject → IfcBuilding → IfcStorey → элемент)
-- ✅ Панель свойств элемента — IFC PropertySets (извлекаются клиентски)
-- ✅ Вкладка «Связи» в правой панели — ИД, дефекты, задачи, связанные с элементом
-- ✅ Инструмент разрезов (clipping planes) — горизонтальный и вертикальный разрез
-- ✅ Инструмент измерений — расстояния между точками
-
-### Управление слоями и экспорт
-- ✅ Управление видимостью IFC-слоёв (IfcWall, IfcSlab, IfcBeam и др.) — чекбоксы с live-обновлением
-- ✅ Экспорт: скриншот текущего вида (PNG), скачивание IFC-файла
-
-### Доступ
-- ✅ Управление доступом к ТИМ-модели (BimAccess — роли: VIEWER, EDITOR, ADMIN)
-
-**База данных (Модуль 13)**
-- ✅ `BimSection`, `BimModel`, `BimElementLink`, `BimAccess`
-- ✅ Enum: `BimAccessRole` (VIEWER, EDITOR, ADMIN)
-- ✅ Цветовая индикация: серый / зелёный / красный по статусу ИД
-- ✅ Оригинальные цвета геометрии из IFC-файла (IfcSurfaceStyleRendering → RGB материалов, прозрачность, корректное восстановление после выбора элемента) — исправлено 2026-04-10
-- ✅ Улучшенное освещение 3D-сцены (AmbientLight + DirectionalLight + HemisphereLight) — исправлено 2026-04-10
-- ✅ nanoCAD BIM, Renga, Pilot-BIM
-- ✅ `BimModel`, `BimElementLink`
-- ✅ **Разрезы (Clipping Planes)** — кнопка «Разрезы» в toolbar, горизонтальный / вертикальный разрез, слайдер положения плоскости, «Убрать разрез» (ЦУС стр. 301)
-- ✅ **Измерения (Dimensions)** — кнопка «Измерения», клик A → клик B → расстояние в метрах, линия + 3D-метка (CSS2DRenderer), «Удалить все измерения» (ЦУС стр. 302)
-### 3D-вьюер ✅
-- ✅ Загрузка IFC-файла из Timeweb S3 (presigned URL) в браузере
-- ✅ Рендеринг геометрии через web-ifc (WASM) + Three.js (`IfcViewerCore`, `ifcSceneSetup`)
-- ✅ Элементы управления камерой: сброс, fit, wireframe (`ViewerToolbar`)
-- ✅ Клик на элемент → raycasting → выделение (подсветка синим)
-- ✅ Временная шкала ГПР (TimelineSlider) для привязки к датам
-
-### Панель свойств элемента ✅
-- ✅ Правая панель (`ElementPropertiesPanel`) с вкладками: Инфо / ГПР / Связи / Файлы
-- ✅ Отображение: тип IFC (IfcWall, IfcSlab…), слой, уровень, GUID
-- ✅ **IFC PropertySets клиентски** — `buildIfcPropertiesMap()` сканирует `IfcRelDefinesByProperties`
-  → `IfcPropertySet` / `IfcElementQuantity` и показывает пары ключ-значение без перепарсинга БД
-- ✅ Fallback: данные из БД (`BimElement.properties`) → данные из IFC → сообщение «не загружены»
-- ✅ Привязка элемента к задаче ГПР (`GprLinkPanel`)
-- ✅ Привязка элемента к документу ИД (`DocumentLinkPanel`)
-
-### Управление моделями ✅
-- ✅ Реестр моделей с статусами (PROCESSING / READY / ERROR), `ModelStatusBadge`
-- ✅ Загрузка новой версии IFC (`UploadModelDialog`, `BimModelVersion`)
-- ✅ Таблица версий (`ModelVersionsTable`) с историей и переключением текущей
-- ✅ Фоновый парсинг через BullMQ воркер (`parse-ifc.worker.ts`): GUID, тип, имя, уровень
-- ✅ Дерево разделов (`SectionTree`, `useSections`) — иерархия частей модели
-
-### Сравнение версий и коллизии ✅
-- ✅ Сравнение двух версий (`VersionCompare`, `VersionDiffViewer`, `useVersionCompare`)
-- ✅ Обнаружение коллизий (`CollisionDetector`, `useCollisions`) — пересечения AABB
-- ✅ Подсветка коллизионной пары (красный), список результатов (`CollisionResultsList`)
-
-### Реестр замечаний и доступ ✅
-- ✅ Реестр замечаний ТИМ (`BimIssuesRegistry`, `useBimIssues`)
-- ✅ Управление доступом (`BimAccessSettings`, `AddBimAccessDialog`, `useBimAccess`)
-- ✅ Уровни доступа: VIEW / ADD / EDIT / DELETE (`BimAccessLevel`)
-
-### URL-структура ✅
-- ✅ `/objects/[id]/tim/` — главная с реестром моделей
-- ✅ `/objects/[id]/tim/models/[modelId]/` — 3D-вьюер + панель свойств
-- ✅ `/objects/[id]/tim/issues/` — реестр замечаний ТИМ
-- ✅ `/objects/[id]/tim/access/` — управление доступом
-
-**База данных (Модуль 13)**
-- ✅ `BimModel` (name, status, stage, s3Key, ifcVersion, elementCount, metadata)
-- ✅ `BimModelVersion` (version, isCurrent, s3Key, comment)
-- ✅ `BimElement` (ifcGuid, ifcType, name, description, layer, level, properties Json?)
-- ✅ `BimElementLink` (elementId, entityType, entityId — полиморфная: GanttTask/ExecutionDoc/Defect)
-- ✅ `BimSection` (иерархия через parentId)
-- ✅ Enum: `BimModelStatus`, `BimModelStage` (OTR/PROJECT/WORKING/CONSTRUCTION), `BimAccessLevel`
-- ✅ Индексы: `@@index([modelId])`, `@@index([ifcGuid])`, `@@unique([modelId, ifcGuid])`
-
-### Не реализовано / на будущее
-- ⬜ Сохранение PropertySets в БД (`BimElement.properties`) при фоновом парсинге воркером
-- ⬜ Фильтрация по уровню / типу / разделу в 3D-вьюере
-- ⬜ Экспорт в IFC (round-trip) с изменёнными статусами
-- ⬜ Интеграция с ИСУП Минстроя (BIM-паспорт)
-- ⬜ Совместный просмотр (multi-user cursor)
-- ⬜ nanoCAD BIM, Renga, Pilot-BIM — прямой импорт (пока только IFC)
-## МОДУЛЬ 13 — ТИМ (Технологии информационного моделирования) 🔄
-
-> **Аналог:** ЦУС → Модуль «ТИМ» (стр. 300)
-> **Статус:** В работе — базовый вьюер и инфраструктура готовы
-
-### 3D-вьюер ✅
-- ✅ Загрузка IFC-файла из Timeweb S3 (presigned URL → web-ifc WASM)
-- ✅ Рендеринг геометрии через Three.js (BufferGeometry + MeshLambertMaterial)
-- ✅ Orbit controls (вращение, зум, пан)
-- ✅ Выбор элемента кликом (raycasting → expressID → IFC GUID)
-- ✅ Подсветка выбранного элемента (серый / синий / красный)
-- ✅ Тулбар: сброс вида, fit-to-view, wireframe, коллизии, сравнение
-- ✅ Клиентский парсинг IFC PropertySets (web-ifc → ifcProperties Map)
-- ✅ **Панель «Структура модели»** (2026-04-10):
-  - сворачиваемая левая панель (260px, коллапс в localStorage)
-  - вкладка «Структура»: дерево элементов из БД, сгруппированных по уровням; поиск, toggle видимости (mesh.visible)
-  - вкладка «Файлы»: список версий, скачать, загрузить новую версию, удалить
-  - вкладка «Связанные модели ТИМ»: другие модели объекта со статусами
-
-### Управление моделями ✅
-- ✅ Реестр моделей объекта (ModelsView + ModelVersionsTable)
-- ✅ Загрузка IFC-файла в Timeweb S3 (presigned URL upload, 3 шага)
-- ✅ Поддержка CAD-систем: nanoCAD BIM, Renga, Pilot-BIM, Revit, ArchiCAD
-- ✅ Версионирование (BimModelVersion): история, флаг isCurrent
-- ✅ Загрузка новой версии существующей модели (upload-version)
-- ✅ Стадии: ОТР / Проект / РД / АС
-- ✅ Дерево разделов (BimSection, SectionTree) — иерархические папки
-- ✅ Статусы обработки: PROCESSING → READY / ERROR (ModelStatusBadge)
-
-### Работа с элементами ✅
-- ✅ Парсинг и хранение элементов в БД (BimElement): GUID, тип IFC, имя, уровень, слой
-- ✅ Панель свойств элемента (ElementPropertiesPanel): 4 вкладки (Инфо, ГПР, Связи, Файлы)
-- ✅ Привязка элемента → задача ГПР (GprLinkPanel, BimElementLink)
-- ✅ Привязка элемента → ИД / дефект (DocumentLinkPanel)
-- ✅ Поиск элементов по GUID и имени (API с пагинацией, лимит 50–200)
-
-### Инструменты ✅
-- ✅ Обнаружение коллизий (CollisionDetector — пересечения и дубликаты геометрии)
-- ✅ Сравнение версий модели (VersionCompare + VersionDiffViewer)
-- ✅ Временная шкала ГПР (TimelineSlider — дата + диапазон)
-- ✅ Контроль доступа к BIM (BimAccessSettings + AddBimAccessDialog)
-- ✅ Реестр замечаний ТИМ (BimIssuesRegistry)
-
-### Не реализовано
-- ⬜ Цветовая индикация готовности ИД: серый / зелёный / красный по статусу
-- ⬜ Пространственная иерархия через web-ifc (IfcProject → IfcSite → IfcBuilding → IfcBuildingStorey)
-- ⬜ Привязка к временной шкале ГПР: показывать/скрывать элементы по дате
-- ⬜ Публичная страница просмотра 3D-модели (для заказчика / субподрядчика)
-- ⬜ Сечения (клиппинг-плоскости)
-- ⬜ Измерения в 3D
-- ⬜ Интеграция с ИСУП Минстроя (3D-контроль хода строительства)
-
-**База данных (Модуль 13)**
-- ✅ `BimModel` (id, name, status, stage, s3Key, fileName, ifcVersion, elementCount, isCurrent)
-- ✅ `BimModelVersion` (version, isCurrent, s3Key, uploadedById)
-- ✅ `BimSection` (иерархия через parentId, order)
-- ✅ `BimElement` (ifcGuid, ifcType, name, level, layer, properties Json)
-- ✅ `BimElementLink` (elementId, entityType, entityId — полиморфная связь)
-- ✅ `BimAccess`, `BimIssue`
-## МОДУЛЬ 13 — ТИМ ✅
 
 > **Аналог:** ЦУС → Модуль «ТИМ» (стр. 285–320)
-> **Статус:** Базовый вьюер + привязки ГПР реализованы. Шаги 1–8 завершены (2026-04-10).
+> **Статус:** ✅ Завершён (Шаги 1–8, 2026-04-10)
 
-### Вьюер IFC-моделей ✅
-- ✅ Загрузка IFC-модели с Timeweb S3 (pre-signed URL, TTL 1 час)
-- ✅ 3D-вьюер на Three.js + web-ifc (WASM-парсинг IFC геометрии в браузере)
-- ✅ OrbitControls (поворот, масштаб, панорамирование)
-- ✅ Выбор элемента по клику (raycasting, подсветка #60A5FA)
-- ✅ Wireframe-режим
-- ✅ Плоскости сечений (ClippingPanel, до 3 плоскостей)
-- ✅ Измерения расстояний (CSS2DRenderer, текстовые метки)
-- ✅ Fit-to-view (сброс камеры)
+### 3D-вьюер ✅
+- ✅ Загрузка IFC-файла из Timeweb S3 (presigned URL → web-ifc WASM → Three.js)
+- ✅ Рендеринг геометрии (BufferGeometry + MeshLambertMaterial), OrbitControls, fit-to-view, wireframe
+- ✅ Клик на элемент → raycasting → выделение (подсветка #60A5FA)
+- ✅ Оригинальные IFC-цвета из модели (IfcSurfaceStyleRendering → RGB, прозрачность) — 2026-04-10
+- ✅ Улучшенное освещение (AmbientLight + DirectionalLight + HemisphereLight) — 2026-04-10
+- ✅ Разрезы (ClippingPanel): горизонтальный / вертикальный, до 3 плоскостей, слайдер положения
+- ✅ Измерения расстояний (CSS2DRenderer метки)
+- ✅ Управление слоями (IfcPresentationLayerAssignment): чекбоксы, «Показать все» / «Скрыть все»
+- ✅ Скриншот PNG/JPG (canvas.toDataURL + контекстное меню правого клика)
+- ✅ Скачивание IFC-файла из S3 (кнопка Download в toolbar)
 - ✅ Загрузка по чанкам без блокировки UI
 
 ### Управление моделями ✅
 - ✅ Реестр IFC-моделей объекта (`ModelsView`, `ModelVersionsTable`)
-- ✅ Загрузка через presigned S3 URL (`UploadModelDialog`, react-dropzone)
-- ✅ Версионирование моделей (история версий, `isCurrent`)
-- ✅ Разделы модели (`BimSection`, `SectionTree`, `useSections`)
-- ✅ Статусы: `PROCESSING` / `READY` / `ERROR` (`ModelStatusBadge`)
-- ✅ Стадии: `OTR` / `PROJECT` / `WORKING` / `CONSTRUCTION`
-- ✅ Совместимость с nanoCAD BIM, Renga, Pilot-BIM (IFC 2x3 / IFC 4)
-- ✅ Сравнение версий (`VersionCompare`, `VersionDiffViewer`)
-
-### Структура и навигация ✅
-- ✅ Дерево структуры модели (тип ↔ элементы) — `ModelStructureTree`
-- ✅ Левая панель: вкладки «Структура», «Файлы», «Связанные» (`ModelStructurePanel`)
-- ✅ Свойства элемента: IFC-тип, слой, уровень, PropertySets (`ElementPropertiesPanel`)
-- ✅ IFC PropertySets из web-ifc (клиентский fallback), БД (основной)
-
-### Коллизии ✅
-- ✅ Обнаружение коллизий по геометрии (`CollisionDetector`, AABB-тест)
-- ✅ Подсветка коллизионной пары (красный `#EF4444`)
-- ✅ Список результатов (`CollisionResultsList`)
-
-### Замечания (Issues) ✅
-- ✅ Реестр замечаний к модели (`BimIssuesRegistry`, `useBimIssues`)
-- ✅ Статусы, приоритеты, назначение ответственного
-
-### Управление доступом ✅
-- ✅ Права на модель: VIEW / ADD / EDIT / DELETE (`BimAccessSettings`)
-- ✅ Стадийные и статусные фильтры (`AddBimAccessDialog`)
-- ✅ API: GET/POST/DELETE `/api/projects/[id]/bim/access/`
-
-### Привязки элементов ТИМ (ЦУС стр. 285–320) ✅
-- ✅ Полиморфные привязки: элемент ↔ GanttTask / ExecutionDoc / Defect (`BimElementLink`)
-- ✅ Вкладка «Связи»: привязка АОСР к элементу (ИД ↔ IFC GUID)
-- ✅ Вкладка «ГПР» — redesign (2026-04-10):
-  - ✅ Select версии ГПР из объекта (`useGanttVersionsForViewer`)
-  - ✅ Список позиций ГПР с иконкой 🔗 для привязанных элементов
-  - ✅ Меню ⋮ на каждой позиции: «Привязать» / «Отвязать» / «Следовать за работой»
-  - ✅ «Следовать за работой» — подсветка синим (`#2563EB`) всех элементов задачи
-- ✅ Цветовая индикация по статусу ИД (серый / зелёный / жёлтый / красный)
-- ✅ API: GET/POST/DELETE `/api/projects/[id]/bim/links/`; фильтры `entityId`, `modelId`
-
-### Временная шкала ГПР (Timeline) ✅
-- ✅ Горизонтальный слайдер с шагом 1 день (`TimelineSlider`)
-- ✅ Дата + процент прогресса по шкале
-- ✅ Легенда: серый / зелёный / красный / жёлтый
-- ✅ Динамические `minDate/maxDate` из дат выбранной версии ГПР (2026-04-10)
-- ✅ Цветовая индикация на модели при движении бегунка (2026-04-10):
-  - Серый — нет привязки к ГПР в выбранной версии
-  - Красный — работа не завершена (`factEnd = null`) или завершена позже даты бегунка
-  - Зелёный — работа завершена (`factEnd ≤ дата бегунка`)
-
-### Не реализовано / на будущее
-- ⬜ Парсинг IFC → `BimElement` (сохранение элементов в БД на сервере)
-- ⬜ Поиск элементов по имени / типу / слою / PropertySet
-- ⬜ Экспорт изменений в IFC (round-trip)
-- ⬜ BCF (Building Collaboration Format) — экспорт замечаний
-- ⬜ AR-разметка на смартфоне (WebXR)
-- ⬜ Публичная ссылка на модель для заказчика (без авторизации)
-
-**База данных (Модуль 13)**
-- ✅ `BimModel`, `BimModelVersion`, `BimSection`
-- ✅ `BimElement`, `BimElementLink` (полиморфная связь entityType + entityId)
-- ✅ `BimAccess`, `BimIssue`
-- ✅ Enum: `BimModelStatus`, `BimModelStage`, `BimAccessLevel`
-> **Аналог:** ЦУС → Модуль «ТИМ» (3D-вьюер, управление моделями)
-> **Статус:** 🔄 В работе
-
-### 3D-вьюер ✅
-- ✅ Загрузка IFC-файла из Timeweb S3 (pre-signed URL → web-ifc WASM → Three.js)
-- ✅ Three.js WebGLRenderer + OrbitControls (вращение, зум, pan)
-- ✅ Раскраска по expressID: серый / синий (выбранный) / красный / зелёный (ГПР)
-- ✅ Каркасный режим (wireframe toggle)
-- ✅ Разрезы (horizontal / vertical clipping plane, ClippingPanel)
-- ✅ Инструмент измерений (расстояния, CSS2DRenderer метки)
-- ✅ Кнопка «Сбросить камеру» / «По размеру модели»
-- ✅ **Управление слоями** (IfcPresentationLayerAssignment): панель с чекбоксами, «Показать все» / «Скрыть все», toggle `mesh.visible`
-- ✅ **Скачивание IFC** из S3 (кнопка Download в toolbar)
-- ✅ **Скриншот PNG** (canvas.toDataURL → скачивание файла)
-- ✅ **Контекстное меню правого клика**: «Сохранить как PNG» / «Сохранить как JPG»
-
-### Управление моделями ✅
-- ✅ Дерево разделов (SectionTree) — иерархия, создание/удаление разделов
 - ✅ Загрузка IFC-файлов (.ifc, .ifczip, .ifcxml) через presigned S3 URL
-- ✅ Версионирование моделей (BimModelVersion, upload-version API)
-- ✅ Фоновый парсинг (BullMQ worker → parse-ifc.worker.ts → BimElement в БД)
-- ✅ Статусы модели: PROCESSING → READY / ERROR (ModelStatusBadge)
-- ✅ IFC-версия (IFC2X3 / IFC4), количество элементов
+- ✅ Версионирование моделей (`BimModelVersion`, upload-version, история, флаг isCurrent)
+- ✅ Фоновый парсинг (BullMQ worker → `parse-ifc.worker.ts` → `BimElement` в БД)
+- ✅ Статусы модели: PROCESSING → READY / ERROR (`ModelStatusBadge`)
+- ✅ Стадии: OTR / PROJECT / WORKING / CONSTRUCTION
+- ✅ Дерево разделов (`BimSection`, `SectionTree`) — иерархические папки
+- ✅ Совместимость с nanoCAD BIM, Renga, Pilot-BIM, Revit, ArchiCAD (IFC 2x3 / IFC 4)
+- ✅ Сравнение версий (`VersionCompare`, `VersionDiffViewer`) — визуальный diff в 3D
 
-### Панель структуры модели ✅
-- ✅ Иерархическое дерево элементов по уровням (ModelStructureTree)
-- ✅ Toggle видимости элемента / уровня в 3D
-- ✅ Поиск по элементам
-- ✅ Выбор элемента из дерева → подсветка в вьюере
+### Структура и свойства элементов ✅
+- ✅ Левая панель (`ModelStructurePanel`): вкладки «Структура», «Файлы», «Связанные модели»
+- ✅ Дерево элементов по уровням (`ModelStructureTree`) — toggle видимости, поиск, выбор → подсветка
+- ✅ Правая панель (`ElementPropertiesPanel`): вкладки Инфо / ГПР / Связи / Файлы
+- ✅ IFC PropertySets клиентски (`buildIfcPropertiesMap()`, без перепарсинга БД) + fallback из БД
+- ✅ Поиск элементов по GUID и имени (API с пагинацией, лимит 50–200)
 
-### Панель свойств элемента ✅
-- ✅ IFC PropertySets (извлекаются через web-ifc, ifcProperties Map)
-- ✅ Привязка к задачам ГПР (GprLinkPanel, LinkSearchDialog)
-- ✅ Привязка к ИД (ExecutionDoc / Ks2Act) и Замечаниям (DefectCreateDialog)
-- ✅ Вкладка «Связи» — список всех привязок элемента с возможностью удаления
-- ✅ «Выделить на модели» — подсветка элементов привязанной задачи / документа
+### Привязки и ГПР-шкала ✅
+- ✅ Полиморфные привязки `BimElementLink`: элемент ↔ GanttTask / ExecutionDoc / Defect
+- ✅ Привязка элемент → задача ГПР (`GprLinkPanel`) и ИД / дефект (`DocumentLinkPanel`)
+- ✅ Вкладка «ГПР»: Select версии, список позиций с меню «Привязать» / «Отвязать» / «Следовать за работой»
+- ✅ «Следовать за работой» — подсветка синим (#2563EB) всех элементов задачи
+- ✅ Цветовая индикация по статусу ИД: серый / зелёный / жёлтый / красный
+- ✅ Цветовая индикация по ГПР: план/факт/отклонение (Timeline palette)
+- ✅ `TimelineSlider` — бегунок по датам версии ГПР, динамические minDate/maxDate (2026-04-10)
+- ✅ API: GET/POST/DELETE `/api/projects/[id]/bim/links/`
 
-### Временна́я шкала ГПР ✅
-- ✅ TimelineSlider — бегунок по датам выбранной версии ГПР
-- ✅ Цветовая индикация по дате: зелёный (работа завершена) / красный (ещё нет)
-- ✅ Синхронизация с выбранной версией ГПР
+### Инструменты ✅
+- ✅ Обнаружение коллизий (`CollisionDetector`, AABB-тест) — подсветка пары (#EF4444), список результатов
+- ✅ Реестр замечаний ТИМ (`BimIssuesRegistry`) — статусы, приоритеты, ответственный
+- ✅ Управление доступом (`BimAccessSettings`): уровни VIEW / ADD / EDIT / DELETE
 
-### Обнаружение коллизий ✅
-- ✅ AABB-проверка всех пар элементов модели (useCollisions)
-- ✅ Список коллизий с подсветкой пары в 3D (CollisionDetector)
-
-### Сравнение версий ✅
-- ✅ Выбор двух версий модели, визуальное diff в 3D (VersionCompare, VersionDiffViewer)
-
-### Замечания (BIM Issues) ✅
-- ✅ Реестр замечаний привязанных к IFC-элементам (BimIssuesRegistry)
-- ✅ Создание замечания прямо из 3D-вьюера (DefectCreateDialog)
-
-### Доступ ✅
-- ✅ Управление доступом к модели (BimAccessSettings, useBimAccess)
+### URL-структура ✅
+- ✅ `/objects/[id]/tim/` — реестр моделей
+- ✅ `/objects/[id]/tim/models/[modelId]/` — 3D-вьюер
+- ✅ `/objects/[id]/tim/issues/` — замечания ТИМ
+- ✅ `/objects/[id]/tim/access/` — управление доступом
 
 ### Не реализовано
 - ⬜ BCF-экспорт/импорт замечаний
 - ⬜ Федерированные модели (несколько IFC одновременно)
-- ⬜ Поддержка nanoCAD BIM / Renga native форматов
 - ⬜ Offline-просмотр (PWA-кэш IFC)
+- ⬜ Сохранение PropertySets в БД при фоновом парсинге
+- ⬜ Экспорт в IFC (round-trip)
+- ⬜ Публичная ссылка на модель для заказчика
+- ⬜ Совместный просмотр (multi-user cursor)
+- ⬜ AR-разметка (WebXR)
+- ⬜ Интеграция с ИСУП Минстроя (BIM-паспорт)
 
 **База данных (Модуль 13)**
-- ✅ `BimModel`, `BimModelVersion`, `BimSection`
-- ✅ `BimElement` (ifcGuid, ifcType, name, layer, level, properties Json)
-- ✅ `BimElementLink` (expressID → GanttTask / ExecutionDoc / Ks2Act / Defect)
-
+- ✅ `BimModel` (name, status: PROCESSING/READY/ERROR, stage: OTR/PROJECT/WORKING/CONSTRUCTION, s3Key, ifcVersion, elementCount, metadata)
+- ✅ `BimModelVersion` (version, isCurrent, s3Key, comment, uploadedById)
+- ✅ `BimSection` (иерархия через parentId, order)
+- ✅ `BimElement` (ifcGuid, ifcType, name, description, layer, level, properties Json)
+- ✅ `BimElementLink` (elementId, entityType, entityId — полиморфная: GanttTask/ExecutionDoc/Defect)
+- ✅ `BimAccess`, `BimIssue`
+- ✅ Enum: `BimModelStatus`, `BimModelStage`, `BimAccessLevel` (VIEW/ADD/EDIT/DELETE)
+- ✅ Индексы: `@@index([modelId])`, `@@index([ifcGuid])`, `@@unique([modelId, ifcGuid])`
 ---
 
 ## МОДУЛЬ 14 — ЭЦП и регуляторный комплаенс
