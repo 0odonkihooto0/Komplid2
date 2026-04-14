@@ -40,6 +40,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: string;
+  defaultType?: SpecialJournalType;
 }
 
 // CUSTOM скрыт из UI согласно требованиям ЦУС (нельзя создавать произвольные журналы)
@@ -47,10 +48,10 @@ const JOURNAL_TYPES = (Object.keys(JOURNAL_TYPE_LABELS) as SpecialJournalType[])
   (t) => t !== 'CUSTOM'
 );
 
-export function CreateJournalDialog({ open, onOpenChange, projectId }: Props) {
+export function CreateJournalDialog({ open, onOpenChange, projectId, defaultType }: Props) {
   const { createMutation } = useJournalRegistry(projectId);
 
-  const [type, setType] = useState<SpecialJournalType | ''>('');
+  const [type, setType] = useState<SpecialJournalType | ''>(defaultType ?? '');
   const [title, setTitle] = useState('');
   const [contractId, setContractId] = useState('');
   const [responsibleId, setResponsibleId] = useState('');
@@ -85,7 +86,7 @@ export function CreateJournalDialog({ open, onOpenChange, projectId }: Props) {
   });
 
   const resetForm = () => {
-    setType('');
+    setType(defaultType ?? '');
     setTitle('');
     setContractId('');
     setResponsibleId('');
