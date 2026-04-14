@@ -273,6 +273,15 @@ export async function DELETE(
       return errorResponse('Документ в режиме хранения — удаление запрещено', 403);
     }
 
+    // Запрет удаления документов, отправленных на подписание
+    const activeSigningRoute = await db.signingRoute.findUnique({
+      where: { executionDocId: params.docId },
+      select: { status: true },
+    });
+    if (activeSigningRoute?.status === 'PENDING') {
+      return errorResponse('Документы, отправленные на подписание, нельзя удалить', 400);
+    }
+
     if (doc.status !== 'DRAFT') {
       return errorResponse('Удалить можно только черновик', 400);
     }

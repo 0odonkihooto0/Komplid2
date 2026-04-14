@@ -23,6 +23,7 @@ import { SignatureDialog } from '@/components/modules/execution-docs/SignatureDi
 import { QrCodeDialog } from '@/components/modules/execution-docs/QrCodeDialog';
 import { StampPositioner } from '@/components/modules/execution-docs/StampPositioner';
 import { LinkedDocsTab } from '@/components/modules/execution-docs/LinkedDocsTab';
+import { SigningTab } from '@/components/modules/execution-docs/SigningTab';
 import { Breadcrumb } from '@/components/shared/Breadcrumb';
 import { useExecutionDocDetail } from '@/components/modules/execution-docs/useExecutionDocDetail';
 import { EXECUTION_DOC_TYPE_LABELS, EXECUTION_DOC_STATUS_LABELS } from '@/utils/constants';
@@ -282,12 +283,7 @@ export function ExecutionDocDetailContent({ projectId, contractId, docId }: Prop
 
         {/* Вкладка: Подписание */}
         <TabsContent value="signing" className="mt-4">
-          <div className="flex flex-col items-center justify-center rounded-md border border-dashed py-14 text-center">
-            <p className="text-sm font-medium text-muted-foreground">Подписание ЭЦП</p>
-            <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-              Функция доступна после настройки провайдера ЭЦП (КриптоПро CSP) в настройках организации
-            </p>
-          </div>
+          <SigningTab projectId={projectId} contractId={contractId} docId={docId} />
         </TabsContent>
 
         {/* Вкладка: Замечания */}
