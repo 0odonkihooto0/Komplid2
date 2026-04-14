@@ -103,6 +103,17 @@ export function useJournalCard(objectId: string, journalId: string) {
     },
   });
 
+  // Счётчик замечаний к журналу
+  const { data: remarksCountData } = useQuery<{ meta: { total: number } }>({
+    queryKey: ['journal-remarks-count', objectId, journalId],
+    queryFn: async () => {
+      const res = await fetch(`${baseUrl}/remarks?limit=1`);
+      if (!res.ok) return { meta: { total: 0 } };
+      return res.json();
+    },
+    enabled: !!objectId && !!journalId,
+  });
+
   // Навигация к записи
   function handleEntryClick(entry: JournalEntryItem) {
     router.push(`/objects/${objectId}/journals/${journalId}/${entry.id}`);
@@ -130,6 +141,7 @@ export function useJournalCard(objectId: string, journalId: string) {
     hasFilters: !!statusFilter,
     handleResetFilters,
     isActive,
+    remarksTotal: remarksCountData?.meta?.total ?? 0,
     createEntryMutation,
     storageMutation,
     handleEntryClick,

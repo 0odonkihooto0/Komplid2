@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { ArrowLeft, Plus, Lock, Unlock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { JournalStatusBadge } from './JournalStatusBadge';
@@ -13,6 +14,7 @@ import { StorageModeBanner } from './StorageModeBanner';
 import { JournalEntryList } from './JournalEntryList';
 import { JournalRequisitesTab } from './JournalRequisitesTab';
 import { JournalSectionsView } from './JournalSectionsView';
+import { JournalRemarksTab } from './JournalRemarksTab';
 import { CreateEntryDialog } from './CreateEntryDialog';
 import { useJournalCard } from './useJournalCard';
 import { JOURNAL_TYPE_LABELS } from './journal-constants';
@@ -135,12 +137,20 @@ export function JournalCard({ objectId, journalId }: Props) {
 
       <Separator />
 
-      {/* Вкладки: Реквизиты / Разделы (только OZR_1026PR) / Записи */}
+      {/* Вкладки: Реквизиты / Разделы (только OZR_1026PR) / Записи / Замечания */}
       <Tabs defaultValue={isOzr ? 'sections' : 'requisites'}>
         <TabsList>
           <TabsTrigger value="requisites">Реквизиты</TabsTrigger>
           {isOzr && <TabsTrigger value="sections">Разделы</TabsTrigger>}
           <TabsTrigger value="entries">Записи ({vm.entriesTotal})</TabsTrigger>
+          <TabsTrigger value="remarks" className="flex items-center gap-1">
+            Замечания
+            {vm.remarksTotal > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                {vm.remarksTotal}
+              </Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="requisites">
@@ -173,6 +183,10 @@ export function JournalCard({ objectId, journalId }: Props) {
               onRowClick={vm.handleEntryClick}
             />
           </div>
+        </TabsContent>
+
+        <TabsContent value="remarks">
+          <JournalRemarksTab objectId={objectId} journalId={journalId} journal={j} />
         </TabsContent>
       </Tabs>
 

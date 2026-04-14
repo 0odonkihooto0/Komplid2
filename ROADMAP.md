@@ -942,6 +942,13 @@
 - 🐛 Создана миграция `20260414000000_fix_estimate_categories` — таблица `estimate_categories` и FK `categoryId` в `estimate_versions` (P2021 при обращении к модулю смет)
 - 🐛 Исправлены 4 вхождения `<SelectItem value="">` в `JournalRegistry`, `JournalEntryList`, `CreateJournalDialog` — заменены на сентинелы `"ALL"` / `"NONE"` (Radix UI v2.2.6 запрещает пустую строку)
 
+### Добавлено (2026-04-14) — Расширение системы замечаний
+- ✅ `JournalEntryRemark.entryId` nullable; новые поля: `title`, `journalId` → `SpecialJournal`, `issuedById` → User, `issuedAt`, `remediationDeadline`, `attachmentS3Keys`, `objectDescription`
+- ✅ Новая модель `JournalRemarkReply` (id, title, text, remarkId, authorId, createdAt); миграция `extend_journal_remarks`
+- ✅ API замечаний журнала: `GET/POST .../journals/[jid]/remarks`, `GET/POST .../remarks/[rid]/replies`, `POST .../remarks/[rid]/accept` (→ RESOLVED), `POST .../remarks/[rid]/return` (→ OPEN)
+- ✅ `JournalRemarksTab.tsx` — таблица (№, Статус, Замечание, Кем выдано, Ответственный, Срок), Sheet-карточка с вкладками «Информация» / «Ответы», кнопки «Принять» / «Вернуть на доработку»
+- ✅ Badge-счётчик замечаний на вкладке «Замечания» в `JournalCard`
+
 ### Добавлено (2026-04-14)
 - ✅ Вкладка «Реквизиты» первой в `JournalCard`: Заказчик, Генподрядчик, Стройконтроль, Авторский надзор, Гос.надзор + даты начала/окончания работ
 - ✅ Поля `SpecialJournal.requisites (Json?)`, `.startDate (DateTime?)`, `.endDate (DateTime?)` — миграция `20260414020000_add_journal_requisites`
