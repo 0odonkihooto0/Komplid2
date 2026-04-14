@@ -8,6 +8,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { ExecutionDocsTable } from '@/components/modules/execution-docs/ExecutionDocsTable';
+import { IdCategoryTree } from '@/components/modules/execution-docs/IdCategoryTree';
 import { Ks2Table } from '@/components/modules/ks2/Ks2Table';
 import { IdAnalyticsView } from '@/components/modules/execution-docs/IdAnalyticsView';
 import { IdRegistriesView } from '@/components/modules/execution-docs/IdRegistriesView';
@@ -24,6 +25,8 @@ interface Props {
 export function ObjectIdModule({ objectId }: Props) {
   const { contracts, isLoading } = useObjectContracts(objectId);
   const [contractId, setContractId] = useState<string>('');
+  // Активная категория ИД для фильтрации таблицы документов (null = все)
+  const [categoryId, setCategoryId] = useState<string | null>(null);
 
   // Устанавливаем первый договор по умолчанию когда данные загружены
   const selectedContractId = contractId || contracts[0]?.id || '';
@@ -76,10 +79,20 @@ export function ObjectIdModule({ objectId }: Props) {
 
         <TabsContent value="docs" className="mt-4">
           {selectedContractId ? (
-            <ExecutionDocsTable
-              contractId={selectedContractId}
-              projectId={objectId}
-            />
+            <div className="flex min-h-[400px] rounded-lg border overflow-hidden">
+              <IdCategoryTree
+                projectId={objectId}
+                activeId={categoryId}
+                onSelect={setCategoryId}
+              />
+              <div className="flex-1 min-w-0 p-4">
+                <ExecutionDocsTable
+                  contractId={selectedContractId}
+                  projectId={objectId}
+                  categoryId={categoryId}
+                />
+              </div>
+            </div>
           ) : (
             <p className="py-12 text-center text-muted-foreground">
               У объекта нет договоров. Создайте договор в разделе «Паспорт».

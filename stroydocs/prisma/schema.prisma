@@ -180,6 +180,9 @@ model Organization {
   problemIssuesAsAssignee ProblemIssue[] @relation("ProblemIssueAssignee")
   problemIssuesAsVerifier ProblemIssue[] @relation("ProblemIssueVerifier")
 
+  // Модуль 10 — Шаблоны категорий ИД на уровне организации
+  idDocCategoryTemplates IdDocCategory[]
+
   @@map("organizations")
 }
 
@@ -475,6 +478,9 @@ model BuildingObject {
   // Модуль 6 — Сметы
   estimateCategories      EstimateCategory[]
   estimateAdditionalCosts EstimateAdditionalCost[]
+
+  // Модуль 10 — Категории ИД
+  idDocCategories IdDocCategory[]
 
   @@index([organizationId])
   @@index([parentId])
@@ -1090,6 +1096,10 @@ model ExecutionDoc {
   storageModeAt DateTime? // Дата перевода в хранение
   idCategory    IdCategory? // Классификация по ГОСТ Р 70108-2025
 
+  // Пользовательская категория ИД (иерархическое дерево проекта)
+  categoryId String?
+  category   IdDocCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
   // Штамп производства работ на PDF
   stampType  String? // Тип штампа: "work_permit" | "certified_copy" | "qr_stamp"
   stampX     Float? // X-координата штампа (в пунктах от левого края)
@@ -1117,6 +1127,7 @@ model ExecutionDoc {
   @@index([createdById])
   @@index([lastEditedById])
   @@index([status]) // Фильтрация по статусу — частый запрос
+  @@index([categoryId])
   @@map("execution_docs")
 }
 
@@ -1295,6 +1306,10 @@ model Ks2Act {
   createdById String
   createdBy   User   @relation("Ks2ActCreator", fields: [createdById], references: [id])
 
+  // Пользовательская категория ИД
+  categoryId String?
+  category   IdDocCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1303,6 +1318,7 @@ model Ks2Act {
 
   @@index([contractId])
   @@index([createdById])
+  @@index([categoryId])
   @@map("ks2_acts")
 }
 
@@ -5251,4 +5267,36 @@ model PIRCategoryConfig {
 
   @@index([configId])
   @@map("pir_category_configs")
+}
+
+// === Модуль 10 — Категории исполнительных документов ===
+
+/// Иерархическая категория ИД (пользовательская, per-проект или шаблон per-организация)
+model IdDocCategory {
+  id       String @id @default(uuid())
+  name     String
+  parentId String?
+
+  parent   IdDocCategory?  @relation("IdDocCategoryHierarchy", fields: [parentId], references: [id])
+  children IdDocCategory[] @relation("IdDocCategoryHierarchy")
+
+  // Либо привязана к проекту (рабочая категория), либо к организации (шаблон)
+  projectId      String?
+  project        BuildingObject? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  organizationId String?
+  organization   Organization?   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  sortOrder  Int     @default(0)
+  isTemplate Boolean @default(false) // true = шаблонная категория уровня организации
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  executionDocs ExecutionDoc[]
+  ks2Acts       Ks2Act[]
+
+  @@index([projectId])
+  @@index([organizationId])
+  @@index([parentId])
+  @@map("id_doc_categories")
 }

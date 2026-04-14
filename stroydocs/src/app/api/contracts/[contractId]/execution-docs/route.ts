@@ -30,6 +30,8 @@ export async function GET(
     const type = searchParams.get('type') as ExecutionDocType | null;
     const status = searchParams.get('status');
     const idCategory = searchParams.get('idCategory') as IdCategory | null;
+    // Пользовательская иерархическая категория ИД
+    const categoryId = searchParams.get('categoryId');
 
     // Пагинация (лимит 50, макс 200)
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1'));
@@ -41,6 +43,7 @@ export async function GET(
       ...(type && { type }),
       ...(status && { status: status as 'DRAFT' | 'IN_REVIEW' | 'SIGNED' | 'REJECTED' }),
       ...(idCategory && { idCategory }),
+      ...(categoryId && { categoryId }),
     };
 
     const [docs, total] = await Promise.all([

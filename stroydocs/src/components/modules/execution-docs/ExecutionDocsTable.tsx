@@ -20,6 +20,8 @@ import type { ExecutionDocStatus, IdCategory } from '@prisma/client';
 interface Props {
   contractId: string;
   projectId: string;
+  /** Фильтр по пользовательской категории ИД (IdDocCategory.id) */
+  categoryId?: string | null;
 }
 
 interface DocRow {
@@ -30,8 +32,8 @@ interface DocRow {
   createdBy: { id: string; firstName: string; lastName: string };
 }
 
-export function ExecutionDocsTable({ contractId, projectId }: Props) {
-  const { docs, columns, isLoading } = useExecutionDocs(contractId);
+export function ExecutionDocsTable({ contractId, projectId, categoryId }: Props) {
+  const { docs, columns, isLoading } = useExecutionDocs(contractId, categoryId);
   const { data: session } = useSession();
   const router = useRouter();
   const deleteMutation = useDeleteExecutionDoc(projectId, contractId);
