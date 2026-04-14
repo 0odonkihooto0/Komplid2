@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { updateJournalEntrySchema } from '@/lib/validations/journal-schemas';
+import { deleteFile } from '@/lib/s3-utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -197,6 +198,11 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     }
     if (entry.status !== 'DRAFT') {
       return errorResponse('Удаление возможно только для записей в статусе DRAFT', 400);
+    }
+
+    // Удаляем вложения из S3 перед удалением записи
+    if (entry.attachmentS3Keys.length > 0) {
+      await Promise.all(entry.attachmentS3Keys.map((key) => deleteFile(key).catch(() => {})));
     }
 
     await db.specialJournalEntry.delete({ where: { id: params.entryId } });

@@ -16,6 +16,8 @@ export function useJournalCard(objectId: string, journalId: string) {
 
   // Фильтры записей
   const [statusFilter, setStatusFilter] = useState<JournalEntryStatus | ''>('');
+  // Выбранные записи для bulk-операций
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const baseUrl = `/api/projects/${objectId}/journals/${journalId}`;
 
@@ -159,6 +161,104 @@ export function useJournalCard(objectId: string, journalId: string) {
     },
   });
 
+  // Вспомогательная функция инвалидации записей
+  function invalidateEntries() {
+    queryClient.invalidateQueries({ queryKey: ['journal-entries', objectId, journalId] });
+    queryClient.invalidateQueries({ queryKey: ['journal', objectId, journalId] });
+  }
+
+  // Загрузка вложения к записи (не мутация — вызывается внутри handleCreateEntry)
+  async function uploadEntryAttachment(entryId: string, file: File): Promise<void> {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch(`${baseUrl}/entries/${entryId}/attachments`, {
+      method: 'POST',
+      body: fd,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error((err as { error?: string }).error ?? 'Ошибка загрузки файла');
+    }
+  }
+
+  // Удаление одной записи журнала
+  const deleteEntryMutation = useMutation({
+    mutationFn: async (entryId: string) => {
+      const res = await fetch(`${baseUrl}/entries/${entryId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? 'Ошибка удаления записи');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: 'Запись удалена' });
+      invalidateEntries();
+    },
+    onError: (err: Error) => {
+      toast({ title: err.message, variant: 'destructive' });
+    },
+  });
+
+  // Дублирование записи журнала
+  const duplicateMutation = useMutation({
+    mutationFn: async (entryId: string) => {
+      const res = await fetch(`${baseUrl}/entries/${entryId}/duplicate`, { method: 'POST' });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? 'Ошибка дублирования записи');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: 'Запись продублирована' });
+      invalidateEntries();
+    },
+    onError: (err: Error) => {
+      toast({ title: err.message, variant: 'destructive' });
+    },
+  });
+
+  // Массовое удаление записей (только DRAFT, до 50)
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const res = await fetch(`${baseUrl}/entries/bulk-delete`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? 'Ошибка массового удаления');
+      }
+      return res.json();
+    },
+    onSuccess: (_data, ids) => {
+      toast({ title: `Удалено записей: ${ids.length}` });
+      setSelectedIds([]);
+      invalidateEntries();
+    },
+    onError: (err: Error) => {
+      toast({ title: err.message, variant: 'destructive' });
+    },
+  });
+
+  // Создание записи + последовательная загрузка файлов-вложений
+  async function handleCreateEntry(
+    payload: CreateJournalEntryInput,
+    files: File[],
+    sectionId?: string,
+  ): Promise<void> {
+    const mergedPayload = sectionId ? { ...payload, sectionId } : payload;
+    const result: ApiResponse<{ id: string }> = await createEntryMutation.mutateAsync(mergedPayload);
+    if (files.length > 0 && result.success && result.data?.id) {
+      for (const file of files) {
+        await uploadEntryAttachment(result.data.id, file);
+      }
+      invalidateEntries();
+    }
+  }
+
   // Запуск маршрута согласования
   const startApprovalMutation = useMutation({
     mutationFn: async () => {
@@ -219,11 +319,17 @@ export function useJournalCard(objectId: string, journalId: string) {
     handleResetFilters,
     isActive,
     remarksTotal: remarksCountData?.meta?.total ?? 0,
+    selectedIds,
+    setSelectedIds,
     createEntryMutation,
+    deleteEntryMutation,
+    duplicateMutation,
+    bulkDeleteMutation,
     storageMutation,
     createLinkMutation,
     createExecDocMutation,
     startApprovalMutation,
+    handleCreateEntry,
     handleEntryClick,
     handleBack,
   };
