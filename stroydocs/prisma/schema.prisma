@@ -848,6 +848,10 @@ enum ExecutionDocType {
   AOSR // Акт освидетельствования скрытых работ
   OZR // Общий журнал работ
   TECHNICAL_READINESS_ACT // Акт технической готовности
+  GENERAL_DOCUMENT // Общий документ (свободная форма)
+  KS_6A // КС-6а
+  KS_11 // Акт приёмки КС-11
+  KS_14 // Акт приёмки КС-14
 }
 
 /// Статус исполнительного документа
@@ -1110,6 +1114,11 @@ model ExecutionDoc {
   // XML-экспорт по схемам Минстроя
   xmlExportedAt DateTime? // Дата последнего XML-экспорта
   xmlS3Key      String? // Ключ XML-файла в S3
+
+  // Общий документ (свободная форма) — GENERAL_DOCUMENT
+  documentDate     DateTime? // Дата документа
+  note             String? // Примечание
+  attachmentS3Keys String[]  @default([]) // Вложения (несколько файлов)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

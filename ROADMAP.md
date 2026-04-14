@@ -925,6 +925,21 @@
 - ✅ `IdClosurePackage` (number, name, status, executionDocIds[], registryIds[], archiveDocIds[], s3Key)
 - ✅ Расширение `ExecutionDoc`: qrToken, qrCodeS3Key, storageMode, storageModeAt, idCategory, stamp*, xml*
 
+### Добавлено (2026-04-14) — Расширение типов ИД и вкладок
+- ✅ `ExecutionDocType` расширен: +`GENERAL_DOCUMENT` (общий документ), +`KS_6A` (КС-6а), +`KS_11` (Акт приёмки КС-11), +`KS_14` (Акт приёмки КС-14)
+- ✅ Вкладки `ObjectIdModule` переработаны: **Все | КС | Акты | Общие документы | Счет-фактура | Аналитика | Реестры**
+  - «КС» — `Ks2Table` (КС-2/КС-3) + `ExecutionDocsTable` с фильтром `types=[KS_6A,KS_11,KS_14]`
+  - «Акты» — `ExecutionDocsTable` фильтр `types=[AOSR,TECHNICAL_READINESS_ACT]`
+  - «Общие документы» — `ExecutionDocsTable` фильтр `types=[GENERAL_DOCUMENT]`
+  - «Счет-фактура» — заглушка (в разработке)
+- ✅ Вложенный DropdownMenu «Создать документ» в шапке модуля (`CreateDocDropdown.tsx`): 3 группы — Общестроительные работы / Акты КС / Другие; поддерживает `DropdownMenuSub`
+- ✅ Карточка `GENERAL_DOCUMENT` (`GeneralDocDialog.tsx`): поля номер/дата/название/примечание, загрузка файлов через Dropzone → S3, вкладки Информация/Файлы/Согласование/Подписание, кнопки «Сохранить» и «Провести» (→ IN_REVIEW)
+- ✅ `useGeneralDoc.ts` — хук с `createMutation`, `updateMutation`, `submitMutation`, `uploadAttachment`, `deleteAttachment`
+- ✅ API вложений: `GET/POST/DELETE /api/objects/[oid]/contracts/[cid]/execution-docs/[did]/attachments` (паттерн Gantt-вложений)
+- ✅ `ExecutionDocsTable` + `useExecutionDocs` расширены: prop `types?: ExecutionDocType[]`, query `?types=TYPE1,TYPE2`
+- ✅ `id-classification.ts`: KS_6A → ACCOUNTING_JOURNAL; KS_11/KS_14 → INSPECTION_ACT; GENERAL_DOCUMENT → OTHER_ID
+- ✅ Миграция `20260414070000_add_general_docs`: ALTER TYPE добавляет 4 значения; ALTER TABLE добавляет `documentDate`, `note`, `attachmentS3Keys`
+
 ---
 
 ## МОДУЛЬ 11 — Строительный контроль (СК) ✅

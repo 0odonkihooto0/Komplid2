@@ -1,7 +1,8 @@
 import { z } from 'zod';
+import { ExecutionDocType } from '@prisma/client';
 
 export const createExecutionDocSchema = z.object({
-  type: z.enum(['AOSR', 'OZR', 'TECHNICAL_READINESS_ACT']),
+  type: z.nativeEnum(ExecutionDocType),
   workRecordId: z.string().optional(),
   title: z.string().optional(),
 });
@@ -14,6 +15,14 @@ export const updateExecutionDocStatusSchema = z.object({
 export const updateOverrideFieldsSchema = z.object({
   overrideFields: z.record(z.string(), z.string()).optional(),
   overrideHtml: z.string().nullable().optional(),
+});
+
+/** Схема для редактирования общего документа (GENERAL_DOCUMENT) */
+export const updateGeneralDocSchema = z.object({
+  title: z.string().optional(),
+  documentDate: z.string().optional(), // ISO-строка даты
+  note: z.string().optional(),
+  attachmentS3Keys: z.array(z.string()).optional(),
 });
 
 /** Поля формы редактирования АОСР */
@@ -53,3 +62,4 @@ export const inputControlOverrideSchema = z.object({
 export type CreateExecutionDocInput = z.infer<typeof createExecutionDocSchema>;
 export type UpdateExecutionDocStatusInput = z.infer<typeof updateExecutionDocStatusSchema>;
 export type UpdateOverrideFieldsInput = z.infer<typeof updateOverrideFieldsSchema>;
+export type UpdateGeneralDocInput = z.infer<typeof updateGeneralDocSchema>;

@@ -6,6 +6,7 @@ import { getSessionOrThrow } from '@/lib/auth-utils';
 import {
   updateExecutionDocStatusSchema,
   updateOverrideFieldsSchema,
+  updateGeneralDocSchema,
 } from '@/lib/validations/execution-doc';
 import { successResponse, errorResponse } from '@/utils/api';
 import { getDownloadUrl } from '@/lib/s3-utils';
@@ -193,6 +194,23 @@ export async function PATCH(
         _count: { select: { signatures: true, comments: true } },
       },
     });
+
+    // Ветка 3: поля свободной формы (GENERAL_DOCUMENT и аналогичные)
+    const generalParsed = updateGeneralDocSchema.safeParse(body);
+    if (generalParsed.success) {
+      const { title, documentDate, note, attachmentS3Keys } = generalParsed.data;
+      const generalData: Record<string, unknown> = {};
+      if (title !== undefined) generalData.title = title;
+      if (documentDate !== undefined) generalData.documentDate = documentDate ? new Date(documentDate) : null;
+      if (note !== undefined) generalData.note = note;
+      if (attachmentS3Keys !== undefined) generalData.attachmentS3Keys = attachmentS3Keys;
+      if (Object.keys(generalData).length > 0) {
+        await db.executionDoc.update({
+          where: { id: params.docId },
+          data: generalData as Prisma.ExecutionDocUpdateInput,
+        });
+      }
+    }
 
     return successResponse(updated);
   } catch (error) {

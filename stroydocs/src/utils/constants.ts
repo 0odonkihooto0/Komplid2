@@ -75,6 +75,10 @@ export const EXECUTION_DOC_TYPE_LABELS: Record<ExecutionDocType, string> = {
   AOSR: 'АОСР',
   OZR: 'ОЖР',
   TECHNICAL_READINESS_ACT: 'Акт технической готовности',
+  GENERAL_DOCUMENT: 'Общий документ',
+  KS_6A: 'КС-6а',
+  KS_11: 'КС-11',
+  KS_14: 'КС-14',
 };
 
 /** Русские названия статусов исполнительных документов */
