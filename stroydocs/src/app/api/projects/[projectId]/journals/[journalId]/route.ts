@@ -101,17 +101,18 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       if (!contract) return errorResponse('Договор не найден', 404);
     }
 
+    const updateData: Prisma.SpecialJournalUncheckedUpdateInput = {
+      ...(title !== undefined ? { title } : {}),
+      ...(contractId !== undefined ? { contractId } : {}),
+      ...(responsibleId !== undefined ? { responsibleId } : {}),
+      ...(normativeRef !== undefined ? { normativeRef } : {}),
+      ...(requisites !== undefined ? { requisites: requisites ?? Prisma.JsonNull } : {}),
+      ...(startDate !== undefined ? { startDate: startDate ? new Date(startDate) : null } : {}),
+      ...(endDate !== undefined ? { endDate: endDate ? new Date(endDate) : null } : {}),
+    };
     const updated = await db.specialJournal.update({
       where: { id: params.journalId },
-      data: {
-        ...(title !== undefined ? { title } : {}),
-        ...(contractId !== undefined ? { contractId } : {}),
-        ...(responsibleId !== undefined ? { responsibleId } : {}),
-        ...(normativeRef !== undefined ? { normativeRef } : {}),
-        ...(requisites !== undefined ? { requisites: requisites ?? Prisma.JsonNull } : {}),
-        ...(startDate !== undefined ? { startDate: startDate ? new Date(startDate) : null } : {}),
-        ...(endDate !== undefined ? { endDate: endDate ? new Date(endDate) : null } : {}),
-      },
+      data: updateData,
       include: {
         responsible: { select: { id: true, firstName: true, lastName: true } },
         createdBy: { select: { id: true, firstName: true, lastName: true } },

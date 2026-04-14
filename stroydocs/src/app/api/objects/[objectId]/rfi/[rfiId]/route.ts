@@ -1,4 +1,5 @@
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
@@ -62,13 +63,14 @@ export async function PATCH(
 
     const { deadline, assigneeId, ...rest } = parsed.data;
 
+    const updateData: Prisma.RFIUncheckedUpdateInput = {
+      ...rest,
+      ...(deadline !== undefined ? { deadline: deadline ? new Date(deadline) : null } : {}),
+      ...(assigneeId !== undefined ? { assigneeId } : {}),
+    };
     const updated = await db.rFI.update({
       where: { id: params.rfiId },
-      data: {
-        ...rest,
-        ...(deadline !== undefined ? { deadline: deadline ? new Date(deadline) : null } : {}),
-        ...(assigneeId !== undefined ? { assigneeId } : {}),
-      },
+      data: updateData,
       include: {
         author: { select: { id: true, firstName: true, lastName: true } },
         assignee: { select: { id: true, firstName: true, lastName: true } },
