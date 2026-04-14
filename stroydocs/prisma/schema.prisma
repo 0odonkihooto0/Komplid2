@@ -284,6 +284,8 @@ model User {
   journalEntries         SpecialJournalEntry[] @relation("JournalEntryAuthor")
   journalRemarksAuthored JournalEntryRemark[]  @relation("RemarkAuthor")
   journalRemarksResolved JournalEntryRemark[]  @relation("RemarkResolver")
+  journalRemarksIssued   JournalEntryRemark[]  @relation("RemarkIssuedBy")
+  journalRemarkReplies   JournalRemarkReply[]  @relation("RemarkReplyAuthor")
 
   // Модуль 10 — ИД
   closurePackagesCreated IdClosurePackage[] @relation("ClosurePackageCreator")
@@ -4022,6 +4024,7 @@ model SpecialJournal {
   entries       SpecialJournalEntry[]
   sections      JournalSection[]
   approvalRoute ApprovalRoute?        @relation("JournalApproval")
+  remarks       JournalEntryRemark[]  @relation("JournalRemarks")
 
   @@index([projectId])
   @@index([projectId, type])
@@ -4076,17 +4079,25 @@ model SpecialJournalEntry {
   @@map("special_journal_entries")
 }
 
-/// Замечание к записи журнала (Модуль 9)
+/// Замечание к записи журнала или ко всему журналу (Модуль 9)
 model JournalEntryRemark {
-  id         String    @id @default(uuid())
-  text       String
-  status     String    @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED
-  deadline   DateTime?
-  resolvedAt DateTime?
-  resolution String?
+  id                  String    @id @default(uuid())
+  title               String?   // Заголовок замечания
+  text                String
+  status              String    @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED
+  deadline            DateTime? // Срок (entry-level)
+  remediationDeadline DateTime? // Срок устранения (journal-level)
+  issuedAt            DateTime? // Дата выдачи замечания
+  resolvedAt          DateTime?
+  resolution          String?
+  objectDescription   String?   // Описание места/объекта замечания
+  attachmentS3Keys    String[]  @default([]) // Вложения
 
-  entryId String
-  entry   SpecialJournalEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  entryId String? // nullable: замечание может быть к записи или ко всему журналу
+  entry   SpecialJournalEntry? @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  journalId String?
+  journal   SpecialJournal? @relation("JournalRemarks", fields: [journalId], references: [id], onDelete: Cascade)
 
   authorId String
   author   User   @relation("RemarkAuthor", fields: [authorId], references: [id])
@@ -4094,12 +4105,36 @@ model JournalEntryRemark {
   resolvedById String?
   resolvedBy   User?   @relation("RemarkResolver", fields: [resolvedById], references: [id])
 
+  issuedById String?
+  issuedBy   User?   @relation("RemarkIssuedBy", fields: [issuedById], references: [id])
+
+  replies JournalRemarkReply[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([entryId])
+  @@index([journalId])
   @@index([status])
   @@map("journal_entry_remarks")
+}
+
+/// Ответ на замечание (Модуль 9)
+model JournalRemarkReply {
+  id    String  @id @default(uuid())
+  title String?
+  text  String
+
+  remarkId String
+  remark   JournalEntryRemark @relation(fields: [remarkId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("RemarkReplyAuthor", fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([remarkId])
+  @@map("journal_remark_replies")
 }
 
 /// Раздел ОЖР (Приказ Ростехнадзора № 1026/пр) — Модуль 9

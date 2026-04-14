@@ -95,6 +95,23 @@ export const updateRemarkSchema = z.object({
   deadline: z.string().optional(),
 });
 
+/** Создание замечания к журналу (journal-level) */
+export const createJournalRemarkSchema = z.object({
+  title: z.string().optional(),
+  text: z.string().min(1, 'Введите текст замечания'),
+  issuedById: z.string().uuid().optional(),
+  issuedAt: z.string().optional(),
+  remediationDeadline: z.string().optional(),
+  objectDescription: z.string().optional(),
+  attachmentS3Keys: z.array(z.string()).optional(),
+});
+
+/** Создание ответа на замечание */
+export const createRemarkReplySchema = z.object({
+  title: z.string().optional(),
+  text: z.string().min(1, 'Введите текст ответа'),
+});
+
 // === Вывод типов ===
 
 export type ConcreteWorksData = z.infer<typeof concreteWorksDataSchema>;
@@ -106,3 +123,5 @@ export type CreateJournalEntryInput = z.infer<typeof createJournalEntrySchema>;
 export type UpdateJournalEntryInput = z.infer<typeof updateJournalEntrySchema>;
 export type CreateRemarkInput = z.infer<typeof createRemarkSchema>;
 export type UpdateRemarkInput = z.infer<typeof updateRemarkSchema>;
+export type CreateJournalRemarkInput = z.infer<typeof createJournalRemarkSchema>;
+export type CreateRemarkReplyInput = z.infer<typeof createRemarkReplySchema>;
