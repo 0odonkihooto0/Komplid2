@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { SpecialJournalType } from '@prisma/client';
-import { JOURNAL_TYPE_LABELS } from './journal-constants';
+import { JOURNAL_TYPE_LABELS, JOURNAL_NORMATIVE_REFS } from './journal-constants';
 import { useJournalRegistry } from './useJournalRegistry';
 
 interface Employee {
@@ -42,7 +42,10 @@ interface Props {
   projectId: string;
 }
 
-const JOURNAL_TYPES = Object.keys(JOURNAL_TYPE_LABELS) as SpecialJournalType[];
+// CUSTOM скрыт из UI согласно требованиям ЦУС (нельзя создавать произвольные журналы)
+const JOURNAL_TYPES = (Object.keys(JOURNAL_TYPE_LABELS) as SpecialJournalType[]).filter(
+  (t) => t !== 'CUSTOM'
+);
 
 export function CreateJournalDialog({ open, onOpenChange, projectId }: Props) {
   const { createMutation } = useJournalRegistry(projectId);
@@ -126,7 +129,14 @@ export function CreateJournalDialog({ open, onOpenChange, projectId }: Props) {
           {/* Тип журнала */}
           <div className="space-y-1.5">
             <Label>Тип журнала *</Label>
-            <Select value={type} onValueChange={(v) => setType(v as SpecialJournalType)}>
+            <Select value={type} onValueChange={(v) => {
+                  const t = v as SpecialJournalType;
+                  setType(t);
+                  // Авто-заполнение нормативной ссылки если поле пустое
+                  if (!normativeRef) {
+                    setNormativeRef(JOURNAL_NORMATIVE_REFS[t] ?? '');
+                  }
+                }}>
               <SelectTrigger>
                 <SelectValue placeholder="Выберите тип" />
               </SelectTrigger>
