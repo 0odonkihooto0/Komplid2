@@ -12,6 +12,7 @@ import { JournalTypeBadge } from './JournalTypeBadge';
 import { StorageModeBanner } from './StorageModeBanner';
 import { JournalEntryList } from './JournalEntryList';
 import { JournalRequisitesTab } from './JournalRequisitesTab';
+import { JournalSectionsView } from './JournalSectionsView';
 import { CreateEntryDialog } from './CreateEntryDialog';
 import { useJournalCard } from './useJournalCard';
 import { JOURNAL_TYPE_LABELS } from './journal-constants';
@@ -24,6 +25,9 @@ interface Props {
 export function JournalCard({ objectId, journalId }: Props) {
   const vm = useJournalCard(objectId, journalId);
   const [entryDialogOpen, setEntryDialogOpen] = useState(false);
+  const [sectionIdForEntry, setSectionIdForEntry] = useState<string | undefined>(undefined);
+
+  const isOzr = vm.journal?.type === 'OZR_1026PR';
 
   if (vm.isJournalLoading) {
     return (
@@ -131,16 +135,31 @@ export function JournalCard({ objectId, journalId }: Props) {
 
       <Separator />
 
-      {/* Вкладки: Реквизиты / Записи */}
-      <Tabs defaultValue="requisites">
+      {/* Вкладки: Реквизиты / Разделы (только OZR_1026PR) / Записи */}
+      <Tabs defaultValue={isOzr ? 'sections' : 'requisites'}>
         <TabsList>
           <TabsTrigger value="requisites">Реквизиты</TabsTrigger>
+          {isOzr && <TabsTrigger value="sections">Разделы</TabsTrigger>}
           <TabsTrigger value="entries">Записи ({vm.entriesTotal})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="requisites">
           <JournalRequisitesTab objectId={objectId} journalId={journalId} journal={j} />
         </TabsContent>
+
+        {isOzr && (
+          <TabsContent value="sections">
+            <JournalSectionsView
+              objectId={objectId}
+              journalId={journalId}
+              isActive={vm.isActive}
+              onAddEntry={(sid) => {
+                setSectionIdForEntry(sid);
+                setEntryDialogOpen(true);
+              }}
+            />
+          </TabsContent>
+        )}
 
         <TabsContent value="entries">
           <div className="space-y-2 pt-4">
@@ -161,13 +180,17 @@ export function JournalCard({ objectId, journalId }: Props) {
       {vm.journal && (
         <CreateEntryDialog
           open={entryDialogOpen}
-          onOpenChange={setEntryDialogOpen}
+          onOpenChange={(open) => {
+            setEntryDialogOpen(open);
+            if (!open) setSectionIdForEntry(undefined);
+          }}
           journalType={j.type}
           isPending={vm.createEntryMutation.isPending}
           onSubmit={(payload) => {
-            vm.createEntryMutation.mutate(payload, {
-              onSuccess: () => setEntryDialogOpen(false),
-            });
+            vm.createEntryMutation.mutate(
+              { ...payload, sectionId: sectionIdForEntry },
+              { onSuccess: () => { setEntryDialogOpen(false); setSectionIdForEntry(undefined); } },
+            );
           }}
         />
       )}

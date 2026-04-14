@@ -4020,6 +4020,7 @@ model SpecialJournal {
   updatedAt DateTime @updatedAt
 
   entries       SpecialJournalEntry[]
+  sections      JournalSection[]
   approvalRoute ApprovalRoute?        @relation("JournalApproval")
 
   @@index([projectId])
@@ -4052,6 +4053,10 @@ model SpecialJournalEntry {
   // Привязка к ИД
   executionDocId String?
   executionDoc   ExecutionDoc? @relation("JournalEntryDoc", fields: [executionDocId], references: [id], onDelete: SetNull)
+
+  // Привязка к разделу ОЖР
+  sectionId String?
+  section   JournalSection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
 
   journalId String
   journal   SpecialJournal @relation(fields: [journalId], references: [id], onDelete: Cascade)
@@ -4095,6 +4100,25 @@ model JournalEntryRemark {
   @@index([entryId])
   @@index([status])
   @@map("journal_entry_remarks")
+}
+
+/// Раздел ОЖР (Приказ Ростехнадзора № 1026/пр) — Модуль 9
+model JournalSection {
+  id            String @id @default(uuid())
+  sectionNumber Int
+  title         String
+
+  journalId String
+  journal   SpecialJournal @relation(fields: [journalId], references: [id], onDelete: Cascade)
+
+  entries SpecialJournalEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([journalId, sectionNumber])
+  @@index([journalId])
+  @@map("journal_sections")
 }
 
 // === Модели Модуля 10 — Расширение ИД ===

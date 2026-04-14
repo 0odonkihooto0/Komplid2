@@ -948,6 +948,7 @@
 - ✅ `PATCH /api/projects/[pid]/journals/[jid]` расширен: `requisites`, `startDate`, `endDate`
 - ✅ `POST /api/projects/[pid]/journals/[jid]/fill-requisites` — автозаполнение из `ObjectOrganization` + `ObjectPerson` по ролям (regex-маппинг)
 - ✅ `JournalRequisitesTab.tsx` + `useJournalRequisites.ts` — Select из участников объекта, Input[type=date]
+- ✅ Система разделов ОЖР (`JournalSection`): 6 разделов (Р.1–Р.6) автосоздаются при открытии `OZR_1026PR`; `GET /sections` + `POST /sections/[sid]/fill` — автозаполнение Р.1/2 из `ContractParticipant`, Р.3 из `WorkRecord`+АОСР, Р.5 из подписанных ИД; вкладка «Разделы» в `JournalCard`; `SpecialJournalEntry.sectionId` — миграция `20260414030000_add_journal_sections`
 
 ---
 
