@@ -191,7 +191,21 @@ export interface JournalDetail {
   responsible: { id: string; firstName: string | null; lastName: string | null };
   createdBy: { id: string; firstName: string | null; lastName: string | null };
   contract: { id: string; number: string; name: string } | null;
-  approvalRoute: { id: string; status: string } | null;
+  approvalRoute: {
+    id: string;
+    status: string;
+    currentStepIdx: number;
+    steps: Array<{
+      id: string;
+      stepIndex: number;
+      role: string;
+      status: string;
+      comment: string | null;
+      decidedAt: string | null;
+      userId: string | null;
+      user: { id: string; firstName: string | null; lastName: string | null } | null;
+    }>;
+  } | null;
   _count: { entries: number };
 }
 

@@ -159,6 +159,27 @@ export function useJournalCard(objectId: string, journalId: string) {
     },
   });
 
+  // Запуск маршрута согласования
+  const startApprovalMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${baseUrl}/workflow`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? 'Ошибка запуска согласования');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: 'Маршрут согласования запущен' });
+      queryClient.invalidateQueries({ queryKey: ['journal', objectId, journalId] });
+    },
+    onError: (err: Error) => {
+      toast({ title: err.message, variant: 'destructive' });
+    },
+  });
+
   // Счётчик замечаний к журналу
   const { data: remarksCountData } = useQuery<{ meta: { total: number } }>({
     queryKey: ['journal-remarks-count', objectId, journalId],
@@ -202,6 +223,7 @@ export function useJournalCard(objectId: string, journalId: string) {
     storageMutation,
     createLinkMutation,
     createExecDocMutation,
+    startApprovalMutation,
     handleEntryClick,
     handleBack,
   };

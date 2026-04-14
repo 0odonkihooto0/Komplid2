@@ -931,7 +931,7 @@
 - ⬜ Типо-специфичные поля UI для 8 типов (монтажные, антикоррозионные, геодезические, земляные, свайные, кабельные, пожарная безопасность, произвольный) — используется generic-форма
 - ⬜ Типо-специфичные PDF-шаблоны для 8 типов — используется generic-шаблон
 - ✅ Полноценные страницы вкладок ОЖР и ЖВК: `OzrListView` (фильтр по форме 1026/пр и РД 11-05) + `JvkListView` (INPUT_CONTROL) с TanStack Table, фильтрами по типу/статусу, `CreateJournalDialog` с предвыбранным типом (prop `defaultType`)
-- ⬜ UI для запуска маршрута согласования журнала (ApprovalRoute связь есть в схеме, API нет)
+- ✅ UI для запуска маршрута согласования журнала (ApprovalRoute связь есть в схеме, API нет)
 
 **База данных (Модуль 9)**
 - ✅ `SpecialJournal`, `SpecialJournalEntry`, `JournalEntryRemark`
@@ -956,6 +956,13 @@
 - ✅ `POST /api/projects/[pid]/journals/[jid]/fill-requisites` — автозаполнение из `ObjectOrganization` + `ObjectPerson` по ролям (regex-маппинг)
 - ✅ `JournalRequisitesTab.tsx` + `useJournalRequisites.ts` — Select из участников объекта, Input[type=date]
 - ✅ Система разделов ОЖР (`JournalSection`): 6 разделов (Р.1–Р.6) автосоздаются при открытии `OZR_1026PR`; `GET /sections` + `POST /sections/[sid]/fill` — автозаполнение Р.1/2 из `ContractParticipant`, Р.3 из `WorkRecord`+АОСР, Р.5 из подписанных ИД; вкладка «Разделы» в `JournalCard`; `SpecialJournalEntry.sectionId` — миграция `20260414030000_add_journal_sections`
+
+### Добавлено (2026-04-14) — Workflow согласования журналов
+- ✅ Кнопка «На согласование» в шапке `JournalCard` (только если журнал ACTIVE и нет активного маршрута)
+- ✅ `GET/POST/DELETE /api/projects/[pid]/journals/[jid]/workflow` — получить/запустить/сбросить ApprovalRoute из участников контракта (роли: SUBCONTRACTOR→CONTRACTOR→DEVELOPER→SUPERVISION)
+- ✅ `POST /api/projects/[pid]/journals/[jid]/workflow/decide` — принять решение APPROVED/REJECTED по текущему шагу + уведомления через `notifyApprovalEvent` (fire-and-forget)
+- ✅ Вкладка «Согласование» в `JournalCard` — `JournalApprovalTab.tsx`: empty-state с кнопкой запуска, `ApprovalTimeline` при активном маршруте, badge-статус маршрута на триггере вкладки
+- ✅ Заглушка «Подписать ЭЦП» (disabled Button) при `route.status === 'APPROVED'` — готова к подключению КриптоПро
 
 ### Добавлено (2026-04-14) — Связи записей и создание ИД из записи
 - ✅ Enum `JournalLinkType` (OZR_TO_JVK | OZR_TO_AOSR | GENERIC); модель `JournalEntryLink` (sourceEntryId, targetEntryId, createdById, уникальность пары); миграция `20260414040000_add_journal_entry_links`
