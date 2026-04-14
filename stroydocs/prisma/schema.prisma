@@ -329,6 +329,10 @@ model User {
   reviewingDesignDocs      DesignDocument[]        @relation("DesignDocReviewerUser")
   designDocChangesAuthored DesignDocChange[]       @relation("DesignDocChangeAuthor")
 
+  // Замечания к ИД
+  commentResponsibilities DocComment[]      @relation("CommentResponsible")
+  commentReplies          DocCommentReply[] @relation("ReplyAuthor")
+
   @@index([organizationId])
   @@map("users")
 }
@@ -1046,6 +1050,7 @@ enum ApprovalRouteStatus {
   APPROVED // Согласован
   REJECTED // Отклонён
   RESET // Сброшен
+  PENDING_REMARKS // Приостановлен — есть открытые замечания
 }
 
 /// Статус шага согласования
@@ -1259,6 +1264,16 @@ model DocComment {
   positionY  Float? // Y-координата на странице (0-1)
   status     DocCommentStatus @default(OPEN)
 
+  // Расширенные поля замечания
+  commentNumber      Int? // Порядковый номер замечания в документе
+  urgency            String? // Срочность: CRITICAL | HIGH | NORMAL | LOW
+  remarkType         String? // Тип: DESIGN | QUALITY | SAFETY | PROCESS | OTHER
+  watcherIds         String[] // Наблюдатели (id пользователей)
+  plannedResolveDate DateTime? // Плановая дата устранения
+  actualResolveDate  DateTime? // Фактическая дата устранения
+  suggestion         String? // Предложения по устранению
+  attachmentS3Keys   String[] @default([]) // Вложения в Timeweb S3
+
   executionDocId String
   executionDoc   ExecutionDoc @relation(fields: [executionDocId], references: [id], onDelete: Cascade)
 
@@ -1269,13 +1284,39 @@ model DocComment {
   resolvedBy   User?     @relation("CommentResolver", fields: [resolvedById], references: [id])
   resolvedAt   DateTime?
 
+  // Ответственный за устранение
+  responsibleId String?
+  responsible   User?   @relation("CommentResponsible", fields: [responsibleId], references: [id])
+
+  replies DocCommentReply[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([executionDocId])
   @@index([authorId])
   @@index([resolvedById])
+  @@index([responsibleId])
   @@map("doc_comments")
+}
+
+/// Ответ на замечание к исполнительному документу
+model DocCommentReply {
+  id               String     @id @default(uuid())
+  text             String // Текст ответа
+  attachmentS3Keys String[]   @default([]) // Вложения в Timeweb S3
+
+  commentId String
+  comment   DocComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("ReplyAuthor", fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([commentId])
+  @@index([authorId])
+  @@map("doc_comment_replies")
 }
 
 /// Архивный документ (Документарий)

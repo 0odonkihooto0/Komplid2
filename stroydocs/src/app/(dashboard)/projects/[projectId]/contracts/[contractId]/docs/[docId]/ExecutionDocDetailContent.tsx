@@ -192,10 +192,10 @@ export function ExecutionDocDetailContent({ projectId, contractId, docId }: Prop
           <TabsTrigger value="signing">Подписание</TabsTrigger>
           <TabsTrigger value="comments">
             Замечания
-            {/* Счётчик замечаний из comments массива */}
-            {doc.comments.length > 0 && (
+            {/* Счётчик открытых замечаний */}
+            {doc.comments.filter((c) => c.status === 'OPEN').length > 0 && (
               <span className="ml-1.5 rounded-full bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700">
-                {doc.comments.length}
+                {doc.comments.filter((c) => c.status === 'OPEN').length}
               </span>
             )}
           </TabsTrigger>

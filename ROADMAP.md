@@ -76,6 +76,7 @@
 - ✅ Штамп «Копия верна» на PDF (ФИО, должность)
 - ✅ Иерархические категории ИД (`IdDocCategory`): дерево категорий проекта + шаблоны на уровне организации, импорт шаблонов, фильтрация АОСР/ОЖР по категории (панель `IdCategoryTree` слева в таблице документов + CRUD API + API шаблонов организации) — миграция `add_id_categories`
 - ✅ Вкладка «Связанные документы» в карточке ИД: модель `ExecutionDocLink` (junction table, CASCADE), API GET/POST/DELETE (`/execution-docs/[docId]/linked-docs`), компоненты `LinkedDocsTab` + `AddLinkedDocDialog` + `useLinkedDocs`; карточка ИД переведена на tab-layout (8 вкладок: Документ | Согласование | Подписание | Замечания | Версии | ТИМ | Связанные документы | Сохр. реквизиты) — миграция `add_execution_doc_links`
+- ✅ Расширенная система замечаний к ИД: поля `commentNumber` / `urgency` / `remarkType` / `responsibleId` / `watcherIds` / `plannedResolveDate` / `actualResolveDate` / `suggestion` / `attachmentS3Keys`; модель `DocCommentReply` (ответы на замечания); API endpoints `replies` (GET/POST), `accept` (→RESOLVED + resume approval), `return` (→OPEN + PENDING_REMARKS); статус `PENDING_REMARKS` в `ApprovalRouteStatus` (приостановка согласования при наличии открытых замечаний, автовозобновление при закрытии всех); UI — Sheet с вкладками «Информация / Ответы», расширенная форма создания, счётчик только открытых замечаний на вкладке — миграция `extend_doc_comments`
 
 ---
 

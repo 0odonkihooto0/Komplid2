@@ -1,13 +1,21 @@
 'use client';
 
-import { CheckCircle, Circle, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { StatusBadge } from '@/components/shared/StatusBadge';
-import { DOC_COMMENT_STATUS_LABELS } from '@/utils/constants';
 import { formatDate } from '@/utils/format';
-import { useDocComments } from './useDocComments';
+import { useDocComments, type DocComment } from './useDocComments';
 import { AddDocCommentForm } from './AddDocCommentForm';
+import { DocCommentSheet } from './DocCommentSheet';
+
+const URGENCY_LABELS: Record<string, string> = {
+  CRITICAL: 'Критическая',
+  HIGH: 'Высокая',
+  NORMAL: 'Обычная',
+  LOW: 'Низкая',
+};
 
 interface Props {
   projectId: string;
@@ -16,77 +24,77 @@ interface Props {
 }
 
 export function DocCommentsList({ projectId, contractId, docId }: Props) {
-  const { comments, isLoading, toggleStatusMutation, deleteMutation } = useDocComments(
-    projectId,
-    contractId,
-    docId
-  );
+  const [selectedComment, setSelectedComment] = useState<DocComment | null>(null);
+  const { comments, isLoading, deleteMutation } = useDocComments(projectId, contractId, docId);
 
   if (isLoading) return <Skeleton className="h-32 w-full" />;
 
+  const openCount = comments.filter((c) => c.status === 'OPEN').length;
+
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold">Замечания ({comments.length})</h3>
+      <h3 className="text-sm font-semibold">
+        Замечания ({comments.length}){openCount > 0 && ` · ${openCount} открытых`}
+      </h3>
 
       <div className="space-y-2">
         {comments.map((comment) => (
-          <div key={comment.id} className="rounded-md border p-3 space-y-2">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-2">
-                <StatusBadge
-                  status={comment.status}
-                  label={DOC_COMMENT_STATUS_LABELS[comment.status]}
-                />
-                <span className="text-xs text-muted-foreground">
-                  {comment.author.lastName} {comment.author.firstName}
-                </span>
-                {comment.pageNumber && (
-                  <span className="text-xs text-muted-foreground">стр. {comment.pageNumber}</span>
+          <div
+            key={comment.id}
+            className="rounded-md border p-3 space-y-1.5 cursor-pointer hover:bg-muted/50 transition-colors"
+            onClick={() => setSelectedComment(comment)}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 flex-wrap">
+                {comment.commentNumber && (
+                  <span className="text-xs text-muted-foreground font-mono">
+                    №{comment.commentNumber}
+                  </span>
+                )}
+                <Badge variant={comment.status === 'OPEN' ? 'destructive' : 'secondary'} className="text-xs">
+                  {comment.status === 'OPEN' ? 'Открыто' : 'Устранено'}
+                </Badge>
+                {comment.urgency && (
+                  <Badge variant="outline" className="text-xs">
+                    {URGENCY_LABELS[comment.urgency] ?? comment.urgency}
+                  </Badge>
+                )}
+                {comment._count.replies > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    {comment._count.replies} отв.
+                  </span>
                 )}
               </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    toggleStatusMutation.mutate({
-                      commentId: comment.id,
-                      status: comment.status === 'OPEN' ? 'RESOLVED' : 'OPEN',
-                    })
-                  }
-                  title={comment.status === 'OPEN' ? 'Устранено' : 'Переоткрыть'}
-                >
-                  {comment.status === 'OPEN' ? (
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  ) : (
-                    <Circle className="h-4 w-4 text-orange-600" />
-                  )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => deleteMutation.mutate(comment.id)}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0 shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteMutation.mutate(comment.id);
+                }}
+              >
+                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+              </Button>
             </div>
-            <p className="text-sm">{comment.text}</p>
+            <p className="text-sm line-clamp-2">{comment.text}</p>
             <div className="text-xs text-muted-foreground">
-              {formatDate(comment.createdAt)}
-              {comment.resolvedBy && comment.resolvedAt && (
-                <span>
-                  {' '}
-                  | Устранил: {comment.resolvedBy.lastName} {comment.resolvedBy.firstName},{' '}
-                  {formatDate(comment.resolvedAt)}
-                </span>
-              )}
+              {comment.author.lastName} {comment.author.firstName} · {formatDate(comment.createdAt)}
             </div>
           </div>
         ))}
       </div>
 
       <AddDocCommentForm projectId={projectId} contractId={contractId} docId={docId} />
+
+      <DocCommentSheet
+        comment={selectedComment}
+        open={!!selectedComment}
+        onClose={() => setSelectedComment(null)}
+        projectId={projectId}
+        contractId={contractId}
+        docId={docId}
+      />
     </div>
   );
 }
