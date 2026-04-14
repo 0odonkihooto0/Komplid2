@@ -188,6 +188,27 @@ HTTP 200 — дефолт, явно передавать не нужно.
 
 ## React / Next.js
 
+**`ApiResponse<T>` — discriminated union, `.data` без `success`-проверки не компилируется.**
+`ApiResponse<T>` из `@/types/api` — union-тип:
+`{ success: true; data: T } | { success: false; error: string; details?: unknown }`.
+Обращение к `json.data` без проверки `json.success` → TS-ошибка:
+«Property 'data' does not exist on type '{ success: false; error: string; details?: unknown }'».
+Проверка `if (!res.ok)` **не сужает** тип: TypeScript не знает, что `res.ok === true` влечёт
+`json.success === true`. Нужно явно сузить тип через success-guard:
+```typescript
+// Правильно:
+const json: ApiResponse<T> = await res.json();
+if (!json.success) throw new Error(json.error);
+return json.data;
+
+// Неправильно (не компилируется):
+const json: ApiResponse<T> = await res.json();
+return json.data ?? []; // TS2339: Property 'data' does not exist...
+```
+Правило: **всегда** добавлять `if (!json.success) throw new Error(json.error)` перед
+обращением к `json.data` когда тип аннотирован как `ApiResponse<T>` из `@/types/api`.
+Зафиксировано в `JournalEntryLinkDialog.tsx` (два запроса в одном файле).
+
 **`<SelectItem value="">` — runtime-ошибка во всём проекте (28 вхождений в 18 файлах).**
 Radix UI `@radix-ui/react-select` v2.2.6+ добавил валидацию: `value` не может быть пустой строкой.
 Ошибка: «A \<Select.Item /> must have a value prop that is not an empty string».
