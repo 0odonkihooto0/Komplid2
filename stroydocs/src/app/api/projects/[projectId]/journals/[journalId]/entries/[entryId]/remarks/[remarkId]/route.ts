@@ -31,7 +31,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         },
       },
     });
-    if (!remark || remark.entry.journal.projectId !== params.projectId) {
+    if (!remark || !remark.entry || remark.entry.journal.projectId !== params.projectId) {
       return errorResponse('Замечание не найдено', 404);
     }
 
@@ -99,7 +99,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
         },
       },
     });
-    if (!remark || remark.entry.journal.projectId !== params.projectId) {
+    if (!remark || !remark.entry || remark.entry.journal.projectId !== params.projectId) {
       return errorResponse('Замечание не найдено', 404);
     }
 
