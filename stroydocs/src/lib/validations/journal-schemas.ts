@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SpecialJournalType } from '@prisma/client';
 
 // === Типо-зависимые данные записей журнала ===
 
@@ -43,19 +44,7 @@ export const authorSupervisionDataSchema = z.object({
 
 /** Создание специального журнала */
 export const createJournalSchema = z.object({
-  type: z.enum([
-    'CONCRETE_WORKS',
-    'WELDING_WORKS',
-    'AUTHOR_SUPERVISION',
-    'MOUNTING_WORKS',
-    'ANTICORROSION',
-    'GEODETIC',
-    'EARTHWORKS',
-    'PILE_DRIVING',
-    'CABLE_LAYING',
-    'FIRE_SAFETY',
-    'CUSTOM',
-  ]),
+  type: z.nativeEnum(SpecialJournalType),
   title: z.string().min(2, 'Введите наименование журнала').optional(),
   contractId: z.string().uuid().optional(),
   responsibleId: z.string().uuid('Укажите ответственного'),
