@@ -106,7 +106,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       ...(contractId !== undefined ? { contractId } : {}),
       ...(responsibleId !== undefined ? { responsibleId } : {}),
       ...(normativeRef !== undefined ? { normativeRef } : {}),
-      ...(requisites !== undefined ? { requisites: requisites ?? Prisma.JsonNull } : {}),
+      ...(requisites !== undefined ? { requisites: requisites !== null ? (requisites as Prisma.InputJsonValue) : Prisma.JsonNull } : {}),
       ...(startDate !== undefined ? { startDate: startDate ? new Date(startDate) : null } : {}),
       ...(endDate !== undefined ? { endDate: endDate ? new Date(endDate) : null } : {}),
     };
