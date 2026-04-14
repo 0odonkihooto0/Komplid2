@@ -23,6 +23,8 @@ const updateKs2Schema = z.object({
     materialCost: z.number().default(0),
     workItemId: z.string().optional().nullable(),
   })).optional(),
+  excludedAdditionalCostIds: z.array(z.string()).optional(),
+  correctionToKs2Id: z.string().nullable().optional(),
 });
 
 /** GET — детали акта КС-2 */
@@ -84,7 +86,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const parsed = updateKs2Schema.safeParse(body);
     if (!parsed.success) return errorResponse('Ошибка валидации', 400, parsed.error.issues);
 
-    const { status, items } = parsed.data;
+    const { status, items, excludedAdditionalCostIds, correctionToKs2Id } = parsed.data;
 
     // Обновляем позиции если переданы
     if (items !== undefined) {
@@ -99,6 +101,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         where: { id: params.ks2Id },
         data: {
           ...(status && { status }),
+          ...(excludedAdditionalCostIds !== undefined && { excludedAdditionalCostIds }),
+          ...(correctionToKs2Id !== undefined && { correctionToKs2Id }),
           totalAmount,
           laborCost: laborCostTotal,
           materialCost: materialCostTotal,
@@ -117,11 +121,19 @@ export async function PATCH(req: NextRequest, { params }: Params) {
           },
         },
       });
-    } else if (status) {
-      await db.ks2Act.update({
-        where: { id: params.ks2Id },
-        data: { status },
-      });
+    } else {
+      // Обновляем статус и/или поля ДЗ/корректировки
+      const hasUpdate = status || excludedAdditionalCostIds !== undefined || correctionToKs2Id !== undefined;
+      if (hasUpdate) {
+        await db.ks2Act.update({
+          where: { id: params.ks2Id },
+          data: {
+            ...(status && { status }),
+            ...(excludedAdditionalCostIds !== undefined && { excludedAdditionalCostIds }),
+            ...(correctionToKs2Id !== undefined && { correctionToKs2Id }),
+          },
+        });
+      }
     }
 
     const updated = await db.ks2Act.findUnique({

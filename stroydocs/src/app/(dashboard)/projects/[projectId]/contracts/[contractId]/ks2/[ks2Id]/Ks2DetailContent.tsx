@@ -5,7 +5,10 @@ import { ArrowLeft, FileDown, Wand2, FilePlus, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useKs2Detail } from '@/components/modules/ks2/useKs2';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useKs2Detail, useKs2List } from '@/components/modules/ks2/useKs2';
+import { Ks2AdditionalCostsTab } from '@/components/modules/ks2/Ks2AdditionalCostsTab';
 import { formatDate } from '@/utils/format';
 
 const STATUS_CONFIG = {
@@ -23,8 +26,13 @@ interface Props {
 
 /** Страница детального просмотра акта КС-2 */
 export function Ks2DetailContent({ projectId, contractId, ks2Id }: Props) {
-  const { act, isLoading, autofillMutation, generatePdfMutation, generateKs3Mutation, generateKs3PdfMutation } =
+  // Хуки должны быть до любых ранних return (rules-of-hooks)
+  const { act, isLoading, autofillMutation, generatePdfMutation, generateKs3Mutation, generateKs3PdfMutation, updateCorrectionMutation } =
     useKs2Detail(projectId, contractId, ks2Id);
+
+  // Список актов договора для выбора «корректировка к акту»
+  const { acts: allActs } = useKs2List(projectId, contractId);
+  const otherActs = allActs.filter((a) => a.id !== ks2Id);
 
   if (isLoading) {
     return (
@@ -67,6 +75,26 @@ export function Ks2DetailContent({ projectId, contractId, ks2Id }: Props) {
         </div>
 
         <div className="flex flex-wrap gap-2">
+          {/* Корректировочный акт — выбор исходного акта, к которому относится данный */}
+          <Select
+            value={act.correctionToKs2Id ?? 'NONE'}
+            onValueChange={(v) =>
+              updateCorrectionMutation.mutate(v === 'NONE' ? null : v)
+            }
+          >
+            <SelectTrigger className="w-56">
+              <SelectValue placeholder="Корректировка к акту" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="NONE">— Самостоятельный акт —</SelectItem>
+              {otherActs.map((a) => (
+                <SelectItem key={a.id} value={a.id}>
+                  КС-2 № {a.number}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           {act.status === 'DRAFT' && (
             <Button
               variant="outline"
@@ -113,68 +141,84 @@ export function Ks2DetailContent({ projectId, contractId, ks2Id }: Props) {
         </div>
       </div>
 
-      {/* Таблица позиций */}
-      <div>
-        <h2 className="mb-3 text-base font-medium">Позиции акта ({act.items.length})</h2>
-        {act.items.length === 0 ? (
-          <div className="rounded-md border bg-muted/50 py-8 text-center text-sm text-muted-foreground">
-            Нет позиций. Нажмите «Заполнить из сметы» или добавьте вручную.
-          </div>
-        ) : (
-          <div className="overflow-auto rounded-md border">
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/50">
-                <tr>
-                  <th className="px-3 py-2 text-left font-medium">№</th>
-                  <th className="px-3 py-2 text-left font-medium">Наименование</th>
-                  <th className="px-3 py-2 text-center font-medium">Ед.изм.</th>
-                  <th className="px-3 py-2 text-right font-medium">Кол-во</th>
-                  <th className="px-3 py-2 text-right font-medium">Цена, руб.</th>
-                  <th className="px-3 py-2 text-right font-medium">Сумма, руб.</th>
-                </tr>
-              </thead>
-              <tbody>
-                {act.items.map((item, idx) => (
-                  <tr key={item.id} className="border-b last:border-0 hover:bg-muted/30">
-                    <td className="px-3 py-2 text-muted-foreground">{idx + 1}</td>
-                    <td className="px-3 py-2">
-                      {item.name}
-                      {item.workItem && (
-                        <span className="ml-1 text-xs text-muted-foreground">
-                          [{item.workItem.projectCipher}]
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2 text-center">{item.unit}</td>
-                    <td className="px-3 py-2 text-right">{item.volume}</td>
-                    <td className="px-3 py-2 text-right">{item.unitPrice.toLocaleString('ru-RU')}</td>
-                    <td className="px-3 py-2 text-right font-medium">
-                      {item.totalPrice.toLocaleString('ru-RU')}
+      {/* Вкладки: позиции и допзатраты сметы */}
+      <Tabs defaultValue="positions">
+        <TabsList>
+          <TabsTrigger value="positions">Позиции ({act.items.length})</TabsTrigger>
+          <TabsTrigger value="additional-costs">ДЗ сметы</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="positions" className="mt-4">
+          <h2 className="mb-3 text-base font-medium">Позиции акта ({act.items.length})</h2>
+          {act.items.length === 0 ? (
+            <div className="rounded-md border bg-muted/50 py-8 text-center text-sm text-muted-foreground">
+              Нет позиций. Нажмите «Заполнить из сметы» или добавьте вручную.
+            </div>
+          ) : (
+            <div className="overflow-auto rounded-md border">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/50">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-medium">№</th>
+                    <th className="px-3 py-2 text-left font-medium">Наименование</th>
+                    <th className="px-3 py-2 text-center font-medium">Ед.изм.</th>
+                    <th className="px-3 py-2 text-right font-medium">Кол-во</th>
+                    <th className="px-3 py-2 text-right font-medium">Цена, руб.</th>
+                    <th className="px-3 py-2 text-right font-medium">Сумма, руб.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {act.items.map((item, idx) => (
+                    <tr key={item.id} className="border-b last:border-0 hover:bg-muted/30">
+                      <td className="px-3 py-2 text-muted-foreground">{idx + 1}</td>
+                      <td className="px-3 py-2">
+                        {item.name}
+                        {item.workItem && (
+                          <span className="ml-1 text-xs text-muted-foreground">
+                            [{item.workItem.projectCipher}]
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-center">{item.unit}</td>
+                      <td className="px-3 py-2 text-right">{item.volume}</td>
+                      <td className="px-3 py-2 text-right">{item.unitPrice.toLocaleString('ru-RU')}</td>
+                      <td className="px-3 py-2 text-right font-medium">
+                        {item.totalPrice.toLocaleString('ru-RU')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="border-t bg-muted/50">
+                  <tr>
+                    <td colSpan={5} className="px-3 py-2 text-right font-medium">ИТОГО:</td>
+                    <td className="px-3 py-2 text-right font-bold">
+                      {act.totalAmount.toLocaleString('ru-RU')} руб.
                     </td>
                   </tr>
-                ))}
-              </tbody>
-              <tfoot className="border-t bg-muted/50">
-                <tr>
-                  <td colSpan={5} className="px-3 py-2 text-right font-medium">ИТОГО:</td>
-                  <td className="px-3 py-2 text-right font-bold">
-                    {act.totalAmount.toLocaleString('ru-RU')} руб.
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        )}
-      </div>
+                </tfoot>
+              </table>
+            </div>
+          )}
 
-      {/* КС-3 статус */}
-      {act.ks3Certificate && (
-        <div className="rounded-md border bg-blue-50 p-4">
-          <p className="text-sm font-medium text-blue-900">
-            КС-3 создана. Статус: {act.ks3Certificate.status === 'DRAFT' ? 'Черновик' : act.ks3Certificate.status}
-          </p>
-        </div>
-      )}
+          {/* КС-3 статус (если есть) */}
+          {act.ks3Certificate && (
+            <div className="mt-4 rounded-md border bg-blue-50 p-4">
+              <p className="text-sm font-medium text-blue-900">
+                КС-3 создана. Статус: {act.ks3Certificate.status === 'DRAFT' ? 'Черновик' : act.ks3Certificate.status}
+              </p>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="additional-costs" className="mt-4">
+          <Ks2AdditionalCostsTab
+            projectId={projectId}
+            contractId={contractId}
+            ks2Id={ks2Id}
+            totalItemsAmount={act.totalAmount}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

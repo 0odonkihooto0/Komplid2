@@ -36,8 +36,14 @@
   </table>
 </div>
 
+{{#if isCorrection}}
+<h1>КОРРЕКТИРОВОЧНЫЙ АКТ № {{number}}</h1>
+<h2>о приёмке выполненных работ</h2>
+<p style="font-size: 12px; text-align: center; margin: 4px 0;">(к Акту № {{correctionToNumber}})</p>
+{{else}}
 <h1>АКТ № {{number}}</h1>
 <h2>о приёмке выполненных работ</h2>
+{{/if}}
 
 <p class="text-center">
   Отчётный период: с <strong>{{periodStart}}</strong> по <strong>{{periodEnd}}</strong>
@@ -74,6 +80,16 @@
       <td class="text-right"><strong>{{totalAmount}}</strong></td>
       <td class="text-right"><strong>{{laborCost}}</strong></td>
     </tr>
+    {{#if isCorrection}}
+    <tr>
+      <td colspan="6" style="padding: 4px 8px; text-align: right; border-top: 1px solid #ddd;">Итого по исходному акту:</td>
+      <td style="padding: 4px 8px; text-align: right; border-top: 1px solid #ddd;" colspan="2">{{originalTotalAmount}} руб.</td>
+    </tr>
+    <tr>
+      <td colspan="6" style="padding: 4px 8px; text-align: right;">Разница (+ / –):</td>
+      <td style="padding: 4px 8px; text-align: right; font-weight: bold;" colspan="2">{{diffAmount}} руб.</td>
+    </tr>
+    {{/if}}
   </tbody>
 </table>
 

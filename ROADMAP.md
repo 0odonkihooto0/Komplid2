@@ -95,6 +95,8 @@
 - ✅ КС-2: привязка к договору, смете, периоду; автозаполнение из WorkItems
 - ✅ КС-3: автогенерация как сумма КС-2
 - ✅ HTML-шаблоны (/templates/ks2.hbs, /templates/ks3.hbs)
+- ✅ Вкладка «ДЗ сметы»: таблица EstimateAdditionalCost из смет договора, чекбоксы исключения, пересчёт суммы КС-2 (Ks2AdditionalCostsTab, excludedAdditionalCostIds, GET .../additional-costs)
+- ✅ Корректировочный акт: поле «Корректировка к акту» (Select КС-2 в шапке), печатная форма «КОРРЕКТИРОВОЧНЫЙ АКТ» с разницей стоимостей (correctionToKs2Id, ks2.hbs)
 
 ---
 
