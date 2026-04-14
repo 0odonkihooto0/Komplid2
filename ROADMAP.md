@@ -957,6 +957,14 @@
 - ✅ `JournalRequisitesTab.tsx` + `useJournalRequisites.ts` — Select из участников объекта, Input[type=date]
 - ✅ Система разделов ОЖР (`JournalSection`): 6 разделов (Р.1–Р.6) автосоздаются при открытии `OZR_1026PR`; `GET /sections` + `POST /sections/[sid]/fill` — автозаполнение Р.1/2 из `ContractParticipant`, Р.3 из `WorkRecord`+АОСР, Р.5 из подписанных ИД; вкладка «Разделы» в `JournalCard`; `SpecialJournalEntry.sectionId` — миграция `20260414030000_add_journal_sections`
 
+### Добавлено (2026-04-14) — Связи записей и создание ИД из записи
+- ✅ Enum `JournalLinkType` (OZR_TO_JVK | OZR_TO_AOSR | GENERIC); модель `JournalEntryLink` (sourceEntryId, targetEntryId, createdById, уникальность пары); миграция `20260414040000_add_journal_entry_links`
+- ✅ API `GET/POST .../entries/[eid]/links` — список и создание связей между записями журналов разных типов
+- ✅ API `POST .../entries/[eid]/create-exec-doc` — создание АОСР из записи ОЖР (авто-нумерация, привязка к договору журнала, обновление executionDocId)
+- ✅ UI: контекстное меню записи (DropdownMenu с MoreHorizontal) — «Добавить связь → ЖВК» (`JournalEntryLinkDialog`), «Создать АОСР» (только для `OZR_1026PR`) → redirect к ИД
+- ✅ Иконка `Link2` у записей со связями (`_count.sourceLinks + targetLinks > 0`)
+- ✅ `JournalEntryLinkDialog.tsx` — двухшаговый выбор: журнал ЖВК → запись; мутации `createLinkMutation` и `createExecDocMutation` в `useJournalCard.ts`
+
 ---
 
 ## МОДУЛЬ 10 — Исполнительная документация (ИД) ✅

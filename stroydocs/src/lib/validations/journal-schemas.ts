@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SpecialJournalType } from '@prisma/client';
+import { SpecialJournalType, JournalLinkType } from '@prisma/client';
 
 // === Типо-зависимые данные записей журнала ===
 
@@ -125,3 +125,11 @@ export type CreateRemarkInput = z.infer<typeof createRemarkSchema>;
 export type UpdateRemarkInput = z.infer<typeof updateRemarkSchema>;
 export type CreateJournalRemarkInput = z.infer<typeof createJournalRemarkSchema>;
 export type CreateRemarkReplyInput = z.infer<typeof createRemarkReplySchema>;
+
+/** Создание связи между записями журналов */
+export const createJournalEntryLinkSchema = z.object({
+  targetEntryId: z.string().uuid('Укажите корректный ID целевой записи'),
+  linkType: z.nativeEnum(JournalLinkType).optional(),
+});
+
+export type CreateJournalEntryLinkInput = z.infer<typeof createJournalEntryLinkSchema>;

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/useToast';
-import type { JournalEntryStatus } from '@prisma/client';
+import type { JournalEntryStatus, JournalLinkType } from '@prisma/client';
 import type { ApiResponse, PaginationMeta } from '@/types/api';
 import type { CreateJournalEntryInput } from '@/lib/validations/journal-schemas';
 import type { JournalDetail, JournalEntryItem } from './journal-constants';
@@ -103,6 +103,62 @@ export function useJournalCard(objectId: string, journalId: string) {
     },
   });
 
+  // Создание связи между записями журналов
+  const createLinkMutation = useMutation({
+    mutationFn: async ({
+      sourceEntryId,
+      targetEntryId,
+      linkType,
+    }: {
+      sourceEntryId: string;
+      targetEntryId: string;
+      linkType: JournalLinkType;
+    }) => {
+      const res = await fetch(`${baseUrl}/entries/${sourceEntryId}/links`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetEntryId, linkType }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? 'Ошибка создания связи');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: 'Связь добавлена' });
+      queryClient.invalidateQueries({ queryKey: ['journal-entries', objectId, journalId] });
+    },
+    onError: (err: Error) => {
+      toast({ title: err.message, variant: 'destructive' });
+    },
+  });
+
+  // Создание АОСР из записи журнала
+  const createExecDocMutation = useMutation({
+    mutationFn: async (entryId: string) => {
+      const res = await fetch(`${baseUrl}/entries/${entryId}/create-exec-doc`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? 'Ошибка создания АОСР');
+      }
+      const json: ApiResponse<{ id: string; number: string; title: string; contractId: string }> =
+        await res.json();
+      if (!json.success) throw new Error(json.error ?? 'Ошибка создания АОСР');
+      return json.data;
+    },
+    onSuccess: (data) => {
+      toast({ title: `АОСР ${data.number} создан` });
+      queryClient.invalidateQueries({ queryKey: ['journal-entries', objectId, journalId] });
+      router.push(`/objects/${objectId}/id/${data.contractId}?docId=${data.id}`);
+    },
+    onError: (err: Error) => {
+      toast({ title: err.message, variant: 'destructive' });
+    },
+  });
+
   // Счётчик замечаний к журналу
   const { data: remarksCountData } = useQuery<{ meta: { total: number } }>({
     queryKey: ['journal-remarks-count', objectId, journalId],
@@ -144,6 +200,8 @@ export function useJournalCard(objectId: string, journalId: string) {
     remarksTotal: remarksCountData?.meta?.total ?? 0,
     createEntryMutation,
     storageMutation,
+    createLinkMutation,
+    createExecDocMutation,
     handleEntryClick,
     handleBack,
   };
