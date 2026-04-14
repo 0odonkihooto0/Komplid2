@@ -3,8 +3,14 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { ArrowLeft, FileDown, RefreshCw, Pencil, FileEdit, Pen, QrCode, Stamp, FileCode } from 'lucide-react';
+import { ArrowLeft, FileDown, RefreshCw, Pencil, FileEdit, Pen, QrCode, Stamp, FileCode, ChevronDown, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '@/components/shared/StatusBadge';
@@ -47,7 +53,7 @@ export function ExecutionDocDetailContent({ projectId, contractId, docId }: Prop
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [stampDialogOpen, setStampDialogOpen] = useState(false);
 
-  const { doc, isLoading, generatePdfMutation, autofillFromAosrMutation, exportXmlMutation } = useExecutionDocDetail(
+  const { doc, isLoading, generatePdfMutation, autofillFromAosrMutation, exportXmlMutation, unpostMutation } = useExecutionDocDetail(
     projectId,
     contractId,
     docId
@@ -181,6 +187,25 @@ export function ExecutionDocDetailContent({ projectId, contractId, docId }: Prop
             <Pen className="mr-2 h-4 w-4" />
             Открепленная подпись
           </Button>
+          {/* Действия (доступно при статусе IN_REVIEW) */}
+          {doc.status === 'IN_REVIEW' && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  Действия <ChevronDown className="ml-1 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => unpostMutation.mutate()}
+                  disabled={unpostMutation.isPending}
+                >
+                  <Undo2 className="mr-2 h-4 w-4" />
+                  Отменить проведение
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 

@@ -10,7 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAosrEdit } from './useAosrEdit';
+import { SavedFieldInput } from './SavedFieldInput';
 import type { ExecutionDocStatus } from '@prisma/client';
+
+// Поля с автодополнением (2,3,4,6,7 АОСР — участники строительства)
+const AUTOCOMPLETE_FIELDS = new Set(['zakazchik', 'stroiteli', 'projectirovshik', 'stroiteli11', 'stroiteli3']);
 
 interface Props {
   open: boolean;
@@ -63,10 +67,13 @@ const OTHER_FIELDS = [
   field('stroiteli32', 'ФИО исполнителя (подпись)'),
 ];
 
-function FieldGroup({ fields, register, isReadOnly }: {
+function FieldGroup({ fields, register, isReadOnly, projectId, watch, setValue }: {
   fields: ReturnType<typeof field>[];
   register: ReturnType<typeof useForm<Fields>>['register'];
   isReadOnly: boolean;
+  projectId?: string;
+  watch?: ReturnType<typeof useForm<Fields>>['watch'];
+  setValue?: ReturnType<typeof useForm<Fields>>['setValue'];
 }) {
   return (
     <div className="space-y-3">
@@ -75,6 +82,15 @@ function FieldGroup({ fields, register, isReadOnly }: {
           <Label htmlFor={f.name} className="text-xs">{f.label}</Label>
           {f.multiline ? (
             <Textarea id={f.name} rows={2} disabled={isReadOnly} {...register(f.name)} />
+          ) : projectId && AUTOCOMPLETE_FIELDS.has(f.name) && watch && setValue ? (
+            <SavedFieldInput
+              id={f.name}
+              name={f.name}
+              value={watch(f.name) ?? ''}
+              onChange={(v) => setValue(f.name, v)}
+              projectId={projectId}
+              disabled={isReadOnly}
+            />
           ) : (
             <Input id={f.name} disabled={isReadOnly} {...register(f.name)} />
           )}
@@ -91,7 +107,7 @@ export function AosrEditDialog({ open, onClose, projectId, contractId, docId, do
 
   const allFields = [...PARTICIPANT_FIELDS, ...WORK_FIELDS, ...DATE_FIELDS, ...OTHER_FIELDS];
   const defaultValues = Object.fromEntries(allFields.map((f) => [f.name, currentOverrideFields?.[f.name] ?? '']));
-  const { register, handleSubmit } = useForm<Fields>({ defaultValues });
+  const { register, handleSubmit, watch, setValue } = useForm<Fields>({ defaultValues });
 
   const onSubmit = async (data: Fields) => {
     const nonEmpty = Object.fromEntries(Object.entries(data).filter(([, v]) => v.trim() !== ''));
@@ -119,7 +135,7 @@ export function AosrEditDialog({ open, onClose, projectId, contractId, docId, do
               <TabsTrigger value="dates">Даты</TabsTrigger>
               <TabsTrigger value="other">Прочее</TabsTrigger>
             </TabsList>
-            <TabsContent value="participants" className="pt-3"><FieldGroup fields={PARTICIPANT_FIELDS} register={register} isReadOnly={isReadOnly} /></TabsContent>
+            <TabsContent value="participants" className="pt-3"><FieldGroup fields={PARTICIPANT_FIELDS} register={register} isReadOnly={isReadOnly} projectId={projectId} watch={watch} setValue={setValue} /></TabsContent>
             <TabsContent value="work" className="pt-3"><FieldGroup fields={WORK_FIELDS} register={register} isReadOnly={isReadOnly} /></TabsContent>
             <TabsContent value="dates" className="pt-3"><FieldGroup fields={DATE_FIELDS} register={register} isReadOnly={isReadOnly} /></TabsContent>
             <TabsContent value="other" className="pt-3"><FieldGroup fields={OTHER_FIELDS} register={register} isReadOnly={isReadOnly} /></TabsContent>

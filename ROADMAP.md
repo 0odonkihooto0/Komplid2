@@ -942,6 +942,12 @@
 - ✅ `id-classification.ts`: KS_6A → ACCOUNTING_JOURNAL; KS_11/KS_14 → INSPECTION_ACT; GENERAL_DOCUMENT → OTHER_ID
 - ✅ Миграция `20260414070000_add_general_docs`: ALTER TYPE добавляет 4 значения; ALTER TABLE добавляет `documentDate`, `note`, `attachmentS3Keys`
 
+### Добавлено (2026-04-14) — Отмена проведения, автодополнение полей, ограничение объёма ГПР
+- ✅ **Отмена проведения** (`POST .../execution-docs/[docId]/unpost`): переводит IN_REVIEW → DRAFT; заблокировано при активном согласовании (ApprovalRoute.status=PENDING); кнопка «Действия → Отменить проведение» в карточке ИД (видна только при статусе IN_REVIEW)
+- ✅ **Автодополнение полей АОСР** (`SavedFieldValue`): при Enter в полях 2,3,4,6,7 (Застройщик, Подрядчик, Авторнадзор, Представитель подрядчика, Представитель исполнителя) — сохраняет значение; при фокусе — показывает выпадающий список ранее введённых значений; `SavedFieldInput.tsx` компонент + API `GET/POST /api/projects/[pid]/saved-field-values?field=`
+- ✅ **Ограничение объёма ГПР**: при переводе ИД в IN_REVIEW проверяется `factVolume` документа vs `GanttTask.volume` (maxAllowedVolume); если сумма всех проведённых ИД по задаче превышает плановый объём → ошибка «Фактический объём превышает максимально допустимый по задаче ГПР»
+- ✅ Миграция `20260414100000_add_saved_field_values`: `ALTER TABLE execution_docs ADD COLUMN "factVolume"`, создание таблицы `saved_field_values` с `@@unique[fieldName, value, projectId]`
+
 ---
 
 ## МОДУЛЬ 11 — Строительный контроль (СК) ✅
