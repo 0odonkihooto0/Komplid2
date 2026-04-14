@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/select';
 import { DataTable } from '@/components/shared/DataTable';
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog';
+import { KsActDialog } from '@/components/modules/ks-acts/KsActDialog';
 import { useExecutionDocs } from './useExecutionDocs';
 import { useDeleteExecutionDoc } from '@/hooks/useDeleteExecutionDoc';
 import { canDelete } from '@/utils/can-delete';
@@ -29,6 +30,7 @@ interface DocRow {
   id: string;
   number: string;
   title: string;
+  type: ExecutionDocType;
   status: ExecutionDocStatus;
   createdBy: { id: string; firstName: string; lastName: string };
 }
@@ -40,6 +42,7 @@ export function ExecutionDocsTable({ contractId, projectId, categoryId, types }:
   const deleteMutation = useDeleteExecutionDoc(projectId, contractId);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [deleteTargetName, setDeleteTargetName] = useState<string>('');
+  const [ksActOpenId, setKsActOpenId] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
   // Фильтрация по категории ИД (ГОСТ Р 70108-2025)
@@ -106,10 +109,24 @@ export function ExecutionDocsTable({ contractId, projectId, categoryId, types }:
         data={filteredDocs}
         searchPlaceholder="Поиск по документам..."
         searchColumn="title"
-        onRowClick={(doc) =>
-          router.push(`/objects/${projectId}/contracts/${contractId}/docs/${doc.id}`)
-        }
+        onRowClick={(doc) => {
+          if (doc.type === 'KS_11' || doc.type === 'KS_14') {
+            setKsActOpenId(doc.id);
+          } else {
+            router.push(`/objects/${projectId}/contracts/${contractId}/docs/${doc.id}`);
+          }
+        }}
       />
+
+      {ksActOpenId && (
+        <KsActDialog
+          open={!!ksActOpenId}
+          onOpenChange={(v) => { if (!v) setKsActOpenId(null); }}
+          actId={ksActOpenId}
+          objectId={projectId}
+          contractId={contractId}
+        />
+      )}
 
       <DeleteConfirmDialog
         open={!!deleteTargetId}

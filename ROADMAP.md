@@ -948,6 +948,22 @@
 - ✅ **Ограничение объёма ГПР**: при переводе ИД в IN_REVIEW проверяется `factVolume` документа vs `GanttTask.volume` (maxAllowedVolume); если сумма всех проведённых ИД по задаче превышает плановый объём → ошибка «Фактический объём превышает максимально допустимый по задаче ГПР»
 - ✅ Миграция `20260414100000_add_saved_field_values`: `ALTER TABLE execution_docs ADD COLUMN "factVolume"`, создание таблицы `saved_field_values` с `@@unique[fieldName, value, projectId]`
 
+### Добавлено (2026-04-14) — Специализированные формы КС-11 и КС-14
+- ✅ **Prisma**: `KsActFormData` — новая модель (1:1 к `ExecutionDoc`); поля пп.3,7,9-15; JSON-разделы: `participants`, `indicators`, `workList`, `commissionMembers` (только КС-14); миграция `20260414110000_add_ks_act_form_data`
+- ✅ **API** (`/api/objects/[oid]/contracts/[cid]/ks-acts/`):
+  - `GET/POST /ks-acts` — список и создание КС-11/КС-14 (атомарное создание `ExecutionDoc + KsActFormData`)
+  - `GET/PATCH /ks-acts/[id]` — деталь и обновление данных формы (upsert)
+  - `POST /ks-acts/[id]/print` — генерация PDF через Handlebars + Puppeteer, загрузка в Timeweb S3, возврат pre-signed URL
+  - `POST /ks-acts/[id]/autofill` — автозаполнение участников из `ContractParticipant` (Застройщик/Подрядчик/Технадзор)
+- ✅ **PDF-шаблоны**: `templates/ks11.hbs`, `templates/ks14.hbs` (структура по ГОСТ Р 70108-2025); `src/lib/ks-act-pdf-generator.ts` (Promise-кэш шаблонов, A4 portrait)
+- ✅ **UI-компоненты** (`src/components/modules/ks-acts/`):
+  - `KsActDialog.tsx` — диалог с вкладками Форма/Файлы/Согласование/Подписание, кнопка «Печать»
+  - `Ks11Form.tsx` — форма КС-11 (пп.3,7,9-15) с React Hook Form
+  - `Ks14Form.tsx` — форма КС-14 (аналог + секция «Члены комиссии»)
+  - `KsActParticipantsSection.tsx`, `KsActIndicatorsSection.tsx`, `KsActWorkListSection.tsx`, `KsActCommissionSection.tsx` — табличные разделы с диалогами добавления
+  - `useKsActForm.ts` — TanStack Query хуки (`useKsActDetail`, `useUpdateKsAct`, `useAutofillParticipants`, `usePrintKsAct`)
+- ✅ **Интеграция**: `ExecutionDocsTable.tsx` — клик по строке КС-11/КС-14 открывает `KsActDialog` вместо навигации на страницу документа
+
 ---
 
 ## МОДУЛЬ 11 — Строительный контроль (СК) ✅
