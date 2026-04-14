@@ -1131,6 +1131,10 @@ model ExecutionDoc {
   // Модуль 9 — Журналы
   journalEntries SpecialJournalEntry[] @relation("JournalEntryDoc")
 
+  // Связанные документы ИД (двунаправленные связи)
+  linksAsSource ExecutionDocLink[] @relation("LinkSource")
+  linksAsTarget ExecutionDocLink[] @relation("LinkTarget")
+
   @@index([contractId])
   @@index([workRecordId])
   @@index([createdById])
@@ -1138,6 +1142,21 @@ model ExecutionDoc {
   @@index([status]) // Фильтрация по статусу — частый запрос
   @@index([categoryId])
   @@map("execution_docs")
+}
+
+/// Связь между двумя исполнительными документами
+model ExecutionDocLink {
+  id          String       @id @default(uuid())
+  sourceDocId String
+  sourceDoc   ExecutionDoc @relation("LinkSource", fields: [sourceDocId], references: [id], onDelete: Cascade)
+  targetDocId String
+  targetDoc   ExecutionDoc @relation("LinkTarget", fields: [targetDocId], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+
+  @@unique([sourceDocId, targetDocId])
+  @@index([sourceDocId])
+  @@index([targetDocId])
+  @@map("execution_doc_links")
 }
 
 /// Маршрут согласования (полиморфный: ExecutionDoc | Correspondence | SEDDocument | Ks2Act)

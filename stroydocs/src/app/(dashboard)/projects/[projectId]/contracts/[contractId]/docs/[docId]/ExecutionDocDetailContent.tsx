@@ -3,19 +3,20 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { ArrowLeft, FileDown, RefreshCw, Pencil, FileEdit, Paperclip, Pen, QrCode, Stamp, FileCode } from 'lucide-react';
+import { ArrowLeft, FileDown, RefreshCw, Pencil, FileEdit, Pen, QrCode, Stamp, FileCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '@/components/shared/StatusBadge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DocCommentsList } from '@/components/modules/execution-docs/DocCommentsList';
 import { ApprovalTree } from '@/components/modules/execution-docs/ApprovalTree';
-import { LinkedDesignDocs } from '@/components/modules/execution-docs/LinkedDesignDocs';
 import { EditDocFieldsDialog } from '@/components/modules/execution-docs/EditDocFieldsDialog';
 import { AosrFieldsTable } from '@/components/modules/execution-docs/AosrFieldsTable';
 import { SignatureDialog } from '@/components/modules/execution-docs/SignatureDialog';
 import { QrCodeDialog } from '@/components/modules/execution-docs/QrCodeDialog';
 import { StampPositioner } from '@/components/modules/execution-docs/StampPositioner';
+import { LinkedDocsTab } from '@/components/modules/execution-docs/LinkedDocsTab';
 import { Breadcrumb } from '@/components/shared/Breadcrumb';
 import { useExecutionDocDetail } from '@/components/modules/execution-docs/useExecutionDocDetail';
 import { EXECUTION_DOC_TYPE_LABELS, EXECUTION_DOC_STATUS_LABELS } from '@/utils/constants';
@@ -38,12 +39,11 @@ interface Props {
 }
 
 export function ExecutionDocDetailContent({ projectId, contractId, docId }: Props) {
+  const [activeTab, setActiveTab] = useState('document');
   const [editFieldsOpen, setEditFieldsOpen] = useState(false);
   const [fieldsTableOpen, setFieldsTableOpen] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
-  const [attachmentPanelOpen, setAttachmentPanelOpen] = useState(false);
   const [signatureType, setSignatureType] = useState<'embedded' | 'detached' | null>(null);
-  const [secondPdfUrl, setSecondPdfUrl] = useState<string | null>(null);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [stampDialogOpen, setStampDialogOpen] = useState(false);
 
@@ -72,6 +72,7 @@ export function ExecutionDocDetailContent({ projectId, contractId, docId }: Prop
   return (
     <div className="space-y-6">
       <Breadcrumb />
+
       {/* Навигация */}
       <Link
         href={`/objects/${projectId}/contracts/${contractId}`}
@@ -90,7 +91,7 @@ export function ExecutionDocDetailContent({ projectId, contractId, docId }: Prop
           <p className="mt-1 text-sm text-muted-foreground">{doc.title}</p>
           <div className="mt-2 flex items-center gap-3">
             <StatusBadge status={doc.status} label={EXECUTION_DOC_STATUS_LABELS[doc.status]} />
-            {/* Индикатор ручного редактирования (Фаза 3.6) */}
+            {/* Индикатор ручного редактирования */}
             {isEdited && (
               <Badge variant="outline" className="gap-1 text-xs text-amber-600 border-amber-300">
                 <Pencil className="h-3 w-3" />
@@ -114,7 +115,7 @@ export function ExecutionDocDetailContent({ projectId, contractId, docId }: Prop
           )}
         </div>
 
-        {/* Действия */}
+        {/* Действия — видны на всех вкладках */}
         <div className="flex flex-wrap gap-2">
           {!doc.s3Key && (
             <Button
@@ -135,7 +136,7 @@ export function ExecutionDocDetailContent({ projectId, contractId, docId }: Prop
               {autofillFromAosrMutation.isPending ? 'Обновление...' : 'Обновить из АОСР'}
             </Button>
           )}
-          {/* Кнопки редактирования — только для DRAFT и REJECTED (Фаза 3.6) */}
+          {/* Кнопки редактирования — только для DRAFT и REJECTED */}
           {canEdit && (
             <>
               <Button variant="outline" onClick={() => doc.type === 'AOSR' ? setFieldsTableOpen((v) => !v) : setEditFieldsOpen(true)}>
@@ -148,14 +149,6 @@ export function ExecutionDocDetailContent({ projectId, contractId, docId }: Prop
               </Button>
             </>
           )}
-          {/* Кнопка приложений */}
-          <Button
-            variant={attachmentPanelOpen ? 'secondary' : 'outline'}
-            onClick={() => { setAttachmentPanelOpen((v) => !v); setSecondPdfUrl(null); }}
-          >
-            <Paperclip className="mr-2 h-4 w-4" />
-            Приложения
-          </Button>
           {/* QR-код документа */}
           <Button variant="outline" onClick={() => setQrDialogOpen(true)}>
             <QrCode className="mr-2 h-4 w-4" />
@@ -168,7 +161,7 @@ export function ExecutionDocDetailContent({ projectId, contractId, docId }: Prop
               Штамп
             </Button>
           )}
-          {/* XML-экспорт по схеме Минстроя (Модуль 10, Шаг 8) */}
+          {/* XML-экспорт по схеме Минстроя */}
           {(doc.type === 'AOSR' || doc.type === 'OZR') && (
             <Button
               variant="outline"
@@ -179,7 +172,7 @@ export function ExecutionDocDetailContent({ projectId, contractId, docId }: Prop
               {exportXmlMutation.isPending ? 'Экспорт...' : 'Экспорт XML'}
             </Button>
           )}
-          {/* Подписание — Фаза 4 */}
+          {/* Подписание — КриптоПро CSP */}
           <Button variant="outline" onClick={() => setSignatureType('embedded')}>
             <Pen className="mr-2 h-4 w-4" />
             Встроенная подпись
@@ -191,83 +184,124 @@ export function ExecutionDocDetailContent({ projectId, contractId, docId }: Prop
         </div>
       </div>
 
-      {/* TipTap rich-text редактор (раскрывается при клике) */}
-      {editorOpen && (
-        <DocRichTextEditor
-          projectId={projectId}
-          contractId={contractId}
-          docId={docId}
-          docStatus={doc.status}
-          onClose={() => setEditorOpen(false)}
-        />
-      )}
-
-      {/* Inline-таблица редактирования полей АОСР (Фаза 3.6) */}
-      {doc.type === 'AOSR' && fieldsTableOpen && (
-        <AosrFieldsTable
-          projectId={projectId}
-          contractId={contractId}
-          docId={docId}
-          docStatus={doc.status}
-          currentOverrideFields={
-            doc.overrideFields && typeof doc.overrideFields === 'object'
-              ? (doc.overrideFields as Record<string, string>)
-              : null
-          }
-          suggestedFields={doc.suggestedFields}
-          onClose={() => setFieldsTableOpen(false)}
-        />
-      )}
-
-      {/* Контент: PDF + (split-view если приложения) + замечания + workflow */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-4">
-          {/* Основной PDF */}
-          <div className={attachmentPanelOpen && secondPdfUrl ? 'grid grid-cols-2 gap-4' : ''}>
-            <div>
-              {doc.downloadUrl ? (
-                <PdfViewer url={doc.downloadUrl} />
-              ) : (
-                <div className="flex h-[400px] items-center justify-center rounded-md border bg-muted/50">
-                  <p className="text-muted-foreground">PDF ещё не сгенерирован. Нажмите «Сгенерировать PDF».</p>
-                </div>
-              )}
-            </div>
-            {/* Второй PDF-вьювер для приложения */}
-            {attachmentPanelOpen && secondPdfUrl && (
-              <PdfViewer url={secondPdfUrl} />
+      {/* Вкладки документа */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
+        <TabsList className="flex-wrap">
+          <TabsTrigger value="document">Документ</TabsTrigger>
+          <TabsTrigger value="approval">Согласование</TabsTrigger>
+          <TabsTrigger value="signing">Подписание</TabsTrigger>
+          <TabsTrigger value="comments">
+            Замечания
+            {/* Счётчик замечаний из comments массива */}
+            {doc.comments.length > 0 && (
+              <span className="ml-1.5 rounded-full bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700">
+                {doc.comments.length}
+              </span>
             )}
-          </div>
+          </TabsTrigger>
+          <TabsTrigger value="versions">Версии</TabsTrigger>
+          <TabsTrigger value="tim">ТИМ</TabsTrigger>
+          <TabsTrigger value="linked">Связанные документы</TabsTrigger>
+          <TabsTrigger value="requisites">Сохр. реквизиты</TabsTrigger>
+        </TabsList>
 
-          {/* Панель приложений */}
-          {attachmentPanelOpen && (
-            <div className="rounded-md border p-4 space-y-2">
-              <p className="text-sm font-medium">Приложения</p>
-              <p className="text-sm text-muted-foreground">
-                Для просмотра приложений откройте вкладку «Документарий» в договоре
-                и выберите связанные сертификаты или схемы.
-              </p>
+        {/* Вкладка: Документ */}
+        <TabsContent value="document" className="mt-4">
+          {/* TipTap rich-text редактор (раскрывается при клике) */}
+          {editorOpen && (
+            <DocRichTextEditor
+              projectId={projectId}
+              contractId={contractId}
+              docId={docId}
+              docStatus={doc.status}
+              onClose={() => setEditorOpen(false)}
+            />
+          )}
+
+          {/* Inline-таблица редактирования полей АОСР */}
+          {doc.type === 'AOSR' && fieldsTableOpen && (
+            <AosrFieldsTable
+              projectId={projectId}
+              contractId={contractId}
+              docId={docId}
+              docStatus={doc.status}
+              currentOverrideFields={
+                doc.overrideFields && typeof doc.overrideFields === 'object'
+                  ? (doc.overrideFields as Record<string, string>)
+                  : null
+              }
+              suggestedFields={doc.suggestedFields}
+              onClose={() => setFieldsTableOpen(false)}
+            />
+          )}
+
+          {/* PDF-просмотрщик */}
+          {doc.downloadUrl ? (
+            <PdfViewer url={doc.downloadUrl} />
+          ) : (
+            <div className="flex h-[400px] items-center justify-center rounded-md border bg-muted/50">
+              <p className="text-muted-foreground">PDF ещё не сгенерирован. Нажмите «Сгенерировать PDF».</p>
             </div>
           )}
-        </div>
+        </TabsContent>
 
-        <div className="space-y-4">
+        {/* Вкладка: Согласование */}
+        <TabsContent value="approval" className="mt-4">
           <ApprovalTree
             projectId={projectId}
             contractId={contractId}
             docId={docId}
             docStatus={doc.status}
           />
+        </TabsContent>
+
+        {/* Вкладка: Подписание */}
+        <TabsContent value="signing" className="mt-4">
+          <div className="flex flex-col items-center justify-center rounded-md border border-dashed py-14 text-center">
+            <p className="text-sm font-medium text-muted-foreground">Подписание ЭЦП</p>
+            <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+              Функция доступна после настройки провайдера ЭЦП (КриптоПро CSP) в настройках организации
+            </p>
+          </div>
+        </TabsContent>
+
+        {/* Вкладка: Замечания */}
+        <TabsContent value="comments" className="mt-4">
           <DocCommentsList
             projectId={projectId}
             contractId={contractId}
             docId={docId}
           />
-          <LinkedDesignDocs projectId={projectId} docId={docId} />
-        </div>
-      </div>
+        </TabsContent>
 
-      {/* Диалог подписания (Фаза 4 — КриптоПро) */}
+        {/* Вкладка: Версии — в разработке */}
+        <TabsContent value="versions" className="mt-4">
+          <div className="flex flex-col items-center justify-center rounded-md border border-dashed py-14 text-center">
+            <p className="text-sm font-medium text-muted-foreground">Версии документа — в разработке</p>
+          </div>
+        </TabsContent>
+
+        {/* Вкладка: ТИМ — в разработке */}
+        <TabsContent value="tim" className="mt-4">
+          <div className="flex flex-col items-center justify-center rounded-md border border-dashed py-14 text-center">
+            <p className="text-sm font-medium text-muted-foreground">Связи с ТИМ-моделью — в разработке</p>
+          </div>
+        </TabsContent>
+
+        {/* Вкладка: Связанные документы */}
+        <TabsContent value="linked" className="mt-4">
+          <LinkedDocsTab projectId={projectId} contractId={contractId} docId={docId} />
+        </TabsContent>
+
+        {/* Вкладка: Сохранённые реквизиты — в разработке */}
+        <TabsContent value="requisites" className="mt-4">
+          <div className="flex flex-col items-center justify-center rounded-md border border-dashed py-14 text-center">
+            <p className="text-sm font-medium text-muted-foreground">Сохранённые реквизиты — в разработке</p>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Диалог подписания (КриптоПро CSP) */}
       {signatureType && (
         <SignatureDialog
           open={!!signatureType}
@@ -277,7 +311,7 @@ export function ExecutionDocDetailContent({ projectId, contractId, docId }: Prop
         />
       )}
 
-      {/* Диалог редактирования полей для остальных типов документов (Фаза 3.6.1) */}
+      {/* Диалог редактирования полей для остальных типов документов */}
       {doc.type !== 'AOSR' && (
         <EditDocFieldsDialog
           open={editFieldsOpen}
@@ -294,6 +328,7 @@ export function ExecutionDocDetailContent({ projectId, contractId, docId }: Prop
           }
         />
       )}
+
       {/* Диалог QR-кода */}
       <QrCodeDialog
         open={qrDialogOpen}
@@ -304,6 +339,7 @@ export function ExecutionDocDetailContent({ projectId, contractId, docId }: Prop
         docTitle={`${EXECUTION_DOC_TYPE_LABELS[doc.type]} № ${doc.number}`}
         hasS3Key={!!doc.s3Key}
       />
+
       {/* Диалог штампа на PDF */}
       {doc.downloadUrl && (
         <StampPositioner
