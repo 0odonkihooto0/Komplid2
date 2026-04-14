@@ -23,14 +23,16 @@ interface ExecutionDoc {
   _count: { signatures: number; comments: number };
 }
 
-export function useExecutionDocs(contractId: string) {
+export function useExecutionDocs(contractId: string, categoryId?: string | null) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const { data: docs = [], isLoading } = useQuery<ExecutionDoc[]>({
-    queryKey: ['execution-docs', contractId],
+    queryKey: ['execution-docs', contractId, categoryId ?? null],
     queryFn: async () => {
-      const res = await fetch(`/api/contracts/${contractId}/execution-docs`);
+      const url = new URL(`/api/contracts/${contractId}/execution-docs`, window.location.origin);
+      if (categoryId) url.searchParams.set('categoryId', categoryId);
+      const res = await fetch(url.toString());
       const json = await res.json();
       return json.success ? json.data : [];
     },

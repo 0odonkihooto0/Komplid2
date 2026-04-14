@@ -74,6 +74,7 @@
 - ✅ Шаблоны документов .docx (docxtemplater + pizzip, DocumentTemplate)
 - ✅ Редактор полей акта (overrideFields / overrideHtml / TipTap WYSIWYG)
 - ✅ Штамп «Копия верна» на PDF (ФИО, должность)
+- ✅ Иерархические категории ИД (`IdDocCategory`): дерево категорий проекта + шаблоны на уровне организации, импорт шаблонов, фильтрация АОСР/ОЖР по категории (панель `IdCategoryTree` слева в таблице документов + CRUD API + API шаблонов организации) — миграция `add_id_categories`
 
 ---
 
