@@ -1143,6 +1143,9 @@ model ExecutionDoc {
   linksAsSource ExecutionDocLink[] @relation("LinkSource")
   linksAsTarget ExecutionDocLink[] @relation("LinkTarget")
 
+  // Структурированная форма КС-11 / КС-14
+  ksActFormData KsActFormData?
+
   @@index([contractId])
   @@index([workRecordId])
   @@index([createdById])
@@ -1165,6 +1168,53 @@ model ExecutionDocLink {
   @@index([sourceDocId])
   @@index([targetDocId])
   @@map("execution_doc_links")
+}
+
+/// Структурированные данные формы КС-11 / КС-14 (Акт приёмки законченного строительством объекта)
+model KsActFormData {
+  id String @id @default(uuid())
+
+  // п.3 — Проектная организация
+  designOrg    String? // Наименование
+  designOrgInn String? // ИНН
+
+  // п.7 — Краткая характеристика объекта
+  objectDesc        String? // Описание объекта
+  totalArea         Float? // Общая площадь, м²
+  buildingVolume    Float? // Строительный объём, м³
+  floorCount        Int? // Количество этажей
+  constructionClass String? // Класс ответственности
+
+  // п.9 — Сроки строительства
+  startDate DateTime?
+  endDate   DateTime?
+
+  // п.11 — Принятые решения при отклонениях от проекта
+  deviations String?
+
+  // п.12 — Стоимость строительства
+  constructionCost Float? // По смете
+  actualCost       Float? // Фактическая
+
+  // п.14 — Перечень документов
+  documents String?
+
+  // п.15 — Заключение комиссии
+  conclusion String?
+
+  // Табличные разделы (JSON-массивы)
+  participants      Json? // [{role,orgName,inn,representative,position,order}]
+  indicators        Json? // [{name,unit,designValue,actualValue}]
+  workList          Json? // [{name,unit,volume,note}]
+  commissionMembers Json? // только КС-14: [{name,position,role,orgName}]
+
+  executionDocId String       @unique
+  executionDoc   ExecutionDoc @relation(fields: [executionDocId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("ks_act_form_data")
 }
 
 /// Маршрут согласования (полиморфный: ExecutionDoc | Correspondence | SEDDocument | Ks2Act)

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: 'Times New Roman', serif; font-size: 11pt; margin: 0; padding: 0; }
+  h1 { text-align: center; font-size: 13pt; text-transform: uppercase; margin: 8pt 0 2pt; }
+  h2 { text-align: center; font-size: 11pt; font-weight: normal; margin: 2pt 0 10pt; }
+  .form-number { text-align: right; font-size: 9pt; margin-bottom: 6pt; }
+  table { width: 100%; border-collapse: collapse; margin: 6pt 0; font-size: 10pt; }
+  th, td { border: 1px solid #000; padding: 3pt 5pt; vertical-align: top; }
+  th { background-color: #f0f0f0; font-weight: bold; text-align: center; }
+  .text-center { text-align: center; }
+  .text-right { text-align: right; }
+  .section { margin: 8pt 0; }
+  .section-title { font-weight: bold; margin-bottom: 4pt; }
+  .field-row { display: flex; margin-bottom: 4pt; gap: 8pt; }
+  .field-label { font-weight: bold; min-width: 200pt; flex-shrink: 0; }
+  .field-value { border-bottom: 1px solid #000; flex: 1; min-height: 14pt; }
+  .signatures { margin-top: 20pt; }
+  .sig-block { margin-bottom: 14pt; }
+  .sig-line { border-bottom: 1px solid #000; display: inline-block; width: 160pt; }
+  p { margin: 4pt 0; }
+</style>
+</head>
+<body>
+
+<div class="form-number">
+  Унифицированная форма № КС-14<br>
+  ОКУД 0330212
+</div>
+
+<h1>АКТ № {{number}}</h1>
+<h2>приёмки законченного строительством объекта приёмочной комиссией</h2>
+
+<p class="text-center">{{#if documentDate}}от {{documentDate}}{{/if}}</p>
+
+<div class="section">
+  <div class="field-row">
+    <span class="field-label">Застройщик (Заказчик):</span>
+    <span class="field-value">{{developerName}}</span>
+  </div>
+  <div class="field-row">
+    <span class="field-label">Подрядчик:</span>
+    <span class="field-value">{{contractorName}}</span>
+  </div>
+  <div class="field-row">
+    <span class="field-label">Договор подряда №:</span>
+    <span class="field-value">{{contractNumber}}</span>
+  </div>
+</div>
+
+{{#if commissionMembers.length}}
+<div class="section">
+  <p class="section-title">Состав приёмочной комиссии:</p>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:5%">№</th>
+        <th style="width:25%">Роль в комиссии</th>
+        <th style="width:30%">ФИО</th>
+        <th style="width:25%">Должность</th>
+        <th style="width:15%">Организация</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each commissionMembers}}
+      <tr>
+        <td class="text-center">{{addOne @index}}</td>
+        <td>{{this.role}}</td>
+        <td>{{this.name}}</td>
+        <td>{{this.position}}</td>
+        <td>{{this.orgName}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+{{/if}}
+
+<div class="section">
+  <p class="section-title">1. Наименование объекта:</p>
+  <p>{{projectName}}{{#if projectAddress}}, {{projectAddress}}{{/if}}</p>
+</div>
+
+<div class="section">
+  <div class="field-row">
+    <span class="field-label">Дата начала строительства:</span>
+    <span class="field-value">{{startDate}}</span>
+  </div>
+  <div class="field-row">
+    <span class="field-label">Дата окончания строительства:</span>
+    <span class="field-value">{{endDate}}</span>
+  </div>
+</div>
+
+<div class="section">
+  <p class="section-title">3. Проектная организация:</p>
+  <div class="field-row">
+    <span class="field-label">Наименование:</span>
+    <span class="field-value">{{designOrg}}</span>
+  </div>
+  {{#if designOrgInn}}
+  <div class="field-row">
+    <span class="field-label">ИНН:</span>
+    <span class="field-value">{{designOrgInn}}</span>
+  </div>
+  {{/if}}
+</div>
+
+<div class="section">
+  <p class="section-title">7. Краткая характеристика объекта:</p>
+  <p>{{objectDesc}}</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Показатель</th>
+        <th>Значение</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#if totalArea}}
+      <tr><td>Общая площадь, м²</td><td>{{totalArea}}</td></tr>
+      {{/if}}
+      {{#if buildingVolume}}
+      <tr><td>Строительный объём, м³</td><td>{{buildingVolume}}</td></tr>
+      {{/if}}
+      {{#if floorCount}}
+      <tr><td>Количество этажей</td><td>{{floorCount}}</td></tr>
+      {{/if}}
+      {{#if constructionClass}}
+      <tr><td>Класс ответственности</td><td>{{constructionClass}}</td></tr>
+      {{/if}}
+    </tbody>
+  </table>
+</div>
+
+{{#if indicators.length}}
+<div class="section">
+  <p class="section-title">9. Технические показатели:</p>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:5%">№</th>
+        <th style="width:45%">Наименование показателя</th>
+        <th style="width:15%">Ед. изм.</th>
+        <th style="width:17%">По проекту</th>
+        <th style="width:18%">Фактически</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each indicators}}
+      <tr>
+        <td class="text-center">{{addOne @index}}</td>
+        <td>{{this.name}}</td>
+        <td class="text-center">{{this.unit}}</td>
+        <td class="text-center">{{this.designValue}}</td>
+        <td class="text-center">{{this.actualValue}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+{{/if}}
+
+{{#if workList.length}}
+<div class="section">
+  <p class="section-title">10. Перечень выполненных работ:</p>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:5%">№</th>
+        <th style="width:50%">Наименование работ</th>
+        <th style="width:15%">Ед. изм.</th>
+        <th style="width:15%">Объём</th>
+        <th style="width:15%">Примечание</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each workList}}
+      <tr>
+        <td class="text-center">{{addOne @index}}</td>
+        <td>{{this.name}}</td>
+        <td class="text-center">{{this.unit}}</td>
+        <td class="text-center">{{this.volume}}</td>
+        <td>{{this.note}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+{{/if}}
+
+{{#if deviations}}
+<div class="section">
+  <p class="section-title">11. Принятые решения при отклонениях от проекта:</p>
+  <p>{{deviations}}</p>
+</div>
+{{/if}}
+
+{{#if constructionCost}}
+<div class="section">
+  <p class="section-title">12. Стоимость строительства:</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Показатель</th>
+        <th>Сумма, руб.</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>По смете</td><td class="text-right">{{constructionCost}}</td></tr>
+      {{#if actualCost}}
+      <tr><td>Фактическая</td><td class="text-right">{{actualCost}}</td></tr>
+      {{/if}}
+    </tbody>
+  </table>
+</div>
+{{/if}}
+
+{{#if participants.length}}
+<div class="section">
+  <p class="section-title">13. Сведения об участниках строительства:</p>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:5%">№</th>
+        <th style="width:20%">Роль</th>
+        <th style="width:25%">Организация</th>
+        <th style="width:15%">ИНН</th>
+        <th style="width:20%">Представитель</th>
+        <th style="width:15%">Приказ №</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each participants}}
+      <tr>
+        <td class="text-center">{{addOne @index}}</td>
+        <td>{{this.role}}</td>
+        <td>{{this.orgName}}</td>
+        <td>{{this.inn}}</td>
+        <td>{{this.representative}}</td>
+        <td>{{this.order}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+{{/if}}
+
+{{#if documents}}
+<div class="section">
+  <p class="section-title">14. Прилагаемые документы:</p>
+  <p>{{documents}}</p>
+</div>
+{{/if}}
+
+{{#if conclusion}}
+<div class="section">
+  <p class="section-title">15. Заключение комиссии:</p>
+  <p>{{conclusion}}</p>
+</div>
+{{/if}}
+
+<div class="signatures">
+  <p>Председатель комиссии:</p>
+  <div class="sig-block">
+    <span class="sig-line">&nbsp;</span>
+    <span class="small"> (подпись, расшифровка, дата)</span>
+  </div>
+  <p>Члены комиссии:</p>
+  {{#each commissionMembers}}
+  <div class="sig-block">
+    <span>{{this.role}}: </span>
+    <span class="sig-line">&nbsp;</span>
+    <span class="small"> {{this.name}}</span>
+  </div>
+  {{/each}}
+</div>
+
+</body>
+</html>
