@@ -245,6 +245,17 @@ export interface EntryDetail {
   remarks: RemarkItem[];
 }
 
+// === Тип раздела ОЖР с записями (GET /journals/[journalId]/sections) ===
+
+export interface SectionWithEntries {
+  id: string;
+  sectionNumber: number;
+  title: string;
+  journalId: string;
+  createdAt: string;
+  entries: JournalEntryItem[];
+}
+
 // === Тип записи журнала (GET /journals/[journalId]/entries) ===
 
 export interface JournalEntryItem {

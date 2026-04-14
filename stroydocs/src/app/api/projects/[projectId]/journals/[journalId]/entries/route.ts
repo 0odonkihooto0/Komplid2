@@ -103,7 +103,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       return errorResponse('Ошибка валидации', 400, parsed.error.issues);
     }
 
-    const { date, description, location, normativeRef, weather, temperature, data, inspectionDate, executionDocId } = parsed.data;
+    const { date, description, location, normativeRef, weather, temperature, data, inspectionDate, executionDocId, sectionId } = parsed.data;
 
     // Проверка привязки к ИД
     if (executionDocId) {
@@ -112,6 +112,15 @@ export async function POST(req: NextRequest, { params }: Params) {
         select: { id: true },
       });
       if (!execDoc) return errorResponse('Исполнительный документ не найден', 404);
+    }
+
+    // Проверка принадлежности раздела журналу
+    if (sectionId) {
+      const sec = await db.journalSection.findFirst({
+        where: { id: sectionId, journalId: params.journalId },
+        select: { id: true },
+      });
+      if (!sec) return errorResponse('Раздел не найден', 404);
     }
 
     // Авто-нумерация entryNumber в транзакции с advisory lock
@@ -138,6 +147,7 @@ export async function POST(req: NextRequest, { params }: Params) {
           data: data !== undefined ? data as Prisma.InputJsonValue : undefined,
           inspectionDate: inspectionDate ? new Date(inspectionDate) : null,
           executionDocId: executionDocId ?? null,
+          sectionId: sectionId ?? null,
           journalId: params.journalId,
           authorId: session.user.id,
         },

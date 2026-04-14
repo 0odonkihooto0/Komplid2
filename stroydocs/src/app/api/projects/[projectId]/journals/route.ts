@@ -163,6 +163,20 @@ export async function POST(
       },
     });
 
+    // Автосоздание 6 разделов для ОЖР (Приказ Ростехнадзора № 1026/пр)
+    if (type === 'OZR_1026PR') {
+      await db.journalSection.createMany({
+        data: [
+          { journalId: journal.id, sectionNumber: 1, title: 'Список ИТП подрядчика' },
+          { journalId: journal.id, sectionNumber: 2, title: 'Список ИТП стройконтроля' },
+          { journalId: journal.id, sectionNumber: 3, title: 'Сведения о выполнении работ' },
+          { journalId: journal.id, sectionNumber: 4, title: 'Сведения о стройконтроле' },
+          { journalId: journal.id, sectionNumber: 5, title: 'Перечень ИД' },
+          { journalId: journal.id, sectionNumber: 6, title: 'Сведения об отступлениях от ПД' },
+        ],
+      });
+    }
+
     return successResponse(journal);
   } catch (error) {
     if (error instanceof NextResponse) return error;

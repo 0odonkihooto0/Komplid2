@@ -73,6 +73,7 @@ export const createJournalEntrySchema = z.object({
   data: z.record(z.string(), z.unknown()).optional(),
   inspectionDate: z.string().optional(),
   executionDocId: z.string().uuid().optional(),
+  sectionId: z.string().uuid().optional(),
 });
 
 /** Обновление записи журнала (включая смену статуса) */
