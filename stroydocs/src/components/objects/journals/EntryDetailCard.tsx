@@ -42,6 +42,46 @@ const DATA_FIELD_LABELS: Partial<Record<string, Record<string, string>>> = {
     deviationsFound: 'Обнаруженные отклонения', instructions: 'Указания',
     instructionDeadline: 'Срок выполнения', implementationNote: 'Отметка о выполнении',
   },
+  MOUNTING_WORKS: {
+    structureName: 'Конструкция', structureMark: 'Марка', mass: 'Масса (т)',
+    mountingMethod: 'Способ монтажа', installationTolerance: 'Погрешность (мм)',
+    alignmentMethod: 'Способ выверки', fastenerType: 'Крепление',
+  },
+  ANTICORROSION: {
+    materialMark: 'Марка материала', consumption: 'Расход (кг/м²)', layers: 'Слоёв',
+    method: 'Метод нанесения', surfacePrep: 'Подготовка поверхности',
+    dryFilmThickness: 'Толщина плёнки (мкм)', ambientTemperature: 'Температура (°C)',
+  },
+  GEODETIC: {
+    picket: 'Пикет', designElevation: 'Отметка проектная (м)',
+    actualElevation: 'Отметка фактическая (м)', deviation: 'Отклонение (мм)',
+    instrument: 'Прибор', instrumentNumber: 'Зав. номер', measuredBy: 'Замер выполнил',
+  },
+  EARTHWORKS: {
+    soilType: 'Тип грунта', volume: 'Объём (м³)', mechanism: 'Механизм',
+    depth: 'Глубина (м)', excavationWidth: 'Ширина выемки (м)',
+    soilCategory: 'Категория грунта', dewatering: 'Водоотлив',
+  },
+  PILE_DRIVING: {
+    pileNumber: 'Номер сваи', pileLength: 'Длина (м)', refusal: 'Отказ (мм)',
+    hammerType: 'Тип молота', pileType: 'Тип сваи',
+    penetrationDepth: 'Глубина погружения (м)', beamElevation: 'Отметка головы (м)',
+  },
+  CABLE_LAYING: {
+    cableMark: 'Марка кабеля', cableLength: 'Длина (м)', route: 'Трасса',
+    voltage: 'Напряжение (кВ)', crossSection: 'Сечение (мм²)',
+    layingMethod: 'Способ прокладки', cableNumber: 'Кабель №',
+  },
+  FIRE_SAFETY: {
+    briefingType: 'Вид инструктажа', fullName: 'ФИО инструктируемого',
+    position: 'Должность', instructorFullName: 'ФИО инструктора',
+    instructorPosition: 'Должность инструктора', signatureDate: 'Дата подписи',
+  },
+  DRILLING_WORKS: {
+    wellNumber: 'Номер скважины', diameter: 'Диаметр (мм)', depth: 'Глубина (м)',
+    boreMachineType: 'Буровой станок', drillingMethod: 'Способ бурения',
+    coreRecovery: 'Выход керна (%)', groundwaterDepth: 'Уровень воды (м)',
+  },
 };
 
 const displayName = (u: { firstName: string | null; lastName: string | null }) =>

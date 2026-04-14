@@ -994,6 +994,11 @@
 - ✅ `JournalPrintMenu.tsx` — DropdownMenu «Печать» (.pdf / .doc / .xls) в шапке `JournalCard`
 - ✅ `renderJournalHtml()` добавлен в `journal-pdf-generator.ts` (переиспользует кэш Handlebars-шаблонов для DOC)
 
+### Добавлено (2026-04-14) — Компоненты полей для 8 типов журналов
+- ✅ Компоненты полей (fields/) для 8 типов: `MountingWorksFields`, `AnticorrosionFields`, `GeodeticFields`, `EarthworksFields`, `PileDrivingFields`, `CableLayingFields`, `FireSafetyFields`, `DrillingWorksFields`
+- ✅ `CreateEntryDialog` расширен: switch с 8 новыми case — type-specific поля отображаются при создании записи
+- ✅ `EntryDetailCard` расширен: `DATA_FIELD_LABELS` с 8 новыми записями — русские label'ы в read-only просмотре
+
 ---
 
 ## МОДУЛЬ 10 — Исполнительная документация (ИД) ✅

@@ -19,6 +19,14 @@ import type { CreateJournalEntryInput } from '@/lib/validations/journal-schemas'
 import { ConcreteWorksFields } from './fields/ConcreteWorksFields';
 import { WeldingWorksFields } from './fields/WeldingWorksFields';
 import { SupervisionFields } from './fields/SupervisionFields';
+import { MountingWorksFields } from './fields/MountingWorksFields';
+import { AnticorrosionFields } from './fields/AnticorrosionFields';
+import { GeodeticFields } from './fields/GeodeticFields';
+import { EarthworksFields } from './fields/EarthworksFields';
+import { PileDrivingFields } from './fields/PileDrivingFields';
+import { CableLayingFields } from './fields/CableLayingFields';
+import { FireSafetyFields } from './fields/FireSafetyFields';
+import { DrillingWorksFields } from './fields/DrillingWorksFields';
 
 interface Props {
   open: boolean;
@@ -100,6 +108,22 @@ export function CreateEntryDialog({
         return <WeldingWorksFields data={data} onChange={setData} />;
       case 'AUTHOR_SUPERVISION':
         return <SupervisionFields data={data} onChange={setData} />;
+      case 'MOUNTING_WORKS':
+        return <MountingWorksFields data={data} onChange={setData} />;
+      case 'ANTICORROSION':
+        return <AnticorrosionFields data={data} onChange={setData} />;
+      case 'GEODETIC':
+        return <GeodeticFields data={data} onChange={setData} />;
+      case 'EARTHWORKS':
+        return <EarthworksFields data={data} onChange={setData} />;
+      case 'PILE_DRIVING':
+        return <PileDrivingFields data={data} onChange={setData} />;
+      case 'CABLE_LAYING':
+        return <CableLayingFields data={data} onChange={setData} />;
+      case 'FIRE_SAFETY':
+        return <FireSafetyFields data={data} onChange={setData} />;
+      case 'DRILLING_WORKS':
+        return <DrillingWorksFields data={data} onChange={setData} />;
       default:
         return null;
     }
