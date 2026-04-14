@@ -7,6 +7,14 @@
 
 ## Prisma / База данных
 
+**Nullable Prisma relation в `include` — прямой доступ без null-check блокирует сборку.**
+`JournalEntryRemark.entryId String?` → `entry SpecialJournalEntry?` — поле nullable.
+Код `remark.entry.journal.projectId` без проверки → TS18047 при `Checking validity of types`.
+Docker-build падает с `Type error: 'remark.entry' is possibly 'null'`.
+Правило: если в Prisma `include` используется nullable relation (`Field?`) — перед обращением
+к свойству добавлять явную проверку: `!remark.entry || remark.entry.journal.projectId !== ...`.
+Не путать с non-nullable relations: `SpecialJournalEntry.journal` (не nullable) — доступ безопасен.
+
 **Edit tool молча падает на stale context.**
 Старый контент файла не совпадает с `old_string` → правка не применяется,
 но инструмент не сообщает об ошибке. Всегда перечитывать файл перед edit,
