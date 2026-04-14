@@ -153,12 +153,12 @@ export function CreateJournalDialog({ open, onOpenChange, projectId }: Props) {
           {/* Договор */}
           <div className="space-y-1.5">
             <Label>Договор</Label>
-            <Select value={contractId} onValueChange={setContractId}>
+            <Select value={contractId || 'NONE'} onValueChange={(v) => setContractId(v === 'NONE' ? '' : v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Без привязки к договору" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Без привязки</SelectItem>
+                <SelectItem value="NONE">Без привязки</SelectItem>
                 {contracts.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.number} — {c.name}

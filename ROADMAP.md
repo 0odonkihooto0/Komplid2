@@ -935,6 +935,10 @@
 - ✅ Enum: `SpecialJournalType` (11 значений), `JournalStatus`, `JournalEntryStatus`
 - ✅ Связи: BuildingObject, Contract, User (5), ExecutionDoc, ApprovalRoute
 
+### Исправления (2026-04-14)
+- 🐛 Создана миграция `20260414000000_fix_estimate_categories` — таблица `estimate_categories` и FK `categoryId` в `estimate_versions` (P2021 при обращении к модулю смет)
+- 🐛 Исправлены 4 вхождения `<SelectItem value="">` в `JournalRegistry`, `JournalEntryList`, `CreateJournalDialog` — заменены на сентинелы `"ALL"` / `"NONE"` (Radix UI v2.2.6 запрещает пустую строку)
+
 ---
 
 ## МОДУЛЬ 10 — Исполнительная документация (ИД) ✅
