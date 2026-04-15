@@ -23,6 +23,7 @@ const addDefectSchema = z.object({
   requiresSuspension: z.boolean().default(false),
   gpsLat: z.number().optional(),
   gpsLng: z.number().optional(),
+  substituteInspectorId: z.string().optional(),
 });
 
 // POST /api/projects/[projectId]/inspections/[id]/add-defect — добавить недостаток к проверке
@@ -68,6 +69,7 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
       include: {
         author: { select: { id: true, firstName: true, lastName: true } },
         assignee: { select: { id: true, firstName: true, lastName: true } },
+        substituteInspector: { select: { id: true, firstName: true, lastName: true } },
       },
     });
 

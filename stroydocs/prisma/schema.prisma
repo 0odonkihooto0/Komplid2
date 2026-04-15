@@ -219,8 +219,9 @@ model User {
   ks2ActsCreated          Ks2Act[]                 @relation("Ks2ActCreator")
   activityLogs            ActivityLog[]
   ganttVersionsCreated    GanttVersion[]
-  defectsAuthored         Defect[]                 @relation("DefectAuthor")
-  defectsAssigned         Defect[]                 @relation("DefectAssignee")
+  defectsAuthored              Defect[]                 @relation("DefectAuthor")
+  defectsAssigned              Defect[]                 @relation("DefectAssignee")
+  defectsAsSubstituteInspector Defect[]                 @relation("DefectSubstituteInspector")
   defectComments          DefectComment[]
   dashboardWidgets        DashboardWidget[]
   dailyLogs               DailyLog[]
@@ -2069,7 +2070,11 @@ model Defect {
   inspection         Inspection?   @relation(fields: [inspectionId], references: [id])
   prescriptionId     String?
   prescription       Prescription? @relation(fields: [prescriptionId], references: [id])
-  deputyInspectorId  String? // ID заместителя инспектора
+  deputyInspectorId  String? // ID заместителя инспектора (устаревшее, без relation)
+
+  // Замещающий инженер СК (ЦУС стр. 269)
+  substituteInspectorId String?
+  substituteInspector   User?   @relation("DefectSubstituteInspector", fields: [substituteInspectorId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
