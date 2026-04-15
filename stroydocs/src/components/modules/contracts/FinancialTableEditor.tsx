@@ -36,8 +36,8 @@ export function FinancialTableEditor({ projectId, contractId, tableId, onDelete 
   // Синхронизировать локальное состояние при получении данных с сервера
   useEffect(() => {
     if (!table) return;
-    setLocalColumns(table.columns as TableColumn[]);
-    setLocalRows(table.rows as TableRow[]);
+    setLocalColumns(table.columns as unknown as TableColumn[]);
+    setLocalRows(table.rows as unknown as TableRow[]);
   }, [table]);
 
   /** Отправить изменения на сервер с задержкой */

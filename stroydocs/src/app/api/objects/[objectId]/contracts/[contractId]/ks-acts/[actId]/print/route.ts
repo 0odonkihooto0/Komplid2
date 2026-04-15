@@ -85,7 +85,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
       documents: form?.documents ?? undefined,
       conclusion: form?.conclusion ?? undefined,
       participants: Array.isArray(form?.participants)
-        ? (form.participants as KsActParticipant[])
+        ? (form.participants as unknown as KsActParticipant[])
         : doc.contract.participants.map((p) => ({
             role: ROLE_LABELS[p.role] ?? p.role,
             orgName: p.organization?.name ?? '',
@@ -95,10 +95,10 @@ export async function POST(_req: NextRequest, { params }: Params) {
             order: p.appointmentOrder ?? undefined,
           })),
       indicators: Array.isArray(form?.indicators)
-        ? (form.indicators as KsActIndicator[])
+        ? (form.indicators as unknown as KsActIndicator[])
         : [],
       workList: Array.isArray(form?.workList)
-        ? (form.workList as KsActWorkItem[])
+        ? (form.workList as unknown as KsActWorkItem[])
         : [],
     };
 
@@ -108,7 +108,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
       const ks14Data: Ks14PdfData = {
         ...pdfBase,
         commissionMembers: Array.isArray(form?.commissionMembers)
-          ? (form.commissionMembers as KsActCommissionMember[])
+          ? (form.commissionMembers as unknown as KsActCommissionMember[])
           : [],
       };
       pdfBuffer = await generateKs14Pdf(ks14Data);
