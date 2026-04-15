@@ -1040,12 +1040,15 @@
 - 4 Handlebars-шаблона PDF (`templates/sk/`)
 - `lib/pdf/sk-pdf-generator.ts`
 
-### Улучшения (2026-04-15) — ЦУС стр. 269, 274
+### Улучшения (2026-04-15) — ЦУС стр. 269, 273, 274
 - ✅ `Defect.substituteInspectorId String?` + `@relation("DefectSubstituteInspector")` — замещающий инженер СК на время отпуска/болезни основного инспектора; миграция `20260415000000_add_defect_substitute_inspector`
 - ✅ UI: поле «Замещающий инженер СК» в `AddDefectDialog` с подсказкой (ЦУС стр. 269)
 - ✅ API `add-defect`: принимает и сохраняет `substituteInspectorId`; `useAddDefectToInspection` — тип расширен
 - ✅ API `complete` (ЦУС стр. 274): проверка `contractorPresent !== null` и `responsibleId` перед завершением уже реализована
 - ✅ UI `CompleteInspectionDialog`: инлайн-ошибка при незаполненном `contractorPresent` уже реализована
+- ✅ `DefectNormativeRef` — реестр нормативных ссылок к дефекту (ЦУС стр. 273); миграция `20260415010000_add_defect_normative_refs`
+- ✅ API: `GET/POST .../defects/[id]/normative-refs`, `DELETE .../normative-refs/[refId]`; `normativeRefs` включены в DEFECT_INCLUDE
+- ✅ UI: вкладка «Стандарты» в `DefectDetailCard` — readonly строка `normativeRef` + CRUD-таблица (`NormativeRefsTab.tsx` + `useNormativeRefs.ts`)
 
 ---
 

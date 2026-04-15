@@ -9,6 +9,7 @@ import { RejectDefectDialog } from './RejectDefectDialog';
 import { ExtendDeadlineDialog } from './ExtendDeadlineDialog';
 import { useDefectDetail, useDefectPhotos } from './useDefectDetail';
 import { useAcceptDefect } from '@/components/modules/defects/useDefects';
+import { NormativeRefsTab } from './NormativeRefsTab';
 
 const CATEGORY_LABELS: Record<string, string> = {
   QUALITY_VIOLATION: 'Нарушение ОТ',
@@ -102,6 +103,9 @@ export function DefectDetailCard({ objectId, defectId }: Props) {
             История ({defect.comments?.length ?? 0})
           </TabsTrigger>
           <TabsTrigger value="location">Геолокация</TabsTrigger>
+          <TabsTrigger value="normativeRefs">
+            Стандарты ({(defect.normativeRefs?.length ?? 0) + (defect.normativeRef ? 1 : 0)})
+          </TabsTrigger>
         </TabsList>
 
         {/* 1. Информация */}
@@ -295,6 +299,16 @@ export function DefectDetailCard({ objectId, defectId }: Props) {
           ) : (
             <p className="text-sm text-muted-foreground">GPS-координаты не указаны</p>
           )}
+        </TabsContent>
+
+        {/* 9. Нарушенные стандарты */}
+        <TabsContent value="normativeRefs" className="pt-4">
+          <NormativeRefsTab
+            objectId={objectId}
+            defectId={defectId}
+            normativeRef={defect.normativeRef ?? null}
+            normativeRefs={defect.normativeRefs ?? []}
+          />
         </TabsContent>
       </Tabs>
 

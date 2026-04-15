@@ -22,6 +22,7 @@ const DEFECT_INCLUDE = {
   prescription: {
     select: { id: true, number: true, type: true, status: true, deadline: true },
   },
+  normativeRefs: { orderBy: { createdAt: 'asc' as const } },
 } as const;
 
 async function getDefectOrThrow(defectId: string, projectId: string, orgId: string) {

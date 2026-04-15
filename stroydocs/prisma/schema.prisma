@@ -2081,6 +2081,7 @@ model Defect {
 
   comments        DefectComment[]
   annotationItems DefectAnnotation[]
+  normativeRefs   DefectNormativeRef[]
 
   @@index([projectId])
   @@index([projectId, status])
@@ -5502,4 +5503,18 @@ model SavedFieldValue {
   @@unique([fieldName, value, projectId])
   @@index([fieldName, projectId])
   @@map("saved_field_values")
+}
+
+// Нормативные ссылки к дефекту (ЦУС стр. 273) — дополнение к нарушенным стандартам
+model DefectNormativeRef {
+  id          String  @id @default(uuid())
+  defectId    String
+  defect      Defect  @relation(fields: [defectId], references: [id], onDelete: Cascade)
+  reference   String  // Например: "ГОСТ Р 12.0.230-2007 п. 4.3"
+  description String?
+
+  createdAt DateTime @default(now())
+
+  @@index([defectId])
+  @@map("defect_normative_refs")
 }
