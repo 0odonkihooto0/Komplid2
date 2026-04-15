@@ -192,3 +192,55 @@ export async function generateRemediationActPdf(data: RemediationActPdfData): Pr
   const html = template(data);
   return htmlToPdf(html);
 }
+
+// ─── HTML-рендер без Puppeteer (для экспорта с последующим merge через pdf-lib) ─
+
+export async function renderInspectionActHtml(data: InspectionActPdfData): Promise<string> {
+  const template = await getInspectionActTemplate();
+  return template(data);
+}
+
+export async function renderPrescriptionHtml(data: PrescriptionPdfData): Promise<string> {
+  const template = data.type === 'UN'
+    ? await getPrescriptionUnTemplate()
+    : await getPrescriptionPrTemplate();
+  return template(data);
+}
+
+export async function renderRemediationActHtml(data: RemediationActPdfData): Promise<string> {
+  const template = await getRemediationActTemplate();
+  return template(data);
+}
+
+// ─── Реестр дефектов (сводный PDF) ────────────────────────────────────────────
+
+export interface DefectsListPdfData {
+  objectName: string;
+  generatedAt: string;
+  defects: Array<{
+    number: number;
+    title: string;
+    category: string;
+    status: string;
+    deadline: string;
+    responsible: string;
+  }>;
+}
+
+let defectsListTemplatePromise: Promise<ReturnType<typeof Handlebars.compile>> | null = null;
+
+function getDefectsListTemplate(): Promise<ReturnType<typeof Handlebars.compile>> {
+  if (!defectsListTemplatePromise) {
+    const p = path.join(process.cwd(), 'templates', 'sk', 'defects-list.hbs');
+    defectsListTemplatePromise = fs.promises
+      .readFile(p, 'utf-8')
+      .then((src) => Handlebars.compile(src));
+  }
+  return defectsListTemplatePromise;
+}
+
+export async function generateDefectsListPdf(data: DefectsListPdfData): Promise<Buffer> {
+  const template = await getDefectsListTemplate();
+  const html = template(data);
+  return htmlToPdf(html);
+}

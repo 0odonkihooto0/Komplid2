@@ -1,9 +1,12 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, FileText } from 'lucide-react';
+import { ArrowLeft, FileText, Download, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDate } from '@/utils/format';
@@ -46,6 +49,25 @@ interface Props {
   prescriptionId: string;
 }
 
+async function handleDownloadDocx(objectId: string, prescriptionId: string, number: string) {
+  try {
+    const res = await fetch(
+      `/api/projects/${objectId}/prescriptions/${prescriptionId}/print?format=docx`,
+      { method: 'POST' },
+    );
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `prescription-${number}.doc`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('Ошибка скачивания Word предписания:', err);
+  }
+}
+
 export function PrescriptionCard({ objectId, prescriptionId }: Props) {
   const router = useRouter();
   const { data: prescription, isLoading } = usePrescription(objectId, prescriptionId);
@@ -67,7 +89,7 @@ export function PrescriptionCard({ objectId, prescriptionId }: Props) {
   return (
     <div className="space-y-4 p-6">
       {/* Заголовок */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <Button
           variant="ghost"
           size="sm"
@@ -82,6 +104,35 @@ export function PrescriptionCard({ objectId, prescriptionId }: Props) {
         <Badge variant={prescription.status === 'ACTIVE' ? 'default' : 'secondary'}>
           {STATUS_LABELS[prescription.status] ?? prescription.status}
         </Badge>
+        <div className="ml-auto">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-1.5" />
+                Печать
+                <ChevronDown className="h-3 w-3 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <a
+                  href={`/api/projects/${objectId}/prescriptions/${prescriptionId}/print`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Скачать PDF
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => void handleDownloadDocx(objectId, prescriptionId, prescription.number)}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Скачать Word (.doc)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Вкладки */}

@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { errorResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
-import { generatePrescriptionPdf, type PrescriptionPdfData } from '@/lib/sk-pdf-generator';
+import { generatePrescriptionPdf, renderPrescriptionHtml, type PrescriptionPdfData } from '@/lib/sk-pdf-generator';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +19,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 interface Params { params: { projectId: string; id: string } }
 
 // POST /api/projects/[projectId]/prescriptions/[id]/print — генерация PDF предписания
-export async function POST(_req: NextRequest, { params }: Params) {
+export async function POST(req: NextRequest, { params }: Params) {
   try {
     const session = await getSessionOrThrow();
     const { projectId, id } = params;
@@ -81,6 +81,17 @@ export async function POST(_req: NextRequest, { params }: Params) {
       })),
       generatedAt: new Date().toLocaleDateString('ru-RU'),
     };
+
+    const format = req.nextUrl.searchParams.get('format');
+    if (format === 'docx') {
+      const html = await renderPrescriptionHtml(data);
+      return new NextResponse(html, {
+        headers: {
+          'Content-Type': 'application/msword',
+          'Content-Disposition': `attachment; filename="prescription-${prescription.number}.doc"`,
+        },
+      });
+    }
 
     const buffer = await generatePrescriptionPdf(data);
 

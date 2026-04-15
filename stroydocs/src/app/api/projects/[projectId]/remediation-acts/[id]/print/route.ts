@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { errorResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
-import { generateRemediationActPdf, type RemediationActPdfData } from '@/lib/sk-pdf-generator';
+import { generateRemediationActPdf, renderRemediationActHtml, type RemediationActPdfData } from '@/lib/sk-pdf-generator';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +15,7 @@ function safeStr(val: unknown): string {
 }
 
 // POST /api/projects/[projectId]/remediation-acts/[id]/print — генерация PDF акта устранения
-export async function POST(_req: NextRequest, { params }: Params) {
+export async function POST(req: NextRequest, { params }: Params) {
   try {
     const session = await getSessionOrThrow();
     const { projectId, id } = params;
@@ -81,6 +81,17 @@ export async function POST(_req: NextRequest, { params }: Params) {
       }),
       generatedAt: new Date().toLocaleDateString('ru-RU'),
     };
+
+    const format = req.nextUrl.searchParams.get('format');
+    if (format === 'docx') {
+      const html = await renderRemediationActHtml(data);
+      return new NextResponse(html, {
+        headers: {
+          'Content-Type': 'application/msword',
+          'Content-Disposition': `attachment; filename="remediation-act-${act.number}.doc"`,
+        },
+      });
+    }
 
     const buffer = await generateRemediationActPdf(data);
 
