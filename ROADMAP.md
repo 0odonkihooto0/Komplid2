@@ -1204,9 +1204,12 @@
 - ✅ Новый API `GET /bim/models/[id]/glb-url` — presigned URL для .glb или 202 CONVERTING с поллингом
 - ✅ IFC PropertySets из БД (сохранены при парсинге IfcOpenShell-сервисом, без клиентского парсинга)
 
-### Не реализовано
+### Реализовано (дополнительно)
+- ✅ BCF-экспорт/импорт замечаний (buildingSMART BCF 2.1)
+- ✅ BCF-совместимость с Revit, ArchiCAD, Tekla, nanoCAD BIM
 - ✅ Отчёт по сравнению версий (.xlsx)
-- ⬜ BCF-экспорт/импорт замечаний
+
+### Не реализовано
 - ⬜ Федерированные модели (несколько IFC одновременно)
 - ⬜ Offline-просмотр (PWA-кэш IFC)
 - ⬜ Экспорт в IFC (round-trip)
