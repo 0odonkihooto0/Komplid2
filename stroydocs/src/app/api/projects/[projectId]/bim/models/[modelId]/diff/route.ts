@@ -121,10 +121,10 @@ export async function POST(
     );
 
     /** Создаёт обогащённый элемент diff по GUID */
-    function enrichElement(guid: string): IfcDiffElement {
+    const enrichElement = (guid: string): IfcDiffElement => {
       const info = elementMap.get(guid);
       return { guid, name: info?.name ?? null, ifcType: info?.ifcType ?? null };
-    }
+    };
 
     const result: IfcDiffResult = {
       added: serviceDiff.added.map(enrichElement),

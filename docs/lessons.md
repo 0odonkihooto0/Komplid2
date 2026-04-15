@@ -411,6 +411,14 @@ shadcn/ui компоненты генерируются CLI (`npx shadcn-ui@late
 Предпочтительный подход для простых компонентов (toggle, accordion): самодостаточная реализация
 через React Context + cloneElement без добавления зависимости.
 
+**`function` declaration в блоке — TS-ошибка в strict mode при target ES5.**
+`function enrichElement(...)` объявлена внутри `try`-блока в `diff/route.ts:124`.
+TypeScript/Next.js бьёт ошибку: «Function declarations are not allowed inside blocks in strict mode when targeting 'ES5'. Modules are automatically in strict mode.»
+Тип проверки видит нарушение только при `next build` (не в редакторе).
+**Правило**: функции-хелперы внутри `try/catch`, `if`, циклов и других блоков объявлять
+через `const` + стрелочную функцию: `const fn = (x: T): R => {...}` вместо `function fn(x: T): R {...}`.
+Функции верхнего уровня (`export async function POST`) под это правило не попадают.
+
 ---
 
 > Правило: после каждой исправленной ошибки добавить урок сюда.
