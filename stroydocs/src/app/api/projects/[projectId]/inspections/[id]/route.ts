@@ -21,7 +21,14 @@ const INSPECTION_DETAIL_INCLUDE = {
   },
   inspectionActs: {
     include: {
-      issuedBy: { select: { id: true, firstName: true, lastName: true } },
+      issuedBy: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          organization: { select: { name: true } },
+        },
+      },
     },
     orderBy: { createdAt: 'desc' as const },
   },

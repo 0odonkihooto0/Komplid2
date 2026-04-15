@@ -12,6 +12,7 @@ import { InspectionInfoTab } from './InspectionInfoTab';
 import { InspectionDefectsTab } from './InspectionDefectsTab';
 import { InspectionPrescriptionsTab } from './InspectionPrescriptionsTab';
 import { InspectionActTab } from './InspectionActTab';
+import { InspectionFilesTab } from './InspectionFilesTab';
 import { InspectionRemediationsTab } from './InspectionRemediationsTab';
 import { CompleteInspectionDialog } from './CompleteInspectionDialog';
 
@@ -87,14 +88,20 @@ export function InspectionCard({ objectId, inspectionId }: Props) {
         <TabsList className="w-full justify-start">
           <TabsTrigger value="info">Информация</TabsTrigger>
           <TabsTrigger value="defects">
-            Недостатки ({inspection._count.defects})
+            Недостатки ({inspection.defects.length})
           </TabsTrigger>
           <TabsTrigger value="prescriptions">
-            Предписания ({inspection._count.prescriptions})
+            Предписания ({inspection.prescriptions.length})
           </TabsTrigger>
-          <TabsTrigger value="act">Акт проверки</TabsTrigger>
-          <TabsTrigger value="files">Файлы</TabsTrigger>
-          <TabsTrigger value="remediations">Акты устранения</TabsTrigger>
+          <TabsTrigger value="act">
+            Акт проверки ({inspection.inspectionActs.length})
+          </TabsTrigger>
+          <TabsTrigger value="files">
+            Файлы ({(inspection.attachmentS3Keys ?? []).length})
+          </TabsTrigger>
+          <TabsTrigger value="remediations">
+            Акты устранения ({inspection.remediationActs.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="info">
@@ -114,15 +121,15 @@ export function InspectionCard({ objectId, inspectionId }: Props) {
         </TabsContent>
 
         <TabsContent value="act">
-          <InspectionActTab acts={inspection.inspectionActs} objectId={objectId} inspectionId={inspectionId} />
+          <InspectionActTab
+            acts={inspection.inspectionActs}
+            objectId={objectId}
+            inspectionStatus={inspection.status}
+          />
         </TabsContent>
 
         <TabsContent value="files">
-          <div className="py-6 text-sm text-muted-foreground">
-            {inspection.inspectionActs.length === 0
-              ? 'Файлы появятся после завершения проверки'
-              : `Файлов: ${inspection.inspectionActs.filter((a) => a.s3Key).length}`}
-          </div>
+          <InspectionFilesTab objectId={objectId} inspectionId={inspectionId} />
         </TabsContent>
 
         <TabsContent value="remediations">
