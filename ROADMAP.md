@@ -1149,7 +1149,7 @@
 - ✅ Стадии: OTR / PROJECT / WORKING / CONSTRUCTION
 - ✅ Дерево разделов (`BimSection`, `SectionTree`) — иерархические папки
 - ✅ Совместимость с nanoCAD BIM, Renga, Pilot-BIM, Revit, ArchiCAD (IFC 2x3 / IFC 4)
-- ✅ Сравнение версий (`VersionCompare`, `VersionDiffViewer`) — визуальный diff в 3D
+- ✅ Сравнение версий через ifcdiff (added/deleted/changed attrs/geometry) + экспорт .xlsx
 
 ### Структура и свойства элементов ✅
 - ✅ Левая панель (`ModelStructurePanel`): вкладки «Структура», «Файлы», «Связанные модели»
@@ -1205,6 +1205,7 @@
 - ✅ IFC PropertySets из БД (сохранены при парсинге IfcOpenShell-сервисом, без клиентского парсинга)
 
 ### Не реализовано
+- ✅ Отчёт по сравнению версий (.xlsx)
 - ⬜ BCF-экспорт/импорт замечаний
 - ⬜ Федерированные модели (несколько IFC одновременно)
 - ⬜ Offline-просмотр (PWA-кэш IFC)
