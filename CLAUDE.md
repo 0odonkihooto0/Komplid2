@@ -1,7 +1,7 @@
 # CLAUDE.md — StroyDocs Agent Directives
 
 Проект: **StroyDocs** — SaaS для строительной документации (РФ, ГОСТ Р 70108-2025).
-Стек: Next.js 14 App Router · TypeScript · Prisma · PostgreSQL · Timeweb S3 · shadcn/ui.
+Стек: Next.js 14 App Router · TypeScript · Prisma · PostgreSQL · Timeweb S3 · shadcn/ui · Python/FastAPI (IfcOpenShell-сервис).
 Архитектура: объект строительства как центр, URL `/objects/[objectId]/[module]/[tab]`.
 Полный статус модулей — в `ROADMAP.md`. Детали стека — @docs/stack.md.
 
