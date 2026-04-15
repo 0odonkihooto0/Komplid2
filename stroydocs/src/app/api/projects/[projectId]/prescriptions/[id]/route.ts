@@ -46,7 +46,27 @@ export async function GET(_req: NextRequest, { params }: { params: Params }) {
     });
     if (!prescription) return errorResponse('Предписание не найдено', 404);
 
-    return successResponse(prescription);
+    // Найти акты устранения этого предписания, уже отправленные на проверку
+    const pendingActs = await db.defectRemediationAct.findMany({
+      where: { prescriptionId: prescription.id, status: 'PENDING_REVIEW' },
+      select: { id: true, number: true, defectIds: true },
+    });
+
+    // Карта: defectId → первый pending-акт, куда он включён
+    const pendingMap = new Map<string, { id: string; number: string }>();
+    for (const act of pendingActs) {
+      for (const did of act.defectIds) {
+        if (!pendingMap.has(did)) pendingMap.set(did, { id: act.id, number: act.number });
+      }
+    }
+
+    const enrichedDefects = prescription.defects.map((d) => ({
+      ...d,
+      pendingRemediationActId: pendingMap.get(d.id)?.id ?? null,
+      pendingRemediationActNumber: pendingMap.get(d.id)?.number ?? null,
+    }));
+
+    return successResponse({ ...prescription, defects: enrichedDefects });
   } catch (error) {
     if (error instanceof NextResponse) return error;
     logger.error({ err: error }, 'Ошибка получения предписания');

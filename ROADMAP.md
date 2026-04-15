@@ -1095,6 +1095,10 @@
 - ✅ Счётчики на всех вкладках: Недостатки (N) | Предписания (N) | Акт проверки (N) | Файлы (N) | Акты устранения (N)
 - ✅ `useInspectionAttachments` хук в `useInspections.ts`; `InspectionActItem.issuedBy` расширен полем `organization`
 
+### Добавлено (2026-04-15) — Предупреждение о дублировании недостатков (ЦУС стр. 276)
+- ✅ API `GET .../prescriptions/[id]`: каждый дефект обогащён полями `pendingRemediationActId` / `pendingRemediationActNumber` — ID и номер акта устранения в статусе PENDING_REVIEW, куда дефект уже включён
+- ✅ `CreateRemediationDialog` шаг 2: чекбокс недостатка с pending-актом disabled по умолчанию; warning-badge «Уже на проверке в акте №XXX»; кнопка «Всё равно добавить» → включает чекбокс и показывает Toast с предупреждением о приоритете первого акта
+
 ---
 
 ## МОДУЛЬ 12 — Отчёты ✅ (2026-04-07)

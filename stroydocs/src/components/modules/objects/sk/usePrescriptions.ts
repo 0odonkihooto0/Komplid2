@@ -39,6 +39,8 @@ export interface DefectInPrescription {
   deadline: string | null;
   author: UserRef;
   assignee: UserRef | null;
+  pendingRemediationActId: string | null;
+  pendingRemediationActNumber: string | null;
 }
 
 export interface RemediationActInPrescription {

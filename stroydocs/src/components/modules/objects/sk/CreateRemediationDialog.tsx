@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -14,7 +15,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/useToast';
 import { usePrescriptions, usePrescription } from './usePrescriptions';
+import type { DefectInPrescription } from './usePrescriptions';
 import { useCreateRemediationAct } from './useRemediationActs';
 
 interface Props {
@@ -40,10 +43,12 @@ export function CreateRemediationDialog({ objectId, open, onOpenChange }: Props)
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [prescriptionId, setPrescriptionId] = useState('');
   const [selectedDefectIds, setSelectedDefectIds] = useState<string[]>([]);
+  const [forcedDefectIds, setForcedDefectIds] = useState<string[]>([]);
   const [details, setDetails] = useState<Record<string, { measures: string; note: string }>>({});
   const [number, setNumber] = useState(makeActNumber);
 
   // Все хуки до return
+  const { toast } = useToast();
   const { data: prescriptionsData, isLoading: loadingPrescriptions } = usePrescriptions(
     objectId,
     { status: 'ACTIVE' },
@@ -62,6 +67,7 @@ export function CreateRemediationDialog({ objectId, open, onOpenChange }: Props)
     setStep(1);
     setPrescriptionId('');
     setSelectedDefectIds([]);
+    setForcedDefectIds([]);
     setDetails({});
     setNumber(makeActNumber());
     onOpenChange(false);
@@ -71,7 +77,19 @@ export function CreateRemediationDialog({ objectId, open, onOpenChange }: Props)
     setSelectedDefectIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
+    // При снятии чекбокса убираем из форсированных
+    setForcedDefectIds((prev) => prev.filter((x) => x !== id));
   }, []);
+
+  const handleForceAdd = useCallback((d: DefectInPrescription) => {
+    setForcedDefectIds((prev) => (prev.includes(d.id) ? prev : [...prev, d.id]));
+    setSelectedDefectIds((prev) => (prev.includes(d.id) ? prev : [...prev, d.id]));
+    toast({
+      title: 'Внимание: дублирование недостатка',
+      description: `Недостаток уже включён в акт устранения №${d.pendingRemediationActNumber} (на проверке). Будут учтены мероприятия из акта, отправленного первым.`,
+      variant: 'destructive',
+    });
+  }, [toast]);
 
   const setDetail = useCallback((defectId: string, field: 'measures' | 'note', value: string) => {
     setDetails((prev) => {
@@ -151,25 +169,51 @@ export function CreateRemediationDialog({ objectId, open, onOpenChange }: Props)
             ) : defects.length === 0 ? (
               <p className="text-sm text-muted-foreground">Нет недостатков в этом предписании</p>
             ) : (
-              defects.map((d) => (
-                <label
-                  key={d.id}
-                  className="flex items-start gap-3 rounded-md border p-3 cursor-pointer hover:bg-accent"
-                >
-                  <Checkbox
-                    checked={selectedDefectIds.includes(d.id)}
-                    onCheckedChange={() => toggleDefect(d.id)}
-                    className="mt-0.5"
-                  />
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium leading-none">{d.title}</p>
-                    <div className="flex gap-1.5">
-                      <Badge variant="outline" className="text-xs">{d.category}</Badge>
-                      <Badge variant="outline" className="text-xs">{d.status}</Badge>
-                    </div>
+              defects.map((d) => {
+                const isPending = !!d.pendingRemediationActId;
+                const isForced = forcedDefectIds.includes(d.id);
+                const isDisabled = isPending && !isForced;
+
+                return (
+                  <div key={d.id} className="rounded-md border p-3 space-y-2">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <Checkbox
+                        checked={selectedDefectIds.includes(d.id)}
+                        onCheckedChange={() => !isDisabled && toggleDefect(d.id)}
+                        disabled={isDisabled}
+                        className="mt-0.5"
+                      />
+                      <div className="space-y-1 flex-1">
+                        <p className="text-sm font-medium leading-none">{d.title}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          <Badge variant="outline" className="text-xs">{d.category}</Badge>
+                          <Badge variant="outline" className="text-xs">{d.status}</Badge>
+                          {isPending && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs border-amber-400 text-amber-700 bg-amber-50 flex items-center gap-1"
+                            >
+                              <AlertTriangle className="h-3 w-3" aria-hidden="true" />
+                              Уже на проверке в акте №{d.pendingRemediationActNumber}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </label>
+                    {/* Кнопка принудительного добавления для заблокированных дефектов */}
+                    {isDisabled && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full text-amber-700 border-amber-400 hover:bg-amber-50"
+                        onClick={() => handleForceAdd(d)}
+                      >
+                        Всё равно добавить
+                      </Button>
+                    )}
                   </div>
-                </label>
-              ))
+                );
+              })
             )}
           </div>
         )}
