@@ -419,6 +419,39 @@ TypeScript/Next.js бьёт ошибку: «Function declarations are not allowe
 через `const` + стрелочную функцию: `const fn = (x: T): R => {...}` вместо `function fn(x: T): R {...}`.
 Функции верхнего уровня (`export async function POST`) под это правило не попадают.
 
+**`{ ...spread } as Prisma.InputJsonValue` — ошибка сборки «Conversion of type '...' may be a mistake».**
+Prisma генерирует `InputJsonValue = string | number | boolean | InputJsonObject | InputJsonArray`.
+TypeScript не считает `{ clashStatus: string; ... }` достаточно совместимым с этим union — нет
+перекрытия с primitive-ветками. Прямой `as InputJsonValue` вызывает TS2352 на деплое.
+Ошибка проявляется только при `next build` (type-check фаза) — локально без `node_modules` молчит.
+Затронуло 4 файла: `run-clash.worker.ts` (2 места), `parse-ifc.worker.ts`, `convert-ifc.worker.ts`,
+`bim/models/[modelId]/clash/route.ts`.
+**Правило**: при сохранении любого объекта в Prisma JSON-поле через `update`/`create` — **всегда**
+использовать двойной каст:
+```typescript
+// Неправильно — ошибка сборки:
+metadata: { ...existingMeta, status: 'DONE' } as Prisma.InputJsonValue
+
+// Правильно:
+metadata: { ...existingMeta, status: 'DONE' } as unknown as Prisma.InputJsonValue
+```
+Проверять все файлы: `grep -r "} as Prisma.InputJsonValue" src/` — не должно быть совпадений.
+
+**`find \( -name 'A' -o -name 'b' \) -exec ... \;` в Docker multi-line RUN — ненадёжный парсинг.**
+Dockerfile строка с `\` continuation + `find \( ... -o ... \) -exec ... \;`:
+парсер `/bin/sh` внутри Docker может трактовать экранированные скобки и `;` неожиданно.
+Симптом: `find: '/tmp/ifcconvert': No such file or directory` — директория создана `unzip`,
+но `find` не видит её (или RUN-шаг парсится не так как ожидается).
+**Правило**: в Docker multi-line RUN (`\` continuation) избегать `\( ... \)` и `\;` в `find`.
+Заменять на два отдельных `find` с `if [ -z "$BIN" ]`:
+```dockerfile
+IFCBIN=$(find /tmp/ifcconvert -maxdepth 5 -type f -name 'IfcConvert' | head -1) && \
+if [ -z "$IFCBIN" ]; then IFCBIN=$(find /tmp/ifcconvert -maxdepth 5 -type f -name 'ifcconvert' | head -1); fi && \
+test -n "$IFCBIN" && mv "$IFCBIN" /usr/local/bin/IfcConvert
+```
+Дополнительно: чистить `/tmp/ifcconvert.zip` и `/tmp/ifcconvert` в начале каждой retry-попытки
+(`rm -rf` перед `wget`), чтобы мусор от предыдущей попытки не влиял.
+
 ---
 
 > Правило: после каждой исправленной ошибки добавить урок сюда.

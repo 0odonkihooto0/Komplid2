@@ -69,7 +69,7 @@ const worker = new Worker<ConvertIfcJob>(
       await db.bimModel.update({
         where: { id: modelId },
         data: {
-          metadata: { ...existingMeta, glbS3Key: outputS3Key } as Prisma.InputJsonValue,
+          metadata: { ...existingMeta, glbS3Key: outputS3Key } as unknown as Prisma.InputJsonValue,
         },
       });
 

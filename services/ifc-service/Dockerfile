@@ -30,7 +30,10 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 #   GitHub Releases: https://github.com/IfcOpenShell/IfcOpenShell/releases/download/...
 ARG IFCCONVERT_URL
 
-# find ищет оба варианта имени: IfcConvert (старые сборки) и ifcconvert (новые, строчные)
+# Поиск бинарника: два отдельных find вместо find \( -name ... -o -name ... \)
+# избегаем экранирования скобок в multi-line RUN, которое ненадёжно в /bin/sh.
+# В начале каждой попытки чистим временные файлы (rm -rf ... перед wget),
+# чтобы не использовать мусор от предыдущей неудачной попытки.
 RUN SITE=$(python3 -c "import site; print(site.getsitepackages()[0])") \
     && PIP_BIN="$SITE/ifcopenshell/IfcConvert" \
     && if [ -f "$PIP_BIN" ]; then \
@@ -39,13 +42,17 @@ RUN SITE=$(python3 -c "import site; print(site.getsitepackages()[0])") \
        elif [ -n "$IFCCONVERT_URL" ]; then \
          for attempt in 1 2 3 4 5; do \
            echo "==> IfcConvert download attempt $attempt/5 from $IFCCONVERT_URL" && \
-           wget -q --timeout=120 "$IFCCONVERT_URL" -O /tmp/ifcconvert.zip \
-           && unzip -q /tmp/ifcconvert.zip -d /tmp/ifcconvert \
-           && find /tmp/ifcconvert \( -name 'IfcConvert' -o -name 'ifcconvert' \) \
-                -exec mv {} /usr/local/bin/IfcConvert \; \
-           && chmod +x /usr/local/bin/IfcConvert \
-           && rm -rf /tmp/ifcconvert.zip /tmp/ifcconvert \
-           && break || { echo "Attempt $attempt failed, waiting 15s..."; sleep 15; }; \
+           rm -rf /tmp/ifcconvert.zip /tmp/ifcconvert && \
+           wget -q --timeout=120 "$IFCCONVERT_URL" -O /tmp/ifcconvert.zip && \
+           test -s /tmp/ifcconvert.zip && \
+           unzip -q /tmp/ifcconvert.zip -d /tmp/ifcconvert && \
+           IFCBIN=$(find /tmp/ifcconvert -maxdepth 5 -type f -name 'IfcConvert' | head -1) && \
+           if [ -z "$IFCBIN" ]; then IFCBIN=$(find /tmp/ifcconvert -maxdepth 5 -type f -name 'ifcconvert' | head -1); fi && \
+           test -n "$IFCBIN" && \
+           mv "$IFCBIN" /usr/local/bin/IfcConvert && \
+           chmod +x /usr/local/bin/IfcConvert && \
+           rm -rf /tmp/ifcconvert.zip /tmp/ifcconvert && \
+           break || { echo "Attempt $attempt failed, waiting 15s..."; sleep 15; }; \
          done; \
        else \
          echo "ERROR: IfcConvert не найден в pip-пакете и IFCCONVERT_URL не задан." >&2 && \

@@ -101,7 +101,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           ...existingMeta,
           clashStatus: 'PROCESSING',
           clashResults: null,
-        } as Prisma.InputJsonValue,
+        } as unknown as Prisma.InputJsonValue,
       },
     });
 
