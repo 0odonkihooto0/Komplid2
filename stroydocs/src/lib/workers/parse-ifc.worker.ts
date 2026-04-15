@@ -197,7 +197,7 @@ const worker = new Worker<ParseBimJob>(
           where: { id: modelId },
           data: {
             status: BimModelStatus.ERROR,
-            metadata: { error: message } as Prisma.InputJsonValue,
+            metadata: { error: message } as unknown as Prisma.InputJsonValue,
           },
         })
         .catch((dbErr: unknown) => {

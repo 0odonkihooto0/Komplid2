@@ -130,7 +130,7 @@ const worker = new Worker<RunClashJob>(
               completedAt: new Date().toISOString(),
               results,
             },
-          } as Prisma.InputJsonValue,
+          } as unknown as Prisma.InputJsonValue,
         },
       });
 
@@ -179,7 +179,7 @@ const worker = new Worker<RunClashJob>(
               ...existingMeta,
               clashStatus: 'ERROR',
               clashError: message,
-            } as Prisma.InputJsonValue,
+            } as unknown as Prisma.InputJsonValue,
           },
         })
         .catch((dbErr: unknown) => {
