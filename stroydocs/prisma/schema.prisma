@@ -4476,6 +4476,8 @@ model Inspection {
   attentionUserId   String? // ID пользователя для уведомления
   ganttTaskIds      String[] // Привязка к позициям ГПР
 
+  attachmentS3Keys String[] @default([]) // Прикреплённые файлы к проверке
+
   projectId      String
   buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
 

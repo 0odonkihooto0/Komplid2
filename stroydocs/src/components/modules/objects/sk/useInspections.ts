@@ -48,7 +48,7 @@ export interface InspectionActItem {
   number: string;
   issuedAt: string;
   s3Key: string | null;
-  issuedBy: UserRef;
+  issuedBy: UserRef & { organization?: { name: string } | null };
 }
 
 export interface PrescriptionItem {
@@ -72,6 +72,7 @@ export interface RemediationActItem {
 }
 
 export interface InspectionDetail extends InspectionListItem {
+  attachmentS3Keys: string[];
   defects: DefectInInspection[];
   inspectionActs: InspectionActItem[];
   prescriptions: PrescriptionItem[];
@@ -216,4 +217,66 @@ export function usePatchInspection(objectId: string, inspectionId: string) {
     },
     onError: (err: Error) => toast({ title: 'Ошибка', description: err.message, variant: 'destructive' }),
   });
+}
+
+export interface InspectionAttachment {
+  s3Key: string;
+  fileName: string;
+  downloadUrl: string;
+}
+
+export function useInspectionAttachments(objectId: string, inspectionId: string, enabled: boolean) {
+  const qc = useQueryClient();
+
+  const query = useQuery<InspectionAttachment[]>({
+    queryKey: ['inspection-attachments', objectId, inspectionId],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${objectId}/inspections/${inspectionId}/attachments`);
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error ?? 'Ошибка загрузки файлов');
+      return json.data as InspectionAttachment[];
+    },
+    enabled: enabled && !!objectId && !!inspectionId,
+    staleTime: 30 * 1000,
+  });
+
+  const upload = useMutation({
+    mutationFn: async (file: File) => {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(
+        `/api/projects/${objectId}/inspections/${inspectionId}/attachments`,
+        { method: 'POST', body: fd },
+      );
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error ?? 'Ошибка загрузки файла');
+      return json.data;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['inspection-attachments', objectId, inspectionId] });
+      void qc.invalidateQueries({ queryKey: ['inspection', objectId, inspectionId] });
+      toast({ title: 'Файл прикреплён' });
+    },
+    onError: (err: Error) => toast({ title: 'Ошибка загрузки', description: err.message, variant: 'destructive' }),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (s3Key: string) => {
+      const res = await fetch(
+        `/api/projects/${objectId}/inspections/${inspectionId}/attachments?key=${encodeURIComponent(s3Key)}`,
+        { method: 'DELETE' },
+      );
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error ?? 'Ошибка удаления файла');
+      return json.data;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['inspection-attachments', objectId, inspectionId] });
+      void qc.invalidateQueries({ queryKey: ['inspection', objectId, inspectionId] });
+      toast({ title: 'Файл удалён' });
+    },
+    onError: (err: Error) => toast({ title: 'Ошибка удаления', description: err.message, variant: 'destructive' }),
+  });
+
+  return { query, upload, remove };
 }

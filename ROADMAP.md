@@ -1057,6 +1057,14 @@
 - ✅ Хук `useDefectTemplates` (`src/hooks/useDefectTemplates.ts`): `useDefectTemplates`, `useCreateDefectTemplate`, `useDeleteDefectTemplate`
 - ✅ Миграция `20260415020000_add_defect_templates`
 
+### Добавлено (2026-04-15) — Карточка проверки: 6 вкладок по ЦУС стр. 267–271
+- ✅ `Inspection.attachmentS3Keys String[] @default([])` — прикреплённые файлы к проверке; миграция `20260415030000_add_inspection_attachments`
+- ✅ API: `GET/POST/DELETE /api/projects/[id]/inspections/[id]/attachments` — загрузка, список с presigned URL, удаление файлов (Timeweb S3)
+- ✅ Вкладка «Файлы»: `InspectionFilesTab` — загрузка с компьютера, список файлов со скачиванием и удалением, пустое состояние с пояснением
+- ✅ Вкладка «Акт проверки»: `InspectionActTab` — таблица (№ акта | Дата выдачи | Кем выдано | Организация проверяющего + кнопка «Печать акта»); статус-зависимое пустое состояние: «Акт не сформирован (нарушения не выявлены)» для завершённых проверок без актов
+- ✅ Счётчики на всех вкладках: Недостатки (N) | Предписания (N) | Акт проверки (N) | Файлы (N) | Акты устранения (N)
+- ✅ `useInspectionAttachments` хук в `useInspections.ts`; `InspectionActItem.issuedBy` расширен полем `organization`
+
 ---
 
 ## МОДУЛЬ 12 — Отчёты ✅ (2026-04-07)
