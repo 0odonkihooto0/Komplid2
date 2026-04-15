@@ -1,19 +1,16 @@
 /**
  * BullMQ-воркер парсинга IFC-файлов ТИМ-модели.
- * Скачивает IFC из Timeweb S3, парсит через web-ifc (WASM),
- * сохраняет BimElement[] в БД и переводит BimModel в статус READY.
+ * Вместо WASM-парсинга (web-ifc) — HTTP-вызов к IfcOpenShell-микросервису (/parse).
+ * Сервис сам скачивает IFC из Timeweb S3, возвращает элементы с PropertySets.
  *
  * Запуск: ts-node -r tsconfig-paths/register src/lib/workers/parse-ifc.worker.ts
  * В продакшне: запускать как отдельный Node.js процесс на том же VPS.
  */
-import * as path from 'path';
-import * as os from 'os';
-import * as fs from 'fs/promises';
 import { Worker } from 'bullmq';
-import { PrismaClient, BimModelStatus } from '@prisma/client';
-import * as WebIFC from 'web-ifc';
-import { downloadFile } from '../s3-utils';
+import { PrismaClient, BimModelStatus, Prisma } from '@prisma/client';
 import type { ParseBimJob } from '../queues/parse-bim';
+import { enqueueNotification } from '../queue';
+import { getConvertIfcQueue } from '../queues/convert-ifc.queue';
 
 // Парсим REDIS_URL в plain-объект опций для BullMQ.
 // BullMQ v5 бандлит свою версию ioredis — передача внешнего IORedis-инстанса
@@ -34,162 +31,184 @@ function getRedisOptions() {
 // чтобы не конфликтовать с Next.js Request Context.
 const db = new PrismaClient();
 
-// Размер одного батча при createMany — не переполняем память при тысячах элементов
+// Размер одного батча при upsert — не переполняем память при тысячах элементов
 const BATCH_SIZE = 500;
 
-/**
- * Извлечь строковое значение из IFC-поля (GlobalId, Name, Description и т.д.).
- * web-ifc возвращает значения как объекты { type, value } или null.
- */
-function extractIfcString(field: unknown): string | null {
-  if (!field || typeof field !== 'object') return null;
-  const f = field as Record<string, unknown>;
-  if (typeof f.value === 'string') return f.value;
-  return null;
+/** Элемент, возвращаемый IfcOpenShell-сервисом из /parse */
+interface IfcServiceElement {
+  ifcGuid: string;
+  ifcType: string;
+  name: string | null;
+  description: string | null;
+  layer: string | null;
+  level: string | null;
+  properties: Record<string, unknown> | null;
 }
 
-/**
- * Парсинг одного IFC-файла:
- * — открываем через web-ifc IfcAPI
- * — перебираем все линии, отбираем сущности с GlobalId
- * — батч-вставляем в bim_elements
- */
-async function parseIfcFile(
-  modelId: string,
-  tmpFilePath: string
-): Promise<{ elementCount: number; ifcVersion: string }> {
-  const ifcApi = new WebIFC.IfcAPI();
-
-  // Путь к WASM — web-ifc-node.wasm лежит рядом с пакетом.
-  // absolute=true чтобы не зависеть от cwd воркера.
-  ifcApi.SetWasmPath(
-    path.join(process.cwd(), 'node_modules', 'web-ifc') + path.sep,
-    true
-  );
-  await ifcApi.Init();
-
-  const fileData = await fs.readFile(tmpFilePath);
-  const modelID = ifcApi.OpenModel(new Uint8Array(fileData.buffer));
-
-  const ifcVersion = ifcApi.GetModelSchema(modelID) ?? 'IFC4';
-
-  // Получаем все expressID в модели
-  const allLines = ifcApi.GetAllLines(modelID);
-  const elements: Array<{
-    modelId: string;
-    ifcGuid: string;
-    ifcType: string;
-    name: string | null;
-    description: string | null;
-    layer: string | null;
-    level: string | null;
-  }> = [];
-
-  // Array.from() обязателен — Vector<number> не является стандартным Array
-  // (см. lessons.md: "Array.entries() в for...of без Array.from()")
-  for (const lineID of Array.from(allLines)) {
-    let line: Record<string, unknown> | null = null;
-    try {
-      line = ifcApi.GetLine(modelID, lineID, false) as Record<string, unknown>;
-    } catch {
-      // Некоторые служебные линии не поддаются GetLine — пропускаем
-      continue;
-    }
-    if (!line) continue;
-
-    // Отбираем только именованные сущности (IfcProduct и его наследники),
-    // у которых есть GlobalId
-    const globalId = extractIfcString(line.GlobalId);
-    if (!globalId) continue;
-
-    // ifcType — имя класса IFC (IfcWall, IfcSlab, IfcColumn и т.д.)
-    // web-ifc хранит числовой type ID; преобразуем через TypeNames если доступно
-    const typeId = typeof line.type === 'number' ? line.type : null;
-    const ifcType = typeId != null
-      ? (WebIFC as unknown as Record<number, string>)[typeId] ?? `IFC_TYPE_${typeId}`
-      : 'UNKNOWN';
-
-    elements.push({
-      modelId,
-      ifcGuid: globalId,
-      ifcType,
-      name: extractIfcString(line.Name),
-      description: extractIfcString(line.Description),
-      layer: extractIfcString((line as Record<string, unknown>).ObjectPlacement) ?? null,
-      level: extractIfcString((line as Record<string, unknown>).ContainedInStructure) ?? null,
-      // properties опущено — null-значение для Prisma JSON nullable требует Prisma.DbNull
-    });
-  }
-
-  ifcApi.CloseModel(modelID);
-
-  // Батч-вставка в БД с skipDuplicates (повторный парсинг безопасен)
-  let inserted = 0;
-  for (let i = 0; i < elements.length; i += BATCH_SIZE) {
-    const batch = elements.slice(i, i + BATCH_SIZE);
-    const result = await db.bimElement.createMany({
-      data: batch,
-      skipDuplicates: true,
-    });
-    inserted += result.count;
-  }
-
-  return { elementCount: inserted, ifcVersion };
+/** Ответ IfcOpenShell-сервиса на POST /parse */
+interface IfcParseResponse {
+  ifcVersion: string;
+  elementCount: number;
+  metadata: Record<string, unknown>;
+  elements: IfcServiceElement[];
 }
 
 const worker = new Worker<ParseBimJob>(
   'parse-bim',
   async (job) => {
     const { modelId, s3Key } = job.data;
+    const IFC_SERVICE = process.env.IFC_SERVICE_URL ?? 'http://localhost:8001';
+
     console.log(`[parse-ifc-worker] Начинаю парсинг IFC для модели ${modelId}`);
 
-    const tmpFilePath = path.join(os.tmpdir(), `bim-${modelId}.ifc`);
+    // 1. Обновить статус → PROCESSING
+    await db.bimModel.update({
+      where: { id: modelId },
+      data: { status: BimModelStatus.PROCESSING },
+    });
 
     try {
-      // 1. Скачать IFC из S3 во временный файл
-      console.log(`[parse-ifc-worker] Скачиваю из S3: ${s3Key}`);
-      const fileBuffer = await downloadFile(s3Key);
-      await fs.writeFile(tmpFilePath, fileBuffer);
+      // 2. Вызвать IfcOpenShell-сервис: сервис сам скачивает IFC из S3 по s3Key
+      console.log(`[parse-ifc-worker] Запрос к IfcOpenShell-сервису: ${IFC_SERVICE}/parse`);
 
-      // 2. Парсинг через web-ifc
-      console.log(`[parse-ifc-worker] Парсинг IFC (${fileBuffer.length} байт)...`);
-      const { elementCount, ifcVersion } = await parseIfcFile(modelId, tmpFilePath);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 300_000); // 5 минут на большие модели
 
-      // 3. Обновить BimModel: статус READY, количество элементов, версия IFC
+      let parseResponse: IfcParseResponse;
+      try {
+        const response = await fetch(`${IFC_SERVICE}/parse`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ s3Key, modelId }),
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`IfcOpenShell-сервис /parse вернул ${response.status}: ${errText}`);
+        }
+
+        parseResponse = (await response.json()) as IfcParseResponse;
+      } catch (err) {
+        clearTimeout(timer);
+        throw err;
+      }
+
+      const { ifcVersion, elementCount, metadata, elements } = parseResponse;
+      console.log(
+        `[parse-ifc-worker] Сервис вернул ${elements.length} элементов, IFC: ${ifcVersion}`
+      );
+
+      // 3. Batch upsert элементов в БД (с PropertySets, полностью)
+      for (let i = 0; i < elements.length; i += BATCH_SIZE) {
+        const batch = elements.slice(i, i + BATCH_SIZE);
+        await db.$transaction(
+          batch.map((el) =>
+            db.bimElement.upsert({
+              where: { modelId_ifcGuid: { modelId, ifcGuid: el.ifcGuid } },
+              create: {
+                modelId,
+                ifcGuid: el.ifcGuid,
+                ifcType: el.ifcType,
+                name: el.name,
+                description: el.description,
+                layer: el.layer,
+                level: el.level,
+                properties:
+                  el.properties !== null
+                    ? (el.properties as Prisma.InputJsonValue)
+                    : Prisma.DbNull,
+              },
+              update: {
+                name: el.name,
+                properties:
+                  el.properties !== null
+                    ? (el.properties as Prisma.InputJsonValue)
+                    : Prisma.DbNull,
+                layer: el.layer,
+                level: el.level,
+              },
+            })
+          )
+        );
+      }
+
+      // 4. Обновить BimModel: статус READY + метаданные от сервиса
       await db.bimModel.update({
         where: { id: modelId },
         data: {
           status: BimModelStatus.READY,
           elementCount,
           ifcVersion,
+          metadata: metadata as Prisma.InputJsonValue,
         },
+      });
+
+      // 5. Добавить задачу конвертации IFC → GLB в очередь
+      const convertQueue = getConvertIfcQueue();
+      await convertQueue.add('convert-ifc', {
+        modelId,
+        s3Key,
+        outputS3Key: s3Key.replace('.ifc', '.glb'),
       });
 
       console.log(
         `[parse-ifc-worker] Модель ${modelId} готова. Элементов: ${elementCount}, IFC: ${ifcVersion}`
       );
+
+      // 6. Уведомить пользователя (некритично — оборачиваем в try-catch)
+      try {
+        const model = await db.bimModel.findUnique({
+          where: { id: modelId },
+          select: {
+            name: true,
+            versions: {
+              where: { isCurrent: true },
+              select: {
+                uploadedBy: { select: { id: true, email: true } },
+              },
+              take: 1,
+            },
+          },
+        });
+        const uploader = model?.versions[0]?.uploadedBy;
+        if (model && uploader) {
+          await enqueueNotification({
+            userId: uploader.id,
+            email: uploader.email,
+            type: 'bim_model_ready',
+            title: `Модель «${model.name}» готова`,
+            body: `Парсинг завершён: ${elementCount} элементов, формат ${ifcVersion}.`,
+            entityType: 'BimModel',
+            entityId: modelId,
+            entityName: model.name,
+          });
+        }
+      } catch (notifyErr) {
+        console.error('[parse-ifc-worker] Не удалось отправить уведомление:', notifyErr);
+      }
     } catch (err) {
-      // 4. При ошибке фиксируем ERROR-статус с сообщением
+      // При ошибке фиксируем ERROR-статус с сообщением
       const message = err instanceof Error ? err.message : String(err);
       console.error(`[parse-ifc-worker] Ошибка парсинга модели ${modelId}:`, message);
-      await db.bimModel.update({
-        where: { id: modelId },
-        data: {
-          status: BimModelStatus.ERROR,
-          metadata: { error: message },
-        },
-      }).catch((dbErr: unknown) => {
-        console.error('[parse-ifc-worker] Не удалось обновить статус ERROR:', dbErr);
-      });
+      await db.bimModel
+        .update({
+          where: { id: modelId },
+          data: {
+            status: BimModelStatus.ERROR,
+            metadata: { error: message } as Prisma.InputJsonValue,
+          },
+        })
+        .catch((dbErr: unknown) => {
+          console.error('[parse-ifc-worker] Не удалось обновить статус ERROR:', dbErr);
+        });
       throw err; // пробрасываем чтобы BullMQ выполнил retry
-    } finally {
-      // 5. Удалить временный файл в любом случае
-      await fs.unlink(tmpFilePath).catch(() => undefined);
     }
   },
   {
     connection: getRedisOptions(),
-    // concurrency=1: WASM-парсер тяжёлый, большие IFC-файлы (100-500 МБ) требуют много RAM
+    // concurrency=1: парсинг тяжёлый на стороне Python-сервиса
     concurrency: 1,
   }
 );

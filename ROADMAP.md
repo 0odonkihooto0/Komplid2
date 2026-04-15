@@ -1144,7 +1144,7 @@
 - ✅ Реестр IFC-моделей объекта (`ModelsView`, `ModelVersionsTable`)
 - ✅ Загрузка IFC-файлов (.ifc, .ifczip, .ifcxml) через presigned S3 URL
 - ✅ Версионирование моделей (`BimModelVersion`, upload-version, история, флаг isCurrent)
-- ✅ Фоновый парсинг (BullMQ worker → `parse-ifc.worker.ts` → `BimElement` в БД; серверный парсинг — через IfcOpenShell-сервис)
+- ✅ Фоновый парсинг (BullMQ worker → `parse-ifc.worker.ts` → HTTP POST `/parse` к IfcOpenShell-сервису → `BimElement` в БД с PropertySets)
 - ✅ Статусы модели: PROCESSING → READY / ERROR (`ModelStatusBadge`)
 - ✅ Стадии: OTR / PROJECT / WORKING / CONSTRUCTION
 - ✅ Дерево разделов (`BimSection`, `SectionTree`) — иерархические папки
@@ -1194,11 +1194,15 @@
 - ✅ `/objects/[id]/tim/issues/` — замечания ТИМ
 - ✅ `/objects/[id]/tim/access/` — управление доступом
 
+### Реализовано (дополнительно)
+- ✅ Интеграция `parse-ifc.worker.ts` с IfcOpenShell-сервисом (web-ifc WASM → HTTP-вызов `/parse`)
+- ✅ Конвертация IFC → glTF (`convert-ifc.worker.ts` → HTTP-вызов `/convert`, glbS3Key в `BimModel.metadata`)
+- ✅ PropertySets сохраняются в БД при парсинге (полностью, без `buildIfcPropertiesMap`)
+
 ### Не реализовано
 - ⬜ BCF-экспорт/импорт замечаний
 - ⬜ Федерированные модели (несколько IFC одновременно)
 - ⬜ Offline-просмотр (PWA-кэш IFC)
-- ⬜ Интеграция `parse-ifc.worker.ts` с IfcOpenShell-сервисом (заменить web-ifc WASM на HTTP-вызов `/parse`)
 - ⬜ Экспорт в IFC (round-trip)
 - ⬜ Публичная ссылка на модель для заказчика
 - ⬜ Совместный просмотр (multi-user cursor)
