@@ -8,6 +8,7 @@ import { createMissingDocxTemplates } from './seeds/create-docx-templates';
 import { seedKsiFromXlsx } from './seeds/seed-ksi';
 import { seedThematicReports } from './seeds/thematic-reports';
 import { seedReportTemplates } from './seeds/report-templates';
+import { seedDefectTemplates } from './seeds/defect-templates';
 
 const prisma = new PrismaClient();
 
@@ -261,6 +262,9 @@ async function main() {
   // === Системные шаблоны отчётов (Шаг 9) ===
   await seedReportTemplates(prisma);
   console.log('✅ Системные шаблоны отчётов: созданы');
+
+  // === Шаблоны дефектов (Модуль 11) ===
+  await seedDefectTemplates(prisma);
 
   console.log('Seed завершён:', { org: org.name, admin: admin.email });
 }

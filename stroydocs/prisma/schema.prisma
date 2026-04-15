@@ -183,6 +183,9 @@ model Organization {
   // Модуль 10 — Шаблоны категорий ИД на уровне организации
   idDocCategoryTemplates IdDocCategory[]
 
+  // Модуль 11 — Шаблоны дефектов на уровне организации
+  defectTemplates DefectTemplate[]
+
   @@map("organizations")
 }
 
@@ -2091,6 +2094,26 @@ model Defect {
   @@index([deadline])
   @@index([inspectionId])
   @@map("defects")
+}
+
+/// Шаблон дефекта — системный или организационный (Модуль 11)
+model DefectTemplate {
+  id           String         @id @default(uuid())
+  title        String
+  description  String?
+  category     DefectCategory
+  normativeRef String?
+  requirements String?
+
+  isSystem       Boolean       @default(false)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([isSystem])
+  @@map("defect_templates")
 }
 
 /// Комментарий / история изменения статуса дефекта

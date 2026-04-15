@@ -1050,6 +1050,13 @@
 - ✅ API: `GET/POST .../defects/[id]/normative-refs`, `DELETE .../normative-refs/[refId]`; `normativeRefs` включены в DEFECT_INCLUDE
 - ✅ UI: вкладка «Стандарты» в `DefectDetailCard` — readonly строка `normativeRef` + CRUD-таблица (`NormativeRefsTab.tsx` + `useNormativeRefs.ts`)
 
+### Добавлено (2026-04-15) — Справочник типовых недостатков (ЦУС стр. 272)
+- ✅ `DefectTemplate` — справочник шаблонов дефектов: системные (`isSystem=true`, доступны всем организациям) + пользовательские (привязаны к организации); поля: title, description, category, normativeRef, requirements; 7 системных seed-записей (`prisma/seeds/defect-templates.ts`)
+- ✅ API: `GET/POST /api/sk/defect-templates` (поиск по title, пагинация), `DELETE /api/sk/defect-templates/[id]` (только свои не-системные шаблоны)
+- ✅ UI: в `AddDefectDialog` — переключатель «Типовой недостаток / Вручную»; диалог `DefectTemplatePickerDialog` с поиском, карточками (title + category badge + «Системный» badge) и кнопкой «Создать шаблон»; выбор шаблона автозаполняет поля: title, description, category, normativeRef
+- ✅ Хук `useDefectTemplates` (`src/hooks/useDefectTemplates.ts`): `useDefectTemplates`, `useCreateDefectTemplate`, `useDeleteDefectTemplate`
+- ✅ Миграция `20260415020000_add_defect_templates`
+
 ---
 
 ## МОДУЛЬ 12 — Отчёты ✅ (2026-04-07)

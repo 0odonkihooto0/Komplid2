@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,6 +17,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAddDefectToInspection } from './useInspections';
+import { DefectTemplatePickerDialog } from './DefectTemplatePickerDialog';
+import type { DefectTemplateItem } from '@/hooks/useDefectTemplates';
 
 const CATEGORY_LABELS: Record<string, string> = {
   QUALITY_VIOLATION:    'Нарушение качества',
@@ -56,6 +59,8 @@ interface Props {
 }
 
 export function AddDefectDialog({ objectId, inspectionId, open, onOpenChange }: Props) {
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+
   const addDefect = useAddDefectToInspection(objectId, inspectionId);
 
   const { data: employees = [] } = useQuery<Employee[]>({
@@ -84,6 +89,14 @@ export function AddDefectDialog({ objectId, inspectionId, open, onOpenChange }: 
 
   const requiresSuspension = watch('requiresSuspension');
 
+  const onSelectTemplate = (template: DefectTemplateItem) => {
+    setValue('title', template.title);
+    if (template.description) setValue('description', template.description);
+    setValue('category', template.category as FormValues['category']);
+    if (template.normativeRef) setValue('normativeRef', template.normativeRef);
+    setTemplatePickerOpen(false);
+  };
+
   const onSubmit = (values: FormValues) => {
     addDefect.mutate(
       {
@@ -108,6 +121,7 @@ export function AddDefectDialog({ objectId, inspectionId, open, onOpenChange }: 
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -115,6 +129,22 @@ export function AddDefectDialog({ objectId, inspectionId, open, onOpenChange }: 
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="flex gap-2 p-1 bg-muted rounded-lg mb-4">
+            <button
+              type="button"
+              className="flex-1 py-1.5 px-3 text-sm rounded-md transition-colors bg-background shadow-sm font-medium"
+              onClick={() => setTemplatePickerOpen(true)}
+            >
+              Типовой недостаток
+            </button>
+            <button
+              type="button"
+              className="flex-1 py-1.5 px-3 text-sm rounded-md transition-colors text-muted-foreground hover:text-foreground"
+            >
+              Вручную
+            </button>
+          </div>
+
           <div className="space-y-1.5">
             <Label htmlFor="title">Описание недостатка *</Label>
             <Input id="title" placeholder="Кратко опишите недостаток" {...register('title')} />
@@ -239,5 +269,16 @@ export function AddDefectDialog({ objectId, inspectionId, open, onOpenChange }: 
         </form>
       </DialogContent>
     </Dialog>
+
+    <DefectTemplatePickerDialog
+      open={templatePickerOpen}
+      onOpenChange={setTemplatePickerOpen}
+      onSelect={onSelectTemplate}
+      onCreateNew={() => {
+        setTemplatePickerOpen(false);
+        // TODO: открыть форму создания нового шаблона
+      }}
+    />
+    </>
   );
 }
