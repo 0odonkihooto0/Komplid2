@@ -385,6 +385,20 @@ API `/api/objects/[objectId]/defects/[defectId]` включает `normativeRefs
 **Правило**: при добавлении нового поля в `include` API-роута — одновременно добавлять его в соответствующий
 TypeScript-интерфейс в хуке (`use*.ts`). Проверять: API include ↔ интерфейс хука ↔ использование в компоненте.
 
+**`wget exit code 8` из `services/ifc-service/Dockerfile` — S3-хостинг IfcConvert умер.**
+`https://s3.amazonaws.com/ifcopenshell-builds/IfcConvert-v0.7.0-linux64.zip` возвращает HTTP ошибку (~2025+).
+Дополнительно: версия бинарника (0.7.0) не совпадала с Python-пакетом `ifcopenshell==0.8.0` в requirements.txt.
+Оба должны быть одной версии — они часть одного codebase IfcOpenShell.
+Побочный эффект: debconf warnings «TERM is not set» от apt-get — отсутствие `ENV DEBIAN_FRONTEND=noninteractive`.
+**Правило**: для внешних бинарников (IfcConvert, IfcConvert и подобных) не полагаться на сторонние S3-бакеты.
+Надёжные варианты (в порядке предпочтения):
+1. Загрузить бинарник в свой Timeweb S3 (нет внешней зависимости) — передавать URL через `ARG IFCCONVERT_URL`
+2. GitHub Releases (`https://github.com/IfcOpenShell/IfcOpenShell/releases/download/v0.8.0/IfcConvert-v0.8.0-linux64.zip`)
+3. Добавить retry-цикл (5 попыток с паузой 15 сек) — как в npm install
+Всегда синхронизировать версию бинарника с pip-пакетом: `IfcConvert-v0.8.0` ↔ `ifcopenshell==0.8.0`.
+`DEBIAN_FRONTEND=noninteractive` — ENV (не ARG) для `python:3.11-slim` и любых `*-slim` образов с apt-get.
+Добавлять `libgomp1` в apt-get — OpenMP runtime, требуется многопоточным C++ бинарникам (IfcConvert, FFmpeg и др.).
+
 ---
 
 > Правило: после каждой исправленной ошибки добавить урок сюда.
