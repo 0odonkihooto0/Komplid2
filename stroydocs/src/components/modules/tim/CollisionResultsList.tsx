@@ -11,10 +11,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { CollisionResult } from './useCollisions';
+import type { ClashResultItem } from './useCollisions';
 
 interface Props {
-  results: CollisionResult[];
+  results: ClashResultItem[];
   /** Вызывается при нажатии «Выделить» — передаёт GUID пары */
   onHighlight: (guidA: string, guidB: string) => void;
 }
@@ -28,7 +28,7 @@ export function CollisionResultsList({ results, onHighlight }: Props) {
     );
   }
 
-  const labelMap: Record<CollisionResult['collisionType'], string> = {
+  const labelMap: Record<'intersection' | 'duplicate', string> = {
     intersection: 'Пересечение',
     duplicate: 'Дублирование',
   };
@@ -51,10 +51,10 @@ export function CollisionResultsList({ results, onHighlight }: Props) {
         n: i + 1,
         guidA: r.guidA,
         guidB: r.guidB,
-        type: labelMap[r.collisionType],
-        cx: r.center.x.toFixed(3),
-        cy: r.center.y.toFixed(3),
-        cz: r.center.z.toFixed(3),
+        type: labelMap[r.type],
+        cx: r.clashPoint?.[0]?.toFixed(3) ?? '—',
+        cy: r.clashPoint?.[1]?.toFixed(3) ?? '—',
+        cz: r.clashPoint?.[2]?.toFixed(3) ?? '—',
       });
     });
     const buffer = await wb.xlsx.writeBuffer();
@@ -103,10 +103,10 @@ export function CollisionResultsList({ results, onHighlight }: Props) {
                 <TableCell className="font-mono text-xs">{r.guidB.slice(0, 14)}…</TableCell>
                 <TableCell>
                   <Badge
-                    variant={r.collisionType === 'intersection' ? 'destructive' : 'secondary'}
+                    variant={r.type === 'intersection' ? 'destructive' : 'secondary'}
                     className="text-xs"
                   >
-                    {labelMap[r.collisionType]}
+                    {labelMap[r.type]}
                   </Badge>
                 </TableCell>
                 <TableCell>
