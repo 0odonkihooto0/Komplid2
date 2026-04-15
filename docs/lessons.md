@@ -7,6 +7,17 @@
 
 ## Prisma / База данных
 
+**Расширение Prisma enum → все non-Partial `Record<EnumType, ...>` ломают сборку.**
+При добавлении нового значения в Prisma enum (`ExecutionDocType` получил `GENERAL_DOCUMENT`, `KS_6A`, `KS_11`, `KS_14`) TypeScript требует, чтобы все значения были покрыты в `Record<EnumType, T>`. Файлы `inbox/route.ts` и `pdf-generator.ts` имели неполные маппинги — сборка падала с `Type error: ... is missing the following properties`.
+Правило: после добавления значения в Prisma enum **обязательно** выполнить:
+```bash
+grep -r "Record<ИмяEnum" src/
+```
+Для каждого найденного `Record<EnumType, ...>` без `Partial<>`:
+- Добавить новые ключи в объект — если маппинг должен покрывать ВСЕ значения (Labels, Colors и т.п.)
+- Или изменить тип на `Partial<Record<EnumType, ...>>` — если маппинг заведомо неполный (Templates, Handlers)
+Источник истины для лейблов — `src/utils/constants.ts`; дублировать одни и те же метки в роутах не нужно — лучше импортировать из constants.
+
 **Nullable Prisma relation в `include` — прямой доступ без null-check блокирует сборку.**
 `JournalEntryRemark.entryId String?` → `entry SpecialJournalEntry?` — поле nullable.
 Код `remark.entry.journal.projectId` без проверки → TS18047 при `Checking validity of types`.

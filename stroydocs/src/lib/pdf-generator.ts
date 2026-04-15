@@ -8,8 +8,8 @@ import type {
   TechReadinessTemplateData,
 } from '@/types/templates';
 
-// Маппинг типа документа на файл шаблона
-const TEMPLATE_FILES: Record<ExecutionDocType, string> = {
+// Маппинг типа документа на файл шаблона (только типы с Handlebars-шаблоном)
+const TEMPLATE_FILES: Partial<Record<ExecutionDocType, string>> = {
   AOSR: 'aosr.hbs',
   OZR: 'ozr.hbs',
   TECHNICAL_READINESS_ACT: 'technical-readiness-act.hbs',
@@ -26,7 +26,9 @@ function getTemplate(docType: ExecutionDocType): ReturnType<typeof Handlebars.co
   const cached = templateCache.get(docType);
   if (cached) return cached;
 
-  const templatePath = path.join(process.cwd(), 'templates', TEMPLATE_FILES[docType]);
+  const templateFile = TEMPLATE_FILES[docType];
+  if (!templateFile) throw new Error(`Нет шаблона PDF для типа документа: ${docType}`);
+  const templatePath = path.join(process.cwd(), 'templates', templateFile);
   const source = fs.readFileSync(templatePath, 'utf-8');
   const compiled = Handlebars.compile(source);
   templateCache.set(docType, compiled);
