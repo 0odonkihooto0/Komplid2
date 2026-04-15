@@ -1,6 +1,4 @@
 import { execSync } from 'child_process';
-import { copyFileSync, mkdirSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -23,10 +21,6 @@ const nextConfig = {
   },
 
   // Three.js требует transpilation в Next.js.
-  // web-ifc НЕ добавляем: пакет поставляет CommonJS и не требует транспиляции.
-  // Добавление web-ifc в transpilePackages заставляет webpack переписывать
-  // `new URL('./web-ifc.wasm', import.meta.url)` в hash-путь /_next/static/chunks/HASH.wasm,
-  // что ломает SetWasmPath('/') и вызывает 404 при загрузке WASM в браузере.
   transpilePackages: ['three'],
 
   // Handlebars использует require.extensions (Node.js API) — подавляем webpack-предупреждение.
@@ -36,26 +30,7 @@ const nextConfig = {
         ...(config.ignoreWarnings ?? []),
         { message: /require\.extensions is not supported by webpack/ },
       ];
-      return config;
     }
-    // webpack 5 трансформирует `new URL('./web-ifc.wasm', import.meta.url)`
-    // в URL /_next/static/chunks/web-ifc.wasm но НЕ копирует файл.
-    // asset/resource не срабатывает для URL-dependencies в dev-режиме.
-    // afterEmit хук явно копирует WASM после каждого emit (dev + prod).
-    config.plugins.push({
-      apply(compiler) {
-        compiler.hooks.afterEmit.tapAsync('CopyWebIfcWasm', (_compilation, callback) => {
-          const src = join(process.cwd(), 'node_modules', 'web-ifc', 'web-ifc.wasm');
-          if (!existsSync(src)) { callback(); return; }
-          const dest = join(compiler.outputPath, 'static', 'chunks', 'web-ifc.wasm');
-          try {
-            mkdirSync(dirname(dest), { recursive: true });
-            copyFileSync(src, dest);
-          } catch { /* silent */ }
-          callback();
-        });
-      },
-    });
     return config;
   },
 

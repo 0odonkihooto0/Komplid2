@@ -2,7 +2,7 @@
 
 /**
  * IfcViewer — публичный экспорт с ssr:false.
- * Three.js и web-ifc (WASM) не работают в SSR — используем dynamic import.
+ * Three.js не работает в SSR — используем dynamic import.
  */
 
 import dynamic from 'next/dynamic';
@@ -10,6 +10,11 @@ import { Loader2 } from 'lucide-react';
 import type { ViewerScene } from './ifcSceneSetup';
 
 interface Props {
+  /** ID объекта строительства (используется для запроса /glb-url) */
+  projectId: string;
+  /** ID BIM-модели (используется для запроса /glb-url) */
+  modelId: string;
+  /** Presigned URL для скачивания исходного IFC-файла (кнопка Download) */
   downloadUrl: string;
   elementColors?: Map<string, string>;
   onElementSelected: (ifcGuid: string | null) => void;

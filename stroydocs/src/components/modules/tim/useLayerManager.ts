@@ -25,10 +25,10 @@ export function useLayerManager(sceneRef: RefObject<ViewerScene | null>) {
     const vs = sceneRef.current;
     if (!vs) return;
 
-    const layerExpressIds = vs.layers.get(layerName);
-    if (layerExpressIds) {
-      vs.meshMap.forEach((expressId, mesh) => {
-        if (layerExpressIds.has(expressId)) {
+    const layerGuids = vs.layers.get(layerName);
+    if (layerGuids) {
+      vs.meshMap.forEach((guid, mesh) => {
+        if (layerGuids.has(guid)) {
           (mesh as unknown as { visible: boolean }).visible = visible;
         }
       });
@@ -41,7 +41,7 @@ export function useLayerManager(sceneRef: RefObject<ViewerScene | null>) {
   const showAll = useCallback(() => {
     const vs = sceneRef.current;
     if (!vs) return;
-    vs.meshMap.forEach((_expressId, mesh) => {
+    vs.meshMap.forEach((_guid, mesh) => {
       (mesh as unknown as { visible: boolean }).visible = true;
     });
     setLayerVisibility(prev => {
@@ -55,7 +55,7 @@ export function useLayerManager(sceneRef: RefObject<ViewerScene | null>) {
   const hideAll = useCallback(() => {
     const vs = sceneRef.current;
     if (!vs) return;
-    vs.meshMap.forEach((_expressId, mesh) => {
+    vs.meshMap.forEach((_guid, mesh) => {
       (mesh as unknown as { visible: boolean }).visible = false;
     });
     setLayerVisibility(prev => {

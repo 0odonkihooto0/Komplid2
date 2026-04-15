@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/tooltip';
 
 interface ModelStatusBadgeProps {
-  status: 'PROCESSING' | 'READY' | 'ERROR';
+  status: 'PROCESSING' | 'READY' | 'ERROR' | 'CONVERTING';
   errorMessage?: string | null;
 }
 
@@ -20,6 +20,15 @@ export function ModelStatusBadge({ status, errorMessage }: ModelStatusBadgeProps
       <Badge variant="outline" className="gap-1 text-yellow-600 border-yellow-300 bg-yellow-50">
         <Loader2 className="h-3 w-3 animate-spin" />
         Обработка
+      </Badge>
+    );
+  }
+
+  if (status === 'CONVERTING') {
+    return (
+      <Badge variant="outline" className="gap-1 text-orange-600 border-orange-300 bg-orange-50">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        Конвертация
       </Badge>
     );
   }
