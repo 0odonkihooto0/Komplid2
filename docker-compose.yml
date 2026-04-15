@@ -23,11 +23,16 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      ifc-service:
+        condition: service_healthy
     environment:
       - PORT=3000
       - NODE_ENV=${NODE_ENV:-production}
       - DATABASE_URL=${DATABASE_URL:-}
       - REDIS_URL=redis://redis:6379
+      # URL IfcOpenShell-микросервиса внутри Docker-сети (DNS-имя сервиса).
+      # НЕ localhost — localhost внутри контейнера указывает на сам app, не на ifc-service.
+      - IFC_SERVICE_URL=http://ifc-service:8001
       - S3_ENDPOINT=${S3_ENDPOINT:-}
       - S3_REGION=${S3_REGION:-}
       - S3_BUCKET=${S3_BUCKET:-}

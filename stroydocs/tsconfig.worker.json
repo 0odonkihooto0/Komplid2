@@ -12,6 +12,7 @@
     "resolveJsonModule": true
   },
   "include": [
-    "src/lib/workers/parse-ifc.worker.ts"
+    "src/lib/workers/parse-ifc.worker.ts",
+    "src/lib/workers/convert-ifc.worker.ts"
   ]
 }

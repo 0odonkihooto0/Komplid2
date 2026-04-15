@@ -9,6 +9,7 @@ import logging
 import shutil
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
@@ -65,21 +66,26 @@ def convert_ifc(request: ConvertRequest) -> ConvertResponse:
         # 3. Запуск IfcConvert
         # --use-element-guids — использует GlobalId как ID объектов в glTF
         # --no-progress — отключает прогресс-бар (чище логи)
+        # --log-file /dev/null — уменьшает I/O на большие модели
         cmd = [
             ifcconvert_path,
             str(local_ifc),
             str(local_glb),
             "--use-element-guids",
             "--no-progress",
+            "--log-file", "/dev/null",
         ]
         logger.info("Запускаю IfcConvert: %s", " ".join(cmd))
 
+        start_time = time.time()
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
-            timeout=300,  # 5 минут максимум для больших моделей
+            timeout=300,  # 5 минут максимум для больших моделей (воркер держит 8 мин суммарно)
         )
+        elapsed = time.time() - start_time
+        logger.info("IfcConvert отработал за %.1f сек (code=%d)", elapsed, result.returncode)
 
         if result.returncode != 0:
             logger.error(
@@ -96,9 +102,14 @@ def convert_ifc(request: ConvertRequest) -> ConvertResponse:
             raise HTTPException(status_code=422, detail="IfcConvert не создал выходной файл")
 
         # 4. Загрузить GLB в S3
+        upload_start = time.time()
         file_size = upload_file(local_glb, request.outputS3Key)
-
-        logger.info("Конвертация завершена: %s (%d байт)", request.outputS3Key, file_size)
+        logger.info(
+            "GLB загружен в S3 за %.1f сек: %s (%d байт)",
+            time.time() - upload_start,
+            request.outputS3Key,
+            file_size,
+        )
         return ConvertResponse(glbS3Key=request.outputS3Key, fileSizeBytes=file_size)
 
     except HTTPException:

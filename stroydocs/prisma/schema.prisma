@@ -4614,9 +4614,10 @@ model SafetyBriefing {
 // ============================================================
 
 enum BimModelStatus {
-  PROCESSING // Загрузка/обработка
-  READY // Готова к просмотру
-  ERROR // Ошибка обработки
+  PROCESSING // Парсинг IFC (скачивание + разбор элементов)
+  CONVERTING // Конвертация IFC → GLB для 3D-вьюера
+  READY // Готова к просмотру (и парсинг, и GLB успешны)
+  ERROR // Ошибка обработки (parseError / convertError в metadata)
 }
 
 enum BimModelStage {

@@ -2,17 +2,22 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Vector2 } from 'three';
-import { Loader2 } from 'lucide-react';
 import { ViewerToolbar } from './ViewerToolbar';
 import { ClippingPanel } from './ClippingPanel';
 import { LayerPanel } from './LayerPanel';
 import { ViewerContextMenu } from './ViewerContextMenu';
+import { ConversionProgress, type ConversionUiState } from './ConversionProgress';
 import { useClippingPlanes } from './useClippingPlanes';
 import { useMeasurements } from './useMeasurements';
 import { useLayerManager } from './useLayerManager';
 import { useViewerExport } from './useViewerExport';
 import { initScene, loadGlbModel } from './ifcSceneSetup';
 import type { ViewerScene } from './ifcSceneSetup';
+
+/** Интервал опроса статуса модели (мс) */
+const POLL_INTERVAL_MS = 5_000;
+/** Через сколько мс в статусе CONVERTING показать fallback-панель */
+const FALLBACK_AFTER_MS = 10 * 60 * 1000; // 10 минут
 
 const DEFAULT_COLOR = '#9CA3AF';
 const SELECTED_COLOR = '#60A5FA';
@@ -57,12 +62,17 @@ export function IfcViewerCore({
   onSceneReadyRef.current = onSceneReady;
 
   const [loading, setLoading] = useState(true);
-  const [loadingText, setLoadingText] = useState('Загрузка модели...');
   const [loadingProgress, setLoadingProgress] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [wireframe, setWireframe] = useState(false);
   const [layersOpen, setLayersOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+
+  // ─── Состояние конвертации BIM-модели ────────────────────────────────────────
+  const [conversionState, setConversionState] = useState<ConversionUiState | null>(null);
+  const [convertError, setConvertError] = useState<string | null>(null);
+  const [elapsedSec, setElapsedSec] = useState(0);
+  const [reconverting, setReconverting] = useState(false);
 
   // ─── Разрезы, измерения, слои ────────────────────────────────────────────────
   const clipping = useClippingPlanes(sceneRef);
@@ -105,45 +115,126 @@ export function IfcViewerCore({
     setWireframe(s.wireframe);
   }, []);
 
-  // ─── Инициализация сцены + загрузка GLB ──────────────────────────────────────
+  // ─── Действия на экране прогресса/ошибки ─────────────────────────────────────
+  const handleReload = useCallback(() => {
+    if (typeof window !== 'undefined') window.location.reload();
+  }, []);
+
+  const handleReconvert = useCallback(async () => {
+    if (reconverting) return;
+    setReconverting(true);
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/bim/models/${modelId}/reconvert`,
+        { method: 'POST' }
+      );
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`HTTP ${res.status}: ${text.slice(0, 200)}`);
+      }
+      // После постановки задачи в очередь — перезагружаем страницу чтобы
+      // поллинг стартовал с чистого состояния CONVERTING.
+      if (typeof window !== 'undefined') window.location.reload();
+    } catch (err) {
+      setConvertError(err instanceof Error ? err.message : 'Не удалось перезапустить конвертацию');
+      setReconverting(false);
+    }
+  }, [projectId, modelId, reconverting]);
+
+  // ─── Инициализация сцены + поллинг статуса модели + загрузка GLB ─────────────
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     let cancelled = false;
+    const startedAt = Date.now();
 
     async function init() {
       setLoading(true);
       setLoadError(null);
       setLoadingProgress(null);
+      setConversionState(null);
+      setConvertError(null);
 
       const vs = await initScene(container!);
       if (cancelled) { vs.renderer.dispose(); return; }
       sceneRef.current = vs;
 
       try {
-        // Получить presigned URL для .glb — с поллингом пока конвертация не завершена
+        // Опрашиваем статус модели раз в 5 секунд пока не придёт READY.
+        // Если >10 мин в CONVERTING → переключаемся в FALLBACK (3D недоступен, структура работает).
         let glbUrl: string | null = null;
+
         while (glbUrl === null && !cancelled) {
           const res = await fetch(
-            `/api/projects/${projectId}/bim/models/${modelId}/glb-url`
+            `/api/projects/${projectId}/bim/models/${modelId}`
           );
-          if (res.status === 202) {
-            // GLB ещё не готов — ждём 3 секунды и повторяем
-            setLoadingText('Конвертация модели в glTF...');
-            await new Promise<void>(r => setTimeout(r, 3000));
-            continue;
-          }
+
           if (!res.ok) {
-            throw new Error(`HTTP ${res.status}: не удалось получить URL модели`);
+            throw new Error(`HTTP ${res.status}: не удалось получить статус модели`);
           }
-          const json = (await res.json()) as { url: string };
-          glbUrl = json.url;
+
+          const json = (await res.json()) as {
+            success: boolean;
+            data?: {
+              status: 'PROCESSING' | 'CONVERTING' | 'READY' | 'ERROR';
+              metadata?: { glbS3Key?: string; convertError?: string } | null;
+            };
+          };
+          if (!json.success || !json.data) {
+            throw new Error('Не удалось получить данные модели');
+          }
+
+          const { status, metadata } = json.data;
+          const elapsed = Date.now() - startedAt;
+
+          if (status === 'ERROR') {
+            if (!cancelled) {
+              setConvertError(metadata?.convertError ?? 'Ошибка конвертации модели');
+              setConversionState('ERROR');
+              setLoading(false);
+            }
+            return;
+          }
+
+          if (status === 'READY' && metadata?.glbS3Key) {
+            // GLB готов — запрашиваем presigned URL и выходим из цикла
+            const urlRes = await fetch(
+              `/api/projects/${projectId}/bim/models/${modelId}/glb-url`
+            );
+            if (!urlRes.ok) {
+              throw new Error(`HTTP ${urlRes.status}: не удалось получить URL GLB`);
+            }
+            const urlJson = (await urlRes.json()) as { success: boolean; data?: { url: string } };
+            if (!urlJson.success || !urlJson.data?.url) {
+              throw new Error('URL GLB отсутствует в ответе');
+            }
+            glbUrl = urlJson.data.url;
+            break;
+          }
+
+          // PROCESSING или CONVERTING — показываем прогресс-экран с таймером
+          if (!cancelled) {
+            setConversionState(status === 'PROCESSING' ? 'PROCESSING' : 'CONVERTING');
+            setElapsedSec(Math.floor(elapsed / 1000));
+          }
+
+          // Fallback после 10 минут висения в CONVERTING
+          if (status === 'CONVERTING' && elapsed > FALLBACK_AFTER_MS) {
+            if (!cancelled) {
+              setConversionState('FALLBACK');
+              setLoading(false);
+            }
+            return;
+          }
+
+          await new Promise<void>(r => setTimeout(r, POLL_INTERVAL_MS));
         }
 
-        if (cancelled) return;
+        if (cancelled || !glbUrl) return;
 
-        setLoadingText('Загрузка модели...');
-        await loadGlbModel(glbUrl!, vs, (pct) => {
+        // GLB готов — скрываем прогресс-экран, загружаем модель
+        setConversionState(null);
+        await loadGlbModel(glbUrl, vs, (pct) => {
           if (!cancelled) setLoadingProgress(Math.round(pct));
         });
 
@@ -323,19 +414,39 @@ export function IfcViewerCore({
         </div>
       )}
 
-      {loading && (
+      {/* Экран прогресса конвертации: PROCESSING / CONVERTING / ERROR / FALLBACK */}
+      {conversionState && (
+        <ConversionProgress
+          state={conversionState}
+          elapsedSec={elapsedSec}
+          errorMessage={convertError}
+          onReload={handleReload}
+          onReconvert={handleReconvert}
+          reconverting={reconverting}
+        />
+      )}
+
+      {/* Обычный спиннер загрузки GLB через сеть (после получения presigned URL) */}
+      {loading && !conversionState && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/80">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="text-sm">{loadingText}</span>
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <span className="text-sm">Загрузка модели…</span>
           {loadingProgress !== null && (
             <span className="text-xs text-muted-foreground">{loadingProgress}%</span>
           )}
         </div>
       )}
-      {loadError && (
+
+      {/* Ошибка сети / загрузки GLB (уже после того как glbUrl получен) */}
+      {loadError && !conversionState && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/80">
           <p className="text-sm text-destructive">{loadError}</p>
-          <p className="text-xs text-muted-foreground">Проверьте что модель успешно конвертирована</p>
+          <button
+            onClick={handleReload}
+            className="mt-2 rounded-md border border-border bg-background px-3 py-1.5 text-xs hover:bg-accent"
+          >
+            Обновить страницу
+          </button>
         </div>
       )}
     </div>
