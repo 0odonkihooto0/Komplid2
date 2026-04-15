@@ -7,6 +7,20 @@
 
 ## Prisma / База данных
 
+**Прямой каст Prisma `Json` поля к кастомному типу — ошибка сборки `may be a mistake because neither type sufficiently overlaps`.**
+Prisma `Json` поля возвращают тип `JsonValue` (или `JsonArray` после `Array.isArray` narrowing). TypeScript не считает `JsonValue` достаточно совместимым с кастомными интерфейсами (например `KsActParticipant[]`) — прямой `as CustomType[]` вызывает ошибку `Conversion of type 'JsonArray' to type '...' may be a mistake`.
+Ошибка проявляется только на деплое (тип-чек Next.js build) — локально без `node_modules` пропускается.
+Правило: **никогда не кастовать Prisma `Json` поле напрямую** в кастомный тип — только через `unknown`:
+```typescript
+// Неправильно — ошибка сборки:
+const items = form.participants as KsActParticipant[];
+
+// Правильно — двойной каст через unknown:
+const items = form.participants as unknown as KsActParticipant[];
+```
+При поиске похожих мест: `grep -r "as [A-Z][a-zA-Z]*\[\]" src/` и проверять, что источник — не Prisma `Json` поле.
+Исправлено в `ks-acts/print/route.ts` (4 поля: participants, indicators, workList, commissionMembers) и `FinancialTableEditor.tsx` (columns, rows).
+
 **Расширение Prisma enum → все non-Partial `Record<EnumType, ...>` ломают сборку.**
 При добавлении нового значения в Prisma enum (`ExecutionDocType` получил `GENERAL_DOCUMENT`, `KS_6A`, `KS_11`, `KS_14`) TypeScript требует, чтобы все значения были покрыты в `Record<EnumType, T>`. Файлы `inbox/route.ts` и `pdf-generator.ts` имели неполные маппинги — сборка падала с `Type error: ... is missing the following properties`.
 Правило: после добавления значения в Prisma enum **обязательно** выполнить:
