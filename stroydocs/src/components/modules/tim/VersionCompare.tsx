@@ -1,6 +1,7 @@
 'use client';
 
 import { GitCompare, Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -10,37 +11,56 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { VersionDiffViewer } from './VersionDiffViewer';
 import { useVersionCompare } from './useVersionCompare';
-import { useModels } from './useModels';
+
+interface BimVersion {
+  id: string;
+  version: number;
+  name: string;
+  isCurrent: boolean;
+}
 
 interface Props {
   projectId: string;
+  modelId: string;
+  onHighlightByGuid?: (guid: string) => void;
 }
 
-export function VersionCompare({ projectId }: Props) {
-  const modelsQuery = useModels(projectId);
-  const models = (modelsQuery.data ?? []).filter((m) => m.status === 'READY');
+export function VersionCompare({ projectId, modelId, onHighlightByGuid }: Props) {
+  // Загружаем список версий через существующий GET /bim/models/[modelId]
+  const modelQuery = useQuery<{ versions: BimVersion[] }>({
+    queryKey: ['bim-model-versions', modelId],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${projectId}/bim/models/${modelId}`);
+      const json = await res.json() as { success: boolean; data: { versions: BimVersion[] }; error?: string };
+      if (!json.success) throw new Error(json.error ?? 'Ошибка загрузки версий');
+      return json.data;
+    },
+  });
+
+  const versions = modelQuery.data?.versions ?? [];
 
   const {
-    modelIdA,
-    setModelIdA,
-    modelIdB,
-    setModelIdB,
+    versionIdOld,
+    setVersionIdOld,
+    versionIdNew,
+    setVersionIdNew,
     canCompare,
     result,
     isPending,
     runCompare,
     reset,
-  } = useVersionCompare(projectId);
+  } = useVersionCompare(projectId, modelId);
 
-  const handleModelAChange = (value: string) => {
-    setModelIdA(value);
+  const handleOldChange = (value: string) => {
+    setVersionIdOld(value);
     reset();
   };
 
-  const handleModelBChange = (value: string) => {
-    setModelIdB(value);
+  const handleNewChange = (value: string) => {
+    setVersionIdNew(value);
     reset();
   };
 
@@ -48,22 +68,24 @@ export function VersionCompare({ projectId }: Props) {
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
         <GitCompare className="h-4 w-4" />
-        Сравнение версий моделей
+        Сравнение версий (ifcdiff)
       </div>
 
-      {/* Выбор двух моделей */}
+      {/* Выбор двух версий */}
       <div className="grid gap-3">
         <div className="space-y-1.5">
-          <Label htmlFor="model-a">Модель A (базовая)</Label>
-          <Select value={modelIdA ?? ''} onValueChange={handleModelAChange}>
-            <SelectTrigger id="model-a">
-              <SelectValue placeholder="Выберите модель..." />
+          <Label htmlFor="version-old">Версия A (базовая)</Label>
+          <Select value={versionIdOld ?? ''} onValueChange={handleOldChange}>
+            <SelectTrigger id="version-old">
+              <SelectValue placeholder="Выберите версию..." />
             </SelectTrigger>
             <SelectContent>
-              {models.map((m) => (
-                <SelectItem key={m.id} value={m.id} disabled={m.id === modelIdB}>
-                  {m.name}
-                  {m.section ? ` · ${m.section.name}` : ''}
+              {versions.map((v) => (
+                <SelectItem key={v.id} value={v.id} disabled={v.id === versionIdNew}>
+                  <span>v{v.version} — {v.name}</span>
+                  {v.isCurrent && (
+                    <Badge variant="secondary" className="ml-2 text-xs">текущая</Badge>
+                  )}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -71,16 +93,18 @@ export function VersionCompare({ projectId }: Props) {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="model-b">Модель B (сравниваемая)</Label>
-          <Select value={modelIdB ?? ''} onValueChange={handleModelBChange}>
-            <SelectTrigger id="model-b">
-              <SelectValue placeholder="Выберите модель..." />
+          <Label htmlFor="version-new">Версия B (новая)</Label>
+          <Select value={versionIdNew ?? ''} onValueChange={handleNewChange}>
+            <SelectTrigger id="version-new">
+              <SelectValue placeholder="Выберите версию..." />
             </SelectTrigger>
             <SelectContent>
-              {models.map((m) => (
-                <SelectItem key={m.id} value={m.id} disabled={m.id === modelIdA}>
-                  {m.name}
-                  {m.section ? ` · ${m.section.name}` : ''}
+              {versions.map((v) => (
+                <SelectItem key={v.id} value={v.id} disabled={v.id === versionIdOld}>
+                  <span>v{v.version} — {v.name}</span>
+                  {v.isCurrent && (
+                    <Badge variant="secondary" className="ml-2 text-xs">текущая</Badge>
+                  )}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -98,28 +122,19 @@ export function VersionCompare({ projectId }: Props) {
         ) : (
           <GitCompare className="h-4 w-4" />
         )}
-        {isPending ? 'Сравнение...' : 'Сравнить модели'}
+        {isPending ? 'Сравнение...' : 'Сравнить через ifcdiff'}
       </Button>
 
       {/* Результат сравнения */}
       {result && (
         <div className="rounded-md border p-3">
-          <p className="mb-3 text-xs text-muted-foreground">
-            <span className="font-medium">{result.modelA.name}</span>
-            {' → '}
-            <span className="font-medium">{result.modelB.name}</span>
-          </p>
-          <VersionDiffViewer
-            modelAName={result.modelA.name}
-            modelBName={result.modelB.name}
-            diff={result.diff}
-          />
+          <VersionDiffViewer diff={result} onHighlight={onHighlightByGuid} />
         </div>
       )}
 
-      {models.length === 0 && !modelsQuery.isLoading && (
+      {versions.length < 2 && !modelQuery.isLoading && (
         <p className="text-center text-sm text-muted-foreground">
-          Нет готовых моделей для сравнения. Загрузите хотя бы две модели.
+          Нет двух версий для сравнения. Загрузите хотя бы две версии модели.
         </p>
       )}
     </div>

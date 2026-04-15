@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Download, Plus, Minus, RefreshCw, Minus as Equal } from 'lucide-react';
+import { Download, Plus, Minus, RefreshCw, Hexagon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,28 +14,74 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { BimModelDiff, BimElementSummary, ModifiedElement } from '@/lib/bim/compare-models';
+import type { IfcDiffResult, IfcDiffElement, IfcDiffChangedElement } from '@/types/bim-diff';
 
 interface Props {
-  modelAName: string;
-  modelBName: string;
-  diff: BimModelDiff;
+  diff: IfcDiffResult;
+  onHighlight?: (guid: string) => void;
 }
 
-export function VersionDiffViewer({ modelAName, modelBName, diff }: Props) {
+// ─── Цветовая палитра по ЦУС стр. 303–304 ──────────────────────────────────
+const COLORS = {
+  added: { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-200', hex: '#22C55E' },
+  deleted: { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-200', hex: '#EF4444' },
+  changed: { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-200', hex: '#F59E0B' },
+  geometry: { bg: 'bg-orange-100', text: 'text-orange-800', border: 'border-orange-200', hex: '#F97316' },
+};
+
+export function VersionDiffViewer({ diff, onHighlight }: Props) {
   const [activeTab, setActiveTab] = useState('added');
-  const { stats } = diff;
+  const [highlightedGuid, setHighlightedGuid] = useState<string | null>(null);
+
+  const counts = {
+    added: diff.added.length,
+    deleted: diff.deleted.length,
+    changed: diff.changed.length,
+    geometry: diff.geometryChanged.length,
+  };
+
+  function handleRowClick(guid: string) {
+    setHighlightedGuid(guid);
+    onHighlight?.(guid);
+  }
 
   async function handleExport() {
     const ExcelJS = (await import('exceljs')).default;
     const wb = new ExcelJS.Workbook();
 
-    // Лист «Добавлено»
-    addSheet(wb, 'Добавлено', diff.added, modelBName);
-    // Лист «Удалено»
-    addSheet(wb, 'Удалено', diff.removed, modelAName);
-    // Лист «Изменено»
-    addModifiedSheet(wb, diff.modified);
+    // Общие колонки для всех листов
+    const cols = [
+      { header: 'GUID', key: 'guid', width: 28 },
+      { header: 'Тип IFC', key: 'ifcType', width: 22 },
+      { header: 'Наименование', key: 'name', width: 32 },
+      { header: 'Статус изменения', key: 'status', width: 22 },
+      { header: 'Изменённые атрибуты', key: 'attrs', width: 35 },
+    ];
+
+    const addSheet = (sheetName: string, status: string, rows: IfcDiffElement[]) => {
+      const ws = wb.addWorksheet(sheetName);
+      ws.columns = cols;
+      for (const el of rows) {
+        ws.addRow({ guid: el.guid, ifcType: el.ifcType ?? '', name: el.name ?? '', status, attrs: '' });
+      }
+    };
+
+    addSheet('Добавлено', 'Добавлено', diff.added);
+    addSheet('Удалено', 'Удалено', diff.deleted);
+
+    const wsChanged = wb.addWorksheet('Изм.Атрибуты');
+    wsChanged.columns = cols;
+    for (const el of diff.changed) {
+      wsChanged.addRow({
+        guid: el.guid,
+        ifcType: el.ifcType ?? '',
+        name: el.name ?? '',
+        status: 'Изм. атрибуты',
+        attrs: el.changedAttributes.join(', '),
+      });
+    }
+
+    addSheet('Изм.Геометрия', 'Изм. геометрия', diff.geometryChanged);
 
     const buffer = await wb.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
@@ -44,86 +90,84 @@ export function VersionDiffViewer({ modelAName, modelBName, diff }: Props) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `diff_${modelAName}_vs_${modelBName}.xlsx`;
+    a.download = 'diff_report.xlsx';
     a.click();
     URL.revokeObjectURL(url);
   }
 
   return (
     <div className="space-y-4">
-      {/* Сводка изменений */}
+      {/* Сводная строка с цветовыми бейджами */}
       <div className="flex flex-wrap items-center gap-2">
-        <SummaryBadge
-          icon={<Plus className="h-3 w-3" />}
-          count={stats.addedCount}
-          label="добавлено"
-          variant="added"
-        />
-        <SummaryBadge
-          icon={<Minus className="h-3 w-3" />}
-          count={stats.removedCount}
-          label="удалено"
-          variant="removed"
-        />
-        <SummaryBadge
-          icon={<RefreshCw className="h-3 w-3" />}
-          count={stats.modifiedCount}
-          label="изменено"
-          variant="modified"
-        />
-        <SummaryBadge
-          icon={<Equal className="h-3 w-3" />}
-          count={stats.unchangedCount}
-          label="без изменений"
-          variant="unchanged"
-        />
+        <SummaryBadge icon={<Plus className="h-3 w-3" />} count={counts.added} label="добавлено" color={COLORS.added} />
+        <SummaryBadge icon={<Minus className="h-3 w-3" />} count={counts.deleted} label="удалено" color={COLORS.deleted} />
+        <SummaryBadge icon={<RefreshCw className="h-3 w-3" />} count={counts.changed} label="атрибуты" color={COLORS.changed} />
+        <SummaryBadge icon={<Hexagon className="h-3 w-3" />} count={counts.geometry} label="геометрия" color={COLORS.geometry} />
         <div className="ml-auto">
           <Button variant="outline" size="sm" onClick={handleExport} className="gap-2">
             <Download className="h-4 w-4" />
-            Экспорт xlsx
+            Скачать отчёт .xlsx
           </Button>
         </div>
       </div>
 
-      {/* Таблицы по категориям */}
+      {/* Вкладки по категориям */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="added">
-            Добавлено{' '}
-            {stats.addedCount > 0 && (
-              <Badge variant="secondary" className="ml-1.5">
-                {stats.addedCount}
-              </Badge>
-            )}
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="added" className="text-xs">
+            <span className="mr-1 h-2 w-2 rounded-full bg-green-500 inline-block" />
+            Добавлено{counts.added > 0 && <Badge variant="secondary" className="ml-1">{counts.added}</Badge>}
           </TabsTrigger>
-          <TabsTrigger value="removed">
-            Удалено{' '}
-            {stats.removedCount > 0 && (
-              <Badge variant="secondary" className="ml-1.5">
-                {stats.removedCount}
-              </Badge>
-            )}
+          <TabsTrigger value="deleted" className="text-xs">
+            <span className="mr-1 h-2 w-2 rounded-full bg-red-500 inline-block" />
+            Удалено{counts.deleted > 0 && <Badge variant="secondary" className="ml-1">{counts.deleted}</Badge>}
           </TabsTrigger>
-          <TabsTrigger value="modified">
-            Изменено{' '}
-            {stats.modifiedCount > 0 && (
-              <Badge variant="secondary" className="ml-1.5">
-                {stats.modifiedCount}
-              </Badge>
-            )}
+          <TabsTrigger value="changed" className="text-xs">
+            <span className="mr-1 h-2 w-2 rounded-full bg-yellow-500 inline-block" />
+            Атрибуты{counts.changed > 0 && <Badge variant="secondary" className="ml-1">{counts.changed}</Badge>}
+          </TabsTrigger>
+          <TabsTrigger value="geometry" className="text-xs">
+            <span className="mr-1 h-2 w-2 rounded-full bg-orange-500 inline-block" />
+            Геометрия{counts.geometry > 0 && <Badge variant="secondary" className="ml-1">{counts.geometry}</Badge>}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="added">
-          <ElementTable elements={diff.added} emptyText="Нет добавленных элементов" />
+          <DiffElementTable
+            elements={diff.added}
+            emptyText="Нет добавленных элементов"
+            highlightedGuid={highlightedGuid}
+            onRowClick={handleRowClick}
+            rowColor="#22C55E"
+          />
         </TabsContent>
 
-        <TabsContent value="removed">
-          <ElementTable elements={diff.removed} emptyText="Нет удалённых элементов" />
+        <TabsContent value="deleted">
+          <DiffElementTable
+            elements={diff.deleted}
+            emptyText="Нет удалённых элементов"
+            highlightedGuid={highlightedGuid}
+            onRowClick={handleRowClick}
+            rowColor="#EF4444"
+          />
         </TabsContent>
 
-        <TabsContent value="modified">
-          <ModifiedTable elements={diff.modified} />
+        <TabsContent value="changed">
+          <ChangedAttributesTable
+            elements={diff.changed}
+            highlightedGuid={highlightedGuid}
+            onRowClick={handleRowClick}
+          />
+        </TabsContent>
+
+        <TabsContent value="geometry">
+          <DiffElementTable
+            elements={diff.geometryChanged}
+            emptyText="Нет элементов с изменённой геометрией"
+            highlightedGuid={highlightedGuid}
+            onRowClick={handleRowClick}
+            rowColor="#F97316"
+          />
         </TabsContent>
       </Tabs>
     </div>
@@ -136,20 +180,13 @@ interface SummaryBadgeProps {
   icon: ReactNode;
   count: number;
   label: string;
-  variant: 'added' | 'removed' | 'modified' | 'unchanged';
+  color: { bg: string; text: string; border: string };
 }
 
-const variantClasses: Record<SummaryBadgeProps['variant'], string> = {
-  added: 'bg-green-100 text-green-800 border-green-200',
-  removed: 'bg-red-100 text-red-800 border-red-200',
-  modified: 'bg-orange-100 text-orange-800 border-orange-200',
-  unchanged: 'bg-gray-100 text-gray-600 border-gray-200',
-};
-
-function SummaryBadge({ icon, count, label, variant }: SummaryBadgeProps) {
+function SummaryBadge({ icon, count, label, color }: SummaryBadgeProps) {
   return (
     <div
-      className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium ${variantClasses[variant]}`}
+      className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium ${color.bg} ${color.text} ${color.border}`}
     >
       {icon}
       <span className="font-semibold">{count}</span>
@@ -158,7 +195,15 @@ function SummaryBadge({ icon, count, label, variant }: SummaryBadgeProps) {
   );
 }
 
-function ElementTable({ elements, emptyText }: { elements: BimElementSummary[]; emptyText: string }) {
+interface DiffElementTableProps {
+  elements: IfcDiffElement[];
+  emptyText: string;
+  highlightedGuid: string | null;
+  onRowClick: (guid: string) => void;
+  rowColor: string;
+}
+
+function DiffElementTable({ elements, emptyText, highlightedGuid, onRowClick, rowColor }: DiffElementTableProps) {
   if (elements.length === 0) {
     return <p className="py-6 text-center text-sm text-muted-foreground">{emptyText}</p>;
   }
@@ -168,21 +213,22 @@ function ElementTable({ elements, emptyText }: { elements: BimElementSummary[]; 
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-48">IFC GUID</TableHead>
-            <TableHead>Тип</TableHead>
+            <TableHead className="w-44">GUID</TableHead>
+            <TableHead>Тип IFC</TableHead>
             <TableHead>Наименование</TableHead>
-            <TableHead>Слой</TableHead>
-            <TableHead>Уровень</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {elements.map((el) => (
-            <TableRow key={el.id}>
-              <TableCell className="font-mono text-xs">{el.ifcGuid}</TableCell>
-              <TableCell className="text-xs">{el.ifcType}</TableCell>
+            <TableRow
+              key={el.guid}
+              className="cursor-pointer transition-colors hover:bg-muted/50"
+              style={highlightedGuid === el.guid ? { borderLeft: `3px solid ${rowColor}`, background: `${rowColor}18` } : {}}
+              onClick={() => onRowClick(el.guid)}
+            >
+              <TableCell className="font-mono text-xs">{el.guid}</TableCell>
+              <TableCell className="text-xs">{el.ifcType ?? '—'}</TableCell>
               <TableCell className="text-xs">{el.name ?? '—'}</TableCell>
-              <TableCell className="text-xs">{el.layer ?? '—'}</TableCell>
-              <TableCell className="text-xs">{el.level ?? '—'}</TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -191,9 +237,15 @@ function ElementTable({ elements, emptyText }: { elements: BimElementSummary[]; 
   );
 }
 
-function ModifiedTable({ elements }: { elements: ModifiedElement[] }) {
+interface ChangedAttributesTableProps {
+  elements: IfcDiffChangedElement[];
+  highlightedGuid: string | null;
+  onRowClick: (guid: string) => void;
+}
+
+function ChangedAttributesTable({ elements, highlightedGuid, onRowClick }: ChangedAttributesTableProps) {
   if (elements.length === 0) {
-    return <p className="py-6 text-center text-sm text-muted-foreground">Нет изменённых элементов</p>;
+    return <p className="py-6 text-center text-sm text-muted-foreground">Нет элементов с изменёнными атрибутами</p>;
   }
 
   return (
@@ -201,89 +253,28 @@ function ModifiedTable({ elements }: { elements: ModifiedElement[] }) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-48">IFC GUID</TableHead>
-            <TableHead>Тип (было → стало)</TableHead>
-            <TableHead>Наименование (было → стало)</TableHead>
-            <TableHead>Изменены поля</TableHead>
+            <TableHead className="w-44">GUID</TableHead>
+            <TableHead>Тип IFC</TableHead>
+            <TableHead>Наименование</TableHead>
+            <TableHead>Изменённые атрибуты</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {elements.map(({ elementA, elementB, changes }) => (
-            <TableRow key={elementA.id}>
-              <TableCell className="font-mono text-xs">{elementA.ifcGuid}</TableCell>
-              <TableCell className="text-xs">
-                {changes.includes('ifcType') ? (
-                  <span>
-                    <span className="text-red-600 line-through">{elementA.ifcType}</span>
-                    {' → '}
-                    <span className="text-green-600">{elementB.ifcType}</span>
-                  </span>
-                ) : (
-                  elementA.ifcType
-                )}
-              </TableCell>
-              <TableCell className="text-xs">
-                {changes.includes('name') ? (
-                  <span>
-                    <span className="text-red-600 line-through">{elementA.name ?? '—'}</span>
-                    {' → '}
-                    <span className="text-green-600">{elementB.name ?? '—'}</span>
-                  </span>
-                ) : (
-                  (elementA.name ?? '—')
-                )}
-              </TableCell>
-              <TableCell className="text-xs">{changes.join(', ')}</TableCell>
+          {elements.map((el) => (
+            <TableRow
+              key={el.guid}
+              className="cursor-pointer transition-colors hover:bg-muted/50"
+              style={highlightedGuid === el.guid ? { borderLeft: '3px solid #F59E0B', background: '#F59E0B18' } : {}}
+              onClick={() => onRowClick(el.guid)}
+            >
+              <TableCell className="font-mono text-xs">{el.guid}</TableCell>
+              <TableCell className="text-xs">{el.ifcType ?? '—'}</TableCell>
+              <TableCell className="text-xs">{el.name ?? '—'}</TableCell>
+              <TableCell className="text-xs">{el.changedAttributes.join(', ')}</TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
     </div>
   );
-}
-
-// ─── xlsx хелперы ───────────────────────────────────────────────────────────
-
-function addSheet(
-  wb: import('exceljs').Workbook,
-  name: string,
-  elements: BimElementSummary[],
-  _modelName: string
-) {
-  const ws = wb.addWorksheet(name);
-  ws.columns = [
-    { header: 'IFC GUID', key: 'ifcGuid', width: 28 },
-    { header: 'Тип IFC', key: 'ifcType', width: 20 },
-    { header: 'Наименование', key: 'elName', width: 30 },
-    { header: 'Слой', key: 'layer', width: 20 },
-    { header: 'Уровень', key: 'level', width: 15 },
-  ];
-  for (const el of elements) {
-    ws.addRow({ ifcGuid: el.ifcGuid, ifcType: el.ifcType, elName: el.name ?? '', layer: el.layer ?? '', level: el.level ?? '' });
-  }
-}
-
-function addModifiedSheet(
-  wb: import('exceljs').Workbook,
-  elements: ModifiedElement[]
-) {
-  const ws = wb.addWorksheet('Изменено');
-  ws.columns = [
-    { header: 'IFC GUID', key: 'ifcGuid', width: 28 },
-    { header: 'Тип (было)', key: 'typeA', width: 20 },
-    { header: 'Тип (стало)', key: 'typeB', width: 20 },
-    { header: 'Наименование (было)', key: 'nameA', width: 30 },
-    { header: 'Наименование (стало)', key: 'nameB', width: 30 },
-    { header: 'Изменены поля', key: 'changes', width: 30 },
-  ];
-  for (const { elementA, elementB, changes } of elements) {
-    ws.addRow({
-      ifcGuid: elementA.ifcGuid,
-      typeA: elementA.ifcType,
-      typeB: elementB.ifcType,
-      nameA: elementA.name ?? '',
-      nameB: elementB.name ?? '',
-      changes: changes.join(', '),
-    });
-  }
 }

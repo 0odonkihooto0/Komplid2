@@ -3,13 +3,7 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/useToast';
-import type { BimModelDiff } from '@/lib/bim/compare-models';
-
-interface CompareResponse {
-  modelA: { id: string; name: string };
-  modelB: { id: string; name: string };
-  diff: BimModelDiff;
-}
+import type { IfcDiffResult } from '@/types/bim-diff';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -17,40 +11,48 @@ interface ApiResponse<T> {
   error?: string;
 }
 
-export function useVersionCompare(projectId: string) {
+export function useVersionCompare(projectId: string, modelId: string) {
   const { toast } = useToast();
-  const [modelIdA, setModelIdA] = useState<string | null>(null);
-  const [modelIdB, setModelIdB] = useState<string | null>(null);
+  const [versionIdOld, setVersionIdOld] = useState<string | null>(null);
+  const [versionIdNew, setVersionIdNew] = useState<string | null>(null);
 
-  const mutation = useMutation<CompareResponse, Error>({
+  const mutation = useMutation<IfcDiffResult, Error>({
     mutationFn: async () => {
-      if (!modelIdA || !modelIdB) throw new Error('Выберите две модели для сравнения');
+      if (!versionIdOld || !versionIdNew) {
+        throw new Error('Выберите две версии для сравнения');
+      }
 
       const res = await fetch(
-        `/api/projects/${projectId}/bim/models/compare`,
+        `/api/projects/${projectId}/bim/models/${modelId}/diff`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ modelIdA, modelIdB }),
+          body: JSON.stringify({ versionIdOld, versionIdNew }),
         }
       );
 
-      const json: ApiResponse<CompareResponse> = await res.json();
-      if (!json.success) throw new Error(json.error ?? 'Ошибка сравнения');
+      const json: ApiResponse<IfcDiffResult> = await res.json();
+      if (!json.success) throw new Error(json.error ?? 'Ошибка сравнения версий');
       return json.data;
     },
     onError: (error: Error) => {
-      toast({ title: 'Ошибка сравнения', description: error.message, variant: 'destructive' });
+      toast({
+        title: 'Ошибка сравнения',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 
-  const canCompare = Boolean(modelIdA && modelIdB && modelIdA !== modelIdB);
+  const canCompare = Boolean(
+    versionIdOld && versionIdNew && versionIdOld !== versionIdNew
+  );
 
   return {
-    modelIdA,
-    setModelIdA,
-    modelIdB,
-    setModelIdB,
+    versionIdOld,
+    setVersionIdOld,
+    versionIdNew,
+    setVersionIdNew,
     canCompare,
     result: mutation.data ?? null,
     isPending: mutation.isPending,

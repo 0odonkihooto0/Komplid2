@@ -171,6 +171,17 @@ export default function TimModelViewerPage({ params }: Props) {
     setShowCollisions(false);
   }, []);
 
+  // ─── Подсветить элемент diff в 3D-вьюере ────────────────────────────────
+  const handleHighlightDiffElement = useCallback(
+    (guid: string) => {
+      if (!viewerScene) return;
+      viewerScene.materials.forEach(mat => mat.color.set(DEFAULT_COLOR));
+      const mat = viewerScene.materials.get(guid);
+      if (mat) mat.color.set(FOLLOW_COLOR);
+    },
+    [viewerScene]
+  );
+
   // ─── Ранние return (хуки ВСЕГДА выше) ────────────────────────────────────
   if (isLoading) {
     return (
@@ -264,7 +275,11 @@ export default function TimModelViewerPage({ params }: Props) {
 
         {showCompare && (
           <div className="w-[480px] shrink-0 overflow-y-auto border-l p-4">
-            <VersionCompare projectId={objectId} />
+            <VersionCompare
+              projectId={objectId}
+              modelId={modelId}
+              onHighlightByGuid={handleHighlightDiffElement}
+            />
           </div>
         )}
       </div>
