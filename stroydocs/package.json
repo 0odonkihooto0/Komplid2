@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "postinstall": "prisma generate && cp node_modules/web-ifc/web-ifc.wasm public/ 2>/dev/null || true",
+    "postinstall": "prisma generate",
     "start": "prisma migrate deploy && node server.js",
     "socket": "ts-node --compiler-options {\"module\":\"CommonJS\"} src/server/socket.ts",
     "lint": "next lint",
@@ -84,7 +84,6 @@
     "tailwind-merge": "^3.5.0",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.176.0",
-    "web-ifc": "^0.0.77",
     "xml2js": "^0.6.2",
     "xmlbuilder2": "^4.0.3",
     "zod": "^4.3.6",

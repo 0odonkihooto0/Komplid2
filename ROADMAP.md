@@ -1125,7 +1125,7 @@
 ## МОДУЛЬ 13 — ТИМ ✅
 
 > **Аналог:** ЦУС → Модуль «ТИМ» (стр. 285–320)
-> **Статус:** ✅ Завершён (Шаги 1–8, 2026-04-10)
+> **Статус:** ✅ Завершён (Шаги 1–8, 2026-04-15)
 
 ### 3D-вьюер ✅
 - ✅ Загрузка glTF (.glb) из Timeweb S3 (presigned URL → GLTFLoader → Three.js, без WASM в браузере)
@@ -1138,7 +1138,7 @@
 - ✅ Управление слоями (IfcPresentationLayerAssignment): чекбоксы, «Показать все» / «Скрыть все»
 - ✅ Скриншот PNG/JPG (canvas.toDataURL + контекстное меню правого клика)
 - ✅ Скачивание IFC-файла из S3 (кнопка Download в toolbar)
-- ✅ Загрузка по чанкам без блокировки UI (GLTFLoader, 10–20x быстрее чем web-ifc WASM)
+- ✅ Загрузка по чанкам без блокировки UI (GLTFLoader, Three.js)
 
 ### Управление моделями ✅
 - ✅ Реестр IFC-моделей объекта (`ModelsView`, `ModelVersionsTable`)
@@ -1197,17 +1197,16 @@
 - ✅ `/objects/[id]/tim/access/` — управление доступом
 
 ### Реализовано (дополнительно)
-- ✅ Интеграция `parse-ifc.worker.ts` с IfcOpenShell-сервисом (web-ifc WASM → HTTP-вызов `/parse`)
+- ✅ Интеграция `parse-ifc.worker.ts` с IfcOpenShell-сервисом (HTTP-вызов `/parse`)
 - ✅ Конвертация IFC → glTF (`convert-ifc.worker.ts` → HTTP-вызов `/convert`, glbS3Key в `BimModel.metadata`)
 - ✅ PropertySets сохраняются в БД при парсинге (полностью, через IfcOpenShell-сервис)
-- ✅ 3D-вьюер переключён на GLTFLoader — нет WASM в браузере, загрузка в 10–20x быстрее
+- ✅ 3D-вьюер на GLTFLoader (Three.js) — нет WASM в браузере
 - ✅ Новый API `GET /bim/models/[id]/glb-url` — presigned URL для .glb или 202 CONVERTING с поллингом
 - ✅ IFC PropertySets из БД (сохранены при парсинге IfcOpenShell-сервисом, без клиентского парсинга)
-
-### Реализовано (дополнительно)
 - ✅ BCF-экспорт/импорт замечаний (buildingSMART BCF 2.1)
 - ✅ BCF-совместимость с Revit, ArchiCAD, Tekla, nanoCAD BIM
 - ✅ Отчёт по сравнению версий (.xlsx)
+- ✅ Миграция на IfcOpenShell завершена, пакет web-ifc удалён (Задачи 1–8) — 2026-04-15
 
 ### Не реализовано
 - ⬜ Федерированные модели (несколько IFC одновременно)
