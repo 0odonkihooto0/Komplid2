@@ -1040,6 +1040,16 @@
 - 4 Handlebars-шаблона PDF (`templates/sk/`)
 - `lib/pdf/sk-pdf-generator.ts`
 
+### Улучшения (2026-04-15) — Аналитика СК: фильтры + метки + Развернуть (ЦУС стр. 288–289)
+- ✅ API `GET /sk-analytics` расширен: `?period=week|month|quarter|all`, `?overdueOnly=true`
+- ✅ Пресет периода: «За эту неделю» / «За текущий месяц» / «За квартал» / «За всё время» (Select)
+- ✅ При period=all сохранён произвольный диапазон дат (dateFrom/dateTo)
+- ✅ Чекбокс «Только просроченные» — фильтрует дефекты с deadline < now + status OPEN/IN_PROGRESS
+- ✅ Виджет «Статусы нарушений» — числовые метки на сегментах круговой диаграммы (N + %)
+- ✅ Кнопка «Развернуть» (Maximize2) на каждом из 4 виджетов → `SkChartExpandDialog` (max-w-3xl, height 420)
+- ✅ `SkChartWidget`: новые пропсы `height`, `showLabels`, `onExpand`; `ChartItem` экспортирован
+- ✅ Новый компонент `SkChartExpandDialog.tsx` — Dialog с увеличенным графиком
+
 ### Улучшения (2026-04-15) — Bulk Export реестров + Word-формат (ЦУС стр. 279–285)
 - ✅ Пакетная выгрузка выбранных записей из реестров СК: архив ZIP (отдельные PDF) или сводный PDF
 - ✅ API `POST .../inspection-acts/export` — bulk export актов проверки (PDF merge / ZIP → S3)

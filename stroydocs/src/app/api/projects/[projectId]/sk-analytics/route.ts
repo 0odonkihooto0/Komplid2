@@ -24,14 +24,46 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
     const url = new URL(req.url);
     const dateFrom = url.searchParams.get('dateFrom');
     const dateTo = url.searchParams.get('dateTo');
+    const period = url.searchParams.get('period');
+    const overdueOnly = url.searchParams.get('overdueOnly') === 'true';
 
-    // Базовый фильтр по проекту и периоду
-    const dateFilter = {
-      ...(dateFrom ? { createdAt: { gte: new Date(dateFrom) } } : {}),
-      ...(dateTo ? { createdAt: { ...((dateFrom ? { gte: new Date(dateFrom) } : {}) as Record<string, Date>), lte: new Date(dateTo) } } : {}),
+    // Вычисляем фильтр по дате создания дефекта
+    let createdAtFilter: { gte?: Date; lte?: Date } | undefined;
+
+    if (period && period !== 'all') {
+      // Пресет периода: неделя / месяц / квартал
+      const now = new Date();
+      if (period === 'week') {
+        const day = now.getDay();
+        const diff = day === 0 ? -6 : 1 - day; // начало недели (пн)
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() + diff);
+        weekStart.setHours(0, 0, 0, 0);
+        createdAtFilter = { gte: weekStart };
+      } else if (period === 'month') {
+        createdAtFilter = { gte: new Date(now.getFullYear(), now.getMonth(), 1) };
+      } else if (period === 'quarter') {
+        const quarterMonth = Math.floor(now.getMonth() / 3) * 3;
+        createdAtFilter = { gte: new Date(now.getFullYear(), quarterMonth, 1) };
+      }
+    } else if (dateFrom || dateTo) {
+      // Произвольный диапазон дат
+      createdAtFilter = {
+        ...(dateFrom ? { gte: new Date(dateFrom) } : {}),
+        ...(dateTo ? { lte: new Date(dateTo) } : {}),
+      };
+    }
+
+    // Фильтр просроченных: только открытые/в работе с истёкшим сроком
+    const overdueFilter = overdueOnly
+      ? { status: { in: ['OPEN', 'IN_PROGRESS'] as const }, deadline: { lt: new Date() } }
+      : {};
+
+    const defectWhere = {
+      projectId,
+      ...(createdAtFilter ? { createdAt: createdAtFilter } : {}),
+      ...overdueFilter,
     };
-
-    const defectWhere = { projectId, ...dateFilter };
 
     // 4 агрегации параллельно
     const [byCategory, byStatus, byAuthor, byAssignee] = await Promise.all([
