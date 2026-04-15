@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/useToast';
 
 // Добавить нормативную ссылку к дефекту
 export function useAddNormativeRef(objectId: string, defectId: string) {

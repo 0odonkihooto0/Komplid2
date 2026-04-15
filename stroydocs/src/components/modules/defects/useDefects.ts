@@ -48,6 +48,12 @@ export interface DefectItem {
     createdAt: string;
     author: { id: string; firstName: string; lastName: string };
   }[];
+  // Нормативные ссылки из DefectNormativeRef[] (загружаются в детальной карточке)
+  normativeRefs?: {
+    id: string;
+    reference: string;
+    description: string | null;
+  }[];
 }
 
 export interface DefectFilters {

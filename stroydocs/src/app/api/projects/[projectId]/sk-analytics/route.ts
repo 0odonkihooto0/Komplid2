@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { DefectStatus } from '@prisma/client';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { getSessionOrThrow } from '@/lib/auth-utils';
@@ -56,7 +57,7 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
 
     // Фильтр просроченных: только открытые/в работе с истёкшим сроком
     const overdueFilter = overdueOnly
-      ? { status: { in: ['OPEN', 'IN_PROGRESS'] as const }, deadline: { lt: new Date() } }
+      ? { status: { in: ['OPEN', 'IN_PROGRESS'] as DefectStatus[] }, deadline: { lt: new Date() } }
       : {};
 
     const defectWhere = {
@@ -121,23 +122,23 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
     const byAuthorWithNames = byAuthor.map((r) => ({
       authorId: r.authorId,
       name: userMap.get(r.authorId) ?? 'Неизвестный',
-      count: r._count.id,
+      count: (r._count as { id: number }).id,
     }));
 
     const byAssigneeWithNames = byAssignee.map((r) => ({
       assigneeId: r.assigneeId,
       name: r.assigneeId ? (userMap.get(r.assigneeId) ?? 'Неизвестный') : 'Не назначен',
-      count: r._count.id,
+      count: (r._count as { id: number }).id,
     }));
 
     // Дополнительные общие метрики
     const [totalDefects, openDefects, overdueDefects, totalInspections] = await Promise.all([
       db.defect.count({ where: defectWhere }),
-      db.defect.count({ where: { ...defectWhere, status: { in: ['OPEN', 'IN_PROGRESS'] } } }),
+      db.defect.count({ where: { ...defectWhere, status: { in: ['OPEN', 'IN_PROGRESS'] as DefectStatus[] } } }),
       db.defect.count({
         where: {
           ...defectWhere,
-          status: { in: ['OPEN', 'IN_PROGRESS'] },
+          status: { in: ['OPEN', 'IN_PROGRESS'] as DefectStatus[] },
           deadline: { lt: new Date() },
         },
       }),

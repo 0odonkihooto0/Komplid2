@@ -351,5 +351,41 @@ API-роут уже принимал поле через Zod-схему — не
 
 ---
 
+**`import { toast } from '@/components/ui/use-toast'` — несуществующий путь, ломает production build.**
+В проекте toast-хук находится в `@/hooks/useToast` (файл `src/hooks/useToast.ts`).
+Путь `@/components/ui/use-toast` не существует — Next.js находит ошибку только на этапе webpack-сборки:
+`Module not found: Can't resolve '@/components/ui/use-toast'`.
+Локально проблема скрыта: TypeScript не проверяет путь без `node_modules`, ESLint тоже молчит.
+Файл-нарушитель: `useNormativeRefs.ts` (добавлен в рамках Модуля 11).
+Причина: при создании файла был скопирован несуществующий паттерн вместо используемого в проекте.
+**Правило**: в этом проекте единственный правильный импорт для toast — `import { toast } from '@/hooks/useToast'`.
+Перед добавлением нового хука с toast — grep: `grep -r "useToast\|use-toast" src/ | head -3` и использовать тот путь, который уже есть в проекте.
+
+**`['VALUE'] as const` в Prisma `where` — `readonly` tuple несовместим с `EnumField[]`.**
+`{ in: ['OPEN', 'IN_PROGRESS'] as const }` создаёт `readonly ["OPEN", "IN_PROGRESS"]`.
+Prisma ожидает `DefectStatus[]` (mutable array) → TS2322 на деплое.
+Ошибка возникает при spread такого объекта в `defectWhere` и при прямом использовании в `groupBy`/`count`.
+Также: `{ in: ['OPEN', 'IN_PROGRESS'] }` без `as const` даёт `string[]`, что тоже несовместимо с `DefectStatus[]`.
+**Правило**: для enum-фильтров Prisma всегда использовать явный каст к типу из `@prisma/client`:
+`{ in: ['OPEN', 'IN_PROGRESS'] as DefectStatus[] }`.
+Никогда не использовать `as const` в Prisma-запросах — только `as EnumName[]`.
+
+**Prisma `groupBy` с `_count: { field: true }` — `r._count.field` вызывает TS18048 + TS2339.**
+Typescript видит тип `_count` в результате `groupBy` как `true | { field?: number }`, а не `{ field: number }`.
+Обращение `r._count.id` даёт TS18048 (`_count` possibly undefined) и TS2339 (`Property 'id' does not exist on true`).
+Ошибка проявляется только на деплое (type checking Next.js build).
+**Правило**: при доступе к `_count` после `groupBy` — всегда явный каст:
+`(r._count as { id: number }).id` или `(r._count as Record<string, number>)[fieldName]`.
+
+**Поле `normativeRefs` добавлено в API-ответ, но не добавлено в TypeScript-интерфейс `DefectItem`.**
+API `/api/objects/[objectId]/defects/[defectId]` включает `normativeRefs` через `include`.
+`DefectDetailCard.tsx` использует `defect.normativeRefs` — но `DefectItem` в `useDefects.ts` не имел этого поля.
+Результат: TS2551 `Property 'normativeRefs' does not exist on type 'DefectItem'` на деплое.
+Локально не видно: tsc требует `node_modules` для проверки, без них ошибка молчит.
+**Правило**: при добавлении нового поля в `include` API-роута — одновременно добавлять его в соответствующий
+TypeScript-интерфейс в хуке (`use*.ts`). Проверять: API include ↔ интерфейс хука ↔ использование в компоненте.
+
+---
+
 > Правило: после каждой исправленной ошибки добавить урок сюда.
 > Команда: "Добавь урок в docs/lessons.md: [описание ошибки]"
