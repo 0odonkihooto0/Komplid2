@@ -2,7 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, AlertTriangle, Clock, CheckCircle2, MoreHorizontal } from 'lucide-react';
+import {
+  Plus, AlertTriangle, Clock, CheckCircle2, MoreHorizontal,
+  Download, ChevronDown, FileText, Archive, Loader2,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -79,6 +82,8 @@ interface Props {
 export function SkDefectsView({ objectId }: Props) {
   const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isExporting, setIsExporting] = useState(false);
   const [rejectDialog, setRejectDialog] = useState<{ open: boolean; defectId: string }>({
     open: false,
     defectId: '',
@@ -115,6 +120,38 @@ export function SkDefectsView({ objectId }: Props) {
   ).length;
   const confirmed = defects.filter((d) => d.status === 'CONFIRMED').length;
 
+  async function handleExport(format: 'pdf' | 'zip') {
+    if (selectedIds.size === 0) return;
+    setIsExporting(true);
+    try {
+      const res = await fetch(`/api/projects/${objectId}/defects/export`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedIds), format }),
+      });
+      if (!res.ok) return;
+      if (format === 'zip') {
+        const json = await res.json() as { data: { downloadUrl: string; fileName: string } };
+        const a = document.createElement('a');
+        a.href = json.data.downloadUrl;
+        a.download = json.data.fileName;
+        a.click();
+      } else {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'defects-export.pdf';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error('Ошибка экспорта дефектов:', err);
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
   function handleRowClick(defect: DefectItem) {
     router.push(`/objects/${objectId}/sk/defects/${defect.id}`);
   }
@@ -127,6 +164,29 @@ export function SkDefectsView({ objectId }: Props) {
           <Plus className="mr-2 h-4 w-4" />
           Зафиксировать недостаток
         </Button>
+        {selectedIds.size > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" disabled={isExporting}>
+                {isExporting
+                  ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  : <Download className="h-4 w-4 mr-2" />}
+                Скачать ({selectedIds.size})
+                <ChevronDown className="h-4 w-4 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => void handleExport('pdf')}>
+                <FileText className="h-4 w-4 mr-2" />
+                Скачать сводным PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => void handleExport('zip')}>
+                <Archive className="h-4 w-4 mr-2" />
+                Скачать архивом (ZIP)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       {/* KPI */}
@@ -202,6 +262,14 @@ export function SkDefectsView({ objectId }: Props) {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={defects.length > 0 && selectedIds.size === defects.length}
+                    onCheckedChange={(v) =>
+                      setSelectedIds(v ? new Set(defects.map((d) => d.id)) : new Set())
+                    }
+                  />
+                </TableHead>
                 <TableHead className="w-28">Статус</TableHead>
                 <TableHead>Описание</TableHead>
                 <TableHead className="w-36">Категория</TableHead>
@@ -235,6 +303,18 @@ export function SkDefectsView({ objectId }: Props) {
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleRowClick(defect)}
                   >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedIds.has(defect.id)}
+                        onCheckedChange={(v) => {
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            if (v) next.add(defect.id); else next.delete(defect.id);
+                            return next;
+                          });
+                        }}
+                      />
+                    </TableCell>
                     <TableCell>
                       <DefectStatusBadge status={defect.status} />
                     </TableCell>

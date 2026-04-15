@@ -3,9 +3,15 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { type ColumnDef } from '@tanstack/react-table';
-import { CheckCircle } from 'lucide-react';
+import {
+  CheckCircle, Download, ChevronDown, FileText, Archive, Loader2,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -37,6 +43,40 @@ export function RemediationActsView({ objectId }: Props) {
   const router = useRouter();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isExporting, setIsExporting] = useState(false);
+
+  async function handleExport(format: 'pdf' | 'zip') {
+    if (selectedIds.size === 0) return;
+    setIsExporting(true);
+    try {
+      const res = await fetch(`/api/projects/${objectId}/remediation-acts/export`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedIds), format }),
+      });
+      if (!res.ok) return;
+      if (format === 'zip') {
+        const json = await res.json() as { data: { downloadUrl: string; fileName: string } };
+        const a = document.createElement('a');
+        a.href = json.data.downloadUrl;
+        a.download = json.data.fileName;
+        a.click();
+      } else {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'remediation-acts-export.pdf';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error('Ошибка экспорта актов устранения:', err);
+    } finally {
+      setIsExporting(false);
+    }
+  }
 
   const filters = useMemo(
     () => (statusFilter !== 'all' ? { status: statusFilter } : {}),
@@ -55,6 +95,31 @@ export function RemediationActsView({ objectId }: Props) {
   const kpiAccepted = allActs.filter((a) => a.status === 'ACCEPTED').length;
 
   const columns: ColumnDef<RemediationActListItem, unknown>[] = useMemo(() => [
+    {
+      id: 'select',
+      size: 40,
+      header: () => (
+        <Checkbox
+          checked={acts.length > 0 && selectedIds.size === acts.length}
+          onCheckedChange={(v) =>
+            setSelectedIds(v ? new Set(acts.map((a) => a.id)) : new Set())
+          }
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={selectedIds.has(row.original.id)}
+          onClick={(e) => e.stopPropagation()}
+          onCheckedChange={(v) => {
+            setSelectedIds((prev) => {
+              const next = new Set(prev);
+              if (v) next.add(row.original.id); else next.delete(row.original.id);
+              return next;
+            });
+          }}
+        />
+      ),
+    },
     {
       accessorKey: 'number',
       header: '№',
@@ -95,7 +160,9 @@ export function RemediationActsView({ objectId }: Props) {
         return `${u.lastName} ${u.firstName}`;
       },
     },
-  ], []);
+  // selectedIds в deps чтобы чекбоксы обновлялись корректно
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [acts, selectedIds]);
 
   if (isLoading) {
     return (
@@ -138,6 +205,29 @@ export function RemediationActsView({ objectId }: Props) {
         </div>
 
         <div className="flex items-center gap-3">
+          {selectedIds.size > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" disabled={isExporting}>
+                  {isExporting
+                    ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    : <Download className="h-4 w-4 mr-2" />}
+                  Скачать ({selectedIds.size})
+                  <ChevronDown className="h-4 w-4 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => void handleExport('pdf')}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Скачать сводным PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => void handleExport('zip')}>
+                  <Archive className="h-4 w-4 mr-2" />
+                  Скачать архивом (ZIP)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-44">
               <SelectValue placeholder="Все" />

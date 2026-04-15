@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: Arial, sans-serif; font-size: 11pt; margin: 0; padding: 0; }
+  .header { text-align: center; margin-bottom: 16px; }
+  h2 { font-size: 13pt; margin: 0 0 4px 0; }
+  .meta { font-size: 10pt; color: #555; }
+  table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  th { background: #f0f4f8; border: 1px solid #ccc; padding: 6px 8px; text-align: left; font-weight: bold; }
+  td { border: 1px solid #ccc; padding: 5px 8px; vertical-align: top; }
+  tr:nth-child(even) td { background: #fafafa; }
+  .footer { margin-top: 12px; font-size: 9pt; color: #888; text-align: right; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h2>Реестр недостатков (дефектовка)</h2>
+  <div class="meta">Объект: {{objectName}}</div>
+</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width:40px">№</th>
+      <th>Наименование</th>
+      <th style="width:120px">Категория</th>
+      <th style="width:90px">Статус</th>
+      <th style="width:90px">Срок</th>
+      <th style="width:130px">Ответственный</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each defects}}
+    <tr>
+      <td>{{number}}</td>
+      <td>{{title}}</td>
+      <td>{{category}}</td>
+      <td>{{status}}</td>
+      <td>{{deadline}}</td>
+      <td>{{responsible}}</td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+<div class="footer">Сформировано: {{generatedAt}}</div>
+</body>
+</html>

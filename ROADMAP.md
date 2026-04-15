@@ -1040,6 +1040,26 @@
 - 4 Handlebars-шаблона PDF (`templates/sk/`)
 - `lib/pdf/sk-pdf-generator.ts`
 
+### Улучшения (2026-04-15) — Bulk Export реестров + Word-формат (ЦУС стр. 279–285)
+- ✅ Пакетная выгрузка выбранных записей из реестров СК: архив ZIP (отдельные PDF) или сводный PDF
+- ✅ API `POST .../inspection-acts/export` — bulk export актов проверки (PDF merge / ZIP → S3)
+- ✅ API `POST .../prescriptions/export` — bulk export предписаний (PDF merge / ZIP → S3)
+- ✅ API `POST .../defects/export` — сводный PDF / ZIP реестра недостатков (`defects-list.hbs`)
+- ✅ API `POST .../remediation-acts/export` — bulk export актов устранения (PDF merge / ZIP → S3)
+- ✅ UI `InspectionActsView` — checkbox-колонка + «Скачать выбранные» DropdownMenu (PDF / ZIP)
+- ✅ UI `PrescriptionsView` — checkbox-колонка + «Скачать выбранные» DropdownMenu (PDF / ZIP)
+- ✅ UI `SkDefectsView` — «Скачать выбранные» DropdownMenu (PDF / ZIP)
+- ✅ UI `RemediationActsView` — checkbox-колонка + «Скачать выбранные» DropdownMenu (PDF / ZIP)
+- ✅ Word-формат (.doc): `GET .../inspection-acts/[id]/print?format=docx` — HTML→Word через `application/msword`
+- ✅ Word-формат (.doc): `GET .../prescriptions/[id]/print?format=docx`
+- ✅ Word-формат (.doc): `GET .../remediation-acts/[id]/print?format=docx`
+- ✅ UI `InspectionActsView` — кнопка «Печать» в строке: DropdownMenu PDF / Word
+- ✅ UI `InspectionActTab` — кнопка «Печать акта»: DropdownMenu PDF / Word
+- ✅ UI `PrescriptionCard` — кнопка «Печать»: DropdownMenu PDF / Word
+- ✅ UI `RemediationActCard` — кнопка «Печать»: DropdownMenu PDF / Word
+- ✅ Новый Handlebars-шаблон `templates/sk/defects-list.hbs` — сводный реестр недостатков (A4, таблица)
+- ✅ `sk-pdf-generator.ts`: `renderInspectionActHtml`, `renderPrescriptionHtml`, `renderRemediationActHtml`, `generateDefectsListPdf`
+
 ### Улучшения (2026-04-15) — ЦУС стр. 269, 273, 274
 - ✅ `Defect.substituteInspectorId String?` + `@relation("DefectSubstituteInspector")` — замещающий инженер СК на время отпуска/болезни основного инспектора; миграция `20260415000000_add_defect_substitute_inspector`
 - ✅ UI: поле «Замещающий инженер СК» в `AddDefectDialog` с подсказкой (ЦУС стр. 269)
