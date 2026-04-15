@@ -50,6 +50,38 @@ const s3 = new S3Client({
 - **Парсинг смет**: xml2js (XML Гранд-Смета), exceljs (xlsx), pdf-parse (PDF)
 - **OCR**: Yandex Vision API (Фаза позже)
 
+## ТИМ / IFC-обработка (микросервис)
+
+- **Расположение**: `services/ifc-service/` — автономный Python-сервис, порт **8001**
+- **Runtime**: Python 3.11 + FastAPI + Uvicorn
+- **IFC-библиотека**: IfcOpenShell 0.8 (`ifcopenshell`)
+- **Конвертер**: IfcConvert бинарник (`/usr/local/bin/IfcConvert`) — IFC → GLB
+- **S3**: boto3 — те же Timeweb S3 бакеты, маппинг переменных `S3_*` → `AWS_*`
+- **Вызов из Next.js**: через `IFC_SERVICE_URL` (HTTP POST), из BullMQ-воркеров
+
+**Эндпоинты**:
+```
+POST /parse       ← парсинг IFC: все IfcElement + PropertySets + level/layer
+POST /convert     ← IFC → GLB через IfcConvert
+POST /clash       ← коллизии двух IFC (ifcclash + AABB-fallback)
+POST /diff        ← сравнение версий IFC (ifcdiff + ручной fallback)
+POST /properties  ← полные PropertySets элемента по GUID
+GET  /health      ← health check
+```
+
+**Переменные окружения сервиса** (задаются в docker-compose через S3_* проекта):
+```
+AWS_ACCESS_KEY_ID      ← S3_ACCESS_KEY
+AWS_SECRET_ACCESS_KEY  ← S3_SECRET_KEY
+AWS_S3_ENDPOINT_URL    ← S3_ENDPOINT
+AWS_S3_BUCKET_NAME     ← S3_BUCKET
+AWS_S3_REGION          ← S3_REGION (default: ru-1)
+IFC_SERVICE_URL=http://localhost:8001  ← в Next.js .env
+```
+
+**Правило**: все IFC-операции (парсинг, конвертация, коллизии, diff) — только через этот сервис.
+Не использовать `web-ifc` WASM для серверного парсинга на больших моделях — OOM.
+
 ## Realtime / Мобайл
 - **Чат**: Socket.io — ОТДЕЛЬНЫЙ процесс на порту 3001 (не в Next.js API Route!)
 - **PWA**: next-pwa (Workbox) — офлайн-кэш статики + 10 последних документов

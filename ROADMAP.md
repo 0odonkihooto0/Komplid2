@@ -1144,7 +1144,7 @@
 - ✅ Реестр IFC-моделей объекта (`ModelsView`, `ModelVersionsTable`)
 - ✅ Загрузка IFC-файлов (.ifc, .ifczip, .ifcxml) через presigned S3 URL
 - ✅ Версионирование моделей (`BimModelVersion`, upload-version, история, флаг isCurrent)
-- ✅ Фоновый парсинг (BullMQ worker → `parse-ifc.worker.ts` → `BimElement` в БД)
+- ✅ Фоновый парсинг (BullMQ worker → `parse-ifc.worker.ts` → `BimElement` в БД; серверный парсинг — через IfcOpenShell-сервис)
 - ✅ Статусы модели: PROCESSING → READY / ERROR (`ModelStatusBadge`)
 - ✅ Стадии: OTR / PROJECT / WORKING / CONSTRUCTION
 - ✅ Дерево разделов (`BimSection`, `SectionTree`) — иерархические папки
@@ -1173,6 +1173,21 @@
 - ✅ Реестр замечаний ТИМ (`BimIssuesRegistry`) — статусы, приоритеты, ответственный
 - ✅ Управление доступом (`BimAccessSettings`): уровни VIEW / ADD / EDIT / DELETE
 
+### IfcOpenShell-сервис ✅
+- ✅ Python FastAPI микросервис `services/ifc-service/` на порту 8001
+- ✅ `POST /parse` — скачивает IFC из Timeweb S3, извлекает все IfcElement с PropertySets, уровнями, слоями; возвращает JSON с метаданными (ifcVersion, elementCount, IfcProject.Name/author) и массивом элементов
+- ✅ `POST /convert` — конвертирует IFC → GLB через IfcConvert (`--use-element-guids`), загружает результат в S3
+- ✅ `POST /clash` — обнаружение коллизий между двумя IFC-моделями; использует `ifcopenshell.util.ifcclash` с AABB-fallback
+- ✅ `POST /diff` — сравнение двух версий IFC (added/deleted/changed/geometryChanged); использует `ifcopenshell.ifcdiff` с ручным fallback
+- ✅ `POST /properties` — полные PropertySets конкретного элемента по GUID через `ifc.by_guid()`
+- ✅ `GET /health` — health check для мониторинга
+- ✅ Временные файлы: `tempfile.mkdtemp()` + `finally: shutil.rmtree()` — гарантированная очистка
+- ✅ Логирование через `logging` (не print); уровень INFO
+- ✅ Dockerfile: `python:3.11-slim` + IfcConvert бинарник (распаковка zip → `/usr/local/bin/IfcConvert`)
+- ✅ Добавлен в корневой `docker-compose.yml` как сервис `ifc-service` (port 8001)
+- ✅ Маппинг S3 переменных: `S3_ACCESS_KEY` → `AWS_ACCESS_KEY_ID` и т.д.
+- ✅ `IFC_SERVICE_URL=http://localhost:8001` добавлен в `.env.example`
+
 ### URL-структура ✅
 - ✅ `/objects/[id]/tim/` — реестр моделей
 - ✅ `/objects/[id]/tim/models/[modelId]/` — 3D-вьюер
@@ -1183,7 +1198,7 @@
 - ⬜ BCF-экспорт/импорт замечаний
 - ⬜ Федерированные модели (несколько IFC одновременно)
 - ⬜ Offline-просмотр (PWA-кэш IFC)
-- ⬜ Сохранение PropertySets в БД при фоновом парсинге
+- ⬜ Интеграция `parse-ifc.worker.ts` с IfcOpenShell-сервисом (заменить web-ifc WASM на HTTP-вызов `/parse`)
 - ⬜ Экспорт в IFC (round-trip)
 - ⬜ Публичная ссылка на модель для заказчика
 - ⬜ Совместный просмотр (multi-user cursor)
