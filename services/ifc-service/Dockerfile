@@ -1,8 +1,6 @@
 FROM python:3.11-slim
 
 # DEBIAN_FRONTEND=noninteractive подавляет интерактивные запросы debconf при Docker-сборке.
-# Без этого apt-get выдаёт предупреждения "debconf: unable to initialize frontend" — сборка
-# продолжается, но логи засоряются. Устанавливать как ENV (не ARG) — нужно для всего образа.
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Системные зависимости:
@@ -15,29 +13,45 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Python-зависимости — отдельный слой для кэширования.
-# Этот слой не инвалидируется при изменениях кода приложения — только при изменении requirements.txt.
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# IfcConvert — официальный конвертер IFC → glTF/GLB из пакета IfcOpenShell.
-# Версия 0.8.0 соответствует ifcopenshell==0.8.0 в requirements.txt — важно держать синхронизированными.
+# IfcConvert — конвертер IFC → GLB из пакета IfcOpenShell.
+# Версия бинарника обязана совпадать с ifcopenshell==0.8.0 из requirements.txt.
 #
-# История URL:
-#   Старый (недоступен с ~2025): https://s3.amazonaws.com/ifcopenshell-builds/IfcConvert-v0.7.0-linux64.zip
-#   Новый: GitHub Releases — https://github.com/IfcOpenShell/IfcOpenShell/releases/download/v0.8.0/...
+# Стратегия поиска (в порядке):
+#   1. В pip-пакете ifcopenshell — в сборках 0.8.x IfcConvert может быть bundled в site-packages.
+#   2. Скачивание по IFCCONVERT_URL (передаётся через build-arg или docker-compose).
+#      Рекомендуется загрузить бинарник в собственный Timeweb S3 для надёжности.
+#      Пример: IFCCONVERT_URL=https://<s3-endpoint>/<bucket>/tools/IfcConvert-v0.8.0-linux64.zip
 #
-# Альтернатива без внешних зависимостей: загрузить бинарник в Timeweb S3 и передать URL через ARG.
-# Пример: ARG IFCCONVERT_URL и wget "$IFCCONVERT_URL" — тогда сборка не зависит от GitHub.
-RUN for attempt in 1 2 3 4 5; do \
-      echo "==> IfcConvert download attempt $attempt/5" && \
-      wget -q --timeout=60 \
-        "https://github.com/IfcOpenShell/IfcOpenShell/releases/download/v0.8.0/IfcConvert-v0.8.0-linux64.zip" \
-      && unzip -q IfcConvert-v0.8.0-linux64.zip -d /tmp/ifcconvert \
-      && mv /tmp/ifcconvert/IfcConvert /usr/local/bin/IfcConvert \
-      && chmod +x /usr/local/bin/IfcConvert \
-      && rm -rf IfcConvert-v0.8.0-linux64.zip /tmp/ifcconvert \
-      && break || { echo "Attempt $attempt failed, waiting 15s..."; sleep 15; }; \
-    done \
+# История:
+#   S3 (умер ~2025): https://s3.amazonaws.com/ifcopenshell-builds/IfcConvert-v0.7.0-linux64.zip
+#   GitHub Releases: https://github.com/IfcOpenShell/IfcOpenShell/releases/download/...
+ARG IFCCONVERT_URL
+
+RUN SITE=$(python3 -c "import site; print(site.getsitepackages()[0])") \
+    && PIP_BIN="$SITE/ifcopenshell/IfcConvert" \
+    && if [ -f "$PIP_BIN" ]; then \
+         echo "IfcConvert found in pip package at $PIP_BIN" && \
+         chmod +x "$PIP_BIN" && ln -sf "$PIP_BIN" /usr/local/bin/IfcConvert; \
+       elif [ -n "$IFCCONVERT_URL" ]; then \
+         for attempt in 1 2 3 4 5; do \
+           echo "==> IfcConvert download attempt $attempt/5 from $IFCCONVERT_URL" && \
+           wget -q --timeout=120 "$IFCCONVERT_URL" -O /tmp/ifcconvert.zip \
+           && unzip -q /tmp/ifcconvert.zip -d /tmp/ifcconvert \
+           && find /tmp/ifcconvert -name 'IfcConvert' -exec mv {} /usr/local/bin/IfcConvert \; \
+           && chmod +x /usr/local/bin/IfcConvert \
+           && rm -rf /tmp/ifcconvert.zip /tmp/ifcconvert \
+           && break || { echo "Attempt $attempt failed, waiting 15s..."; sleep 15; }; \
+         done; \
+       else \
+         echo "ERROR: IfcConvert не найден в pip-пакете и IFCCONVERT_URL не задан." >&2 && \
+         echo "Загрузите IfcConvert-v0.8.0-linux64.zip в Timeweb S3 и передайте URL:" >&2 && \
+         echo "  docker compose build --build-arg IFCCONVERT_URL=https://<s3>/tools/IfcConvert-v0.8.0-linux64.zip" >&2 && \
+         echo "  или задайте IFCCONVERT_URL в .env" >&2 && \
+         exit 1; \
+       fi \
     && test -x /usr/local/bin/IfcConvert
 
 COPY . /app
