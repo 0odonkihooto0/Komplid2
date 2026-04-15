@@ -1,4 +1,4 @@
-ifcopenshell==0.8.0
+ifcopenshell==0.8.5
 fastapi==0.115.0
 uvicorn[standard]==0.32.0
 boto3==1.35.0

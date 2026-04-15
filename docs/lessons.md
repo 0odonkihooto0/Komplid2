@@ -398,6 +398,18 @@ TypeScript-интерфейс в хуке (`use*.ts`). Проверять: API i
 Всегда синхронизировать версию бинарника с pip-пакетом: `IfcConvert-v0.8.0` ↔ `ifcopenshell==0.8.0`.
 `DEBIAN_FRONTEND=noninteractive` — ENV (не ARG) для `python:3.11-slim` и любых `*-slim` образов с apt-get.
 Добавлять `libgomp1` в apt-get — OpenMP runtime, требуется многопоточным C++ бинарникам (IfcConvert, FFmpeg и др.).
+Правильная стратегия для Dockerfile IfcConvert: 1) проверить наличие в pip-пакете, 2) скачать по `ARG IFCCONVERT_URL`, 3) fail с явной инструкцией. Захардкоженный URL внешнего S3 — антипаттерн.
+
+**`Module not found: Can't resolve '@/components/ui/collapsible'` — shadcn/ui компонент не добавлен в репозиторий.**
+shadcn/ui компоненты генерируются CLI (`npx shadcn-ui@latest add collapsible`) и требуют `@radix-ui/react-collapsible` зависимость.
+Если зависимость отсутствует в `package.json` и `package-lock.json` — импорт компонента ломает сборку.
+Обнаружено в `CollisionDetector.tsx` → `@/components/ui/collapsible` (только один файл в проекте).
+Проблема: компонент написан, но файл `src/components/ui/collapsible.tsx` не был добавлен в репозиторий.
+**Правило**: при использовании shadcn/ui компонента (`Collapsible`, `Accordion` и т.п.) —
+либо добавить зависимость в `package.json` и сгенерировать файл через CLI,
+либо написать самодостаточную реализацию без Radix UI (как для `Checkbox`, `RadioGroup`).
+Предпочтительный подход для простых компонентов (toggle, accordion): самодостаточная реализация
+через React Context + cloneElement без добавления зависимости.
 
 ---
 

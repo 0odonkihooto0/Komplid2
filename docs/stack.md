@@ -54,7 +54,7 @@ const s3 = new S3Client({
 
 - **Расположение**: `services/ifc-service/` — автономный Python-сервис, порт **8001**
 - **Runtime**: Python 3.11 + FastAPI + Uvicorn
-- **IFC-библиотека**: IfcOpenShell 0.8 (`ifcopenshell`)
+- **IFC-библиотека**: IfcOpenShell 0.8.5 (`ifcopenshell==0.8.5`)
 - **Конвертер**: IfcConvert бинарник (`/usr/local/bin/IfcConvert`) — IFC → GLB
 - **S3**: boto3 — те же Timeweb S3 бакеты, маппинг переменных `S3_*` → `AWS_*`
 - **Вызов из Next.js**: через `IFC_SERVICE_URL` (HTTP POST), из BullMQ-воркеров

@@ -48,7 +48,13 @@ services:
       start_period: 60s
 
   ifc-service:
-    build: ./services/ifc-service
+    build:
+      context: ./services/ifc-service
+      args:
+        # URL для скачивания бинарника IfcConvert при сборке образа.
+        # Загрузите IfcConvert-v0.8.0-linux64.zip в Timeweb S3 и задайте URL в .env:
+        #   IFCCONVERT_URL=https://<s3-endpoint>/<bucket>/tools/IfcConvert-v0.8.0-linux64.zip
+        - IFCCONVERT_URL=${IFCCONVERT_URL:-}
     ports:
       - "8001:8001"
     environment:
