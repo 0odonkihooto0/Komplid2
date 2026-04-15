@@ -46,3 +46,23 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+
+  ifc-service:
+    build: ./services/ifc-service
+    ports:
+      - "8001:8001"
+    environment:
+      # Маппинг S3_* переменных проекта → boto3 AWS_* переменные
+      - AWS_ACCESS_KEY_ID=${S3_ACCESS_KEY:-}
+      - AWS_SECRET_ACCESS_KEY=${S3_SECRET_KEY:-}
+      - AWS_S3_ENDPOINT_URL=${S3_ENDPOINT:-}
+      - AWS_S3_BUCKET_NAME=${S3_BUCKET:-}
+      - AWS_S3_REGION=${S3_REGION:-ru-1}
+      - PORT=8001
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8001/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
