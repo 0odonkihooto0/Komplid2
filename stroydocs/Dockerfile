@@ -40,8 +40,6 @@ RUN npm config set registry https://registry.npmjs.org \
 
 # Копируем исходники
 COPY . .
-# Копируем WASM-файл web-ifc в public/ — postinstall выполнялся до COPY . ., поэтому public/ не существовала
-RUN cp node_modules/web-ifc/web-ifc.wasm public/ 2>/dev/null || true
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Build-time defaults — переопределяются через переменные окружения в runtime

@@ -1,6 +1,6 @@
 /**
  * BullMQ-воркер парсинга IFC-файлов ТИМ-модели.
- * Вместо WASM-парсинга (web-ifc) — HTTP-вызов к IfcOpenShell-микросервису (/parse).
+ * HTTP-вызов к IfcOpenShell-микросервису (/parse) — парсинг IFC на сервере.
  * Сервис сам скачивает IFC из Timeweb S3, возвращает элементы с PropertySets.
  *
  * Запуск: ts-node -r tsconfig-paths/register src/lib/workers/parse-ifc.worker.ts
