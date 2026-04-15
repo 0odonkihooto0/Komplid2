@@ -134,23 +134,24 @@ const worker = new Worker<ParseBimJob>(
         );
       }
 
-      // 4. Обновить BimModel: статус READY + метаданные от сервиса
+      // 4. Обновить BimModel: статус CONVERTING (парсинг готов, идёт конвертация IFC → GLB).
+      // READY поставит convert-ifc.worker после успешной загрузки GLB в S3.
       await db.bimModel.update({
         where: { id: modelId },
         data: {
-          status: BimModelStatus.READY,
+          status: BimModelStatus.CONVERTING,
           elementCount,
           ifcVersion,
           metadata: metadata as Prisma.InputJsonValue,
         },
       });
 
-      // 5. Добавить задачу конвертации IFC → GLB в очередь
+      // 5. Добавить задачу конвертации IFC → GLB в очередь "convert-ifc"
       const convertQueue = getConvertIfcQueue();
       await convertQueue.add('convert-ifc', {
         modelId,
         s3Key,
-        outputS3Key: s3Key.replace('.ifc', '.glb'),
+        outputS3Key: s3Key.replace(/\.ifc$/i, '.glb'),
       });
 
       console.log(
@@ -177,9 +178,9 @@ const worker = new Worker<ParseBimJob>(
           await enqueueNotification({
             userId: uploader.id,
             email: uploader.email,
-            type: 'bim_model_ready',
-            title: `Модель «${model.name}» готова`,
-            body: `Парсинг завершён: ${elementCount} элементов, формат ${ifcVersion}.`,
+            type: 'bim_model_parsed',
+            title: `Модель «${model.name}» распарсена`,
+            body: `Найдено ${elementCount} элементов (${ifcVersion}). Идёт конвертация 3D…`,
             entityType: 'BimModel',
             entityId: modelId,
             entityName: model.name,

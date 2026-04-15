@@ -75,8 +75,19 @@ if [ "$REDIS_OK" = "ok" ]; then
   node /app/dist/workers/lib/workers/parse-ifc.worker.js &
   WORKER_PID=$!
   echo '[worker] parse-ifc worker запущен (PID: '"$WORKER_PID"')'
+
+  # convert-ifc воркер: слушает очередь "convert-ifc", дергает ifc-service /convert
+  # и сохраняет glbS3Key в BimModel.metadata. Без него модели висят в CONVERTING.
+  if [ -f /app/dist/workers/lib/workers/convert-ifc.worker.js ]; then
+    echo '[worker] Запуск convert-ifc worker...'
+    node /app/dist/workers/lib/workers/convert-ifc.worker.js &
+    CONVERT_WORKER_PID=$!
+    echo '[worker] convert-ifc worker запущен (PID: '"$CONVERT_WORKER_PID"')'
+  else
+    echo '[worker] ВНИМАНИЕ: convert-ifc.worker.js не найден в dist/, сборка воркеров неполная.'
+  fi
 else
-  echo '[worker] Redis недоступен ('"$REDIS_URL"'). parse-ifc worker НЕ запущен.'
+  echo '[worker] Redis недоступен ('"$REDIS_URL"'). Воркеры НЕ запущены.'
 fi
 
 exec node server.js
