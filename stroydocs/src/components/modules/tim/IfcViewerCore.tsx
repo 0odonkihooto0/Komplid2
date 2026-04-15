@@ -11,13 +11,18 @@ import { useClippingPlanes } from './useClippingPlanes';
 import { useMeasurements } from './useMeasurements';
 import { useLayerManager } from './useLayerManager';
 import { useViewerExport } from './useViewerExport';
-import { initScene, loadIfcModel } from './ifcSceneSetup';
+import { initScene, loadGlbModel } from './ifcSceneSetup';
 import type { ViewerScene } from './ifcSceneSetup';
 
 const DEFAULT_COLOR = '#9CA3AF';
 const SELECTED_COLOR = '#60A5FA';
 
 interface Props {
+  /** ID объекта строительства (используется для запроса /glb-url) */
+  projectId: string;
+  /** ID BIM-модели (используется для запроса /glb-url) */
+  modelId: string;
+  /** Presigned URL для скачивания исходного IFC-файла (кнопка Download) */
   downloadUrl: string;
   elementColors?: Map<string, string>;
   onElementSelected: (ifcGuid: string | null) => void;
@@ -32,6 +37,8 @@ interface Props {
 }
 
 export function IfcViewerCore({
+  projectId,
+  modelId,
   downloadUrl,
   elementColors,
   onElementSelected,
@@ -50,6 +57,8 @@ export function IfcViewerCore({
   onSceneReadyRef.current = onSceneReady;
 
   const [loading, setLoading] = useState(true);
+  const [loadingText, setLoadingText] = useState('Загрузка модели...');
+  const [loadingProgress, setLoadingProgress] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [wireframe, setWireframe] = useState(false);
   const [layersOpen, setLayersOpen] = useState(false);
@@ -96,7 +105,7 @@ export function IfcViewerCore({
     setWireframe(s.wireframe);
   }, []);
 
-  // ─── Инициализация сцены + загрузка IFC ─────────────────────────────────────
+  // ─── Инициализация сцены + загрузка GLB ──────────────────────────────────────
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -105,27 +114,46 @@ export function IfcViewerCore({
     async function init() {
       setLoading(true);
       setLoadError(null);
+      setLoadingProgress(null);
 
       const vs = await initScene(container!);
       if (cancelled) { vs.renderer.dispose(); return; }
       sceneRef.current = vs;
 
       try {
-        const res = await fetch(downloadUrl);
-        if (!res.ok) throw new Error(`HTTP ${res.status}: не удалось скачать IFC`);
-        const buffer = new Uint8Array(await res.arrayBuffer());
-        const { IfcAPI } = await import('web-ifc');
-        const ifcApi = new IfcAPI();
-        ifcApi.SetWasmPath('/');
-        await ifcApi.Init();
-        await loadIfcModel(ifcApi, buffer, vs);
+        // Получить presigned URL для .glb — с поллингом пока конвертация не завершена
+        let glbUrl: string | null = null;
+        while (glbUrl === null && !cancelled) {
+          const res = await fetch(
+            `/api/projects/${projectId}/bim/models/${modelId}/glb-url`
+          );
+          if (res.status === 202) {
+            // GLB ещё не готов — ждём 3 секунды и повторяем
+            setLoadingText('Конвертация модели в glTF...');
+            await new Promise<void>(r => setTimeout(r, 3000));
+            continue;
+          }
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: не удалось получить URL модели`);
+          }
+          const json = (await res.json()) as { url: string };
+          glbUrl = json.url;
+        }
+
+        if (cancelled) return;
+
+        setLoadingText('Загрузка модели...');
+        await loadGlbModel(glbUrl!, vs, (pct) => {
+          if (!cancelled) setLoadingProgress(Math.round(pct));
+        });
+
         // Уведомить внешний код что сцена и элементы готовы
         if (!cancelled) {
           onSceneReadyRef.current?.(vs);
           initLayersRef.current();
         }
       } catch (err) {
-        if (!cancelled) setLoadError(err instanceof Error ? err.message : 'Ошибка загрузки IFC');
+        if (!cancelled) setLoadError(err instanceof Error ? err.message : 'Ошибка загрузки модели');
       }
 
       if (!cancelled) setLoading(false);
@@ -153,12 +181,14 @@ export function IfcViewerCore({
         );
         const hits = s.raycaster.intersectObjects(meshes);
         if (!hits.length) { onSelectedRef.current(null); return; }
-        const expressID = s.meshMap.get(hits[0].object);
-        const guid = expressID !== undefined ? s.guidMap.get(expressID) ?? null : null;
+
+        // GUID берётся напрямую из meshMap (строка, без промежуточного expressID)
+        const guid = s.meshMap.get(hits[0].object) ?? null;
         onSelectedRef.current(guid);
-        // Подсветить выбранный элемент, восстановить оригинальный IFC-цвет для остальных
+
+        // Подсветить выбранный элемент, восстановить оригинальный цвет для остальных
         s.materials.forEach((mat, id) => {
-          if (id === expressID) {
+          if (id === guid) {
             mat.color.set(SELECTED_COLOR);
           } else {
             const orig = s.originalColors.get(id);
@@ -203,20 +233,19 @@ export function IfcViewerCore({
       }
       sceneRef.current = null;
     };
-    // Пересоздаём только при смене downloadUrl — коллбек стабилизирован через ref
-  }, [downloadUrl]);
+    // Пересоздаём только при смене модели — коллбек стабилизирован через ref
+  }, [projectId, modelId]);
 
-  // ─── Цветовая карта элементов ────────────────────────────────────────────────
+  // ─── Цветовая карта элементов (GUID-based) ───────────────────────────────────
   useEffect(() => {
     const s = sceneRef.current;
     if (!s || !elementColors) return;
-    s.materials.forEach((mat, expressID) => {
-      const guid = s.guidMap.get(expressID);
-      const color = guid !== undefined ? elementColors.get(guid) : undefined;
+    s.materials.forEach((mat, guid) => {
+      const color = elementColors.get(guid);
       if (color) {
         mat.color.set(color);
       } else {
-        const orig = s.originalColors.get(expressID);
+        const orig = s.originalColors.get(guid);
         if (orig) mat.color.setRGB(orig[0], orig[1], orig[2]);
       }
     });
@@ -295,15 +324,18 @@ export function IfcViewerCore({
       )}
 
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/80">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-2 text-sm">Загрузка модели...</span>
+          <span className="text-sm">{loadingText}</span>
+          {loadingProgress !== null && (
+            <span className="text-xs text-muted-foreground">{loadingProgress}%</span>
+          )}
         </div>
       )}
       {loadError && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/80">
           <p className="text-sm text-destructive">{loadError}</p>
-          <p className="text-xs text-muted-foreground">Проверьте что IFC-файл доступен</p>
+          <p className="text-xs text-muted-foreground">Проверьте что модель успешно конвертирована</p>
         </div>
       )}
     </div>

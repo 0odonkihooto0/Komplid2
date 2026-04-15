@@ -15,8 +15,8 @@ import type { CollisionResult } from './useCollisions';
 
 interface Props {
   results: CollisionResult[];
-  /** Вызывается при нажатии «Выделить» — передаёт expressID пары */
-  onHighlight: (expressIdA: number, expressIdB: number) => void;
+  /** Вызывается при нажатии «Выделить» — передаёт GUID пары */
+  onHighlight: (guidA: string, guidB: string) => void;
 }
 
 export function CollisionResultsList({ results, onHighlight }: Props) {
@@ -114,7 +114,7 @@ export function CollisionResultsList({ results, onHighlight }: Props) {
                     variant="ghost"
                     size="sm"
                     className="h-6 px-2 text-xs"
-                    onClick={() => onHighlight(r.expressIdA, r.expressIdB)}
+                    onClick={() => onHighlight(r.guidA, r.guidB)}
                   >
                     Выделить
                   </Button>

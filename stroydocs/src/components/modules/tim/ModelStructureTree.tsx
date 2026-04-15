@@ -18,11 +18,9 @@ interface Props {
 
 /** Переключить видимость меша по GUID в Three.js сцене */
 function setMeshVisibility(guid: string, visible: boolean, vs: ViewerScene) {
-  let targetId: number | undefined;
-  vs.guidMap.forEach((g, eid) => { if (g === guid) targetId = eid; });
-  if (targetId === undefined) return;
-  vs.meshMap.forEach((expressId, mesh) => {
-    if (expressId === targetId) (mesh as { visible: boolean }).visible = visible;
+  // meshMap: Map<Object3D, string> — ищем по значению (guid)
+  vs.meshMap.forEach((g, mesh) => {
+    if (g === guid) (mesh as { visible: boolean }).visible = visible;
   });
 }
 

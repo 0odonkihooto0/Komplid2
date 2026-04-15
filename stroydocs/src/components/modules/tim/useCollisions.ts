@@ -11,10 +11,6 @@ export interface CollisionResult {
   guidA: string;
   /** IFC GUID второго элемента */
   guidB: string;
-  /** expressID первого элемента (для подсветки) */
-  expressIdA: number;
-  /** expressID второго элемента (для подсветки) */
-  expressIdB: number;
   collisionType: CollisionType;
   /** Центр пересечения/дублирования (для отображения) */
   center: { x: number; y: number; z: number };
@@ -39,28 +35,24 @@ export function useCollisions() {
       try {
         const THREE = await import('three');
 
-        // Сбор всех пар (mesh, expressID) из сцены
-        const meshEntries = Array.from(scene.meshMap.entries()) as Array<[object, number]>;
+        // Сбор всех пар (mesh, guid) из сцены — meshMap: Map<object, string>
+        const meshEntries = Array.from(scene.meshMap.entries()) as Array<[object, string]>;
 
         // Вычисляем ограничивающие боксы для всех mesh
         const boxes: Array<{
-          expressId: number;
           guid: string;
           box: InstanceType<typeof THREE.Box3>;
           center: InstanceType<typeof THREE.Vector3>;
         }> = [];
 
-        for (const [mesh, expressId] of meshEntries) {
-          const guid = scene.guidMap.get(expressId);
-          if (!guid) continue; // пропускаем элементы без GUID
-
+        for (const [mesh, guid] of meshEntries) {
           const box = new THREE.Box3().setFromObject(mesh as Object3D);
           if (box.isEmpty()) continue;
 
           const center = new THREE.Vector3();
           box.getCenter(center);
 
-          boxes.push({ expressId, guid, box, center });
+          boxes.push({ guid, box, center });
         }
 
         // O(n²) перебор пар
@@ -72,7 +64,7 @@ export function useCollisions() {
             const a = boxes[i];
             const b = boxes[j];
 
-            if (a.expressId === b.expressId) continue;
+            if (a.guid === b.guid) continue;
 
             if (type === 'intersection') {
               // Пересечение геометрии: боксы перекрываются
@@ -101,8 +93,6 @@ export function useCollisions() {
             found.push({
               guidA: a.guid,
               guidB: b.guid,
-              expressIdA: a.expressId,
-              expressIdB: b.expressId,
               collisionType: type,
               center: { x: cx, y: cy, z: cz },
             });

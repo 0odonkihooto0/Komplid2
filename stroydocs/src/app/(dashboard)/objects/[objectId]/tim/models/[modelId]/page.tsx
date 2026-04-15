@@ -63,13 +63,6 @@ export default function TimModelViewerPage({ params }: Props) {
   const timelineMin = selectedVersion?.planStart ? new Date(selectedVersion.planStart) : DEFAULT_MIN;
   const timelineMax = selectedVersion?.planEnd ? new Date(selectedVersion.planEnd) : DEFAULT_MAX;
 
-  // ─── Вспомогательная функция: GUID → expressID ───────────────────────────
-  function buildGuidToExpressId(scene: ViewerScene): Map<string, number> {
-    const map = new Map<string, number>();
-    scene.guidMap.forEach((guid, expressId) => map.set(guid, expressId));
-    return map;
-  }
-
   // ─── Цветовая индикация по временной шкале ───────────────────────────────
   // Запускается при изменении даты бегунка, данных задач или привязок
   useEffect(() => {
@@ -80,8 +73,6 @@ export default function TimModelViewerPage({ params }: Props) {
 
     if (!allGprLinks || allGprLinks.length === 0) return;
 
-    const guidToExpressId = buildGuidToExpressId(viewerScene);
-
     // Индекс задач выбранной версии: taskId → GanttTaskViewer
     const taskMap = new Map<string, GanttTaskViewer>();
     ganttTasksData?.tasks.forEach(t => taskMap.set(t.id, t));
@@ -91,10 +82,8 @@ export default function TimModelViewerPage({ params }: Props) {
       const guid = link.element?.ifcGuid;
       if (!guid) continue;
 
-      const expressId = guidToExpressId.get(guid);
-      if (expressId === undefined) continue;
-
-      const mat = viewerScene.materials.get(expressId);
+      // Материал ищется напрямую по GUID (без промежуточного expressID)
+      const mat = viewerScene.materials.get(guid);
       if (!mat) continue;
 
       const task = taskMap.get(link.entityId);
@@ -115,12 +104,12 @@ export default function TimModelViewerPage({ params }: Props) {
 
   // ─── Подсветить пару коллизионных элементов в сцене ─────────────────────
   const handleHighlightCollision = useCallback(
-    (expressIdA: number, expressIdB: number) => {
+    (guidA: string, guidB: string) => {
       const s = viewerScene;
       if (!s) return;
       s.materials.forEach(mat => mat.color.set(DEFAULT_COLOR));
-      const matA = s.materials.get(expressIdA);
-      const matB = s.materials.get(expressIdB);
+      const matA = s.materials.get(guidA);
+      const matB = s.materials.get(guidB);
       if (matA) matA.color.set(COLLISION_COLOR);
       if (matB) matB.color.set(COLLISION_COLOR);
     },
@@ -132,8 +121,6 @@ export default function TimModelViewerPage({ params }: Props) {
     (taskId: string) => {
       if (!viewerScene || !allGprLinks) return;
 
-      const guidToExpressId = buildGuidToExpressId(viewerScene);
-
       // Сброс всех цветов
       viewerScene.materials.forEach(mat => mat.color.set(DEFAULT_COLOR));
 
@@ -142,9 +129,7 @@ export default function TimModelViewerPage({ params }: Props) {
         if (link.entityId !== taskId) continue;
         const guid = link.element?.ifcGuid;
         if (!guid) continue;
-        const expressId = guidToExpressId.get(guid);
-        if (expressId === undefined) continue;
-        const mat = viewerScene.materials.get(expressId);
+        const mat = viewerScene.materials.get(guid);
         if (mat) mat.color.set(FOLLOW_COLOR);
       }
     },
@@ -162,14 +147,11 @@ export default function TimModelViewerPage({ params }: Props) {
         const json: { success: boolean; data: BimElementLink[] } = await res.json();
         if (!json.success) return;
 
-        const guidToExpressId = buildGuidToExpressId(viewerScene);
         viewerScene.materials.forEach(mat => mat.color.set(DEFAULT_COLOR));
         for (const link of json.data) {
           const guid = link.element?.ifcGuid;
           if (!guid) continue;
-          const expressId = guidToExpressId.get(guid);
-          if (expressId === undefined) continue;
-          const mat = viewerScene.materials.get(expressId);
+          const mat = viewerScene.materials.get(guid);
           if (mat) mat.color.set(FOLLOW_COLOR);
         }
       } catch {
@@ -248,6 +230,8 @@ export default function TimModelViewerPage({ params }: Props) {
         {/* 3D вьюер */}
         <div className="relative flex-1">
           <IfcViewer
+            projectId={objectId}
+            modelId={modelId}
             downloadUrl={model.downloadUrl}
             onElementSelected={setSelectedGuid}
             onSceneReady={setViewerScene}
@@ -264,7 +248,6 @@ export default function TimModelViewerPage({ params }: Props) {
             modelId={modelId}
             projectId={objectId}
             ifcGuid={selectedGuid}
-            ifcProperties={viewerScene?.ifcProperties.get(selectedGuid) ?? null}
             onClose={() => setSelectedGuid(null)}
             selectedVersionId={selectedVersionId}
             onVersionChange={setSelectedVersionId}

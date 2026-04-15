@@ -17,8 +17,8 @@ interface Props {
   isDetecting: boolean;
   onDetect: (scene: ViewerScene, type: CollisionType, toleranceMm: number) => Promise<void>;
   onClear: () => void;
-  /** Подсветить пару элементов по expressID */
-  onHighlight: (expressIdA: number, expressIdB: number) => void;
+  /** Подсветить пару элементов по GUID */
+  onHighlight: (guidA: string, guidB: string) => void;
 }
 
 export function CollisionDetector({

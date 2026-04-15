@@ -1128,7 +1128,7 @@
 > **Статус:** ✅ Завершён (Шаги 1–8, 2026-04-10)
 
 ### 3D-вьюер ✅
-- ✅ Загрузка IFC-файла из Timeweb S3 (presigned URL → web-ifc WASM → Three.js)
+- ✅ Загрузка glTF (.glb) из Timeweb S3 (presigned URL → GLTFLoader → Three.js, без WASM в браузере)
 - ✅ Рендеринг геометрии (BufferGeometry + MeshLambertMaterial), OrbitControls, fit-to-view, wireframe
 - ✅ Клик на элемент → raycasting → выделение (подсветка #60A5FA)
 - ✅ Оригинальные IFC-цвета из модели (IfcSurfaceStyleRendering → RGB, прозрачность) — 2026-04-10
@@ -1138,14 +1138,14 @@
 - ✅ Управление слоями (IfcPresentationLayerAssignment): чекбоксы, «Показать все» / «Скрыть все»
 - ✅ Скриншот PNG/JPG (canvas.toDataURL + контекстное меню правого клика)
 - ✅ Скачивание IFC-файла из S3 (кнопка Download в toolbar)
-- ✅ Загрузка по чанкам без блокировки UI
+- ✅ Загрузка по чанкам без блокировки UI (GLTFLoader, 10–20x быстрее чем web-ifc WASM)
 
 ### Управление моделями ✅
 - ✅ Реестр IFC-моделей объекта (`ModelsView`, `ModelVersionsTable`)
 - ✅ Загрузка IFC-файлов (.ifc, .ifczip, .ifcxml) через presigned S3 URL
 - ✅ Версионирование моделей (`BimModelVersion`, upload-version, история, флаг isCurrent)
 - ✅ Фоновый парсинг (BullMQ worker → `parse-ifc.worker.ts` → HTTP POST `/parse` к IfcOpenShell-сервису → `BimElement` в БД с PropertySets)
-- ✅ Статусы модели: PROCESSING → READY / ERROR (`ModelStatusBadge`)
+- ✅ Статусы модели: PROCESSING → CONVERTING → READY / ERROR (`ModelStatusBadge`)
 - ✅ Стадии: OTR / PROJECT / WORKING / CONSTRUCTION
 - ✅ Дерево разделов (`BimSection`, `SectionTree`) — иерархические папки
 - ✅ Совместимость с nanoCAD BIM, Renga, Pilot-BIM, Revit, ArchiCAD (IFC 2x3 / IFC 4)
@@ -1198,6 +1198,9 @@
 - ✅ Интеграция `parse-ifc.worker.ts` с IfcOpenShell-сервисом (web-ifc WASM → HTTP-вызов `/parse`)
 - ✅ Конвертация IFC → glTF (`convert-ifc.worker.ts` → HTTP-вызов `/convert`, glbS3Key в `BimModel.metadata`)
 - ✅ PropertySets сохраняются в БД при парсинге (полностью, без `buildIfcPropertiesMap`)
+- ✅ 3D-вьюер переключён на GLTFLoader — нет WASM в браузере, загрузка в 10–20x быстрее
+- ✅ Новый API `GET /bim/models/[id]/glb-url` — presigned URL для .glb или 202 CONVERTING с поллингом
+- ✅ IFC PropertySets из БД (сохранены при парсинге IfcOpenShell-сервисом, без клиентского парсинга)
 
 ### Не реализовано
 - ⬜ BCF-экспорт/импорт замечаний
