@@ -173,6 +173,7 @@ export function useAddDefectToInspection(objectId: string, inspectionId: string)
       requiresSuspension: boolean;
       gpsLat?: number;
       gpsLng?: number;
+      substituteInspectorId?: string;
     }) => {
       const res = await fetch(`/api/projects/${objectId}/inspections/${inspectionId}/add-defect`, {
         method: 'POST',

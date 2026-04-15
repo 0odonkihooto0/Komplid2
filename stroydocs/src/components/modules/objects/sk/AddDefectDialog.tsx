@@ -33,9 +33,10 @@ const schema = z.object({
   normativeRef:        z.string().optional(),
   assigneeId:          z.string().optional(),
   deadline:            z.string().optional(),
-  requiresSuspension:  z.boolean().default(false),
-  gpsLat:              z.string().optional(),
-  gpsLng:              z.string().optional(),
+  requiresSuspension:     z.boolean().default(false),
+  gpsLat:                 z.string().optional(),
+  gpsLng:                 z.string().optional(),
+  substituteInspectorId:  z.string().optional(),
 });
 
 type FormValues = z.input<typeof schema>;
@@ -90,8 +91,9 @@ export function AddDefectDialog({ objectId, inspectionId, open, onOpenChange }: 
         description:        values.description || undefined,
         category:           values.category,
         normativeRef:       values.normativeRef || undefined,
-        assigneeId:         values.assigneeId || undefined,
-        requiresSuspension: values.requiresSuspension ?? false,
+        assigneeId:              values.assigneeId || undefined,
+        substituteInspectorId:   values.substituteInspectorId || undefined,
+        requiresSuspension:      values.requiresSuspension ?? false,
         ...(values.deadline ? { deadline: new Date(values.deadline).toISOString() } : {}),
         ...(values.gpsLat && values.gpsLat !== '' ? { gpsLat: parseFloat(values.gpsLat) } : {}),
         ...(values.gpsLng && values.gpsLng !== '' ? { gpsLng: parseFloat(values.gpsLng) } : {}),
@@ -153,6 +155,24 @@ export function AddDefectDialog({ objectId, inspectionId, open, onOpenChange }: 
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Замещающий инженер СК</Label>
+            <Select onValueChange={(v) => setValue('substituteInspectorId', v === 'NONE' ? undefined : v)}>
+              <SelectTrigger><SelectValue placeholder="Не указан" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NONE">Не указан</SelectItem>
+                {employees.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.lastName} {e.firstName}{e.position ? ` — ${e.position}` : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Если инспектор будет отсутствовать (отпуск, болезнь), этот сотрудник сможет принять устранение
+            </p>
           </div>
 
           <div className="space-y-1.5">

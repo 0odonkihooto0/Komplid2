@@ -1040,6 +1040,13 @@
 - 4 Handlebars-шаблона PDF (`templates/sk/`)
 - `lib/pdf/sk-pdf-generator.ts`
 
+### Улучшения (2026-04-15) — ЦУС стр. 269, 274
+- ✅ `Defect.substituteInspectorId String?` + `@relation("DefectSubstituteInspector")` — замещающий инженер СК на время отпуска/болезни основного инспектора; миграция `20260415000000_add_defect_substitute_inspector`
+- ✅ UI: поле «Замещающий инженер СК» в `AddDefectDialog` с подсказкой (ЦУС стр. 269)
+- ✅ API `add-defect`: принимает и сохраняет `substituteInspectorId`; `useAddDefectToInspection` — тип расширен
+- ✅ API `complete` (ЦУС стр. 274): проверка `contractorPresent !== null` и `responsibleId` перед завершением уже реализована
+- ✅ UI `CompleteInspectionDialog`: инлайн-ошибка при незаполненном `contractorPresent` уже реализована
+
 ---
 
 ## МОДУЛЬ 12 — Отчёты ✅ (2026-04-07)
