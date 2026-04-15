@@ -1,6 +1,8 @@
 'use client';
 
-import { X, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { X, Loader2, RefreshCw } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useElementByGuid, useElementDetail } from './useModelViewer';
@@ -11,8 +13,6 @@ interface Props {
   modelId: string;
   projectId: string;
   ifcGuid: string;
-  /** IFC PropertySets извлечённые клиентски из web-ifc (fallback когда DB properties = null) */
-  ifcProperties?: Record<string, Record<string, unknown>> | null;
   onClose: () => void;
   /** Выбранная версия ГПР (пробрасывается в GprLinkPanel) */
   selectedVersionId: string | null;
@@ -49,11 +49,68 @@ function PropertiesTab({ properties }: { properties: Record<string, Record<strin
   );
 }
 
+/** Кнопка загрузки PropertySets через IfcOpenShell-сервис для старых моделей (properties = null) */
+function RefreshPropertiesButton({
+  elementId,
+  modelId,
+  projectId,
+}: {
+  elementId: string;
+  modelId: string;
+  projectId: string;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  async function handleRefresh() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/bim/models/${modelId}/elements/${elementId}/refresh-properties`,
+        { method: 'POST' }
+      );
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({})) as { error?: string };
+        setError(json.error ?? 'Ошибка загрузки свойств');
+        return;
+      }
+      await queryClient.invalidateQueries({
+        queryKey: ['bim-element-detail', projectId, modelId, elementId],
+      });
+    } catch {
+      setError('Сервис недоступен');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="mt-2">
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-7 text-xs"
+        onClick={handleRefresh}
+        disabled={loading}
+      >
+        {loading ? (
+          <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+        ) : (
+          <RefreshCw className="mr-1.5 h-3 w-3" />
+        )}
+        Загрузить свойства
+      </Button>
+      {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
+    </div>
+  );
+}
+
 export function ElementPropertiesPanel({
   modelId,
   projectId,
   ifcGuid,
-  ifcProperties,
   onClose,
   selectedVersionId,
   onVersionChange,
@@ -116,27 +173,23 @@ export function ElementPropertiesPanel({
                     )}
                   </div>
                   <div className="border-t pt-2">
-                    {/* Показывать properties из БД если есть, иначе из IFC (клиентский fallback) */}
                     <PropertiesTab
-                      properties={
-                        (element.properties as Record<string, Record<string, unknown>> | null)
-                        ?? ifcProperties
-                        ?? null
-                      }
+                      properties={element.properties as Record<string, Record<string, unknown>> | null}
                     />
+                    {/* Для старых моделей без properties — кнопка загрузки через IfcOpenShell */}
+                    {!element.properties && (
+                      <RefreshPropertiesButton
+                        elementId={element.id}
+                        modelId={modelId}
+                        projectId={projectId}
+                      />
+                    )}
                   </div>
                 </div>
               ) : (
-                <>
-                  <p className="text-xs text-muted-foreground">
-                    Элемент не найден в базе данных. Возможно, IFC-файл ещё не распарсен.
-                  </p>
-                  {ifcProperties && Object.keys(ifcProperties).length > 0 && (
-                    <div className="mt-2 border-t pt-2">
-                      <PropertiesTab properties={ifcProperties} />
-                    </div>
-                  )}
-                </>
+                <p className="text-xs text-muted-foreground">
+                  Элемент не найден в базе данных. Возможно, IFC-файл ещё не распарсен.
+                </p>
               )}
             </TabsContent>
 

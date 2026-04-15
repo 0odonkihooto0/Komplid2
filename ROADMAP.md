@@ -1155,7 +1155,7 @@
 - ✅ Левая панель (`ModelStructurePanel`): вкладки «Структура», «Файлы», «Связанные модели»
 - ✅ Дерево элементов по уровням (`ModelStructureTree`) — toggle видимости, поиск, выбор → подсветка
 - ✅ Правая панель (`ElementPropertiesPanel`): вкладки Инфо / ГПР / Связи / Файлы
-- ✅ IFC PropertySets клиентски (`buildIfcPropertiesMap()`, без перепарсинга БД) + fallback из БД
+- ✅ IFC PropertySets полностью в БД (извлекаются IfcOpenShell при парсинге)
 - ✅ Поиск элементов по GUID и имени (API с пагинацией, лимит 50–200)
 
 ### Привязки и ГПР-шкала ✅
@@ -1169,7 +1169,9 @@
 - ✅ API: GET/POST/DELETE `/api/projects/[id]/bim/links/`
 
 ### Инструменты ✅
-- ✅ Обнаружение коллизий (`CollisionDetector`, AABB-тест) — подсветка пары (#EF4444), список результатов
+- ✅ Обнаружение коллизий (ifcclash, сервер-side, с допусками и исключениями) — подсветка пары (#EF4444), список результатов
+- ✅ Проверка на дублирование элементов (checkDuplicates)
+- ✅ Настраиваемые допуски и исключения по IfcType
 - ✅ Реестр замечаний ТИМ (`BimIssuesRegistry`) — статусы, приоритеты, ответственный
 - ✅ Управление доступом (`BimAccessSettings`): уровни VIEW / ADD / EDIT / DELETE
 
@@ -1197,7 +1199,7 @@
 ### Реализовано (дополнительно)
 - ✅ Интеграция `parse-ifc.worker.ts` с IfcOpenShell-сервисом (web-ifc WASM → HTTP-вызов `/parse`)
 - ✅ Конвертация IFC → glTF (`convert-ifc.worker.ts` → HTTP-вызов `/convert`, glbS3Key в `BimModel.metadata`)
-- ✅ PropertySets сохраняются в БД при парсинге (полностью, без `buildIfcPropertiesMap`)
+- ✅ PropertySets сохраняются в БД при парсинге (полностью, через IfcOpenShell-сервис)
 - ✅ 3D-вьюер переключён на GLTFLoader — нет WASM в браузере, загрузка в 10–20x быстрее
 - ✅ Новый API `GET /bim/models/[id]/glb-url` — presigned URL для .glb или 202 CONVERTING с поллингом
 - ✅ IFC PropertySets из БД (сохранены при парсинге IfcOpenShell-сервисом, без клиентского парсинга)

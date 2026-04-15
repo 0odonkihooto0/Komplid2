@@ -17,7 +17,6 @@ import {
   useAllGprLinks,
 } from '@/components/modules/tim/useModelViewer';
 import type { GanttTaskViewer, BimElementLink } from '@/components/modules/tim/useModelViewer';
-import { useCollisions } from '@/components/modules/tim/useCollisions';
 import type { ViewerScene } from '@/components/modules/tim/ifcSceneSetup';
 
 interface Props {
@@ -49,8 +48,6 @@ export default function TimModelViewerPage({ params }: Props) {
   const [showCompare, setShowCompare] = useState(false);
   // Выбранная версия ГПР (синхронизируется между GprLinkPanel и Timeline)
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
-
-  const collisions = useCollisions();
 
   // ─── Данные модели и ГПР ─────────────────────────────────────────────────
   const { data: model, isLoading, error } = useModelDetail(objectId, modelId);
@@ -166,9 +163,8 @@ export default function TimModelViewerPage({ params }: Props) {
     setShowCompare(false);
     if (showCollisions && viewerScene) {
       viewerScene.materials.forEach(mat => mat.color.set(DEFAULT_COLOR));
-      collisions.clear();
     }
-  }, [showCollisions, viewerScene, collisions]);
+  }, [showCollisions, viewerScene]);
 
   const handleToggleCompare = useCallback(() => {
     setShowCompare(v => !v);
@@ -259,11 +255,8 @@ export default function TimModelViewerPage({ params }: Props) {
         {showCollisions && (
           <div className="w-80 shrink-0 overflow-y-auto border-l p-4">
             <CollisionDetector
-              scene={viewerScene}
-              results={collisions.results}
-              isDetecting={collisions.isDetecting}
-              onDetect={collisions.detect}
-              onClear={collisions.clear}
+              projectId={objectId}
+              modelId={modelId}
               onHighlight={handleHighlightCollision}
             />
           </div>

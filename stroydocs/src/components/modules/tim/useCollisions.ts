@@ -1,113 +1,132 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import type { Object3D } from 'three';
-import type { ViewerScene } from './ifcSceneSetup';
+import { useState, useCallback, useRef } from 'react';
 
 export type CollisionType = 'intersection' | 'duplicate';
 
-export interface CollisionResult {
-  /** IFC GUID первого элемента */
+export interface ClashResultItem {
   guidA: string;
-  /** IFC GUID второго элемента */
+  nameA: string | null;
   guidB: string;
-  collisionType: CollisionType;
-  /** Центр пересечения/дублирования (для отображения) */
-  center: { x: number; y: number; z: number };
+  nameB: string | null;
+  clashPoint: [number, number, number] | null;
+  type: 'intersection' | 'duplicate';
 }
 
-/** Максимальное количество коллизий в результате (защита от OOM) */
-const MAX_COLLISIONS = 500;
+export interface ClashState {
+  status: 'idle' | 'processing' | 'done' | 'error';
+  results: ClashResultItem[];
+  count: number;
+}
 
-/**
- * Хук управления обнаружением коллизий в Three.js сцене.
- * Работает только в браузере (вызывается из компонентов с 'use client').
- */
-export function useCollisions() {
-  const [results, setResults] = useState<CollisionResult[]>([]);
-  const [isDetecting, setIsDetecting] = useState(false);
+export interface DetectParams {
+  collisionType: CollisionType;
+  toleranceMm: number;
+  modelIdB?: string;
+  excludedTypes: string[];
+}
+
+const POLL_INTERVAL_MS = 3_000;
+const MAX_POLL_MS = 10 * 60 * 1000; // 10 minutes
+
+export function useCollisions(projectId: string, modelId: string) {
+  const [clashState, setClashState] = useState<ClashState>({
+    status: 'idle',
+    results: [],
+    count: 0,
+  });
+
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startedAtRef = useRef<number>(0);
+
+  const stopPolling = useCallback(() => {
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  const poll = useCallback(async () => {
+    if (Date.now() - startedAtRef.current > MAX_POLL_MS) {
+      stopPolling();
+      setClashState(s => ({ ...s, status: 'error' }));
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/bim/models/${modelId}/clash`
+      );
+      if (!res.ok) return;
+
+      const json = await res.json() as {
+        success: boolean;
+        data: {
+          clashStatus: string | null;
+          clashResults: {
+            count: number;
+            results: ClashResultItem[];
+          } | null;
+        };
+      };
+      if (!json.success) return;
+
+      const { clashStatus, clashResults } = json.data;
+
+      if (clashStatus === 'DONE') {
+        stopPolling();
+        setClashState({
+          status: 'done',
+          results: clashResults?.results ?? [],
+          count: clashResults?.count ?? 0,
+        });
+      } else if (clashStatus === 'ERROR') {
+        stopPolling();
+        setClashState(s => ({ ...s, status: 'error' }));
+      }
+    } catch {
+      // Network error — keep polling
+    }
+  }, [projectId, modelId, stopPolling]);
 
   const detect = useCallback(
-    async (scene: ViewerScene, type: CollisionType, toleranceMm: number) => {
-      setIsDetecting(true);
-      setResults([]);
+    async (params: DetectParams) => {
+      stopPolling();
+      setClashState({ status: 'processing', results: [], count: 0 });
 
       try {
-        const THREE = await import('three');
-
-        // Сбор всех пар (mesh, guid) из сцены — meshMap: Map<object, string>
-        const meshEntries = Array.from(scene.meshMap.entries()) as Array<[object, string]>;
-
-        // Вычисляем ограничивающие боксы для всех mesh
-        const boxes: Array<{
-          guid: string;
-          box: InstanceType<typeof THREE.Box3>;
-          center: InstanceType<typeof THREE.Vector3>;
-        }> = [];
-
-        for (const [mesh, guid] of meshEntries) {
-          const box = new THREE.Box3().setFromObject(mesh as Object3D);
-          if (box.isEmpty()) continue;
-
-          const center = new THREE.Vector3();
-          box.getCenter(center);
-
-          boxes.push({ guid, box, center });
-        }
-
-        // O(n²) перебор пар
-        const found: CollisionResult[] = [];
-        const toleranceM = toleranceMm / 1000; // мм → метры
-
-        for (let i = 0; i < boxes.length && found.length < MAX_COLLISIONS; i++) {
-          for (let j = i + 1; j < boxes.length && found.length < MAX_COLLISIONS; j++) {
-            const a = boxes[i];
-            const b = boxes[j];
-
-            if (a.guid === b.guid) continue;
-
-            if (type === 'intersection') {
-              // Пересечение геометрии: боксы перекрываются
-              const expanded = a.box.clone().expandByScalar(toleranceM);
-              if (!expanded.intersectsBox(b.box)) continue;
-            } else {
-              // Дублирование: центры очень близко, одинаковый объём
-              const dist = a.center.distanceTo(b.center);
-              const sizeA = new THREE.Vector3();
-              const sizeB = new THREE.Vector3();
-              a.box.getSize(sizeA);
-              b.box.getSize(sizeB);
-              const volumeA = sizeA.x * sizeA.y * sizeA.z;
-              const volumeB = sizeB.x * sizeB.y * sizeB.z;
-              const volumeRatio = volumeA > 0 && volumeB > 0 ? Math.min(volumeA, volumeB) / Math.max(volumeA, volumeB) : 0;
-
-              const tol = Math.max(toleranceM, 0.01); // минимум 10мм
-              if (dist > tol || volumeRatio < 0.9) continue;
-            }
-
-            // Центр коллизии — середина между центрами элементов
-            const cx = (a.center.x + b.center.x) / 2;
-            const cy = (a.center.y + b.center.y) / 2;
-            const cz = (a.center.z + b.center.z) / 2;
-
-            found.push({
-              guidA: a.guid,
-              guidB: b.guid,
-              collisionType: type,
-              center: { x: cx, y: cy, z: cz },
-            });
+        const res = await fetch(
+          `/api/projects/${projectId}/bim/models/${modelId}/clash`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              modelIdB: params.modelIdB || undefined,
+              tolerance: params.toleranceMm,
+              checkDuplicates: params.collisionType === 'duplicate',
+              excludedTypes: params.excludedTypes,
+            }),
           }
+        );
+
+        if (!res.ok) {
+          setClashState(s => ({ ...s, status: 'error' }));
+          return;
         }
 
-        setResults(found);
-      } finally {
-        setIsDetecting(false);
+        startedAtRef.current = Date.now();
+        intervalRef.current = setInterval(poll, POLL_INTERVAL_MS);
+      } catch {
+        setClashState(s => ({ ...s, status: 'error' }));
       }
     },
-    []
+    [projectId, modelId, stopPolling, poll]
   );
 
-  const clear = useCallback(() => setResults([]), []);
+  const clear = useCallback(() => {
+    stopPolling();
+    setClashState({ status: 'idle', results: [], count: 0 });
+  }, [stopPolling]);
 
-  return { results, isDetecting, detect, clear };
+  return { clashState, detect, clear };
 }

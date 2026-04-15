@@ -1,45 +1,52 @@
 'use client';
 
 import { useState } from 'react';
-import { AlertTriangle, Loader2, Search, X } from 'lucide-react';
+import { AlertTriangle, Loader2, Search, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { CollisionResultsList } from './CollisionResultsList';
-import type { CollisionResult, CollisionType } from './useCollisions';
-import type { ViewerScene } from './ifcSceneSetup';
+import { useCollisions } from './useCollisions';
+import type { CollisionType } from './useCollisions';
+
+const ALL_IFC_TYPES = [
+  'IfcWall', 'IfcSlab', 'IfcColumn', 'IfcBeam',
+  'IfcDoor', 'IfcWindow', 'IfcOpeningElement',
+  'IfcSpace', 'IfcBuildingElementProxy',
+];
+const DEFAULT_EXCLUDED = ['IfcOpeningElement', 'IfcSpace', 'IfcBuildingElementProxy'];
 
 interface Props {
-  /** Сцена Three.js (null — если модель ещё не загружена) */
-  scene: ViewerScene | null;
-  results: CollisionResult[];
-  isDetecting: boolean;
-  onDetect: (scene: ViewerScene, type: CollisionType, toleranceMm: number) => Promise<void>;
-  onClear: () => void;
-  /** Подсветить пару элементов по GUID */
+  projectId: string;
+  modelId: string;
   onHighlight: (guidA: string, guidB: string) => void;
 }
 
-export function CollisionDetector({
-  scene,
-  results,
-  isDetecting,
-  onDetect,
-  onClear,
-  onHighlight,
-}: Props) {
+export function CollisionDetector({ projectId, modelId, onHighlight }: Props) {
   const [collisionType, setCollisionType] = useState<CollisionType>('intersection');
-  const [toleranceMm, setToleranceMm] = useState<number>(0);
+  const [toleranceMm, setToleranceMm] = useState<number>(10);
+  const [excludedTypes, setExcludedTypes] = useState<string[]>(DEFAULT_EXCLUDED);
+  const [exclusionsOpen, setExclusionsOpen] = useState(false);
 
-  const handleDetect = async () => {
-    if (!scene) return;
-    await onDetect(scene, collisionType, toleranceMm);
+  const { clashState, detect, clear } = useCollisions(projectId, modelId);
+
+  const isDetecting = clashState.status === 'processing';
+
+  const handleDetect = () => {
+    detect({ collisionType, toleranceMm, excludedTypes });
   };
 
-  const handleToleranceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    setToleranceMm(isNaN(val) ? 0 : Math.max(0, val));
+  const toggleType = (type: string) => {
+    setExcludedTypes(prev =>
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    );
   };
 
   return (
@@ -83,17 +90,51 @@ export function CollisionDetector({
           min="0"
           step="1"
           value={toleranceMm}
-          onChange={handleToleranceChange}
+          onChange={e => {
+            const val = parseFloat(e.target.value);
+            setToleranceMm(isNaN(val) ? 0 : Math.max(0, val));
+          }}
           className="h-8 w-32 text-sm"
-          placeholder="0"
+          placeholder="10"
         />
       </div>
+
+      {/* Исключения по IfcType */}
+      <Collapsible open={exclusionsOpen} onOpenChange={setExclusionsOpen}>
+        <CollapsibleTrigger asChild>
+          <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+            <ChevronDown
+              className={`h-3.5 w-3.5 transition-transform ${exclusionsOpen ? 'rotate-180' : ''}`}
+            />
+            Исключения по IfcType
+            {excludedTypes.length > 0 && (
+              <span className="ml-1 rounded bg-muted px-1 text-[10px]">
+                {excludedTypes.length}
+              </span>
+            )}
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-2 space-y-1.5">
+          {ALL_IFC_TYPES.map(type => (
+            <div key={type} className="flex items-center gap-2">
+              <Checkbox
+                id={`exc-${type}`}
+                checked={excludedTypes.includes(type)}
+                onCheckedChange={() => toggleType(type)}
+              />
+              <Label htmlFor={`exc-${type}`} className="cursor-pointer font-mono text-xs">
+                {type}
+              </Label>
+            </div>
+          ))}
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Кнопки */}
       <div className="flex gap-2">
         <Button
           onClick={handleDetect}
-          disabled={!scene || isDetecting}
+          disabled={isDetecting}
           className="flex-1 gap-2"
           size="sm"
         >
@@ -105,24 +146,30 @@ export function CollisionDetector({
           {isDetecting ? 'Анализ...' : 'Найти коллизии'}
         </Button>
 
-        {results.length > 0 && (
-          <Button variant="outline" size="sm" onClick={onClear} className="gap-1">
+        {(clashState.results.length > 0 || clashState.status === 'error') && (
+          <Button variant="outline" size="sm" onClick={clear} className="gap-1">
             <X className="h-3.5 w-3.5" />
             Сброс
           </Button>
         )}
       </div>
 
-      {!scene && (
+      {clashState.status === 'processing' && (
         <p className="text-xs text-muted-foreground">
-          Дождитесь загрузки модели в 3D-вьюере
+          Идёт анализ на сервере, это может занять несколько минут...
+        </p>
+      )}
+
+      {clashState.status === 'error' && (
+        <p className="text-xs text-destructive">
+          Ошибка при обнаружении коллизий. Попробуйте ещё раз.
         </p>
       )}
 
       {/* Результаты */}
-      {results.length > 0 || (!isDetecting && scene) ? (
-        <CollisionResultsList results={results} onHighlight={onHighlight} />
-      ) : null}
+      {(clashState.results.length > 0 || clashState.status === 'done') && (
+        <CollisionResultsList results={clashState.results} onHighlight={onHighlight} />
+      )}
     </div>
   );
 }
