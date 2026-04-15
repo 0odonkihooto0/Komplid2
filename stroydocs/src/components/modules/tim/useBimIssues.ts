@@ -1,6 +1,7 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/useToast';
 
 // ─── Типы ────────────────────────────────────────────────────────────────────
 
@@ -58,7 +59,7 @@ export const DEFECT_STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'o
   CLOSED: 'outline',
 };
 
-// ─── Хук ─────────────────────────────────────────────────────────────────────
+// ─── Хук списка замечаний ────────────────────────────────────────────────────
 
 export function useBimIssues(projectId: string) {
   const query = useQuery<BimIssueRow[]>({
@@ -76,5 +77,72 @@ export function useBimIssues(projectId: string) {
     issues: query.data ?? [],
     isLoading: query.isLoading,
     isError: query.isError,
+  };
+}
+
+// ─── BCF Экспорт ─────────────────────────────────────────────────────────────
+
+export function useBcfExport(projectId: string) {
+  const { toast } = useToast();
+
+  const mutation = useMutation<void, Error>({
+    mutationFn: async () => {
+      const res = await fetch(`/api/projects/${projectId}/bim/issues/export-bcf`);
+      const json: ApiResponse<{ url: string }> = await res.json();
+      if (!json.success) throw new Error(json.error ?? 'Ошибка экспорта BCF');
+      window.open(json.data.url, '_blank');
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Ошибка экспорта BCF',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  return {
+    exportBcf: () => mutation.mutate(),
+    isPending: mutation.isPending,
+  };
+}
+
+// ─── BCF Импорт ──────────────────────────────────────────────────────────────
+
+export function useBcfImport(projectId: string) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation<{ imported: number }, Error, File>({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(`/api/projects/${projectId}/bim/issues/import-bcf`, {
+        method: 'POST',
+        body: formData,
+      });
+      const json: ApiResponse<{ imported: number }> = await res.json();
+      if (!json.success) throw new Error(json.error ?? 'Ошибка импорта BCF');
+      return json.data;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: 'BCF импортирован',
+        description: `Импортировано топиков: ${data.imported}`,
+      });
+      void queryClient.invalidateQueries({ queryKey: ['bim-issues', projectId] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Ошибка импорта BCF',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  return {
+    importBcf: (file: File) => mutation.mutate(file),
+    isPending: mutation.isPending,
   };
 }

@@ -11,6 +11,8 @@ StroyDocs IFC Service — FastAPI микросервис для обработк
   POST /clash        — обнаружение коллизий между двумя IFC-моделями
   POST /diff         — сравнение двух версий IFC (added/deleted/changed)
   POST /properties   — полные PropertySets элемента по GUID
+  POST /bcf/export   — экспорт замечаний в BCF 2.1 .bcfzip (buildingSMART)
+  POST /bcf/import   — импорт замечаний из BCF 2.1 .bcfzip
 """
 
 import logging
@@ -19,7 +21,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import clash, convert, diff, parse, properties
+from routers import bcf, clash, convert, diff, parse, properties
 
 # Настройка логирования — используем logging, не print (требование CLAUDE.md)
 logging.basicConfig(
@@ -48,6 +50,7 @@ app.include_router(convert.router, tags=["convert"])
 app.include_router(clash.router, tags=["clash"])
 app.include_router(diff.router, tags=["diff"])
 app.include_router(properties.router, tags=["properties"])
+app.include_router(bcf.router, tags=["bcf"])
 
 
 @app.get("/health")
