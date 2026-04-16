@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { getCachedAnalytics } from '@/lib/analytics/cache';
+import { safe } from '@/lib/analytics/dashboard-helpers';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +22,7 @@ export async function GET() {
 
       const [projects, globalDefects, workRecordsRaw, defectsByCategoryRaw] = await Promise.all([
         // Все проекты с агрегатами
-        db.buildingObject.findMany({
+        safe(() => db.buildingObject.findMany({
           where: { organizationId: orgId },
           select: {
             id: true,
@@ -35,41 +36,41 @@ export async function GET() {
             },
           },
           orderBy: { updatedAt: 'desc' },
-        }),
+        }), []),
 
         // Глобальные дефекты по статусам
-        db.defect.groupBy({
+        safe(() => db.defect.groupBy({
           by: ['status'],
           where: { buildingObject: { organizationId: orgId } },
           _count: { id: true },
-        }),
+        }), []),
 
         // Записи о работах за последние 6 месяцев
-        db.workRecord.findMany({
+        safe(() => db.workRecord.findMany({
           where: {
             contract: { buildingObject: { organizationId: orgId } },
             date: { gte: sixMonthsAgo },
           },
           select: { date: true },
-        }),
+        }), []),
 
         // Дефекты по категориям
-        db.defect.groupBy({
+        safe(() => db.defect.groupBy({
           by: ['category'],
           where: { buildingObject: { organizationId: orgId } },
           _count: { id: true },
-        }),
+        }), []),
       ]);
 
       // Подсчёт ИД по каждому проекту
       const projectIds = projects.map((p) => p.id);
       const [docsGrouped, overdueByProject, signedDocsByProject] = await Promise.all([
-        db.executionDoc.groupBy({
+        safe(() => db.executionDoc.groupBy({
           by: ['status'],
           where: { contract: { buildingObject: { organizationId: orgId } } },
           _count: { id: true },
-        }),
-        db.defect.groupBy({
+        }), []),
+        safe(() => db.defect.groupBy({
           by: ['projectId'],
           where: {
             projectId: { in: projectIds },
@@ -77,15 +78,15 @@ export async function GET() {
             deadline: { lt: now },
           },
           _count: { id: true },
-        }),
+        }), []),
         // Подписанные ИД по проектам
-        db.executionDoc.groupBy({
+        safe(() => db.executionDoc.groupBy({
           by: ['status'],
           where: {
             contract: { projectId: { in: projectIds } },
           },
           _count: { id: true },
-        }),
+        }), []),
       ]);
 
       const overdueMap: Record<string, number> = {};
