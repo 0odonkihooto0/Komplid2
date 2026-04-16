@@ -343,14 +343,7 @@ export function IfcViewerCore({
   }, [elementColors]);
 
   return (
-    <div className="relative h-full w-full">
-      <div ref={containerRef} className="h-full w-full" />
-
-      {/* Метка вида */}
-      <div className="pointer-events-none absolute left-2 top-2 z-10 rounded bg-white/70 px-2 py-0.5 text-xs text-gray-500 backdrop-blur">
-        Перспектива
-      </div>
-
+    <div className="flex h-full w-full flex-col">
       <ViewerToolbar
         wireframe={wireframe}
         onReset={handleReset}
@@ -369,6 +362,14 @@ export function IfcViewerCore({
         onDownloadIfc={downloadIfc}
         onScreenshot={() => screenshot('png')}
       />
+
+      <div className="relative min-h-0 flex-1">
+      <div ref={containerRef} className="h-full w-full" />
+
+      {/* Метка вида */}
+      <div className="pointer-events-none absolute left-2 top-2 z-10 rounded bg-white/70 px-2 py-0.5 text-xs text-gray-500 backdrop-blur">
+        Перспектива
+      </div>
 
       {/* Панель слоёв */}
       {layersOpen && (
@@ -454,6 +455,7 @@ export function IfcViewerCore({
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }
