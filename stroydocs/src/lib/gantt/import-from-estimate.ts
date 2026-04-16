@@ -1,7 +1,5 @@
 import { addDays } from 'date-fns';
-import type { Prisma } from '@prisma/client';
-
-type PrismaTx = Prisma.TransactionClient;
+import type { PrismaTx } from '@/lib/db';
 
 /**
  * Импортирует структуру сметы в версию ГПР.

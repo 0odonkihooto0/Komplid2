@@ -124,7 +124,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     }
 
     // Авто-нумерация entryNumber в транзакции с advisory lock
-    const entry = await db.$transaction(async (tx: Prisma.TransactionClient) => {
+    const entry = await db.$transaction(async (tx) => {
       const lockKey = `journal-entry:${params.journalId}`;
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
 

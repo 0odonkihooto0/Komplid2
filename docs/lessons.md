@@ -493,10 +493,12 @@ P2037 (Too many connections) — НЕ ретраить, нужен PgBouncer.
 получают несовместимый тип при вызове из `db.$transaction(async (tx) => importFn(tx, ...))`.
 Ошибка проявляется только на деплое (type-check фаза Next.js build).
 Затронуто 4 файла: `import-from-file.ts`, `import-from-estimate.ts`, `conduct-movement.ts`, `auto-batch.ts`.
-**Правило**: для типа транзакционного клиента Prisma ВСЕГДА использовать `Prisma.TransactionClient`
-из `@prisma/client` — это стабильный тип, не зависящий от `$extends`. Никогда не выводить тип
-через `Parameters<Parameters<PrismaClient['$transaction']>...>` или `typeof db.$transaction`.
-Паттерн уже используется в `recalc-summary.ts` и `numbering.ts`.
+`Prisma.TransactionClient` тоже несовместим — он основан на базовом `PrismaClient`, не на расширенном.
+**Правило**: для типа транзакционного клиента Prisma ВСЕГДА использовать `PrismaTx`
+из `@/lib/db` — это `Omit<ExtendedPrismaClient, ...>`, совместимый с `$extends`. Никогда не выводить тип
+через `Parameters<Parameters<PrismaClient['$transaction']>...>`, `typeof db.$transaction`
+или `Prisma.TransactionClient`. В inline-коллбэках `db.$transaction(async (tx) => { ... })`
+убирать явную аннотацию типа — TypeScript выведет корректный тип автоматически.
 
 ---
 

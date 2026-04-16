@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import type { PrismaTx } from '@/lib/db';
 
 interface TaskForRecalc {
   id: string;
@@ -17,7 +17,7 @@ interface TaskForRecalc {
  * Обходит дерево снизу вверх и агрегирует: planStart, planEnd, factStart, factEnd, progress, amount.
  */
 export async function recalcSummaryTasks(
-  tx: Prisma.TransactionClient,
+  tx: PrismaTx,
   versionId: string
 ): Promise<void> {
   const tasks = await tx.ganttTask.findMany({
