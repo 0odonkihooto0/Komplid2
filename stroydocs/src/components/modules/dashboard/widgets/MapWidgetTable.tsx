@@ -34,9 +34,10 @@ type SortKey = 'name' | 'constructionType' | 'status' | 'plannedStartDate' | 'pl
 
 interface MapWidgetTableProps {
   objects: ObjectRow[];
+  onObjectClick?: (objectId: string) => void;
 }
 
-export function MapWidgetTable({ objects }: MapWidgetTableProps) {
+export function MapWidgetTable({ objects, onObjectClick }: MapWidgetTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortAsc, setSortAsc] = useState(true);
 
@@ -97,14 +98,22 @@ export function MapWidgetTable({ objects }: MapWidgetTableProps) {
         </TableHeader>
         <TableBody>
           {sorted.map((obj) => (
-            <TableRow key={obj.id} className="text-xs">
+            <TableRow
+              key={obj.id}
+              className={`text-xs${onObjectClick ? ' cursor-pointer hover:bg-muted/60' : ''}`}
+              onClick={onObjectClick ? () => onObjectClick(obj.id) : undefined}
+            >
               <TableCell className="font-medium max-w-[160px] truncate">
-                <Link
-                  href={`/objects/${obj.id}`}
-                  className="hover:text-primary hover:underline"
-                >
-                  {obj.name}
-                </Link>
+                {onObjectClick ? (
+                  <span className="hover:text-primary hover:underline">{obj.name}</span>
+                ) : (
+                  <Link
+                    href={`/objects/${obj.id}`}
+                    className="hover:text-primary hover:underline"
+                  >
+                    {obj.name}
+                  </Link>
+                )}
               </TableCell>
               <TableCell className="text-muted-foreground max-w-[120px] truncate">
                 {obj.constructionType ?? '—'}

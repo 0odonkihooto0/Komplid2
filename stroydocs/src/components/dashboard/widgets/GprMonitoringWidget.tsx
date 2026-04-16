@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useGprMonitoringWidget, type DelayGroup } from './useGprMonitoringWidget';
+import { ObjectPassportDialog } from '@/components/objects/ObjectPassportDialog';
 
 interface Props {
   objectIds?: string[];
@@ -41,8 +42,14 @@ export function GprMonitoringWidget({ objectIds = [] }: Props) {
     filteredItems,
   } = useGprMonitoringWidget({ objectIds });
 
+  const [passportObjectId, setPassportObjectId] = useState<string | null>(null);
+
   return (
     <>
+      <ObjectPassportDialog
+        objectId={passportObjectId}
+        onClose={() => setPassportObjectId(null)}
+      />
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Мониторинг исполнения ГПР, СМР</CardTitle>
@@ -132,12 +139,16 @@ export function GprMonitoringWidget({ objectIds = [] }: Props) {
                 {filteredItems.map((item) => (
                   <tr key={item.objectId} className="border-b last:border-0">
                     <td className="py-2 pr-3">
-                      <Link
-                        href={`/objects/${item.objectId}`}
-                        className="text-primary hover:underline font-medium"
+                      <button
+                        type="button"
+                        className="text-primary hover:underline font-medium text-left"
+                        onClick={() => {
+                          setSelectedGroup(null);
+                          setPassportObjectId(item.objectId);
+                        }}
                       >
                         {item.name}
-                      </Link>
+                      </button>
                     </td>
                     <td className="py-2 pr-3 text-muted-foreground whitespace-nowrap">
                       {formatDate(item.planStart)}

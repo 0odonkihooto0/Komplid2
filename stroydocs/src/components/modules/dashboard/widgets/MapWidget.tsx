@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MapPin } from 'lucide-react';
 import { MapWidgetSchema } from './MapWidgetSchema';
 import { MapWidgetTable } from './MapWidgetTable';
+import { ObjectPassportDialog } from '@/components/objects/ObjectPassportDialog';
 
 interface ObjectSummary {
   id: string;
@@ -86,6 +87,7 @@ interface MapWidgetProps {
 
 export function MapWidget({ objectIds }: MapWidgetProps) {
   const apiKey = process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY;
+  const [passportObjectId, setPassportObjectId] = useState<string | null>(null);
 
   const { data: objects = [], isLoading } = useQuery<ObjectSummary[]>({
     queryKey: ['dashboard-objects-summary', objectIds],
@@ -101,42 +103,48 @@ export function MapWidget({ objectIds }: MapWidgetProps) {
   });
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm flex items-center gap-1.5">
-          <MapPin className="h-4 w-4 text-primary" />
-          Карта объектов
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        {isLoading ? (
-          <Skeleton className="h-64 w-full rounded-none" />
-        ) : (
-          <Tabs defaultValue="schema" className="w-full">
-            <TabsList className="w-full rounded-none border-b bg-transparent h-8 px-3 justify-start gap-1">
-              <TabsTrigger value="schema" className="text-xs h-7 px-3">Схема</TabsTrigger>
-              <TabsTrigger value="table" className="text-xs h-7 px-3">Таблица</TabsTrigger>
-              {apiKey && (
-                <TabsTrigger value="map" className="text-xs h-7 px-3">Карта</TabsTrigger>
-              )}
-            </TabsList>
+    <>
+      <ObjectPassportDialog
+        objectId={passportObjectId}
+        onClose={() => setPassportObjectId(null)}
+      />
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-1.5">
+            <MapPin className="h-4 w-4 text-primary" />
+            Карта объектов
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <Skeleton className="h-64 w-full rounded-none" />
+          ) : (
+            <Tabs defaultValue="schema" className="w-full">
+              <TabsList className="w-full rounded-none border-b bg-transparent h-8 px-3 justify-start gap-1">
+                <TabsTrigger value="schema" className="text-xs h-7 px-3">Схема</TabsTrigger>
+                <TabsTrigger value="table" className="text-xs h-7 px-3">Таблица</TabsTrigger>
+                {apiKey && (
+                  <TabsTrigger value="map" className="text-xs h-7 px-3">Карта</TabsTrigger>
+                )}
+              </TabsList>
 
-            <TabsContent value="schema" className="mt-0 p-3">
-              <MapWidgetSchema objects={objects} />
-            </TabsContent>
-
-            <TabsContent value="table" className="mt-0">
-              <MapWidgetTable objects={objects} />
-            </TabsContent>
-
-            {apiKey && (
-              <TabsContent value="map" className="mt-0 overflow-hidden rounded-b-xl">
-                <YandexMapTab objects={objects} apiKey={apiKey} />
+              <TabsContent value="schema" className="mt-0 p-3">
+                <MapWidgetSchema objects={objects} />
               </TabsContent>
-            )}
-          </Tabs>
-        )}
-      </CardContent>
-    </Card>
+
+              <TabsContent value="table" className="mt-0">
+                <MapWidgetTable objects={objects} onObjectClick={setPassportObjectId} />
+              </TabsContent>
+
+              {apiKey && (
+                <TabsContent value="map" className="mt-0 overflow-hidden rounded-b-xl">
+                  <YandexMapTab objects={objects} apiKey={apiKey} />
+                </TabsContent>
+              )}
+            </Tabs>
+          )}
+        </CardContent>
+      </Card>
+    </>
   );
 }
