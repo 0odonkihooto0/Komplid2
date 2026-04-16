@@ -154,6 +154,7 @@
 - ✅ Email-уведомления (BullMQ + SMTP + notification.worker.ts)
 - ✅ Уведомление следующему участнику цепочки согласования (approval/decide + lib/approval/notify.ts)
 - ✅ Уведомление о дате освидетельствования за ≥3 рабочих дня (inspection-reminder.worker.ts, ГОСТ Р 70108-2025)
+- ✅ Единый API агрегаций дашборда — 15 виджетов в одном запросе (GET /api/dashboard/analytics?objectIds[]=&year=&period=quarter|halfyear|year&mode=separate|cumulative, Promise.all, кэш Redis 5 мин)
 
 **База данных (Модуль 1)**
 - ✅ `DashboardWidget` (userId, type, position, config Json)
