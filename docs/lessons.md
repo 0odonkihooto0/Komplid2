@@ -452,6 +452,17 @@ test -n "$IFCBIN" && mv "$IFCBIN" /usr/local/bin/IfcConvert
 Дополнительно: чистить `/tmp/ifcconvert.zip` и `/tmp/ifcconvert` в начале каждой retry-попытки
 (`rm -rf` перед `wget`), чтобы мусор от предыдущей попытки не влиял.
 
+**Prisma relation field `project` vs `buildingObject` — не все модели с `projectId` используют одинаковое имя relation.**
+Модели `GanttStage`, `FundingRecord`, `GanttVersion` имеют relation `project BuildingObject @relation(...)`.
+Модели `ProblemIssue`, `PIRClosureAct`, `Defect`, `Contract` имеют relation `buildingObject BuildingObject @relation(...)`.
+Все они хранят FK в поле `projectId`, но **имя relation отличается**.
+В `dashboard/analytics/route.ts` два запроса использовали `{ project: objWhere }` для `ProblemIssue` и `PIRClosureAct` —
+ошибка сборки: `'project' does not exist in type 'ProblemIssueWhereInput'`.
+Ошибка проявляется только на деплое (type-check фаза Next.js build) — локально без `node_modules` молчит.
+**Правило**: при написании Prisma `where` с relation-фильтром — **всегда** проверять имя relation в `schema.prisma`.
+Наличие FK `projectId` **не означает** что relation называется `project` — оно может быть `buildingObject`.
+Быстрая проверка: `grep -A2 'projectId.*String' prisma/schema.prisma | grep '@relation'`.
+
 ---
 
 > Правило: после каждой исправленной ошибки добавить урок сюда.
