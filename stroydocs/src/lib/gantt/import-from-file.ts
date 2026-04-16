@@ -1,9 +1,9 @@
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import type { ParseResult } from './parsers/types';
 import { recalcSummaryTasks } from './recalc-summary';
 import { logger } from '@/lib/logger';
 
-type PrismaTx = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0];
+type PrismaTx = Prisma.TransactionClient;
 
 interface ImportResult {
   taskCount: number;

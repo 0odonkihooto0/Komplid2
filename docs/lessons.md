@@ -487,6 +487,17 @@ test -n "$IFCBIN" && mv "$IFCBIN" /usr/local/bin/IfcConvert
 Транзиентные коды: P1001 (сервер недоступен), P1008 (таймаут), P1017 (соединение закрыто).
 P2037 (Too many connections) — НЕ ретраить, нужен PgBouncer.
 
+**`PrismaTx` через `Parameters<PrismaClient['$transaction']>` ломает сборку при `$extends`.**
+При добавлении `$extends` в `db.ts` тип `db` меняется с `PrismaClient` на `DynamicClientExtensionThis<...>`.
+Функции, принимающие `tx: PrismaTx` (где `PrismaTx = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0]>`),
+получают несовместимый тип при вызове из `db.$transaction(async (tx) => importFn(tx, ...))`.
+Ошибка проявляется только на деплое (type-check фаза Next.js build).
+Затронуто 4 файла: `import-from-file.ts`, `import-from-estimate.ts`, `conduct-movement.ts`, `auto-batch.ts`.
+**Правило**: для типа транзакционного клиента Prisma ВСЕГДА использовать `Prisma.TransactionClient`
+из `@prisma/client` — это стабильный тип, не зависящий от `$extends`. Никогда не выводить тип
+через `Parameters<Parameters<PrismaClient['$transaction']>...>` или `typeof db.$transaction`.
+Паттерн уже используется в `recalc-summary.ts` и `numbering.ts`.
+
 ---
 
 > Правило: после каждой исправленной ошибки добавить урок сюда.
