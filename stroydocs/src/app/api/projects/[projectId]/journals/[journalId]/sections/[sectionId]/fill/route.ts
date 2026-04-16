@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
-import type { Prisma } from '@prisma/client';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -123,7 +122,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
     const lockKey = `journal-entry:${params.journalId}`;
     const now = new Date();
 
-    const created = await db.$transaction(async (tx: Prisma.TransactionClient) => {
+    const created = await db.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
 
       const result = await tx.$queryRaw<Array<{ max_num: number | null }>>`

@@ -66,6 +66,13 @@ function createPrismaClient() {
 
 type ExtendedPrismaClient = ReturnType<typeof createPrismaClient>;
 
+/** Тип транзакционного клиента для расширенного Prisma-клиента.
+ *  Использовать вместо Prisma.TransactionClient во всех функциях, принимающих tx. */
+export type PrismaTx = Omit<
+  ExtendedPrismaClient,
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+>;
+
 const globalForPrisma = globalThis as unknown as { prisma: ExtendedPrismaClient };
 
 export const db = globalForPrisma.prisma || createPrismaClient();

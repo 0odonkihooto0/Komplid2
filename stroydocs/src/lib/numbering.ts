@@ -1,5 +1,4 @@
-import { db } from '@/lib/db';
-import type { Prisma } from '@prisma/client';
+import { db, type PrismaTx } from '@/lib/db';
 
 /**
  * Авто-нумерация деловой переписки.
@@ -18,7 +17,7 @@ export async function getNextCorrespondenceNumber(
   const lockKey = `corr:${projectId}:${direction}:${year}`;
   const pattern = `${prefix}-${year}-%`;
 
-  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+  return db.$transaction(async (tx: PrismaTx) => {
     // Захватить транзакционный advisory lock — блокирует конкурентные запросы
     // до завершения транзакции, исключая дублирование номеров
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
@@ -48,7 +47,7 @@ export async function getNextRFINumber(projectId: string): Promise<string> {
   const lockKey = `rfi:${projectId}:${year}`;
   const pattern = `RFI-${year}-%`;
 
-  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+  return db.$transaction(async (tx: PrismaTx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
 
     const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
@@ -76,7 +75,7 @@ export async function getNextSEDNumber(projectId: string): Promise<string> {
   const lockKey = `sed:${projectId}:${year}`;
   const pattern = `СЭД-${year}-%`;
 
-  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+  return db.$transaction(async (tx: PrismaTx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
 
     const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
@@ -107,7 +106,7 @@ export async function getNextDesignTaskNumber(
   const lockKey = `design-task:${projectId}:${taskType}:${year}`;
   const pattern = `${prefix}-${year}-%`;
 
-  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+  return db.$transaction(async (tx: PrismaTx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
 
     const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
@@ -134,7 +133,7 @@ export async function getNextDesignDocNumber(projectId: string): Promise<string>
   const lockKey = `design-doc:${projectId}:${year}`;
   const pattern = `ПД-${year}-%`;
 
-  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+  return db.$transaction(async (tx: PrismaTx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
 
     const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
@@ -161,7 +160,7 @@ export async function getNextPIRRegistryNumber(projectId: string): Promise<strin
   const lockKey = `pir-registry:${projectId}:${year}`;
   const pattern = `РЕЕ-${year}-%`;
 
-  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+  return db.$transaction(async (tx: PrismaTx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
 
     const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
@@ -188,7 +187,7 @@ export async function getNextPIRClosureNumber(projectId: string): Promise<string
   const lockKey = `pir-closure:${projectId}:${year}`;
   const pattern = `АКТ-${year}-%`;
 
-  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+  return db.$transaction(async (tx: PrismaTx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
 
     const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
@@ -212,7 +211,7 @@ export async function getNextPIRClosureNumber(projectId: string): Promise<string
 export async function getNextTaskCommentNumber(taskId: string): Promise<number> {
   const lockKey = `task-comment:${taskId}`;
 
-  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+  return db.$transaction(async (tx: PrismaTx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
 
     const results = await tx.$queryRaw<Array<{ cnt: bigint }>>`
@@ -231,7 +230,7 @@ export async function getNextTaskCommentNumber(taskId: string): Promise<number> 
 export async function getNextDocCommentNumber(docId: string): Promise<number> {
   const lockKey = `doc-comment:${docId}`;
 
-  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+  return db.$transaction(async (tx: PrismaTx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
 
     const results = await tx.$queryRaw<Array<{ cnt: bigint }>>`
@@ -257,7 +256,7 @@ export async function getNextSEDWorkflowNumber(projectId: string): Promise<strin
   const lockKey = `sed-workflow:${projectId}:${year}`;
   const pattern = `ДО-${year}-%`;
 
-  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+  return db.$transaction(async (tx: PrismaTx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
 
     const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`
@@ -327,7 +326,7 @@ export async function getNextJournalNumber(
   const lockKey = `journal:${projectId}:${type}`;
   const pattern = `${prefix}-%`;
 
-  return db.$transaction(async (tx: Prisma.TransactionClient) => {
+  return db.$transaction(async (tx: PrismaTx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
 
     const results = await tx.$queryRaw<Array<{ max_num: string | null }>>`

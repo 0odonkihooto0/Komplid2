@@ -1,11 +1,6 @@
-import { db } from '@/lib/db';
+import { db, type PrismaTx } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import { Prisma, WarehouseMovementType, WarehouseMovStatus } from '@prisma/client';
-
-/**
- * Тип транзакционного клиента Prisma — используется для upsert внутри транзакции.
- */
-type PrismaTx = Prisma.TransactionClient;
+import { WarehouseMovementType, WarehouseMovStatus } from '@prisma/client';
 
 /**
  * Обновляет (или создаёт) запись об остатке товара на складе.

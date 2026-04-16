@@ -1,11 +1,5 @@
-import { db } from '@/lib/db';
+import { db, type PrismaTx } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import { Prisma } from '@prisma/client';
-
-/**
- * Тип транзакционного клиента Prisma — используется для операций внутри транзакции.
- */
-type PrismaTx = Prisma.TransactionClient;
 
 /**
  * Строка складского движения для создания партий.
