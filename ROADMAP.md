@@ -1149,6 +1149,8 @@
 - ✅ Скриншот PNG/JPG (canvas.toDataURL + контекстное меню правого клика)
 - ✅ Скачивание IFC-файла из S3 (кнопка Download в toolbar)
 - ✅ Загрузка по чанкам без блокировки UI (GLTFLoader, Three.js)
+- ✅ Режимы отображения: wireframe / X-ray / цвет по типу IFC (ЦУС стр. 302) — dropdown «Отображения» в тулбаре, 4 режима через DropdownMenuRadioGroup
+- ✅ Легенда цветов по типу элемента (overlay правый нижний угол canvas, активна только для режима «По типу»)
 
 ### Управление моделями ✅
 - ✅ Реестр IFC-моделей объекта (`ModelsView`, `ModelVersionsTable`)

@@ -5,6 +5,7 @@ import {
   MousePointer2, Square, RotateCcw, Hand, Eye, EyeOff,
   Maximize2, Grid3X3, Ruler, Scissors, Layers, AlertTriangle,
   GitCompare, BoxSelect, Focus, Camera, Download, FileSpreadsheet,
+  Palette,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,14 +19,19 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import type { DisplayMode } from './displayModes';
 
 interface ViewerToolbarProps {
   onReset: () => void;
   onFit: () => void;
-  onWireframe: () => void;
-  wireframe: boolean;
+  /** Текущий режим отображения (default / wireframe / xray / byType) */
+  displayMode: DisplayMode;
+  /** Смена режима отображения — управляется хуком useDisplayModes */
+  onDisplayModeChange: (mode: DisplayMode) => void;
   onCollisions?: () => void;
   onCompare?: () => void;
   collisionsActive?: boolean;
@@ -85,8 +91,8 @@ const VSep = () => <Separator orientation="vertical" className="mx-1 h-6" />;
 export function ViewerToolbar({
   onReset,
   onFit,
-  onWireframe,
-  wireframe,
+  displayMode,
+  onDisplayModeChange,
   onCollisions,
   onCompare,
   collisionsActive,
@@ -123,7 +129,51 @@ export function ViewerToolbar({
 
         {/* Группа 3: Вид */}
         <TBtn icon={Maximize2} label="По размеру модели" onClick={onFit} />
-        <TBtn icon={Grid3X3} label="Каркасный режим" active={wireframe} onClick={onWireframe} />
+        <TBtn
+          icon={Grid3X3}
+          label="Каркасный режим"
+          active={displayMode === 'wireframe'}
+          onClick={() =>
+            onDisplayModeChange(displayMode === 'wireframe' ? 'default' : 'wireframe')
+          }
+        />
+
+        {/* Dropdown «Отображения» — 4 режима (ЦУС стр. 302) */}
+        <DropdownMenu>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant={displayMode !== 'default' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                >
+                  <Palette className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Отображения</TooltipContent>
+          </Tooltip>
+          <DropdownMenuContent align="start">
+            <DropdownMenuRadioGroup
+              value={displayMode}
+              onValueChange={(v) => onDisplayModeChange(v as DisplayMode)}
+            >
+              <DropdownMenuRadioItem value="default">
+                Оригинальные цвета
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="wireframe">
+                Каркас
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="xray">
+                Рентген
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="byType">
+                По типу элемента
+              </DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <VSep />
 
