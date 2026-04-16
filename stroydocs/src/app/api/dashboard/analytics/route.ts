@@ -17,14 +17,19 @@ export async function GET(req: NextRequest) {
     const objectIds = sp.getAll('objectIds[]').filter(Boolean);
     const year = parseInt(sp.get('year') ?? String(new Date().getFullYear()), 10) || new Date().getFullYear();
     const period = sp.get('period') ?? 'year';
-    const { dateFrom, dateTo } = getDateRange(year, period);
+    // Произвольный диапазон из виджета имеет приоритет над year+period
+    const dateFromParam = sp.get('dateFrom');
+    const dateToParam   = sp.get('dateTo');
+    const { dateFrom, dateTo } = (dateFromParam && dateToParam)
+      ? { dateFrom: new Date(dateFromParam), dateTo: new Date(dateToParam) }
+      : getDateRange(year, period);
 
     // Фильтр объектов (с учётом multi-tenancy)
     const objWhere = objectIds.length > 0
       ? { id: { in: objectIds }, organizationId: orgId }
       : { organizationId: orgId };
 
-    const cacheKey = `analytics:dashboard:${orgId}:${year}:${period}:${[...objectIds].sort().join(',')}`;
+    const cacheKey = `analytics:dashboard:${orgId}:${year}:${period}:${dateFromParam ?? ''}:${dateToParam ?? ''}:${[...objectIds].sort().join(',')}`;
 
     const data = await getCachedAnalytics(cacheKey, async () => {
       const now = new Date();
