@@ -1,6 +1,11 @@
 'use client';
 
-import { Home, Maximize2, Grid3X3, AlertTriangle, GitCompare, Scissors, Ruler, Layers, Download, Camera } from 'lucide-react';
+import type { ComponentType } from 'react';
+import {
+  MousePointer2, Square, RotateCcw, Hand, Eye, EyeOff,
+  Maximize2, Grid3X3, Ruler, Scissors, Layers, AlertTriangle,
+  GitCompare, BoxSelect, Focus, Camera, Download,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -8,34 +13,66 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
 
 interface ViewerToolbarProps {
   onReset: () => void;
   onFit: () => void;
   onWireframe: () => void;
   wireframe: boolean;
-  /** Открыть панель обнаружения коллизий */
   onCollisions?: () => void;
-  /** Открыть панель сравнения версий */
   onCompare?: () => void;
-  /** Подсветка активна — кнопка коллизий нажата */
   collisionsActive?: boolean;
-  /** Сравнение активно — кнопка сравнения нажата */
   compareActive?: boolean;
-  /** Режим разрезов */
   onClipping?: () => void;
   clippingActive?: boolean;
-  /** Режим измерений */
   onMeasure?: () => void;
   measureActive?: boolean;
-  /** Управление слоями */
   onLayers?: () => void;
   layersActive?: boolean;
-  /** Скачать IFC-файл */
   onDownloadIfc?: () => void;
-  /** Скриншот PNG */
   onScreenshot?: () => void;
+  /** Выбрать все элементы */
+  onSelectAll?: () => void;
+  /** Показать только выбранные элементы */
+  onShowSelected?: () => void;
+  /** Скрыть выбранные элементы */
+  onHideSelected?: () => void;
+  /** Показать все элементы (сбросить видимость) */
+  onShowAll?: () => void;
 }
+
+/** Кнопка тулбара с tooltip */
+function TBtn({
+  icon: Icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  active?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant={active ? 'secondary' : 'ghost'}
+          size="sm"
+          className="h-8 w-8 p-0"
+          onClick={onClick}
+          disabled={!onClick}
+        >
+          <Icon className="h-4 w-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+const VSep = () => <Separator orientation="vertical" className="mx-1 h-6" />;
 
 export function ViewerToolbar({
   onReset,
@@ -54,163 +91,57 @@ export function ViewerToolbar({
   layersActive,
   onDownloadIfc,
   onScreenshot,
+  onSelectAll,
+  onShowSelected,
+  onHideSelected,
+  onShowAll,
 }: ViewerToolbarProps) {
   return (
     <TooltipProvider>
-      <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="secondary"
-              size="icon"
-              className="h-8 w-8 shadow-md"
-              onClick={onReset}
-            >
-              <Home className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right">Сбросить камеру</TooltipContent>
-        </Tooltip>
+      <div className="flex shrink-0 items-center border-b bg-background px-2 py-1">
+        {/* Группа 1: Выбор */}
+        <TBtn icon={MousePointer2} label="Курсор" />
+        <TBtn icon={Square} label="Рамка выбора" />
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="secondary"
-              size="icon"
-              className="h-8 w-8 shadow-md"
-              onClick={onFit}
-            >
-              <Maximize2 className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right">По размеру модели</TooltipContent>
-        </Tooltip>
+        <VSep />
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant={wireframe ? 'default' : 'secondary'}
-              size="icon"
-              className="h-8 w-8 shadow-md"
-              onClick={onWireframe}
-            >
-              <Grid3X3 className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right">Каркасный режим</TooltipContent>
-        </Tooltip>
+        {/* Группа 2: Навигация */}
+        <TBtn icon={RotateCcw} label="Вращение" onClick={onReset} />
+        <TBtn icon={Hand} label="Панорама" />
+        <TBtn icon={Eye} label="Взгляд вокруг" />
 
-        {onClipping && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={clippingActive ? 'default' : 'secondary'}
-                size="icon"
-                className="h-8 w-8 shadow-md"
-                onClick={onClipping}
-              >
-                <Scissors className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Разрезы</TooltipContent>
-          </Tooltip>
-        )}
+        <VSep />
 
-        {onMeasure && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={measureActive ? 'default' : 'secondary'}
-                size="icon"
-                className="h-8 w-8 shadow-md"
-                onClick={onMeasure}
-              >
-                <Ruler className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Измерения</TooltipContent>
-          </Tooltip>
-        )}
+        {/* Группа 3: Вид */}
+        <TBtn icon={Maximize2} label="По размеру модели" onClick={onFit} />
+        <TBtn icon={Grid3X3} label="Каркасный режим" active={wireframe} onClick={onWireframe} />
 
+        <VSep />
+
+        {/* Группа 4: Инструменты */}
+        <TBtn icon={Ruler} label="Измерения" active={measureActive} onClick={onMeasure} />
+        <TBtn icon={Scissors} label="Разрезы" active={clippingActive} onClick={onClipping} />
+        <TBtn icon={Layers} label="Слои" active={layersActive} onClick={onLayers} />
         {onCollisions && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={collisionsActive ? 'default' : 'secondary'}
-                size="icon"
-                className="h-8 w-8 shadow-md"
-                onClick={onCollisions}
-              >
-                <AlertTriangle className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Обнаружение коллизий</TooltipContent>
-          </Tooltip>
+          <TBtn icon={AlertTriangle} label="Коллизии" active={collisionsActive} onClick={onCollisions} />
         )}
-
         {onCompare && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={compareActive ? 'default' : 'secondary'}
-                size="icon"
-                className="h-8 w-8 shadow-md"
-                onClick={onCompare}
-              >
-                <GitCompare className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Сравнение версий</TooltipContent>
-          </Tooltip>
+          <TBtn icon={GitCompare} label="Сравнение версий" active={compareActive} onClick={onCompare} />
         )}
 
-        {onLayers && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={layersActive ? 'default' : 'secondary'}
-                size="icon"
-                className="h-8 w-8 shadow-md"
-                onClick={onLayers}
-              >
-                <Layers className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Слои</TooltipContent>
-          </Tooltip>
-        )}
+        <VSep />
 
-        {onDownloadIfc && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="secondary"
-                size="icon"
-                className="h-8 w-8 shadow-md"
-                onClick={onDownloadIfc}
-              >
-                <Download className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Скачать IFC</TooltipContent>
-          </Tooltip>
-        )}
+        {/* Группа 5: Выделение */}
+        <TBtn icon={BoxSelect} label="Выбрать всё" onClick={onSelectAll} />
+        <TBtn icon={Focus} label="Показать только выбранное" onClick={onShowSelected} />
+        <TBtn icon={EyeOff} label="Скрыть выбранное" onClick={onHideSelected} />
+        <TBtn icon={Eye} label="Показать всё" onClick={onShowAll} />
 
-        {onScreenshot && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="secondary"
-                size="icon"
-                className="h-8 w-8 shadow-md"
-                onClick={onScreenshot}
-              >
-                <Camera className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Скриншот PNG</TooltipContent>
-          </Tooltip>
-        )}
+        <VSep />
+
+        {/* Группа 6: Экспорт */}
+        <TBtn icon={Camera} label="Скриншот" onClick={onScreenshot} />
+        <TBtn icon={Download} label="Скачать IFC" onClick={onDownloadIfc} />
       </div>
     </TooltipProvider>
   );
