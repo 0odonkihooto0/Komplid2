@@ -28,6 +28,9 @@ import { ConstructionProgressWidget } from './widgets/ConstructionProgressWidget
 import { ObjectsWidget } from './widgets/ObjectsWidget';
 import { MapWidget } from './widgets/MapWidget';
 import { ObjectsBaseWidget } from '@/components/dashboard/widgets/ObjectsBaseWidget';
+import { IssuesWidget } from '@/components/dashboard/widgets/IssuesWidget';
+import { ContractsWidget } from '@/components/dashboard/widgets/ContractsWidget';
+import { StagesWidget } from '@/components/dashboard/widgets/StagesWidget';
 import { DashboardWidgetsManager } from './DashboardWidgetsManager';
 
 interface Widget {
@@ -92,6 +95,14 @@ function SortableWidget({ widget, objectIds, onStatusFilter }: SortableWidgetPro
       {widget.type === 'objects_base' && (
         <ObjectsBaseWidget objectIds={objectIds} onStatusFilter={onStatusFilter} />
       )}
+      {widget.type === 'issues' && (
+        <IssuesWidget
+          mode={(widget.config?.mode as 'chart' | 'table') ?? 'chart'}
+          objectIds={objectIds}
+        />
+      )}
+      {widget.type === 'contracts_by_type' && <ContractsWidget objectIds={objectIds} />}
+      {widget.type === 'stages' && <StagesWidget objectIds={objectIds} />}
     </div>
   );
 }

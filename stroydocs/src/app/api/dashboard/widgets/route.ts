@@ -16,11 +16,14 @@ const DEFAULT_WIDGETS = [
   { type: 'smr_progress',           title: 'Прогресс СМР',      position: 4, colSpan: 1, isVisible: true },
   { type: 'id_quality',             title: 'Качество ИД',       position: 5, colSpan: 1, isVisible: true },
   { type: 'construction_progress',  title: 'Ход строительства', position: 6, colSpan: 2, isVisible: true },
-  { type: 'map',                    title: 'Карта объектов',    position: 7, colSpan: 3, isVisible: true },
+  { type: 'map',                    title: 'Карта объектов',            position: 7,  colSpan: 3, isVisible: true  },
+  { type: 'issues',                 title: 'Актуальные вопросы',        position: 8,  colSpan: 2, isVisible: false },
+  { type: 'contracts_by_type',      title: 'Контрактация по контрактам',position: 9,  colSpan: 2, isVisible: false },
+  { type: 'stages',                 title: 'Стадии реализации',         position: 10, colSpan: 1, isVisible: false },
 ];
 
 // Типы виджетов которые добавляются к существующим пользователям при обновлении
-const NEW_WIDGET_TYPES = ['objects', 'map'];
+const NEW_WIDGET_TYPES = ['objects', 'map', 'issues', 'contracts_by_type', 'stages'];
 
 export async function GET() {
   try {
