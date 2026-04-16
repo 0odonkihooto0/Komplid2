@@ -1395,6 +1395,13 @@
 - ✅ Новые API: `/api/dashboard/funding-drill`, `/api/dashboard/payment-drill`, `/api/dashboard/smr-drill`
 - ✅ Все 7 виджетов зарегистрированы в `DashboardWidgetsGrid` + `DEFAULT_WIDGETS` (position 14–20, `isVisible: false`)
 
+## ЦУС — Индикаторы инфопанели объекта + ObjectPassportDialog (апрель 2026, стр. 311, 334–346)
+- ✅ API `GET /api/objects/[objectId]/dashboard-indicators` → `{ gprExec, pirOsv, smrOsv, payments }` — каждый индикатор: `planTotal`, `planToday`, `factTotal`, `percent`, `status` (OK/OVERDUE/AHEAD)
+- ✅ `ObjectInfoHeader`: 4 богатых `IndicatorWidget` с цветовым семафором (красный/жёлтый/зелёный), форматом млрд/млн, строкой «План на <дата>: X» и статусом (Просрочено / Перевыполнение / В срок)
+- ✅ `ObjectPassportDialog`: всплывающее окно с 8 вкладками (Паспорт / Показатели / Финансирование / Контракты / Стройконтроль / Проблемные вопросы / Задачи / Фотогалерея)
+- ✅ `MapWidget` → вкладка «Таблица»: клик на строку объекта открывает `ObjectPassportDialog`
+- ✅ `GprMonitoringWidget` → диалог группы: клик на объект открывает `ObjectPassportDialog`
+
 ---
 
 # КАК РАБОТАТЬ С ЭТИМ ФАЙЛОМ

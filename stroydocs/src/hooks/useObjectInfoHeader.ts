@@ -4,6 +4,23 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter, usePathname } from 'next/navigation';
 
+export type IndicatorStatus = 'OK' | 'OVERDUE' | 'AHEAD';
+
+export interface DashboardIndicator {
+  planTotal: number;
+  planToday: number;
+  factTotal: number;
+  percent: number;
+  status: IndicatorStatus;
+}
+
+export interface DashboardIndicatorsData {
+  gprExec: DashboardIndicator;
+  pirOsv: DashboardIndicator;
+  smrOsv: DashboardIndicator;
+  payments: DashboardIndicator;
+}
+
 export interface ObjectSummaryData {
   object: {
     id: string;
@@ -55,7 +72,7 @@ export function useObjectInfoHeader(objectId: string) {
   }, []);
 
   // Загружаем данные только при раскрытии панели
-  const { data: summary, isLoading } = useQuery<ObjectSummaryData>({
+  const { data: summary, isLoading: isSummaryLoading } = useQuery<ObjectSummaryData>({
     queryKey: ['object-summary', objectId],
     queryFn: async () => {
       const res = await fetch(`/api/objects/${objectId}/summary`);
@@ -65,8 +82,23 @@ export function useObjectInfoHeader(objectId: string) {
       return typed.data;
     },
     enabled: isExpanded,
-    staleTime: 5 * 60 * 1000, // 5 минут
+    staleTime: 5 * 60 * 1000,
   });
+
+  const { data: indicators, isLoading: isIndicatorsLoading } = useQuery<DashboardIndicatorsData>({
+    queryKey: ['dashboard-indicators', objectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/objects/${objectId}/dashboard-indicators`);
+      const json: unknown = await res.json();
+      const typed = json as { success: boolean; data: DashboardIndicatorsData; error?: string };
+      if (!typed.success) throw new Error(typed.error ?? 'Ошибка загрузки индикаторов');
+      return typed.data;
+    },
+    enabled: isExpanded,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const isLoading = isSummaryLoading || isIndicatorsLoading;
 
   const router = useRouter();
   const pathname = usePathname();
@@ -94,6 +126,7 @@ export function useObjectInfoHeader(objectId: string) {
     isExpanded,
     toggle,
     summary,
+    indicators,
     isLoading,
     goToPrev,
     goToNext,
