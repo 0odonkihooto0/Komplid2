@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { X, Loader2, RefreshCw } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { X, Loader2, RefreshCw, ChevronDown, ChevronRight, Copy } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useElementByGuid, useElementDetail } from './useModelViewer';
+import { useToast } from '@/hooks/useToast';
+import { useElementByGuid, useElementDetail, type BimElementDetail } from './useModelViewer';
 import { GprLinkPanel } from './GprLinkPanel';
 import { DocumentLinkPanel } from './DocumentLinkPanel';
 
@@ -23,27 +25,86 @@ interface Props {
   onFollowDoc: (entityType: string, entityId: string) => void;
 }
 
-/** Таблица IFC PropertySets */
-function PropertiesTab({ properties }: { properties: Record<string, Record<string, unknown>> | null }) {
-  if (!properties || Object.keys(properties).length === 0) {
-    return <p className="text-xs text-muted-foreground">Свойства не загружены (IFC-файл не распознан)</p>;
-  }
+/** Один раскрываемый блок PropertySet */
+function PsetAccordionItem({
+  name,
+  props,
+  defaultOpen,
+}: {
+  name: string;
+  props: Record<string, unknown>;
+  defaultOpen: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const entries = Object.entries(props);
+  if (entries.length === 0) return null;
+
   return (
-    <div className="space-y-3">
-      {Object.entries(properties).map(([psetName, props]) => (
-        <div key={psetName}>
-          <p className="mb-1 text-xs font-semibold text-muted-foreground">{psetName}</p>
-          <table className="w-full text-xs">
-            <tbody>
-              {Object.entries(props).map(([key, val]) => (
-                <tr key={key} className="border-b border-muted/30">
-                  <td className="py-0.5 pr-2 text-muted-foreground">{key}</td>
-                  <td className="py-0.5 font-mono">{String(val ?? '—')}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <div className="border-b border-muted/30">
+      <button
+        className="flex w-full items-center gap-1 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+        onClick={() => setOpen((p) => !p)}
+      >
+        {open
+          ? <ChevronDown className="h-3 w-3 shrink-0" />
+          : <ChevronRight className="h-3 w-3 shrink-0" />}
+        <span className="truncate">{name}</span>
+        <span className="ml-auto shrink-0 text-[10px] tabular-nums">{entries.length}</span>
+      </button>
+      {open && (
+        <div className="grid grid-cols-[100px_1fr] gap-y-0.5 pb-2 pl-4">
+          {entries.map(([key, val]) => (
+            <div key={key} className="contents">
+              <span className="text-xs text-gray-500 truncate">{key}</span>
+              <span className="text-xs text-gray-900 font-mono break-all">{String(val ?? '—')}</span>
+            </div>
+          ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+/** Accordion PropertySets с поиском */
+function PropertiesAccordion({
+  properties,
+  search,
+}: {
+  properties: Record<string, Record<string, unknown>>;
+  search: string;
+}) {
+  const psets = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return Object.entries(properties);
+    // Фильтрация по ключу или значению свойства
+    return Object.entries(properties)
+      .map(([psetName, props]) => {
+        const filtered = Object.fromEntries(
+          Object.entries(props).filter(
+            ([key, val]) =>
+              key.toLowerCase().includes(q) ||
+              String(val ?? '').toLowerCase().includes(q) ||
+              psetName.toLowerCase().includes(q)
+          )
+        );
+        return [psetName, filtered] as [string, Record<string, unknown>];
+      })
+      .filter(([, props]) => Object.keys(props).length > 0);
+  }, [properties, search]);
+
+  if (psets.length === 0) {
+    return <p className="py-2 text-xs text-muted-foreground">Свойства не найдены</p>;
+  }
+
+  return (
+    <div>
+      {psets.map(([psetName, props], idx) => (
+        <PsetAccordionItem
+          key={psetName}
+          name={psetName}
+          props={props}
+          defaultOpen={idx === 0 && !search}
+        />
       ))}
     </div>
   );
@@ -107,6 +168,104 @@ function RefreshPropertiesButton({
   );
 }
 
+/** Вкладка «Информация»: базовые поля + accordion PropertySets + поиск + копировать GUID */
+function InfoTab({
+  element,
+  ifcGuid,
+  modelId,
+  projectId,
+}: {
+  element: BimElementDetail;
+  ifcGuid: string;
+  modelId: string;
+  projectId: string;
+}) {
+  const [propSearch, setPropSearch] = useState('');
+  const { toast } = useToast();
+
+  const properties = element.properties as Record<string, Record<string, unknown>> | null;
+
+  const handleCopyGuid = async () => {
+    try {
+      await navigator.clipboard.writeText(ifcGuid);
+      toast({ title: 'GUID скопирован' });
+    } catch {
+      toast({ title: 'Не удалось скопировать', variant: 'destructive' });
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* Базовая информация */}
+      <div className="grid grid-cols-[100px_1fr] gap-y-1 text-xs">
+        <span className="text-muted-foreground">GUID</span>
+        <span className="flex items-center gap-1 font-mono">
+          <span className="truncate">{ifcGuid}</span>
+          <button
+            onClick={handleCopyGuid}
+            className="shrink-0 p-0.5 rounded hover:bg-gray-100 transition-colors"
+            aria-label="Копировать GUID"
+          >
+            <Copy className="h-3 w-3 text-muted-foreground" />
+          </button>
+        </span>
+
+        <span className="text-muted-foreground">Тип IFC</span>
+        <span className="font-mono">{element.ifcType}</span>
+
+        {element.name && (
+          <>
+            <span className="text-muted-foreground">Имя</span>
+            <span>{element.name}</span>
+          </>
+        )}
+
+        {element.layer && (
+          <>
+            <span className="text-muted-foreground">Слой</span>
+            <span>{element.layer}</span>
+          </>
+        )}
+
+        {element.level && (
+          <>
+            <span className="text-muted-foreground">Уровень</span>
+            <span>{element.level}</span>
+          </>
+        )}
+      </div>
+
+      {/* Поиск по свойствам + Accordion PropertySets */}
+      <div className="border-t pt-2">
+        {properties && Object.keys(properties).length > 0 ? (
+          <>
+            <Input
+              value={propSearch}
+              onChange={(e) => setPropSearch(e.target.value)}
+              placeholder="Поиск свойств..."
+              className="mb-2 h-7 text-xs"
+            />
+            <PropertiesAccordion properties={properties} search={propSearch} />
+          </>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Свойства не загружены (IFC-файл не распознан)
+          </p>
+        )}
+
+        {/* Для старых моделей без properties — кнопка загрузки через IfcOpenShell */}
+        {!properties && (
+          <RefreshPropertiesButton
+            elementId={element.id}
+            modelId={modelId}
+            projectId={projectId}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function ElementPropertiesPanel({
   modelId,
   projectId,
@@ -155,37 +314,12 @@ export function ElementPropertiesPanel({
           <div className="flex-1 overflow-y-auto px-3 py-2">
             <TabsContent value="info" className="mt-0">
               {element ? (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-2 gap-x-2 text-xs">
-                    <span className="text-muted-foreground">Тип IFC</span>
-                    <span className="font-mono">{element.ifcType}</span>
-                    {element.layer && (
-                      <>
-                        <span className="text-muted-foreground">Слой</span>
-                        <span>{element.layer}</span>
-                      </>
-                    )}
-                    {element.level && (
-                      <>
-                        <span className="text-muted-foreground">Уровень</span>
-                        <span>{element.level}</span>
-                      </>
-                    )}
-                  </div>
-                  <div className="border-t pt-2">
-                    <PropertiesTab
-                      properties={element.properties as Record<string, Record<string, unknown>> | null}
-                    />
-                    {/* Для старых моделей без properties — кнопка загрузки через IfcOpenShell */}
-                    {!element.properties && (
-                      <RefreshPropertiesButton
-                        elementId={element.id}
-                        modelId={modelId}
-                        projectId={projectId}
-                      />
-                    )}
-                  </div>
-                </div>
+                <InfoTab
+                  element={element}
+                  ifcGuid={ifcGuid}
+                  modelId={modelId}
+                  projectId={projectId}
+                />
               ) : (
                 <p className="text-xs text-muted-foreground">
                   Элемент не найден в базе данных. Возможно, IFC-файл ещё не распарсен.
