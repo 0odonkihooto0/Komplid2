@@ -23,6 +23,8 @@ interface Props {
   onCompare?: () => void;
   collisionsActive?: boolean;
   compareActive?: boolean;
+  /** Экспорт элементов в CSV (ifcType — фильтр, undefined = все) */
+  onExportCsv?: (ifcType?: string) => void;
 }
 
 const IfcViewerCore = dynamic(

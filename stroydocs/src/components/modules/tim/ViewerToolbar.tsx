@@ -4,7 +4,7 @@ import type { ComponentType } from 'react';
 import {
   MousePointer2, Square, RotateCcw, Hand, Eye, EyeOff,
   Maximize2, Grid3X3, Ruler, Scissors, Layers, AlertTriangle,
-  GitCompare, BoxSelect, Focus, Camera, Download,
+  GitCompare, BoxSelect, Focus, Camera, Download, FileSpreadsheet,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,6 +14,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface ViewerToolbarProps {
   onReset: () => void;
@@ -32,6 +38,8 @@ interface ViewerToolbarProps {
   layersActive?: boolean;
   onDownloadIfc?: () => void;
   onScreenshot?: () => void;
+  /** Экспорт элементов в CSV (ifcType — фильтр по типу, undefined = все) */
+  onExportCsv?: (ifcType?: string) => void;
   /** Выбрать все элементы */
   onSelectAll?: () => void;
   /** Показать только выбранные элементы */
@@ -91,6 +99,7 @@ export function ViewerToolbar({
   layersActive,
   onDownloadIfc,
   onScreenshot,
+  onExportCsv,
   onSelectAll,
   onShowSelected,
   onHideSelected,
@@ -142,6 +151,31 @@ export function ViewerToolbar({
         {/* Группа 6: Экспорт */}
         <TBtn icon={Camera} label="Скриншот" onClick={onScreenshot} />
         <TBtn icon={Download} label="Скачать IFC" onClick={onDownloadIfc} />
+        {onExportCsv && (
+          <DropdownMenu>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <FileSpreadsheet className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Экспорт данных</TooltipContent>
+            </Tooltip>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => onExportCsv()}>
+                Все элементы (CSV)
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onExportCsv('IfcWall')}>
+                Только стены (CSV)
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onExportCsv('IfcSlab')}>
+                Только перекрытия (CSV)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </TooltipProvider>
   );

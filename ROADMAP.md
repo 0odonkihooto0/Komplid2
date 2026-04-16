@@ -1204,6 +1204,7 @@
 - ✅ `IFC_SERVICE_URL=http://localhost:8001` добавлен в `.env.example`
 - ✅ ifcpatch FixWindingOrder перед конвертацией (non-fatal fallback)
 - ✅ IfcConvert: --use-element-guids --threads 4 + логирование времени
+- ✅ IfcCSV: экспорт элементов модели в CSV с фильтром по ifcType
 
 ### URL-структура ✅
 - ✅ `/objects/[id]/tim/` — реестр моделей
