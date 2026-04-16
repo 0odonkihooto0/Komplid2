@@ -23,12 +23,21 @@ const DEFAULT_WIDGETS = [
   { type: 'gpr_monitoring',        title: 'Мониторинг ГПР, СМР',       position: 11, colSpan: 2, isVisible: false },
   { type: 'sk_monitoring_chart',   title: 'СК: диаграмма недостатков', position: 12, colSpan: 1, isVisible: false },
   { type: 'sk_monitoring_table',   title: 'СК: таблица мониторинга',   position: 13, colSpan: 2, isVisible: false },
+  { type: 'defect_status',           title: 'Недостатки по статусам',        position: 14, colSpan: 1, isVisible: false },
+  { type: 'funding_plan',            title: 'Общий план финансирования',      position: 15, colSpan: 2, isVisible: false },
+  { type: 'contracts_payment_bar',   title: 'Оплата по контрактам (график)',  position: 16, colSpan: 2, isVisible: false },
+  { type: 'contracts_payment_donut', title: 'Статус оплаты (сводно)',         position: 17, colSpan: 1, isVisible: false },
+  { type: 'smr_osvoeno',             title: 'Освоено по контрактам, СМР',    position: 18, colSpan: 1, isVisible: false },
+  { type: 'financing_status',        title: 'Статус по финансированию',       position: 19, colSpan: 2, isVisible: false },
+  { type: 'paid_by_project',         title: 'Оплачено по проекту',           position: 20, colSpan: 2, isVisible: false },
 ];
 
 // Типы виджетов которые добавляются к существующим пользователям при обновлении
 const NEW_WIDGET_TYPES = [
   'objects', 'map', 'issues', 'contracts_by_type', 'stages',
   'gpr_monitoring', 'sk_monitoring_chart', 'sk_monitoring_table',
+  'defect_status', 'funding_plan', 'contracts_payment_bar',
+  'contracts_payment_donut', 'smr_osvoeno', 'financing_status', 'paid_by_project',
 ];
 
 export async function GET() {

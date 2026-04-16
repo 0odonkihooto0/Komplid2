@@ -1377,12 +1377,23 @@
 
 ---
 
-## ЦУС — Виджеты дашборда (стр. 312–313, 321, 334–335)
+## ЦУС — Виджеты дашборда (стр. 312–313, 321, 334–335, 328–350)
 
 - ✅ IssuesWidget — «Актуальные вопросы» (PieChart/таблица + drill-down по типам ProblemIssue)
 - ✅ ContractsWidget — «Контрактация по контрактам» (таблица типов + разворачиваемая детализация)
 - ✅ StagesWidget — «Стадии реализации» (список GanttStage + modal с объектами)
 - ✅ API: `/api/dashboard/issues`, `/api/dashboard/contracts-by-type`, `/api/dashboard/stages-objects`
+
+### Добавлено (2026-04-16) — Финансовые виджеты ЦУС (стр. 328–350)
+- ✅ **DefectStatusWidget** (`defect_status`) — PieChart donut: сектора = статусы недостатков, центр = всего; клик → modal с таблицей дефектов (reuse sk-drill)
+- ✅ **FundingPlanWidget** (`funding_plan`) — PieChart donut: сектора = источники финансирования (фед./рег./мест./собств./внебюдж.), центр = общая сумма; клик → modal с разбивкой по объектам
+- ✅ **ContractsPaymentWidget** (`contracts_payment_bar`) — BarChart: 2 бара на год (Оплачено / Плановые) из `contractsPayments`
+- ✅ **ContractsPaymentDonutWidget** (`contracts_payment_donut`) — PieChart donut: Оплачено / Отклонение, центр = сумма плановых; клик → modal с объектами (план/факт/отклонение)
+- ✅ **SmrOsvoenoWidget** (`smr_osvoeno`) — PieChart donut: Выполнено / Остаток по СМР-контрактам; фильтр по годам; клик → modal с объектами
+- ✅ **FinancingStatusWidget** (`financing_status`) — BarChart: 2 бара на год (Факт / План финансирования) из `financingByYear`
+- ✅ **PaidByProjectWidget** (`paid_by_project`) — BarChart: 2 бара (Оплачено по контрактам / План финансирования) + сводка собственные/заёмные
+- ✅ Новые API: `/api/dashboard/funding-drill`, `/api/dashboard/payment-drill`, `/api/dashboard/smr-drill`
+- ✅ Все 7 виджетов зарегистрированы в `DashboardWidgetsGrid` + `DEFAULT_WIDGETS` (position 14–20, `isVisible: false`)
 
 ---
 
