@@ -463,6 +463,14 @@ test -n "$IFCBIN" && mv "$IFCBIN" /usr/local/bin/IfcConvert
 Наличие FK `projectId` **не означает** что relation называется `project` — оно может быть `buildingObject`.
 Быстрая проверка: `grep -A2 'projectId.*String' prisma/schema.prisma | grep '@relation'`.
 
+**`select: { name: true }` на User relation — модель User не имеет поля `name`.**
+`User` модель хранит имя в двух полях: `firstName` и `lastName`. Поле `name` не существует.
+`dashboard/sk-drill/route.ts` использовал `assignee: { select: { id: true, name: true } }` →
+ошибка сборки: `'name' does not exist in type 'UserSelect<DefaultArgs>'`.
+Ошибка проявляется только на деплое (type-check фаза Next.js build) — локально без `node_modules` молчит.
+**Правило**: при `select`/`include` на User relation — **всегда** `{ id: true, firstName: true, lastName: true }`.
+Если нужна строка с полным именем — конкатенировать в маппинге: `` `${u.firstName} ${u.lastName}` ``.
+
 ---
 
 > Правило: после каждой исправленной ошибки добавить урок сюда.
