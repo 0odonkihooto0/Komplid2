@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
       where: {
         type: type as ProblemIssueType,
         status: 'ACTIVE',
-        project: objWhere,
+        buildingObject: objWhere,
       },
       select: {
         id: true,
