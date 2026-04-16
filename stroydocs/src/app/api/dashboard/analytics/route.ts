@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
         // 1. Объекты по статусам
         safe(() => db.buildingObject.groupBy({ by: ['status'], where: objWhere, _count: { id: true } }), []),
         // 2. Проблемные вопросы по типам
-        safe(() => db.problemIssue.groupBy({ by: ['type'], where: { project: objWhere }, _count: { id: true } }), []),
+        safe(() => db.problemIssue.groupBy({ by: ['type'], where: { buildingObject: objWhere }, _count: { id: true } }), []),
         // 3. ГПР ПИР — задачи
         safe(() => db.ganttTask.findMany({
           where: { version: { isActive: true, stage: { name: { contains: 'ПИР', mode: 'insensitive' }, project: objWhere } }, planEnd: { gte: dateFrom, lte: dateTo } },
@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
         }), []),
         // 3. ГПР ПИР — акты закрытия
         safe(() => db.pIRClosureAct.findMany({
-          where: { status: 'SIGNED', project: objWhere, periodEnd: { gte: dateFrom, lte: dateTo } },
+          where: { status: 'SIGNED', buildingObject: objWhere, periodEnd: { gte: dateFrom, lte: dateTo } },
           select: { periodEnd: true, totalAmount: true },
         }), []),
         // 4. ГПР СМР — задачи
