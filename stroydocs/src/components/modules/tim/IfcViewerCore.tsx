@@ -39,6 +39,8 @@ interface Props {
   onCompare?: () => void;
   collisionsActive?: boolean;
   compareActive?: boolean;
+  /** Экспорт элементов в CSV (ifcType — фильтр, undefined = все) */
+  onExportCsv?: (ifcType?: string) => void;
 }
 
 export function IfcViewerCore({
@@ -52,6 +54,7 @@ export function IfcViewerCore({
   onCompare,
   collisionsActive,
   compareActive,
+  onExportCsv,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<ViewerScene | null>(null);
@@ -361,6 +364,7 @@ export function IfcViewerCore({
         layersActive={layersOpen}
         onDownloadIfc={downloadIfc}
         onScreenshot={() => screenshot('png')}
+        onExportCsv={onExportCsv}
       />
 
       <div className="relative min-h-0 flex-1">

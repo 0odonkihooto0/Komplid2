@@ -171,6 +171,25 @@ export default function TimModelViewerPage({ params }: Props) {
     setShowCollisions(false);
   }, []);
 
+  // Экспорт элементов модели в CSV
+  const handleExportCsv = useCallback(async (ifcType?: string) => {
+    try {
+      const url = new URL(
+        `/api/projects/${objectId}/bim/models/${modelId}/export-csv`,
+        window.location.origin
+      );
+      if (ifcType) url.searchParams.set('ifcType', ifcType);
+
+      const res = await fetch(url.toString());
+      const json = await res.json();
+      if (json.success && json.data?.url) {
+        window.open(json.data.url, '_blank');
+      }
+    } catch {
+      // Ошибка сети — не ломаем UI
+    }
+  }, [objectId, modelId]);
+
   // ─── Подсветить элемент diff в 3D-вьюере ────────────────────────────────
   const handleHighlightDiffElement = useCallback(
     (guid: string) => {
@@ -246,6 +265,7 @@ export default function TimModelViewerPage({ params }: Props) {
             onCompare={handleToggleCompare}
             collisionsActive={showCollisions}
             compareActive={showCompare}
+            onExportCsv={handleExportCsv}
           />
         </div>
 
