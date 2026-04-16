@@ -15,7 +15,7 @@ interface DrillDefect {
   deadline: string | null;
   resolvedAt: string | null;
   buildingObject: { id: string; name: string };
-  assignee: { id: string; name: string } | null;
+  assignee: { id: string; firstName: string; lastName: string } | null;
 }
 
 export async function GET(req: NextRequest) {
@@ -57,7 +57,8 @@ export async function GET(req: NextRequest) {
         assignee: {
           select: {
             id: true,
-            name: true,
+            firstName: true,
+            lastName: true,
           },
         },
       },
