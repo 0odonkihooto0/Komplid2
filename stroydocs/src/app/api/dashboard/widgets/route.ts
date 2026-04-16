@@ -20,10 +20,16 @@ const DEFAULT_WIDGETS = [
   { type: 'issues',                 title: 'Актуальные вопросы',        position: 8,  colSpan: 2, isVisible: false },
   { type: 'contracts_by_type',      title: 'Контрактация по контрактам',position: 9,  colSpan: 2, isVisible: false },
   { type: 'stages',                 title: 'Стадии реализации',         position: 10, colSpan: 1, isVisible: false },
+  { type: 'gpr_monitoring',        title: 'Мониторинг ГПР, СМР',       position: 11, colSpan: 2, isVisible: false },
+  { type: 'sk_monitoring_chart',   title: 'СК: диаграмма недостатков', position: 12, colSpan: 1, isVisible: false },
+  { type: 'sk_monitoring_table',   title: 'СК: таблица мониторинга',   position: 13, colSpan: 2, isVisible: false },
 ];
 
 // Типы виджетов которые добавляются к существующим пользователям при обновлении
-const NEW_WIDGET_TYPES = ['objects', 'map', 'issues', 'contracts_by_type', 'stages'];
+const NEW_WIDGET_TYPES = [
+  'objects', 'map', 'issues', 'contracts_by_type', 'stages',
+  'gpr_monitoring', 'sk_monitoring_chart', 'sk_monitoring_table',
+];
 
 export async function GET() {
   try {

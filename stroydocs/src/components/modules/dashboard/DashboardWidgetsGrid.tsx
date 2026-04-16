@@ -31,6 +31,8 @@ import { ObjectsBaseWidget } from '@/components/dashboard/widgets/ObjectsBaseWid
 import { IssuesWidget } from '@/components/dashboard/widgets/IssuesWidget';
 import { ContractsWidget } from '@/components/dashboard/widgets/ContractsWidget';
 import { StagesWidget } from '@/components/dashboard/widgets/StagesWidget';
+import { GprMonitoringWidget } from '@/components/dashboard/widgets/GprMonitoringWidget';
+import { SkMonitoringWidget }  from '@/components/dashboard/widgets/SkMonitoringWidget';
 import { DashboardWidgetsManager } from './DashboardWidgetsManager';
 
 interface Widget {
@@ -103,6 +105,9 @@ function SortableWidget({ widget, objectIds, onStatusFilter }: SortableWidgetPro
       )}
       {widget.type === 'contracts_by_type' && <ContractsWidget objectIds={objectIds} />}
       {widget.type === 'stages' && <StagesWidget objectIds={objectIds} />}
+      {widget.type === 'gpr_monitoring'      && <GprMonitoringWidget objectIds={objectIds} />}
+      {widget.type === 'sk_monitoring_chart' && <SkMonitoringWidget mode="chart" objectIds={objectIds} />}
+      {widget.type === 'sk_monitoring_table' && <SkMonitoringWidget mode="table" objectIds={objectIds} />}
     </div>
   );
 }
