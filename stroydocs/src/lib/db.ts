@@ -1,17 +1,73 @@
 import { PrismaClient } from '@prisma/client';
 // Валидация env-переменных при старте — падаем явно, не тихо
 import '@/lib/env';
+import { logger } from '@/lib/logger';
 
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+/** Коды транзиентных ошибок Prisma — повтор может помочь */
+const TRANSIENT_PRISMA_CODES = new Set(['P1001', 'P1008', 'P1017']);
 
-export const db =
-  globalForPrisma.prisma ||
-  new PrismaClient({
+function isTransientPrismaError(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    typeof (err as { code: unknown }).code === 'string' &&
+    TRANSIENT_PRISMA_CODES.has((err as { code: string }).code)
+  );
+}
+
+/** Обёртка: одна повторная попытка через 500 мс при транзиентной ошибке БД */
+async function retryOnTransient<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (isTransientPrismaError(err)) {
+      logger.warn({ err }, 'Транзиентная ошибка БД, повторная попытка через 500 мс');
+      await new Promise((r) => setTimeout(r, 500));
+      return await fn();
+    }
+    throw err;
+  }
+}
+
+function createPrismaClient() {
+  const base = new PrismaClient({
     datasources: {
       db: {
         url: process.env.DATABASE_URL + '?connection_limit=10&pool_timeout=20',
       },
     },
   });
+
+  // Автоматический retry при транзиентных ошибках (P1001/P1008/P1017)
+  // для всех операций включая $queryRaw/$executeRaw
+  return base.$extends({
+    query: {
+      $allModels: {
+        async $allOperations({ args, query }) {
+          return retryOnTransient(() => query(args));
+        },
+      },
+      async $queryRaw({ args, query }) {
+        return retryOnTransient(() => query(args));
+      },
+      async $executeRaw({ args, query }) {
+        return retryOnTransient(() => query(args));
+      },
+      async $queryRawUnsafe({ args, query }) {
+        return retryOnTransient(() => query(args));
+      },
+      async $executeRawUnsafe({ args, query }) {
+        return retryOnTransient(() => query(args));
+      },
+    },
+  });
+}
+
+type ExtendedPrismaClient = ReturnType<typeof createPrismaClient>;
+
+const globalForPrisma = globalThis as unknown as { prisma: ExtendedPrismaClient };
+
+export const db = globalForPrisma.prisma || createPrismaClient();
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db;
