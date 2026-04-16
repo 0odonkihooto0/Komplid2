@@ -157,6 +157,7 @@
 - ✅ Единый API агрегаций дашборда — 15 виджетов в одном запросе (GET /api/dashboard/analytics?objectIds[]=&year=&period=quarter|halfyear|year&mode=separate|cumulative, Promise.all, кэш Redis 5 мин)
 - ✅ Виджет «База объектов» — сводная таблица статусов (N объектов + кол-во/% по ACTIVE/COMPLETED/ARCHIVED), клик на строку фильтрует дашборд (ObjectsBaseWidget, callback onStatusFilter)
 - ✅ Виджет «Карта объектов» — 3 вкладки: Схема (SVG-карта 8 ФО РФ с тепловой картой по кол-ву объектов), Таблица (сортируемые колонки + переход в паспорт), Карта (Яндекс.Карты)
+- ✅ Виджеты аналитики ГПР (ЦУС стр. 314–321): `GprAnalyticsWidget` (stage: PIR | SMR) — LineChart 5 линий (план / факт выполнения / отклонение выполнения / факт освоения / отклонение освоения), фильтр по году и произвольному периоду, масштаб (квартал/полугодие/год), накопительный и отдельный расчёт, toggle линий через кастомную легенду; данные из DASH.1 API (`gprPirAnalytics` / `gprSmrAnalytics`)
 
 **База данных (Модуль 1)**
 - ✅ `DashboardWidget` (userId, type, position, config Json)
