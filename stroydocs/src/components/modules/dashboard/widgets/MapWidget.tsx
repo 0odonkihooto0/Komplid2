@@ -4,7 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MapPin } from 'lucide-react';
+import { MapWidgetSchema } from './MapWidgetSchema';
+import { MapWidgetTable } from './MapWidgetTable';
 
 interface ObjectSummary {
   id: string;
@@ -12,6 +15,10 @@ interface ObjectSummary {
   address: string | null;
   status: string;
   idReadinessPct: number;
+  region: string | null;
+  constructionType: string | null;
+  plannedStartDate: string | null;
+  plannedEndDate: string | null;
 }
 
 declare global {
@@ -21,47 +28,29 @@ declare global {
   }
 }
 
-export function MapWidget() {
+// Вкладка «Карта» (Яндекс.Карты) — изолирована для управления жизненным циклом
+function YandexMapTab({ objects, apiKey }: { objects: ObjectSummary[]; apiKey: string }) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [mapReady, setMapReady] = useState(false);
-  const apiKey = process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY;
 
-  const { data: objects = [], isLoading } = useQuery<ObjectSummary[]>({
-    queryKey: ['dashboard-objects-summary'],
-    queryFn: async () => {
-      const res = await fetch('/api/dashboard/objects-summary');
-      if (!res.ok) return [];
-      return res.json();
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  // Загружаем Яндекс.Карты API
   useEffect(() => {
-    if (!apiKey || typeof window === 'undefined') return;
+    if (typeof window === 'undefined') return;
     if (window.ymaps) { setMapReady(true); return; }
-
     const script = document.createElement('script');
     script.src = `https://api-maps.yandex.ru/2.1/?apikey=${apiKey}&lang=ru_RU`;
     script.async = true;
-    script.onload = () => {
-      window.ymaps.ready(() => setMapReady(true));
-    };
+    script.onload = () => window.ymaps.ready(() => setMapReady(true));
     document.head.appendChild(script);
   }, [apiKey]);
 
-  // Инициализируем карту и добавляем метки
   useEffect(() => {
     if (!mapReady || !mapContainerRef.current || objects.length === 0) return;
-
     const ymaps = window.ymaps;
     const map = new ymaps.Map(mapContainerRef.current, {
-      center: [55.75, 37.61], // Москва по умолчанию
+      center: [55.75, 37.61],
       zoom: 5,
       controls: ['zoomControl'],
     });
-
-    // Геокодируем адреса и добавляем метки
     objects.forEach((obj) => {
       if (!obj.address) return;
       ymaps.geocode(obj.address, { results: 1 }).then((res: unknown) => {
@@ -83,28 +72,33 @@ export function MapWidget() {
         map.geoObjects.add(placemark);
       });
     });
-
     return () => { map.destroy(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapReady, objects]);
 
-  if (!apiKey) {
-    return (
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-1.5">
-            <MapPin className="h-4 w-4 text-primary" />
-            Карта объектов
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground">
-            Для отображения карты укажите <code>NEXT_PUBLIC_YANDEX_MAPS_API_KEY</code> в переменных окружения.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  if (!mapReady) return <Skeleton className="h-64 w-full rounded-none" />;
+  return <div ref={mapContainerRef} style={{ height: 256, width: '100%' }} />;
+}
+
+interface MapWidgetProps {
+  objectIds?: string[];
+}
+
+export function MapWidget({ objectIds }: MapWidgetProps) {
+  const apiKey = process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY;
+
+  const { data: objects = [], isLoading } = useQuery<ObjectSummary[]>({
+    queryKey: ['dashboard-objects-summary', objectIds],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (objectIds && objectIds.length > 0) params.set('objectIds', objectIds.join(','));
+      const qs = params.size > 0 ? `?${params.toString()}` : '';
+      const res = await fetch(`/api/dashboard/objects-summary${qs}`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   return (
     <Card>
@@ -114,11 +108,33 @@ export function MapWidget() {
           Карта объектов
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-0 overflow-hidden rounded-b-xl">
-        {isLoading || !mapReady ? (
+      <CardContent className="p-0">
+        {isLoading ? (
           <Skeleton className="h-64 w-full rounded-none" />
         ) : (
-          <div ref={mapContainerRef} style={{ height: 256, width: '100%' }} />
+          <Tabs defaultValue="schema" className="w-full">
+            <TabsList className="w-full rounded-none border-b bg-transparent h-8 px-3 justify-start gap-1">
+              <TabsTrigger value="schema" className="text-xs h-7 px-3">Схема</TabsTrigger>
+              <TabsTrigger value="table" className="text-xs h-7 px-3">Таблица</TabsTrigger>
+              {apiKey && (
+                <TabsTrigger value="map" className="text-xs h-7 px-3">Карта</TabsTrigger>
+              )}
+            </TabsList>
+
+            <TabsContent value="schema" className="mt-0 p-3">
+              <MapWidgetSchema objects={objects} />
+            </TabsContent>
+
+            <TabsContent value="table" className="mt-0">
+              <MapWidgetTable objects={objects} />
+            </TabsContent>
+
+            {apiKey && (
+              <TabsContent value="map" className="mt-0 overflow-hidden rounded-b-xl">
+                <YandexMapTab objects={objects} apiKey={apiKey} />
+              </TabsContent>
+            )}
+          </Tabs>
         )}
       </CardContent>
     </Card>
