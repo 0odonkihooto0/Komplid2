@@ -1375,6 +1375,15 @@
 
 ---
 
+## ЦУС — Виджеты дашборда (стр. 312–313, 321, 334–335)
+
+- ✅ IssuesWidget — «Актуальные вопросы» (PieChart/таблица + drill-down по типам ProblemIssue)
+- ✅ ContractsWidget — «Контрактация по контрактам» (таблица типов + разворачиваемая детализация)
+- ✅ StagesWidget — «Стадии реализации» (список GanttStage + modal с объектами)
+- ✅ API: `/api/dashboard/issues`, `/api/dashboard/contracts-by-type`, `/api/dashboard/stages-objects`
+
+---
+
 # КАК РАБОТАТЬ С ЭТИМ ФАЙЛОМ
 
 В начале каждой рабочей сессии говори Claude Code:
