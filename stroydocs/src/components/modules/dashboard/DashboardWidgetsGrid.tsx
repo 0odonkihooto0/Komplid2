@@ -32,7 +32,14 @@ import { IssuesWidget } from '@/components/dashboard/widgets/IssuesWidget';
 import { ContractsWidget } from '@/components/dashboard/widgets/ContractsWidget';
 import { StagesWidget } from '@/components/dashboard/widgets/StagesWidget';
 import { GprMonitoringWidget } from '@/components/dashboard/widgets/GprMonitoringWidget';
-import { SkMonitoringWidget }  from '@/components/dashboard/widgets/SkMonitoringWidget';
+import { SkMonitoringWidget }            from '@/components/dashboard/widgets/SkMonitoringWidget';
+import { DefectStatusWidget }            from '@/components/dashboard/widgets/DefectStatusWidget';
+import { FundingPlanWidget }             from '@/components/dashboard/widgets/FundingPlanWidget';
+import { ContractsPaymentWidget }        from '@/components/dashboard/widgets/ContractsPaymentWidget';
+import { ContractsPaymentDonutWidget }   from '@/components/dashboard/widgets/ContractsPaymentDonutWidget';
+import { SmrOsvoenoWidget }              from '@/components/dashboard/widgets/SmrOsvoenoWidget';
+import { FinancingStatusWidget }         from '@/components/dashboard/widgets/FinancingStatusWidget';
+import { PaidByProjectWidget }           from '@/components/dashboard/widgets/PaidByProjectWidget';
 import { DashboardWidgetsManager } from './DashboardWidgetsManager';
 
 interface Widget {
@@ -108,6 +115,13 @@ function SortableWidget({ widget, objectIds, onStatusFilter }: SortableWidgetPro
       {widget.type === 'gpr_monitoring'      && <GprMonitoringWidget objectIds={objectIds} />}
       {widget.type === 'sk_monitoring_chart' && <SkMonitoringWidget mode="chart" objectIds={objectIds} />}
       {widget.type === 'sk_monitoring_table' && <SkMonitoringWidget mode="table" objectIds={objectIds} />}
+      {widget.type === 'defect_status'           && <DefectStatusWidget objectIds={objectIds} />}
+      {widget.type === 'funding_plan'            && <FundingPlanWidget objectIds={objectIds} />}
+      {widget.type === 'contracts_payment_bar'   && <ContractsPaymentWidget objectIds={objectIds} />}
+      {widget.type === 'contracts_payment_donut' && <ContractsPaymentDonutWidget objectIds={objectIds} />}
+      {widget.type === 'smr_osvoeno'             && <SmrOsvoenoWidget objectIds={objectIds} />}
+      {widget.type === 'financing_status'        && <FinancingStatusWidget objectIds={objectIds} />}
+      {widget.type === 'paid_by_project'         && <PaidByProjectWidget objectIds={objectIds} />}
     </div>
   );
 }
