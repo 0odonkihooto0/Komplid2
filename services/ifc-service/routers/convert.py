@@ -6,12 +6,14 @@ IfcConvert — официальный конвертер из пакета IfcOp
 """
 
 import logging
+import os
 import shutil
 import subprocess
 import tempfile
 import time
 from pathlib import Path
 
+import ifcpatch
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -59,21 +61,36 @@ def convert_ifc(request: ConvertRequest) -> ConvertResponse:
         # 1. Скачать IFC из S3
         local_ifc = download_file(request.s3Key, tmpdir)
 
+        # 1.5. Предобработка через ifcpatch — исправление порядка обхода полигонов
+        patch_start = time.time()
+        try:
+            ifcpatch.execute({
+                "input": str(local_ifc),
+                "output": str(local_ifc),
+                "recipe": "FixWindingOrder",
+                "arguments": [],
+            })
+            logger.info("ifcpatch FixWindingOrder: %.1fs", time.time() - patch_start)
+        except Exception as e:
+            logger.warning("ifcpatch failed (non-fatal): %s", e)
+
         # 2. Путь для выходного GLB
         glb_filename = Path(request.s3Key).stem + ".glb"
         local_glb = Path(tmpdir) / glb_filename
 
         # 3. Запуск IfcConvert
-        # --use-element-guids — использует GlobalId как ID объектов в glTF
+        # --use-element-guids — использует GlobalId как ID объектов в glTF (raycasting)
         # --no-progress — отключает прогресс-бар (чище логи)
-        # --log-file /dev/null — уменьшает I/O на большие модели
+        # --log-format json — структурированные логи
+        # --threads 4 — параллельная конвертация
         cmd = [
             ifcconvert_path,
             str(local_ifc),
             str(local_glb),
             "--use-element-guids",
             "--no-progress",
-            "--log-file", "/dev/null",
+            "--log-format", "json",
+            "--threads", "4",
         ]
         logger.info("Запускаю IfcConvert: %s", " ".join(cmd))
 
@@ -82,10 +99,9 @@ def convert_ifc(request: ConvertRequest) -> ConvertResponse:
             cmd,
             capture_output=True,
             text=True,
-            timeout=300,  # 5 минут максимум для больших моделей (воркер держит 8 мин суммарно)
+            timeout=480,  # 8 минут максимум для больших моделей (воркер держит 10 мин суммарно)
         )
         elapsed = time.time() - start_time
-        logger.info("IfcConvert отработал за %.1f сек (code=%d)", elapsed, result.returncode)
 
         if result.returncode != 0:
             logger.error(
@@ -101,6 +117,14 @@ def convert_ifc(request: ConvertRequest) -> ConvertResponse:
         if not local_glb.exists():
             raise HTTPException(status_code=422, detail="IfcConvert не создал выходной файл")
 
+        glb_size_kb = os.path.getsize(local_glb) // 1024
+        logger.info(
+            "IfcConvert: %.1fs, exit=%d, size=%dKB",
+            elapsed,
+            result.returncode,
+            glb_size_kb,
+        )
+
         # 4. Загрузить GLB в S3
         upload_start = time.time()
         file_size = upload_file(local_glb, request.outputS3Key)
@@ -115,7 +139,7 @@ def convert_ifc(request: ConvertRequest) -> ConvertResponse:
     except HTTPException:
         raise
     except subprocess.TimeoutExpired:
-        logger.error("IfcConvert превысил таймаут 300 сек для файла %s", request.s3Key)
-        raise HTTPException(status_code=422, detail="Конвертация превысила таймаут (300 сек)")
+        logger.error("IfcConvert превысил таймаут 480 сек для файла %s", request.s3Key)
+        raise HTTPException(status_code=422, detail="Конвертация превысила таймаут (480 сек)")
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)

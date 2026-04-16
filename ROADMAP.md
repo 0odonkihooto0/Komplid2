@@ -1202,6 +1202,8 @@
 - ✅ Добавлен в корневой `docker-compose.yml` как сервис `ifc-service` (port 8001)
 - ✅ Маппинг S3 переменных: `S3_ACCESS_KEY` → `AWS_ACCESS_KEY_ID` и т.д.
 - ✅ `IFC_SERVICE_URL=http://localhost:8001` добавлен в `.env.example`
+- ✅ ifcpatch FixWindingOrder перед конвертацией (non-fatal fallback)
+- ✅ IfcConvert: --use-element-guids --threads 4 + логирование времени
 
 ### URL-структура ✅
 - ✅ `/objects/[id]/tim/` — реестр моделей
