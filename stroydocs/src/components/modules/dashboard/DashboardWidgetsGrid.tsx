@@ -27,6 +27,7 @@ import { IdQualityWidget } from './widgets/IdQualityWidget';
 import { ConstructionProgressWidget } from './widgets/ConstructionProgressWidget';
 import { ObjectsWidget } from './widgets/ObjectsWidget';
 import { MapWidget } from './widgets/MapWidget';
+import { ObjectsBaseWidget } from '@/components/dashboard/widgets/ObjectsBaseWidget';
 import { DashboardWidgetsManager } from './DashboardWidgetsManager';
 
 interface Widget {
@@ -38,8 +39,14 @@ interface Widget {
   config?: Record<string, unknown> | null;
 }
 
+interface SortableWidgetProps {
+  widget: Widget;
+  objectIds?: string[];
+  onStatusFilter?: (status: string | null) => void;
+}
+
 // Компонент одного сортируемого виджета
-function SortableWidget({ widget, objectIds }: { widget: Widget; objectIds?: string[] }) {
+function SortableWidget({ widget, objectIds, onStatusFilter }: SortableWidgetProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: widget.id });
 
@@ -81,16 +88,20 @@ function SortableWidget({ widget, objectIds }: { widget: Widget; objectIds?: str
       {widget.type === 'id_quality' && <IdQualityWidget />}
       {widget.type === 'construction_progress' && <ConstructionProgressWidget />}
       {widget.type === 'objects' && <ObjectsWidget objectIds={objectIds} />}
-      {widget.type === 'map' && <MapWidget />}
+      {widget.type === 'map' && <MapWidget objectIds={objectIds} />}
+      {widget.type === 'objects_base' && (
+        <ObjectsBaseWidget objectIds={objectIds} onStatusFilter={onStatusFilter} />
+      )}
     </div>
   );
 }
 
 interface DashboardWidgetsGridProps {
   objectIds?: string[];
+  onStatusFilter?: (status: string | null) => void;
 }
 
-export function DashboardWidgetsGrid({ objectIds }: DashboardWidgetsGridProps) {
+export function DashboardWidgetsGrid({ objectIds, onStatusFilter }: DashboardWidgetsGridProps) {
   const queryClient = useQueryClient();
   const [localOrder, setLocalOrder] = useState<string[] | null>(null);
 
@@ -164,7 +175,12 @@ export function DashboardWidgetsGrid({ objectIds }: DashboardWidgetsGridProps) {
         <SortableContext items={visible.map((w) => w.id)} strategy={rectSortingStrategy}>
           <div className="grid gap-4 lg:grid-cols-3">
             {visible.map((widget) => (
-              <SortableWidget key={widget.id} widget={widget} objectIds={objectIds} />
+              <SortableWidget
+                key={widget.id}
+                widget={widget}
+                objectIds={objectIds}
+                onStatusFilter={onStatusFilter}
+              />
             ))}
           </div>
         </SortableContext>

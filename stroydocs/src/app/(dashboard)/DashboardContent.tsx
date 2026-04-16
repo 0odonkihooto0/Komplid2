@@ -44,6 +44,7 @@ export function DashboardContent() {
     regions: [],
     constructionTypes: [],
   });
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ['dashboard-stats'],
@@ -71,20 +72,23 @@ export function DashboardContent() {
   // Пустой массив = фильтра нет, показываем все
   const activeObjectIds = useMemo(() => {
     const { objectIds, statuses, regions, constructionTypes } = filters;
+    const effectiveStatuses = selectedStatus
+      ? [...statuses, selectedStatus].filter((v, i, a) => a.indexOf(v) === i)
+      : statuses;
     const hasFilter =
-      objectIds.length + statuses.length + regions.length + constructionTypes.length > 0;
+      objectIds.length + effectiveStatuses.length + regions.length + constructionTypes.length > 0;
     if (!hasFilter) return [];
 
     return allProjects
       .filter((p) => {
         if (objectIds.length > 0 && !objectIds.includes(p.id)) return false;
-        if (statuses.length > 0 && !statuses.includes(p.status)) return false;
+        if (effectiveStatuses.length > 0 && !effectiveStatuses.includes(p.status)) return false;
         if (regions.length > 0 && p.region && !regions.includes(p.region)) return false;
         if (constructionTypes.length > 0 && p.constructionType && !constructionTypes.includes(p.constructionType)) return false;
         return true;
       })
       .map((p) => p.id);
-  }, [filters, allProjects]);
+  }, [filters, allProjects, selectedStatus]);
 
   const kpiCards = [
     { title: 'Объекты', value: stats?.projectsCount ?? 0, icon: FolderOpen, href: '/objects' },
@@ -146,7 +150,7 @@ export function DashboardContent() {
         </div>
 
         {/* Виджеты аналитики */}
-        <DashboardWidgetsGrid objectIds={activeObjectIds} />
+        <DashboardWidgetsGrid objectIds={activeObjectIds} onStatusFilter={setSelectedStatus} />
 
         {/* Лента событий */}
         <ActivityFeed />
