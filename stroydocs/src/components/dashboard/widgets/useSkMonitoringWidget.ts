@@ -51,7 +51,7 @@ interface DrillDefect {
   deadline:       string | null;
   resolvedAt:     string | null;
   buildingObject: { id: string; name: string };
-  assignee:       { id: string; name: string } | null;
+  assignee:       { id: string; firstName: string; lastName: string } | null;
 }
 
 interface AnalyticsData {
