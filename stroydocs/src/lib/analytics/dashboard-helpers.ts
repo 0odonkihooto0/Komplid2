@@ -48,35 +48,12 @@ export function buildGprMonthly(
     }));
 }
 
-/** Коды транзиентных ошибок Prisma — повтор может помочь */
-const TRANSIENT_PRISMA_CODES = new Set(['P1001', 'P1008', 'P1017']);
-
-function isTransientPrismaError(err: unknown): boolean {
-  return (
-    typeof err === 'object' &&
-    err !== null &&
-    'code' in err &&
-    typeof (err as { code: unknown }).code === 'string' &&
-    TRANSIENT_PRISMA_CODES.has((err as { code: string }).code)
-  );
-}
-
 /** Защитная обёртка: ошибка одного запроса не ломает весь ответ.
- *  При транзиентной ошибке БД (P1001/P1008/P1017) делает одну повторную попытку через 500 мс. */
+ *  Retry при транзиентных ошибках обеспечивается на уровне Prisma-клиента (db.ts). */
 export async function safe<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
   try {
     return await fn();
   } catch (err) {
-    // Транзиентная ошибка — повторяем один раз после короткой паузы
-    if (isTransientPrismaError(err)) {
-      try {
-        await new Promise((r) => setTimeout(r, 500));
-        return await fn();
-      } catch (retryErr) {
-        logger.warn({ err: retryErr }, 'dashboard/analytics: повторная попытка не удалась');
-        return fallback;
-      }
-    }
     logger.warn({ err }, 'dashboard/analytics: частичная ошибка агрегации');
     return fallback;
   }

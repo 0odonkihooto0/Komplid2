@@ -471,17 +471,21 @@ test -n "$IFCBIN" && mv "$IFCBIN" /usr/local/bin/IfcConvert
 **Правило**: при `select`/`include` на User relation — **всегда** `{ id: true, firstName: true, lastName: true }`.
 Если нужна строка с полным именем — конкатенировать в маппинге: `` `${u.firstName} ${u.lastName}` ``.
 
-**Prisma P1001 в `Promise.all` агрегации — `safe()` обёртка с retry обязательна для агрегационных роутов.**
-`P1001` (Can't reach database server) — транзиентная ошибка сети/БД. В `dashboard/analytics` ошибка
-была поймана `safe()`, но без retry — кратковременный сбой сети сразу отдавал пустые данные.
-В `analytics/global` запросы вообще не были обёрнуты в `safe()` — любой сбой крашил весь эндпоинт.
-Исправлено: `safe()` в `src/lib/analytics/dashboard-helpers.ts` теперь делает одну повторную
-попытку через 500 мс при транзиентных ошибках Prisma (P1001, P1008, P1017). `analytics/global`
-обёрнут в `safe()` по тому же паттерну.
-**Правило**: любой агрегационный роут с 3+ независимыми запросами в `Promise.all` — каждый запрос
-оборачивать в `safe(fn, fallback)`. Для per-entity роутов (аналитика одного объекта) — не нужно,
-внешний `try/catch` → 500 достаточен. Транзиентные ошибки Prisma: P1001 (сервер недоступен),
-P1008 (таймаут запроса), P1017 (соединение закрыто).
+**Prisma P1001/P1008/P1017 — транзиентные ошибки БД крашили ВСЕ роуты одновременно.**
+При кратковременной недоступности PostgreSQL (сеть, обслуживание Timeweb Managed DB) все
+параллельные запросы пользователей получали 500. Затронуто: `inbox/count` ($queryRaw),
+`objects` (findMany), `dashboard/widgets` (findMany), `dashboard/stats` (Promise.all из 9 count),
+`dashboard/analytics` (Promise.all из 19 запросов), `analytics/global` (7 запросов).
+После восстановления БД — P2037 (Too many connections) от лавины переподключений.
+Исправлено: в `src/lib/db.ts` добавлен Prisma `$extends` с автоматическим retry (1 попытка,
+500 мс задержка) для ВСЕХ операций — model queries, $queryRaw, $executeRaw.
+Это покрывает все роуты проекта без изменения каждого файла.
+`safe()` в `dashboard-helpers.ts` оставлен для изоляции ошибок в агрегационных роутах
+(partial failure → fallback), retry из неё убран (теперь на уровне клиента).
+**Правило**: retry транзиентных ошибок — на уровне Prisma-клиента (`db.ts`).
+Изоляция partial failure — `safe(fn, fallback)` для агрегационных роутов с 3+ запросами.
+Транзиентные коды: P1001 (сервер недоступен), P1008 (таймаут), P1017 (соединение закрыто).
+P2037 (Too many connections) — НЕ ретраить, нужен PgBouncer.
 
 ---
 
