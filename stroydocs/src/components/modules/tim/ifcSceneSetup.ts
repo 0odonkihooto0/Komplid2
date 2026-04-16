@@ -37,12 +37,12 @@ export async function initScene(container: HTMLDivElement): Promise<ViewerScene>
   const { clientWidth: w, clientHeight: h } = container;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color('#111827');
-  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 0.4));
-  const dir = new THREE.DirectionalLight(0xffffff, 0.8);
-  dir.position.set(10, 20, 10);
-  scene.add(dir);
+  scene.background = new THREE.Color(0xEEEEEE);
+  const ambient = new THREE.AmbientLight(0xffffff, 0.9);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+  dirLight.position.set(5, 10, 7);
+  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x8888aa, 0.5);
+  scene.add(ambient, dirLight, hemiLight);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(w || 800, h || 600);
