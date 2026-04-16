@@ -7,10 +7,12 @@ import { ClippingPanel } from './ClippingPanel';
 import { LayerPanel } from './LayerPanel';
 import { ViewerContextMenu } from './ViewerContextMenu';
 import { ConversionProgress, type ConversionUiState } from './ConversionProgress';
+import { DisplayModeLegend } from './DisplayModeLegend';
 import { useClippingPlanes } from './useClippingPlanes';
 import { useMeasurements } from './useMeasurements';
 import { useLayerManager } from './useLayerManager';
 import { useViewerExport } from './useViewerExport';
+import { useDisplayModes } from './useDisplayModes';
 import { initScene, loadGlbModel } from './ifcSceneSetup';
 import type { ViewerScene } from './ifcSceneSetup';
 
@@ -18,9 +20,6 @@ import type { ViewerScene } from './ifcSceneSetup';
 const POLL_INTERVAL_MS = 5_000;
 /** Через сколько мс в статусе CONVERTING показать fallback-панель */
 const FALLBACK_AFTER_MS = 10 * 60 * 1000; // 10 минут
-
-const DEFAULT_COLOR = '#9CA3AF';
-const SELECTED_COLOR = '#60A5FA';
 
 interface Props {
   /** ID объекта строительства (используется для запроса /glb-url) */
@@ -67,7 +66,8 @@ export function IfcViewerCore({
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [wireframe, setWireframe] = useState(false);
+  /** Выбранный элемент — нужен X-Ray режиму для подсветки только выбранного */
+  const [selectedGuid, setSelectedGuid] = useState<string | null>(null);
   const [layersOpen, setLayersOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
@@ -77,10 +77,11 @@ export function IfcViewerCore({
   const [elapsedSec, setElapsedSec] = useState(0);
   const [reconverting, setReconverting] = useState(false);
 
-  // ─── Разрезы, измерения, слои ────────────────────────────────────────────────
+  // ─── Разрезы, измерения, слои, режимы отображения ────────────────────────────
   const clipping = useClippingPlanes(sceneRef);
   const measure = useMeasurements(sceneRef);
   const layerManager = useLayerManager(sceneRef);
+  const displayModes = useDisplayModes(sceneRef, selectedGuid, projectId, modelId);
   const { downloadIfc, screenshot } = useViewerExport(sceneRef, downloadUrl);
   // Стабильный реф для initializeLayers — не добавляем в зависимости useEffect
   const initLayersRef = useRef(layerManager.initializeLayers);
@@ -108,14 +109,6 @@ export function IfcViewerCore({
     s.camera.position.copy(center).addScalar(Math.max(size.x, size.y, size.z) * 1.5);
     s.controls.target.copy(center);
     s.controls.update();
-  }, []);
-
-  const handleWireframe = useCallback(() => {
-    const s = sceneRef.current;
-    if (!s) return;
-    s.wireframe = !s.wireframe;
-    s.materials.forEach(mat => { mat.wireframe = s.wireframe; });
-    setWireframe(s.wireframe);
   }, []);
 
   // ─── Действия на экране прогресса/ошибки ─────────────────────────────────────
@@ -274,22 +267,18 @@ export function IfcViewerCore({
           (o): o is import('three').Object3D => typeof o === 'object' && o !== null && 'isObject3D' in o
         );
         const hits = s.raycaster.intersectObjects(meshes);
-        if (!hits.length) { onSelectedRef.current(null); return; }
+        if (!hits.length) {
+          setSelectedGuid(null);
+          onSelectedRef.current(null);
+          return;
+        }
 
         // GUID берётся напрямую из meshMap (строка, без промежуточного expressID)
         const guid = s.meshMap.get(hits[0].object) ?? null;
+        setSelectedGuid(guid);
         onSelectedRef.current(guid);
-
-        // Подсветить выбранный элемент, восстановить оригинальный цвет для остальных
-        s.materials.forEach((mat, id) => {
-          if (id === guid) {
-            mat.color.set(SELECTED_COLOR);
-          } else {
-            const orig = s.originalColors.get(id);
-            if (orig) mat.color.setRGB(orig[0], orig[1], orig[2]);
-            else mat.color.set(DEFAULT_COLOR);
-          }
-        });
+        // Подсветка выбранного элемента делегирована useDisplayModes
+        // (эмиссия применяется ко всем режимам автоматически через useEffect хука)
       });
     }
 
@@ -348,10 +337,10 @@ export function IfcViewerCore({
   return (
     <div className="flex h-full w-full flex-col">
       <ViewerToolbar
-        wireframe={wireframe}
+        displayMode={displayModes.mode}
+        onDisplayModeChange={displayModes.setMode}
         onReset={handleReset}
         onFit={handleFit}
-        onWireframe={handleWireframe}
         onClipping={clipping.toggle}
         clippingActive={clipping.active}
         onMeasure={measure.toggleActive}
@@ -374,6 +363,9 @@ export function IfcViewerCore({
       <div className="pointer-events-none absolute left-2 top-2 z-10 rounded bg-white/70 px-2 py-0.5 text-xs text-gray-500 backdrop-blur">
         Перспектива
       </div>
+
+      {/* Легенда цветов по типу IFC — только в режиме «По типу» */}
+      <DisplayModeLegend mode={displayModes.mode} />
 
       {/* Панель слоёв */}
       {layersOpen && (

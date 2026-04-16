@@ -20,6 +20,8 @@ export interface ViewerScene {
   materials: Map<string, THREE_NS.MeshLambertMaterial>;
   /** ifcGuid → оригинальный цвет [R, G, B] (0.0–1.0) из glTF для восстановления после выбора */
   originalColors: Map<string, [number, number, number]>;
+  /** ifcGuid → оригинальная прозрачность (0.0–1.0) из glTF для восстановления после X-Ray */
+  originalOpacity: Map<string, number>;
   /** IFC слои: имя слоя → множество ifcGuid элементов */
   layers: Map<string, Set<string>>;
   /** CSS2DRenderer для текстовых меток измерений */
@@ -68,12 +70,13 @@ export async function initScene(container: HTMLDivElement): Promise<ViewerScene>
   const meshMap = new Map<object, string>();
   const materials = new Map<string, THREE_NS.MeshLambertMaterial>();
   const originalColors = new Map<string, [number, number, number]>();
+  const originalOpacity = new Map<string, number>();
   const layers = new Map<string, Set<string>>();
 
   // Собираем vs первым, чтобы animate мог обновлять vs.frameId напрямую
   const vs: ViewerScene = {
     scene, camera, renderer, css2dRenderer, controls, raycaster,
-    meshMap, materials, originalColors, layers, frameId: 0, wireframe: false,
+    meshMap, materials, originalColors, originalOpacity, layers, frameId: 0, wireframe: false,
   };
 
   function animate() {
@@ -132,6 +135,7 @@ export async function loadGlbModel(
           vs.meshMap.set(child, guid);
           vs.materials.set(guid, mat);
           vs.originalColors.set(guid, [baseColor.r, baseColor.g, baseColor.b]);
+          vs.originalOpacity.set(guid, opacity);
 
           // Слой из userData (IfcConvert может сохранять layer в extras)
           const layer = (child.userData.ifcLayer ?? child.userData.layer) as string | undefined;
