@@ -5,7 +5,7 @@ import {
   MousePointer2, Square, RotateCcw, Hand, Eye, EyeOff,
   Maximize2, Grid3X3, Ruler, Scissors, Layers, AlertTriangle,
   GitCompare, BoxSelect, Focus, Camera, Download, FileSpreadsheet,
-  Palette,
+  Palette, Box,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,9 +21,13 @@ import {
   DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { DisplayMode } from './displayModes';
+
+/** Режим камеры: перспективный или один из 6 ортогональных видов */
+export type CameraView = 'perspective' | 'front' | 'back' | 'left' | 'right' | 'top' | 'bottom';
 
 interface ViewerToolbarProps {
   onReset: () => void;
@@ -32,6 +36,10 @@ interface ViewerToolbarProps {
   displayMode: DisplayMode;
   /** Смена режима отображения — управляется хуком useDisplayModes */
   onDisplayModeChange: (mode: DisplayMode) => void;
+  /** Текущий вид камеры (перспектива или одна из 6 ортогональных проекций) */
+  currentView: CameraView;
+  /** Смена вида камеры — переключает Perspective ↔ Orthographic и ориентирует камеру */
+  onViewChange: (view: CameraView) => void;
   onCollisions?: () => void;
   onCompare?: () => void;
   collisionsActive?: boolean;
@@ -93,6 +101,8 @@ export function ViewerToolbar({
   onFit,
   displayMode,
   onDisplayModeChange,
+  currentView,
+  onViewChange,
   onCollisions,
   onCompare,
   collisionsActive,
@@ -171,6 +181,41 @@ export function ViewerToolbar({
               <DropdownMenuRadioItem value="byType">
                 По типу элемента
               </DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Dropdown «Вид» — перспектива + 6 ортогональных проекций */}
+        <DropdownMenu>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant={currentView !== 'perspective' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                >
+                  <Box className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Вид</TooltipContent>
+          </Tooltip>
+          <DropdownMenuContent align="start">
+            <DropdownMenuRadioGroup
+              value={currentView}
+              onValueChange={(v) => onViewChange(v as CameraView)}
+            >
+              <DropdownMenuRadioItem value="perspective">
+                Перспектива
+              </DropdownMenuRadioItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioItem value="front">Спереди</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="back">Сзади</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="left">Слева</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="right">Справа</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="top">Сверху</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="bottom">Снизу</DropdownMenuRadioItem>
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>

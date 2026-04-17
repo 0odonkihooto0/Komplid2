@@ -10,7 +10,7 @@ import type { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 
 export interface ViewerScene {
   scene: THREE_NS.Scene;
-  camera: THREE_NS.PerspectiveCamera;
+  camera: THREE_NS.PerspectiveCamera | THREE_NS.OrthographicCamera;
   renderer: THREE_NS.WebGLRenderer;
   controls: OrbitControlsType;
   raycaster: THREE_NS.Raycaster;
@@ -81,9 +81,11 @@ export async function initScene(container: HTMLDivElement): Promise<ViewerScene>
 
   function animate() {
     vs.frameId = requestAnimationFrame(animate);
-    controls.update();
-    renderer.render(scene, camera);
-    css2dRenderer.render(scene, camera);
+    vs.controls.update();
+    // Читаем актуальные scene/camera через vs — при переключении вида
+    // IfcViewerCore.applyView() заменяет vs.camera и vs.controls.
+    vs.renderer.render(vs.scene, vs.camera);
+    vs.css2dRenderer.render(vs.scene, vs.camera);
   }
   animate();
 
