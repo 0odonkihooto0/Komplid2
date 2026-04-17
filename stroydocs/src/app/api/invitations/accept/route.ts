@@ -12,7 +12,7 @@ const acceptSchema = z.object({
   token: z.string().min(1),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  password: z.string().min(6),
+  password: z.string().min(6).max(72, 'Пароль не может быть длиннее 72 символов'),
 });
 
 export async function POST(req: NextRequest) {
