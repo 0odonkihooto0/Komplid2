@@ -11,8 +11,12 @@ import { TaskKanbanView } from '@/components/modules/tasks/TaskKanbanView';
 import { TaskCalendarView } from '@/components/modules/tasks/TaskCalendarView';
 import { TaskBriefListView } from '@/components/modules/tasks/TaskBriefListView';
 import { TaskFeedView } from '@/components/modules/tasks/TaskFeedView';
+import { TaskTemplatesView } from '@/components/modules/tasks/TaskTemplatesView';
+import { CreateTaskTemplateDialog } from '@/components/modules/tasks/CreateTaskTemplateDialog';
+import { SelectTemplateDialog } from '@/components/modules/tasks/SelectTemplateDialog';
 import { useGlobalTasks } from '@/components/modules/tasks/useGlobalTasks';
 import { useTaskGroups } from '@/components/modules/tasks/useTaskGroups';
+import { useTaskTemplates } from '@/components/modules/tasks/useTaskTemplates';
 
 const VIEWS_KEY = 'stroydocs-planner-views';
 const ACTIVE_KEY = 'stroydocs-planner-active';
@@ -72,6 +76,10 @@ export default function PlannerPage() {
   const [period, setPeriod] = useState('all');
   const [page, setPage] = useState(1);
 
+  // Диалоги шаблонов
+  const [createTemplateOpen, setCreateTemplateOpen] = useState(false);
+  const [selectTemplateOpen, setSelectTemplateOpen] = useState(false);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setGrouping(params.get('grouping') ?? 'all');
@@ -106,6 +114,7 @@ export default function PlannerPage() {
   });
 
   const { groups, groupTree } = useTaskGroups();
+  const { templates } = useTaskTemplates();
 
   const activeView = openViews.find((v) => v.id === activeViewId) ?? openViews[0];
 
@@ -132,6 +141,8 @@ export default function PlannerPage() {
   function handleSearchChange(v: string) { setSearch(v); setPage(1); }
   function handlePeriodChange(v: string) { setPeriod(v); setPage(1); }
 
+  const isTemplatesView = grouping === 'templates';
+
   return (
     <div className="flex h-full -m-6 overflow-hidden">
       <div className="w-[300px] shrink-0 overflow-y-auto">
@@ -141,6 +152,7 @@ export default function PlannerPage() {
           counts={counts}
           groups={groups}
           groupTree={groupTree}
+          templateCount={templates.length}
           onGroupingChange={handleGroupingChange}
           onGroupIdChange={handleGroupIdChange}
         />
@@ -153,54 +165,70 @@ export default function PlannerPage() {
           counts={counts}
           onSearchChange={handleSearchChange}
           onPeriodChange={handlePeriodChange}
+          onCreateTemplate={() => setCreateTemplateOpen(true)}
+          onSelectTemplate={() => setSelectTemplateOpen(true)}
         />
-        <PlannerViewTabs
-          openViews={openViews}
-          activeViewId={activeViewId}
-          onViewChange={setActiveViewId}
-          onAddView={addView}
-          onCloseView={closeView}
-        >
-          {activeView.type === 'list' && (
-            <TaskListView
-              tasks={tasks}
-              isLoading={isLoading}
-              total={total}
-              page={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-            />
-          )}
-          {activeView.type === 'kanban' && (
-            <TaskKanbanView
-              currentUserId={currentUserId}
-              grouping={grouping}
-              groupId={groupId}
-              search={search}
-            />
-          )}
-          {activeView.type === 'calendar' && (
-            <TaskCalendarView
-              grouping={grouping}
-              groupId={groupId}
-              search={search}
-            />
-          )}
-          {activeView.type === 'brief' && (
-            <TaskBriefListView
-              tasks={tasks}
-              isLoading={isLoading}
-            />
-          )}
-          {activeView.type === 'feed' && (
-            <TaskFeedView
-              grouping={grouping}
-              groupId={groupId ?? undefined}
-              search={search}
-            />
-          )}
-        </PlannerViewTabs>
+
+        {isTemplatesView ? (
+          <TaskTemplatesView />
+        ) : (
+          <PlannerViewTabs
+            openViews={openViews}
+            activeViewId={activeViewId}
+            onViewChange={setActiveViewId}
+            onAddView={addView}
+            onCloseView={closeView}
+          >
+            {activeView.type === 'list' && (
+              <TaskListView
+                tasks={tasks}
+                isLoading={isLoading}
+                total={total}
+                page={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+              />
+            )}
+            {activeView.type === 'kanban' && (
+              <TaskKanbanView
+                currentUserId={currentUserId}
+                grouping={grouping}
+                groupId={groupId}
+                search={search}
+              />
+            )}
+            {activeView.type === 'calendar' && (
+              <TaskCalendarView
+                grouping={grouping}
+                groupId={groupId}
+                search={search}
+              />
+            )}
+            {activeView.type === 'brief' && (
+              <TaskBriefListView
+                tasks={tasks}
+                isLoading={isLoading}
+              />
+            )}
+            {activeView.type === 'feed' && (
+              <TaskFeedView
+                grouping={grouping}
+                groupId={groupId ?? undefined}
+                search={search}
+              />
+            )}
+          </PlannerViewTabs>
+        )}
       </div>
+
+      <CreateTaskTemplateDialog
+        open={createTemplateOpen}
+        onOpenChange={setCreateTemplateOpen}
+      />
+      <SelectTemplateDialog
+        open={selectTemplateOpen}
+        onOpenChange={setSelectTemplateOpen}
+      />
     </div>
   );
 }

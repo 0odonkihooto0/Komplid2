@@ -17,6 +17,7 @@ interface Props {
   counts: TaskCounts;
   groups: TaskGroupItem[];
   groupTree: TaskGroupItem[];
+  templateCount?: number;
   onGroupingChange: (g: string) => void;
   onGroupIdChange: (id: string | null) => void;
 }
@@ -125,7 +126,7 @@ function TaskGroupNode({ group, selectedGroupId, depth, onSelect, onCreateChild,
 }
 
 export function TaskGroupingsPanel({
-  selectedGrouping, selectedGroupId, counts, groupTree,
+  selectedGrouping, selectedGroupId, counts, groupTree, templateCount,
   onGroupingChange, onGroupIdChange,
 }: Props) {
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
@@ -185,7 +186,7 @@ export function TaskGroupingsPanel({
         <div className="px-2 pb-2">
           <GroupingItem
             label="Шаблоны"
-            count={0}
+            count={templateCount ?? 0}
             isActive={selectedGrouping === 'templates'}
             onClick={() => { onGroupingChange('templates'); onGroupIdChange(null); }}
           />
