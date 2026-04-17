@@ -56,7 +56,7 @@ export function AddScheduleDialog({ open, onOpenChange, templateId }: Props) {
   const [weekDays, setWeekDays] = useState<number[]>([]);
   const [monthDays, setMonthDays] = useState<number[]>([]);
 
-  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: { repeatType: 'DAY', interval: 1, isActive: true, createSubTasks: false },
   });

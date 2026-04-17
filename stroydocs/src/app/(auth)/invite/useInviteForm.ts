@@ -10,7 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 const inviteSchema = z.object({
   firstName: z.string().min(1, 'Введите имя'),
   lastName: z.string().min(1, 'Введите фамилию'),
-  password: z.string().min(6, 'Минимум 6 символов'),
+  password: z.string().min(6, 'Минимум 6 символов').max(72, 'Пароль не может быть длиннее 72 символов'),
 });
 
 type InviteInput = z.infer<typeof inviteSchema>;
