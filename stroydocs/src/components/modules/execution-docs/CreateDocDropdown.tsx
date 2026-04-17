@@ -28,7 +28,7 @@ interface Props {
 // Вложенный дропдаун «Создать документ» по группам ЦУС
 export function CreateDocDropdown({ contractId, projectId, onCreated }: Props) {
   const [execDocOpen, setExecDocOpen] = useState(false);
-  const [execDocType, setExecDocType] = useState<ExecutionDocType>('AOSR');
+  const [_execDocType, setExecDocType] = useState<ExecutionDocType>('AOSR');
 
   const [ks2Open, setKs2Open] = useState(false);
 

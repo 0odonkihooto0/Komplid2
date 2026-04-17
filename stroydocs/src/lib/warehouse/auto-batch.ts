@@ -1,4 +1,4 @@
-import { db, type PrismaTx } from '@/lib/db';
+import { type PrismaTx } from '@/lib/db';
 import { logger } from '@/lib/logger';
 
 /**

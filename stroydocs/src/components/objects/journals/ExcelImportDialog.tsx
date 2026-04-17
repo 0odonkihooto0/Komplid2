@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FileSpreadsheet, Upload, UploadCloud, X, CheckCircle2 } from 'lucide-react';
+import { FileSpreadsheet, Upload, UploadCloud, CheckCircle2 } from 'lucide-react';
 import type { SpecialJournalType } from '@prisma/client';
 import { useExcelImport } from './useExcelImport';
 

@@ -1,11 +1,6 @@
 import type { EstimateItem } from '@prisma/client';
 import type { VersionInfo, CompareResultItem } from './compare-versions';
 
-interface ChapterMeta {
-  id: string;
-  name: string;
-}
-
 /** Формат по умолчанию: плоский список с дельтами */
 export function formatDefault(items: CompareResultItem[]) {
   return { items };

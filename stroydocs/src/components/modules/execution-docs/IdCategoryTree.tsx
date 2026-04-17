@@ -198,7 +198,7 @@ export function IdCategoryTree({ projectId, activeId, onSelect }: Props) {
     setRenameValue(currentName);
   };
 
-  const handleRenameConfirm = (id: string, name: string) => {
+  const _handleRenameConfirm = (id: string, name: string) => {
     setRenamingId(null);
     if (name === renameValue) return; // без изменений
     renameCategory.mutate(

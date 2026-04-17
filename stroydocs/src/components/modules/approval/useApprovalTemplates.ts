@@ -115,7 +115,7 @@ interface CreateTemplateLevelParams {
  * Создать шаблон и все его уровни последовательно.
  * Возвращает ID созданного шаблона.
  */
-export function useCreateTemplateWithLevels(queryKey: unknown[]) {
+export function useCreateTemplateWithLevels(_queryKey: unknown[]) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
