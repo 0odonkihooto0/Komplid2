@@ -31,7 +31,7 @@ export function TaskHistoryTab({ reports, task }: Props) {
       date: task.createdAt,
       actor: `${task.createdBy.firstName} ${task.createdBy.lastName}`,
       text: 'Задача создана',
-      type: 'created',
+      type: 'created' as const,
     },
     ...reports.map((r) => ({
       id: r.id,
