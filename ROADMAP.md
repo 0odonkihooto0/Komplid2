@@ -1519,17 +1519,20 @@
 > **Аналог:** ЦУС → Главное меню «Справочники» → Общие справочники (стр. 366–372 руководства)
 > **Цель:** единый UI-фреймворк для всех справочников системы по принципу ЦУС: «Работа со всеми справочниками организована по единому принципу».
 
-### Инфраструктура (REF.1)
-- ⬜ Универсальный компонент `<ReferenceTable>` — таблица с настройкой колонок (боковая панель чекбоксов), фильтрацией, сортировкой, пагинацией, bulk-операциями
-- ⬜ Универсальный Excel-экспорт: 3 варианта (все доступные колонки / отображаемые / все данные)
-- ⬜ Универсальный диалог редактирования `<ReferenceEditDialog>` (декларативные поля)
-- ⬜ Меню действий (⋮): Информация / Редактировать / Удалить / Скопировать ссылку
-- ⬜ Массовое удаление через чекбоксы
-- ⬜ Диалог подтверждения удаления
-- ⬜ Shareable link: `/references/[slug]/entry/[id]` — прямая ссылка на запись
+### Инфраструктура (REF.1) ✅ 2026-04-17
+- ✅ Универсальный компонент `<ReferenceTable>` — таблица с настройкой колонок (боковая панель чекбоксов), фильтрацией, сортировкой, пагинацией, bulk-операциями
+- ✅ Универсальный Excel-экспорт: 3 варианта (все доступные колонки / отображаемые / все данные)
+- ✅ Универсальный диалог редактирования `<ReferenceEditDialog>` (декларативные поля)
+- ✅ Меню действий (⋮): Информация / Редактировать / Удалить / Скопировать ссылку
+- ✅ Массовое удаление через чекбоксы
+- ✅ Диалог подтверждения удаления
+- ✅ Shareable link: `/references/[slug]/entry/[id]` — прямая ссылка на запись
+- ✅ `src/lib/references/types.ts` — `FieldType`, `ReferenceFieldSchema`, `ReferenceSchema`
+- ✅ `src/lib/references/registry.ts` — `REFERENCE_REGISTRY`, `getReferenceSchema`, `listReferenceSchemas`
+- ✅ API: `GET/POST /api/references/[slug]`, `GET/PATCH/DELETE /api/references/[slug]/[id]`, `POST /api/references/[slug]/bulk-delete`, `POST /api/references/[slug]/export`
 
 ### Audit (REF.2)
-- ⬜ Модель `ReferenceAudit` (entityType, entityId, action, oldValues Json, newValues Json, userId, timestamp)
+- ✅ Модель `ReferenceAudit` (slug, entryId, action, oldData Json, newData Json, userId, organizationId, timestamp) — добавлена в schema.prisma
 - ⬜ Боковая панель «История изменений» с датой/временем/пользователем/дифом
 - ⬜ Утилита `lib/reference-audit.ts` — обёртка над Prisma для автоматической записи в аудит
 
