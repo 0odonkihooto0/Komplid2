@@ -73,7 +73,7 @@ export function CreateTaskTemplateDialog({ open, onOpenChange }: Props) {
 
   const {
     register, handleSubmit, setValue, watch, reset, formState: { errors },
-  } = useForm<FormData>({
+  } = useForm({
     resolver: zodResolver(schema),
     defaultValues: { priority: 'MEDIUM', durationUnit: 'hours' },
   });

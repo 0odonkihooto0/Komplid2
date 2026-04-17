@@ -33,7 +33,7 @@ export function CreateTaskLabelDialog({ open, onOpenChange, defaultGroupId }: Pr
   const { groups } = useTaskGroups();
   const createMutation = useCreateTaskLabel();
 
-  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: { color: '#6366f1' },
   });
