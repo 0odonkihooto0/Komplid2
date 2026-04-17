@@ -9,6 +9,7 @@ import { LayerPanel } from './LayerPanel';
 import { ViewerContextMenu } from './ViewerContextMenu';
 import { ConversionProgress, type ConversionUiState } from './ConversionProgress';
 import { DisplayModeLegend } from './DisplayModeLegend';
+import { NavCube } from './NavCube';
 import { useClippingPlanes } from './useClippingPlanes';
 import { useMeasurements } from './useMeasurements';
 import { useLayerManager } from './useLayerManager';
@@ -488,6 +489,9 @@ export function IfcViewerCore({
 
       {/* Легенда цветов по типу IFC — только в режиме «По типу» */}
       <DisplayModeLegend mode={displayModes.mode} />
+
+      {/* Куб ориентации (NavCube) — правый нижний угол, синхронизация с главной камерой */}
+      <NavCube sceneRef={sceneRef} onViewChange={applyView} />
 
       {/* Панель слоёв */}
       {layersOpen && (

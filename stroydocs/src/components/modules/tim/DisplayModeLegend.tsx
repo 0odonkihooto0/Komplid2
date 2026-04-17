@@ -17,7 +17,7 @@ export function DisplayModeLegend({ mode }: Props) {
   const items = Object.keys(IFC_TYPE_COLORS);
 
   return (
-    <div className="pointer-events-none absolute bottom-2 right-2 z-10 rounded-md border border-border bg-background/90 p-2 text-xs shadow-md backdrop-blur-sm">
+    <div className="pointer-events-none absolute bottom-2 left-2 z-10 rounded-md border border-border bg-background/90 p-2 text-xs shadow-md backdrop-blur-sm">
       <div className="mb-1 font-medium text-muted-foreground">По типу элемента</div>
       <div className="grid grid-cols-2 gap-x-3 gap-y-1">
         {items.map((type) => {
