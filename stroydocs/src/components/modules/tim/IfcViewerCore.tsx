@@ -304,6 +304,14 @@ export function IfcViewerCore({
             return;
           }
 
+          // Защита от зависания: status=READY, но glbS3Key отсутствует —
+          // конвертация не записала ключ → бесконечный поллинг. Кидаем понятную ошибку.
+          if (status === 'READY' && !metadata?.glbS3Key) {
+            throw new Error(
+              'Модель готова, но GLB-файл не найден (metadata.glbS3Key = null). Запустите конвертацию заново.'
+            );
+          }
+
           if (status === 'READY' && metadata?.glbS3Key) {
             // GLB готов — запрашиваем presigned URL и выходим из цикла
             const urlRes = await fetch(
@@ -555,14 +563,19 @@ export function IfcViewerCore({
         />
       )}
 
-      {/* Обычный спиннер загрузки GLB через сеть (после получения presigned URL) */}
+      {/* Skeleton-загрузка GLB через сеть (после получения presigned URL) */}
       {loading && !conversionState && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/80">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <span className="text-sm">Загрузка модели…</span>
-          {loadingProgress !== null && (
-            <span className="text-xs text-muted-foreground">{loadingProgress}%</span>
-          )}
+        <div className="absolute inset-0 flex flex-col gap-3 bg-background/90 p-6">
+          <div className="h-6 w-48 animate-pulse rounded bg-muted" />
+          <div className="flex-1 animate-pulse rounded-lg bg-muted/60" />
+          <div className="flex items-center justify-between">
+            <div className="h-3 w-32 animate-pulse rounded bg-muted" />
+            {loadingProgress !== null && (
+              <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                {loadingProgress}%
+              </span>
+            )}
+          </div>
         </div>
       )}
 

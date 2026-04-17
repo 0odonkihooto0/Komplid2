@@ -299,8 +299,10 @@ export function ElementPropertiesPanel({
       </div>
 
       {isLoading ? (
-        <div className="flex flex-1 items-center justify-center">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        <div className="flex flex-1 flex-col gap-2 p-4">
+          <div className="h-3 w-3/4 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-2/3 animate-pulse rounded bg-muted" />
         </div>
       ) : (
         <Tabs defaultValue="info" className="flex min-h-0 flex-1 flex-col">
