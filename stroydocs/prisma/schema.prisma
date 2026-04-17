@@ -57,10 +57,35 @@ enum FundingType {
 }
 
 enum TaskStatus {
-  OPEN // Открыта
+  OPEN // "Новая" (legacy)
+  PLANNED // Запланирована (startDate в будущем)
   IN_PROGRESS // В работе
+  UNDER_REVIEW // На проверке
+  REVISION // На доработке
   DONE // Выполнена
-  CANCELLED // Отменена
+  IRRELEVANT // Неактуальная
+  CANCELLED // Отменена (legacy)
+}
+
+// === Модуль 18 — Планировщик задач ===
+
+enum TaskRoleType {
+  AUTHOR
+  EXECUTOR
+  CONTROLLER
+  OBSERVER
+}
+
+enum TaskGroupVisibility {
+  EVERYONE
+  SELECTED
+}
+
+enum TaskScheduleRepeat {
+  DAY
+  WEEK
+  MONTH
+  YEAR
 }
 
 enum TaskPriority {
@@ -185,6 +210,12 @@ model Organization {
 
   // Модуль 11 — Шаблоны дефектов на уровне организации
   defectTemplates DefectTemplate[]
+
+  // Модуль 18 — Планировщик задач
+  taskGroups    TaskGroup[]
+  taskLabels    TaskLabel[]
+  taskTypes     TaskType[]
+  taskTemplates TaskTemplate[]
 
   @@map("organizations")
 }
@@ -340,6 +371,12 @@ model User {
 
   // Маршруты подписания (КриптоПро)
   signingSteps SigningStep[]
+
+  // Модуль 18 — Планировщик задач
+  taskRoles             TaskRole[]     @relation("TaskRoleUser")
+  taskGroupsAuthored    TaskGroup[]    @relation("TaskGroupAuthor")
+  taskTemplatesAuthored TaskTemplate[] @relation("TaskTemplateAuthor")
+  taskReportsAuthored   TaskReport[]   @relation("TaskReportAuthor")
 
   @@index([organizationId])
   @@map("users")
@@ -2316,10 +2353,31 @@ model Task {
   childTasks Task[]                    @relation("TaskHierarchy")
   version    ProjectManagementVersion? @relation(fields: [versionId], references: [id])
 
+  // === Модуль 18 — Планировщик задач (все поля опциональные) ===
+  typeId           String?
+  taskType         TaskType? @relation(fields: [typeId], references: [id])
+  groupId          String?
+  group            TaskGroup? @relation(fields: [groupId], references: [id])
+  templateId       String? // из какого шаблона создана
+  plannedStartDate DateTime? // Начало исполнения
+  actualStartDate  DateTime?
+  completedAt      DateTime?
+  duration         Int? // Длительность в МИНУТАХ — совместимо с шаблонами/расписаниями
+  isReadByAuthor   Boolean @default(true) // для жирного шрифта (непрочитанные изменения)
+  publicLinkToken  String? @unique // уникальный токен для «Скопировать ссылку»
+
+  roles     TaskRole[]
+  labels    TaskLabelOnTask[]
+  checklist TaskChecklistItem[]
+  reports   TaskReport[]
+
   @@index([projectId])
   @@index([assigneeId])
   @@index([parentTaskId])
   @@index([versionId])
+  @@index([typeId])
+  @@index([groupId])
+  @@index([templateId])
   @@map("tasks")
 }
 
@@ -5543,4 +5601,182 @@ model DefectNormativeRef {
 
   @@index([defectId])
   @@map("defect_normative_refs")
+}
+
+// === Модуль 18 — Планировщик задач (Task Manager) ===
+
+/// Роль пользователя в задаче (Автор / Исполнитель / Контролёр / Наблюдатель)
+model TaskRole {
+  id     String       @id @default(uuid())
+  taskId String
+  task   Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId String
+  user   User         @relation("TaskRoleUser", fields: [userId], references: [id])
+  role   TaskRoleType
+  createdAt DateTime @default(now())
+
+  @@unique([taskId, userId, role])
+  @@index([userId, role])
+  @@map("task_roles")
+}
+
+/// Группа задач (пользовательские группировки, поддерживают подгруппы)
+model TaskGroup {
+  id             String              @id @default(uuid())
+  name           String
+  parentId       String?
+  parent         TaskGroup?          @relation("TaskGroupTree", fields: [parentId], references: [id])
+  children       TaskGroup[]         @relation("TaskGroupTree")
+  visibility     TaskGroupVisibility @default(EVERYONE)
+  visibleUserIds String[]            @default([])
+  order          Int                 @default(0)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  authorId       String
+  author         User         @relation("TaskGroupAuthor", fields: [authorId], references: [id])
+
+  tasks     Task[]
+  labels    TaskLabel[]
+  templates TaskTemplate[]
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([parentId])
+  @@map("task_groups")
+}
+
+/// Метка (label) для задач
+model TaskLabel {
+  id      String     @id @default(uuid())
+  name    String
+  color   String     @default("#6366f1")
+  groupId String?
+  group   TaskGroup? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  tasks     TaskLabelOnTask[]
+  createdAt DateTime          @default(now())
+
+  @@index([organizationId])
+  @@map("task_labels")
+}
+
+/// Связь задачи и метки (M:N)
+model TaskLabelOnTask {
+  taskId  String
+  labelId String
+  task    Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  label   TaskLabel @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, labelId])
+  @@index([labelId])
+  @@map("task_label_on_task")
+}
+
+/// Тип задачи (справочник: Задача / Встреча / Доработки и пользовательские)
+model TaskType {
+  id    String @id @default(uuid())
+  key   String @unique // "task" | "meeting" | "fix" — системные
+  name  String
+  isSystem Boolean @default(false)
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  tasks     Task[]
+  templates TaskTemplate[]
+
+  @@index([organizationId])
+  @@map("task_types")
+}
+
+/// Шаблон задачи — переиспользуемый набор полей для быстрого создания задач
+model TaskTemplate {
+  id               String         @id @default(uuid())
+  name             String // "Шаблон"
+  description      String?
+  typeId           String?
+  taskType         TaskType?      @relation(fields: [typeId], references: [id])
+  groupId          String?
+  group            TaskGroup?     @relation(fields: [groupId], references: [id])
+  parentTemplateId String?
+  parentTemplate   TaskTemplate?  @relation("TaskTemplateTree", fields: [parentTemplateId], references: [id])
+  children         TaskTemplate[] @relation("TaskTemplateTree")
+  priority         TaskPriority   @default(MEDIUM)
+  duration         Int? // Длительность в минутах
+  s3Keys           String[]       @default([])
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  authorId       String
+  author         User         @relation("TaskTemplateAuthor", fields: [authorId], references: [id])
+
+  schedules TaskSchedule[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([typeId])
+  @@index([groupId])
+  @@map("task_templates")
+}
+
+/// Расписание генерации задач из шаблона (BullMQ cron)
+model TaskSchedule {
+  id             String             @id @default(uuid())
+  templateId     String
+  template       TaskTemplate       @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  repeatType     TaskScheduleRepeat
+  interval       Int                @default(1) // каждые N дней/недель/...
+  weekDays       Int[]              @default([]) // 0-6 (вс-сб) — если WEEK
+  monthDays      Int[]              @default([]) // 1-31 — если MONTH
+  startDate      DateTime
+  endDate        DateTime?
+  isActive       Boolean            @default(true)
+  createSubTasks Boolean            @default(false)
+  lastRunAt      DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([isActive, startDate])
+  @@map("task_schedules")
+}
+
+/// Пункт чек-листа задачи (с файлами)
+model TaskChecklistItem {
+  id     String   @id @default(uuid())
+  taskId String
+  task   Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  title  String
+  done   Boolean  @default(false)
+  order  Int      @default(0)
+  s3Keys String[] @default([])
+
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+  @@map("task_checklist_items")
+}
+
+/// Отчёт о выполнении задачи
+model TaskReport {
+  id          String    @id @default(uuid())
+  taskId      String
+  task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  progress    String // ход выполнения (обязательное)
+  newDeadline DateTime?
+  s3Keys      String[]  @default([])
+
+  authorId String
+  author   User   @relation("TaskReportAuthor", fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+  @@map("task_reports")
 }

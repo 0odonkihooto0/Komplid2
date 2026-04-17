@@ -266,6 +266,21 @@ async function main() {
   // === Шаблоны дефектов (Модуль 11) ===
   await seedDefectTemplates(prisma);
 
+  // === Системные типы задач (Модуль 18 — Планировщик задач) ===
+  const SYSTEM_TASK_TYPES = [
+    { key: 'task', name: 'Задача' },
+    { key: 'meeting', name: 'Встреча' },
+    { key: 'fix', name: 'Доработки' },
+  ];
+  for (const t of SYSTEM_TASK_TYPES) {
+    await prisma.taskType.upsert({
+      where: { key: t.key },
+      update: { name: t.name, isSystem: true },
+      create: { key: t.key, name: t.name, isSystem: true },
+    });
+  }
+  console.log('✅ Системные типы задач: созданы');
+
   console.log('Seed завершён:', { org: org.name, admin: admin.email });
 }
 

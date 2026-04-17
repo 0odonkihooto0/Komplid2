@@ -1364,6 +1364,66 @@
 ---
 ---
 
+## МОДУЛЬ 18 — Планировщик задач (Task Manager) ⬜
+
+> **Аналог:** ЦУС → Инструмент «Планировщик задач» (стр. 351–365 руководства)
+> **Отличие от УП:** УП — иерархия мероприятий объекта. Планировщик задач — глобальный task-manager (как Jira/Asana).
+> **Цель:** полноценный task-management с ролями, жизненным циклом, группами, шаблонами, расписанием, 5 представлениями.
+
+### База данных (TASK.1) ✅ (2026-04-17)
+- ✅ Расширение Task: typeId, groupId, templateId, plannedStartDate, actualStartDate, completedAt, duration (минуты), isReadByAuthor, publicLinkToken + relations (roles, labels, checklist, reports) — все новые поля опциональные, УП не затронут
+- ✅ TaskStatus расширен: PLANNED, UNDER_REVIEW, REVISION, IRRELEVANT (legacy OPEN/IN_PROGRESS/DONE/CANCELLED сохранены)
+- ✅ TaskRole — M:N роли (AUTHOR/EXECUTOR/CONTROLLER/OBSERVER), unique(taskId, userId, role)
+- ✅ TaskGroup (name, parentId, visibility, visibleUserIds[], order, authorId, organizationId)
+- ✅ TaskLabel (name, color, groupId, organizationId) + TaskLabelOnTask
+- ✅ TaskType (key @unique, name, isSystem, organizationId?) — системные: task, meeting, fix
+- ✅ TaskTemplate (name, description, typeId, groupId, parentTemplateId, priority, duration, s3Keys[], authorId)
+- ✅ TaskSchedule (repeatType, interval, weekDays[], monthDays[], startDate, endDate, isActive, createSubTasks, lastRunAt)
+- ✅ TaskChecklistItem (title, done, order, s3Keys[])
+- ✅ TaskReport (progress, newDeadline, s3Keys[], authorId)
+- ✅ Миграция `20260417000000_add_task_manager_module` + seed системных TaskType в `prisma/seed.ts`
+
+### API (TASK.2)
+- ⬜ GET/POST /api/tasks — глобальный реестр (с фильтрами по роли, группе, статусу, просрочке)
+- ⬜ Task actions: /start, /send-to-review, /review-start, /accept, /return-to-revision, /discuss, /mark-irrelevant, /redirect, /delegate, /copy, /to-template
+- ⬜ /api/task-groups, /api/task-labels, /api/task-types, /api/task-templates, /api/task-schedules
+- ⬜ /api/tasks/[id]/checklist, /api/tasks/[id]/reports
+- ⬜ BullMQ воркер task-schedule.worker — генерация задач по расписанию
+
+### UI — глобальная страница (TASK.3)
+- ⬜ /planner — глобальный планировщик
+- ⬜ Левая панель группировок: Активные/Выполняю/Контролирую/Наблюдаю/Созданные мной/Неактуальные/Просроченные/Выполненные/Шаблоны + Группы задач (с CRUD, подгруппы, метки, видимость)
+- ⬜ Правая часть: список задач с переключателем представлений
+- ⬜ Вкладки представлений (можно открывать несколько)
+
+### 5 представлений (TASK.4)
+- ⬜ Список задач (TanStack Table)
+- ⬜ Канбан-доска (колонки по статусам, drag-n-drop @dnd-kit)
+- ⬜ Календарь (react-big-calendar или dhtmlx)
+- ⬜ Краткий список (минималистичный)
+- ⬜ Новостная лента (хронологический поток)
+
+### Шаблоны и автоматизация (TASK.5)
+- ⬜ Создание шаблона с нуля / из задачи
+- ⬜ Вкладка «Расписание» в шаблоне
+- ⬜ BullMQ cron-воркер для генерации задач по расписанию
+- ⬜ Список шаблонов в группировке «Шаблоны»
+
+### Карточка задачи расширенная (TASK.6)
+- ⬜ 4 роли с кнопками «Действия» для каждой (контролёр: начать проверку / принять / вернуть / обсудить; исполнитель: взять / отправить / делегировать / перенаправить; наблюдатель: комментарии)
+- ⬜ Чек-лист с файлами
+- ⬜ Вкладка «Отчёты о выполнении»
+- ⬜ Копировать ссылку на задачу
+- ⬜ Счётчик непрочитанных изменений (жирный шрифт в списке)
+
+### Боковая выезжающая панель (TASK.7)
+- ⬜ Значок-триггер в шапке (на всех страницах)
+- ⬜ Sheet с превью задач + кнопки «Все задачи» и «Добавить»
+- ⬜ Badge с количеством просроченных задач
+
+---
+---
+
 # ТЕХНИЧЕСКИЙ ДОЛГ И СКВОЗНЫЕ ЗАДАЧИ
 
 - ⬜ Справочник нормативных документов (СНиП, СП, ГОСТ) — tsvector-поиск
