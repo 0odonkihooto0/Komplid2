@@ -9,6 +9,7 @@ import { UploadModelDialog } from './UploadModelDialog';
 import { useSections } from './useSections';
 import type { BimSection } from './useSections';
 import { useModels } from './useModels';
+import type { BimModelItem } from './useModels';
 
 interface ModelsViewProps {
   objectId: string;
@@ -17,6 +18,10 @@ interface ModelsViewProps {
 export function ModelsView({ objectId }: ModelsViewProps) {
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
+  // При «Загрузить новую версию» из меню ⋮ — пред-заполняем имя и раздел
+  const [uploadDefaults, setUploadDefaults] = useState<{
+    name?: string; sectionId?: string | null;
+  }>({});
 
   const sectionsQuery = useSections(objectId);
   const modelsQuery = useModels(objectId, selectedSectionId);
@@ -27,6 +32,16 @@ export function ModelsView({ objectId }: ModelsViewProps) {
   const selectedSectionName = selectedSectionId
     ? findSectionName(sections, selectedSectionId)
     : null;
+
+  const openUploadFresh = () => {
+    setUploadDefaults({ sectionId: selectedSectionId });
+    setUploadOpen(true);
+  };
+
+  const openUploadNewVersion = (model: BimModelItem) => {
+    setUploadDefaults({ name: model.name, sectionId: model.section?.id ?? null });
+    setUploadOpen(true);
+  };
 
   return (
     <div className="flex h-full min-h-0">
@@ -49,17 +64,15 @@ export function ModelsView({ objectId }: ModelsViewProps) {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-lg font-semibold">
-              {selectedSectionName ? `Раздел: ${selectedSectionName}` : 'Все модели'}
+              Версии модели {models.length}
             </h2>
-            <p className="text-sm text-muted-foreground">
-              {models.length > 0
-                ? `${models.length} ${pluralModels(models.length)}`
-                : 'Нет загруженных моделей'}
-            </p>
+            {selectedSectionName && (
+              <p className="text-sm text-muted-foreground">Раздел: {selectedSectionName}</p>
+            )}
           </div>
-          <Button onClick={() => setUploadOpen(true)} className="gap-2">
+          <Button onClick={openUploadFresh} className="gap-2">
             <Plus className="h-4 w-4" />
-            Загрузить IFC
+            Загрузить версию модели
           </Button>
         </div>
 
@@ -67,6 +80,8 @@ export function ModelsView({ objectId }: ModelsViewProps) {
           models={models}
           isLoading={modelsQuery.isLoading}
           projectId={objectId}
+          onUploadClick={openUploadFresh}
+          onUploadNewVersion={openUploadNewVersion}
         />
       </div>
 
@@ -75,7 +90,8 @@ export function ModelsView({ objectId }: ModelsViewProps) {
         onOpenChange={setUploadOpen}
         projectId={objectId}
         sections={sections}
-        defaultSectionId={selectedSectionId}
+        defaultSectionId={uploadDefaults.sectionId ?? selectedSectionId}
+        defaultName={uploadDefaults.name}
       />
     </div>
   );
@@ -90,10 +106,4 @@ function findSectionName(sections: BimSection[], id: string): string | null {
     if (found) return found;
   }
   return null;
-}
-
-function pluralModels(n: number): string {
-  if (n % 10 === 1 && n % 100 !== 11) return 'модель';
-  if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) return 'модели';
-  return 'моделей';
 }

@@ -52,6 +52,8 @@ interface DataTableProps<TData, TValue> {
   searchPlaceholder?: string;
   searchColumn?: string;
   onRowClick?: (row: TData) => void;
+  /** Функция для подсветки строк по условию (например — актуальная версия) */
+  getRowClassName?: (row: TData) => string | undefined;
 }
 
 export function DataTable<TData, TValue>({
@@ -60,6 +62,7 @@ export function DataTable<TData, TValue>({
   searchPlaceholder = 'Поиск...',
   searchColumn,
   onRowClick,
+  getRowClassName,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
@@ -103,19 +106,25 @@ export function DataTable<TData, TValue>({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  onClick={() => onRowClick?.(row.original)}
-                  className={onRowClick ? 'cursor-pointer hover:bg-muted/50 transition-colors border-b' : 'hover:bg-muted/50 transition-colors border-b'}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="py-2 px-4">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) => {
+                const baseClass = onRowClick
+                  ? 'cursor-pointer hover:bg-muted/50 transition-colors border-b'
+                  : 'hover:bg-muted/50 transition-colors border-b';
+                const extraClass = getRowClassName?.(row.original);
+                return (
+                  <TableRow
+                    key={row.id}
+                    onClick={() => onRowClick?.(row.original)}
+                    className={extraClass ? `${baseClass} ${extraClass}` : baseClass}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="py-2 px-4">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,10 +49,12 @@ interface UploadModelDialogProps {
   projectId: string;
   sections: BimSection[];
   defaultSectionId?: string | null;
+  /** Пред-заполнить поле «Наименование» (для загрузки новой версии существующей модели) */
+  defaultName?: string;
 }
 
 export function UploadModelDialog({
-  open, onOpenChange, projectId, sections, defaultSectionId,
+  open, onOpenChange, projectId, sections, defaultSectionId, defaultName,
 }: UploadModelDialogProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -61,6 +63,14 @@ export function UploadModelDialog({
   const [stage, setStage] = useState('');
   const [source, setSource] = useState('');
   const [comment, setComment] = useState('');
+
+  // Синхронизация пред-заполненных значений при открытии диалога
+  useEffect(() => {
+    if (open) {
+      if (defaultName !== undefined) setName(defaultName);
+      if (defaultSectionId) setSectionId(defaultSectionId);
+    }
+  }, [open, defaultName, defaultSectionId]);
 
   const upload = useUploadModel(projectId);
   const flatSections = flattenSections(sections);
