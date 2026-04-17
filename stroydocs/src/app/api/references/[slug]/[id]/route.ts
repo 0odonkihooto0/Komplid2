@@ -4,8 +4,9 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { getReferenceSchema } from '@/lib/references/registry';
+import { writeAudit } from '@/lib/references/audit';
 import type { ReferenceFieldSchema } from '@/lib/references/types';
-import { Prisma } from '@prisma/client';
+import { ReferenceAuditAction } from '@prisma/client';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -102,16 +103,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const updated = await modelClient.update({ where: { id: params.id }, data: updateData });
 
     if (schema.auditable !== false) {
-      await db.referenceAudit.create({
-        data: {
-          slug: params.slug,
-          entryId: params.id,
-          action: 'UPDATE',
-          oldData: existing as unknown as Prisma.InputJsonValue,
-          newData: updated as unknown as Prisma.InputJsonValue,
-          userId: session.user.id,
-          organizationId: schema.scope === 'organization' ? session.user.organizationId : null,
-        },
+      await writeAudit({
+        entityType: params.slug,
+        entityId: params.id,
+        action: ReferenceAuditAction.UPDATE,
+        oldValues: existing as Record<string, unknown>,
+        newValues: updated as Record<string, unknown>,
+        userId: session.user.id,
+        organizationId: schema.scope === 'organization' ? session.user.organizationId : null,
       });
     }
 
@@ -143,15 +142,13 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     await modelClient.delete({ where: { id: params.id } });
 
     if (schema.auditable !== false) {
-      await db.referenceAudit.create({
-        data: {
-          slug: params.slug,
-          entryId: params.id,
-          action: 'DELETE',
-          oldData: existing as unknown as Prisma.InputJsonValue,
-          userId: session.user.id,
-          organizationId: schema.scope === 'organization' ? session.user.organizationId : null,
-        },
+      await writeAudit({
+        entityType: params.slug,
+        entityId: params.id,
+        action: ReferenceAuditAction.DELETE,
+        oldValues: existing as Record<string, unknown>,
+        userId: session.user.id,
+        organizationId: schema.scope === 'organization' ? session.user.organizationId : null,
       });
     }
 

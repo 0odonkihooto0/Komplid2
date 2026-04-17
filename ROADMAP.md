@@ -1531,10 +1531,13 @@
 - ✅ `src/lib/references/registry.ts` — `REFERENCE_REGISTRY`, `getReferenceSchema`, `listReferenceSchemas`
 - ✅ API: `GET/POST /api/references/[slug]`, `GET/PATCH/DELETE /api/references/[slug]/[id]`, `POST /api/references/[slug]/bulk-delete`, `POST /api/references/[slug]/export`
 
-### Audit (REF.2)
-- ✅ Модель `ReferenceAudit` (slug, entryId, action, oldData Json, newData Json, userId, organizationId, timestamp) — добавлена в schema.prisma
-- ⬜ Боковая панель «История изменений» с датой/временем/пользователем/дифом
-- ⬜ Утилита `lib/reference-audit.ts` — обёртка над Prisma для автоматической записи в аудит
+### Audit (REF.2) ✅ 2026-04-17
+- ✅ Модель `ReferenceAudit` — enum `ReferenceAuditAction` (CREATE/UPDATE/DELETE), поля `entityType/entityId/action/oldValues/newValues/changedFields`, named relation к User ("ReferenceAuditUser") и relation к Organization с onDelete: Cascade
+- ✅ Утилита `src/lib/references/audit.ts` — `writeAudit()` + `diffObjects()`
+- ✅ Обновлены API-роуты (POST/PATCH/DELETE/bulk-delete) — используют `writeAudit` вместо прямых `db.referenceAudit.create`
+- ✅ `GET /api/references/[slug]/audit` — cursor-based пагинация, фильтры по entityId и диапазону дат, include user
+- ✅ `<ReferenceAuditPanel>` — боковая панель 480px: список с подгрузкой, иконки по action, ФИО + relative time + tooltip точного времени, раскрывающийся дифф полей для UPDATE
+- ✅ Кнопка «История» (иконка History) в `<ReferenceTable>` открывает панель (скрыта если `auditable: false`)
 
 ### Базовые справочники (REF.3–REF.5)
 - ⬜ Currency (Валюты): name, shortName, shortSymbol, fullName, englishName, caseForm, code — с seed 20 мировых валют

@@ -217,6 +217,9 @@ model Organization {
   taskTypes     TaskType[]
   taskTemplates TaskTemplate[]
 
+  // Модуль 19 — Аудит справочников
+  referenceAudits ReferenceAudit[]
+
   @@map("organizations")
 }
 
@@ -380,7 +383,7 @@ model User {
   taskComments          TaskComment[]  @relation("TaskCommentAuthor")
 
   // Модуль 19 — Справочники
-  referenceAudits ReferenceAudit[]
+  referenceAudits ReferenceAudit[] @relation("ReferenceAuditUser")
 
   @@index([organizationId])
   @@map("users")
@@ -5800,21 +5803,28 @@ model TaskComment {
   @@map("task_comments")
 }
 
+enum ReferenceAuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
 /// Аудит изменений справочников (Модуль 19 — REF.2 История изменений)
 model ReferenceAudit {
-  id             String  @id @default(uuid())
-  slug           String
-  entryId        String
-  action         String  // 'CREATE' | 'UPDATE' | 'DELETE'
-  oldData        Json?
-  newData        Json?
-  userId         String
-  user           User    @relation(fields: [userId], references: [id])
+  id            String               @id @default(uuid())
+  entityType    String
+  entityId      String
+  action        ReferenceAuditAction
+  oldValues     Json?
+  newValues     Json?
+  changedFields String[]             @default([])
+  userId        String
+  user          User                 @relation("ReferenceAuditUser", fields: [userId], references: [id])
   organizationId String?
+  organization  Organization?        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt     DateTime             @default(now())
 
-  createdAt DateTime @default(now())
-
-  @@index([slug, entryId])
-  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([organizationId, entityType])
   @@map("reference_audits")
 }

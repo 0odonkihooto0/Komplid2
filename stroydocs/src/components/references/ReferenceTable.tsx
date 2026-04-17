@@ -21,11 +21,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, MoreVertical, Printer, Columns, Trash2, Plus, Link, Info, Pencil } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, MoreVertical, Printer, Columns, Trash2, Plus, Link, Info, Pencil, History } from 'lucide-react';
 import { useReferenceTable } from './useReferenceTable';
 import { ReferenceEditDialog } from './ReferenceEditDialog';
 import { ReferenceInfoDialog } from './ReferenceInfoDialog';
 import { DeleteReferenceDialog } from './DeleteReferenceDialog';
+import { ReferenceAuditPanel } from './ReferenceAuditPanel';
 import type { ReferenceSchema } from '@/lib/references/types';
 import { toast } from '@/hooks/useToast';
 
@@ -39,6 +40,7 @@ export function ReferenceTable({ schema }: Props) {
   const [infoEntry, setInfoEntry] = useState<Record<string, unknown> | null>(null);
   const [deleteIds, setDeleteIds] = useState<string[]>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [auditOpen, setAuditOpen] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => state.setSearch(debouncedSearch), 300);
@@ -106,6 +108,12 @@ export function ReferenceTable({ schema }: Props) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {schema.auditable !== false && (
+          <Button variant="outline" size="sm" onClick={() => setAuditOpen(true)}>
+            <History className="h-4 w-4 mr-1" />История
+          </Button>
+        )}
 
         <div className="flex-1" />
 
@@ -197,6 +205,9 @@ export function ReferenceTable({ schema }: Props) {
         onEdit={() => { setEditEntry(infoEntry); setInfoEntry(null); setEditOpen(true); }} />}
       <DeleteReferenceDialog schema={schema} ids={deleteIds} open={deleteOpen} onOpenChange={setDeleteOpen}
         onConfirm={() => { state.bulkDelete(deleteIds); setDeleteOpen(false); }} isPending={state.isDeleting} />
+      {schema.auditable !== false && (
+        <ReferenceAuditPanel slug={schema.slug} open={auditOpen} onOpenChange={setAuditOpen} />
+      )}
     </div>
   );
 }
