@@ -30,7 +30,7 @@ function formatDate(iso: string | null) {
   return new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
 }
 
-function KanbanCard({ task }: { task: GlobalTask }) {
+function KanbanCard({ task, onTaskClick }: { task: GlobalTask; onTaskClick?: (id: string) => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: task.id,
     data: { status: task.status },
@@ -42,9 +42,11 @@ function KanbanCard({ task }: { task: GlobalTask }) {
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      onClick={(e) => { if (!isDragging) { e.stopPropagation(); onTaskClick?.(task.id); } }}
       className={cn(
         'cursor-grab rounded-lg border bg-white p-3 shadow-sm select-none',
         isDragging && 'opacity-40',
+        !isDragging && onTaskClick && 'hover:border-blue-300',
       )}
     >
       <div className="mb-1 flex items-start gap-2">
@@ -103,10 +105,11 @@ function KanbanCard({ task }: { task: GlobalTask }) {
 }
 
 function KanbanColumn({
-  status, label, color, tasks, onQuickCreate,
+  status, label, color, tasks, onQuickCreate, onTaskClick,
 }: {
   status: TaskStatus; label: string; color: string;
   tasks: GlobalTask[]; onQuickCreate: (status: TaskStatus, title: string) => void;
+  onTaskClick?: (id: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   const [creating, setCreating] = useState(false);
@@ -137,7 +140,7 @@ function KanbanColumn({
         className={cn('flex flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2', isOver && 'ring-2 ring-blue-300 ring-inset rounded-b-lg')}
         style={{ minHeight: 80 }}
       >
-        {tasks.map((t) => <KanbanCard key={t.id} task={t} />)}
+        {tasks.map((t) => <KanbanCard key={t.id} task={t} onTaskClick={onTaskClick} />)}
       </div>
 
       <div className="px-2 pb-2">
@@ -171,9 +174,10 @@ interface Props {
   grouping: string;
   groupId?: string | null;
   search?: string;
+  onTaskClick?: (id: string) => void;
 }
 
-export function TaskKanbanView({ currentUserId, grouping, groupId, search }: Props) {
+export function TaskKanbanView({ currentUserId, grouping, groupId, search, onTaskClick }: Props) {
   const { tasks, isLoading, changeStatus } = useTaskKanban({ grouping, groupId, search });
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -235,6 +239,7 @@ export function TaskKanbanView({ currentUserId, grouping, groupId, search }: Pro
             color={col.color}
             tasks={tasksByStatus[col.status] ?? []}
             onQuickCreate={handleQuickCreate}
+            onTaskClick={onTaskClick}
           />
         ))}
       </div>
