@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Building2, FileText, BookOpen, BarChart3, Monitor, Inbox, type LucideIcon } from 'lucide-react';
+import { LayoutDashboard, Building2, FileText, BookOpen, BarChart3, Monitor, Inbox, ClipboardList, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -23,6 +23,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: '/', label: 'Главная', icon: LayoutDashboard },
   { href: '/inbox', label: 'Входящие', icon: Inbox, showInboxBadge: true },
+  { href: '/planner', label: 'Планировщик задач', icon: ClipboardList },
   { href: '/objects', label: 'Объекты', icon: Building2 },
   { href: '/analytics', label: 'Аналитика', icon: BarChart3 },
   { href: '/monitoring', label: 'Мониторинг', icon: Monitor },

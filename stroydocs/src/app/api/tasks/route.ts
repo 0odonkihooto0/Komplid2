@@ -100,6 +100,15 @@ export async function GET(req: NextRequest) {
       }
     })();
 
+    // Вычисление граничных дат для фильтров «сегодня» и «ближайшие 7 дней»
+    const startOfToday = new Date(now);
+    startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date(now);
+    endOfToday.setHours(23, 59, 59, 999);
+    const endOfWeek = new Date(now);
+    endOfWeek.setDate(endOfWeek.getDate() + 7);
+    endOfWeek.setHours(23, 59, 59, 999);
+
     // Параллельно: список задач, общий count, counts по группировкам
     const [tasks, total, countsArr] = await Promise.all([
       db.task.findMany({
@@ -120,11 +129,17 @@ export async function GET(req: NextRequest) {
         db.task.count({ where: { ...visibilityWhere, ...additionalFilters, status: 'IRRELEVANT' } }),
         db.task.count({ where: { ...visibilityWhere, ...additionalFilters, deadline: { lt: now }, status: { notIn: TERMINAL_STATUSES } } }),
         db.task.count({ where: { ...visibilityWhere, ...additionalFilters, status: 'DONE' } }),
+        // today: задачи со сроком сегодня
+        db.task.count({ where: { ...visibilityWhere, ...additionalFilters,
+          deadline: { gte: startOfToday, lte: endOfToday } } }),
+        // week: задачи со сроком в ближайшие 7 дней
+        db.task.count({ where: { ...visibilityWhere, ...additionalFilters,
+          deadline: { gte: now, lte: endOfWeek } } }),
       ]),
     ]);
 
-    const [all, active, executor, controller, observer, author, irrelevant, overdue, completed] = countsArr;
-    const counts = { all, active, executor, controller, observer, author, irrelevant, overdue, completed };
+    const [all, active, executor, controller, observer, author, irrelevant, overdue, completed, today, week] = countsArr;
+    const counts = { all, active, executor, controller, observer, author, irrelevant, overdue, completed, today, week };
 
     return successResponse(
       { tasks, counts },
