@@ -1370,16 +1370,18 @@
 > **Отличие от УП:** УП — иерархия мероприятий объекта. Планировщик задач — глобальный task-manager (как Jira/Asana).
 > **Цель:** полноценный task-management с ролями, жизненным циклом, группами, шаблонами, расписанием, 5 представлениями.
 
-### База данных (TASK.1)
-- ⬜ Расширение Task: type, label[], groupId, templateId, plannedStartDate, actualStartDate, completedAt, duration, checklist[], coverageStatus (Новая/Запланирована/В работе/На проверке/На доработке/Выполнена/Неактуальная)
-- ⬜ TaskRole — роли участников (AUTHOR/EXECUTOR/CONTROLLER/OBSERVER) с many-to-many через промежуточную таблицу
-- ⬜ TaskGroup (name, parentId, visibility, visibleUserIds, order, authorId)
-- ⬜ TaskLabel (name, color, groupId)
-- ⬜ TaskType (справочник типов)
-- ⬜ TaskTemplate (все поля задачи + duration + scheduleId)
-- ⬜ TaskSchedule (repeatType, interval, weekDays, monthDays, startDate, endDate, isActive, createSubTasks)
-- ⬜ TaskChecklistItem (title, done, order, s3Keys[])
-- ⬜ TaskReport (progress text, newDeadline, s3Keys[], authorId, createdAt)
+### База данных (TASK.1) ✅ (2026-04-17)
+- ✅ Расширение Task: typeId, groupId, templateId, plannedStartDate, actualStartDate, completedAt, duration (минуты), isReadByAuthor, publicLinkToken + relations (roles, labels, checklist, reports) — все новые поля опциональные, УП не затронут
+- ✅ TaskStatus расширен: PLANNED, UNDER_REVIEW, REVISION, IRRELEVANT (legacy OPEN/IN_PROGRESS/DONE/CANCELLED сохранены)
+- ✅ TaskRole — M:N роли (AUTHOR/EXECUTOR/CONTROLLER/OBSERVER), unique(taskId, userId, role)
+- ✅ TaskGroup (name, parentId, visibility, visibleUserIds[], order, authorId, organizationId)
+- ✅ TaskLabel (name, color, groupId, organizationId) + TaskLabelOnTask
+- ✅ TaskType (key @unique, name, isSystem, organizationId?) — системные: task, meeting, fix
+- ✅ TaskTemplate (name, description, typeId, groupId, parentTemplateId, priority, duration, s3Keys[], authorId)
+- ✅ TaskSchedule (repeatType, interval, weekDays[], monthDays[], startDate, endDate, isActive, createSubTasks, lastRunAt)
+- ✅ TaskChecklistItem (title, done, order, s3Keys[])
+- ✅ TaskReport (progress, newDeadline, s3Keys[], authorId)
+- ✅ Миграция `20260417000000_add_task_manager_module` + seed системных TaskType в `prisma/seed.ts`
 
 ### API (TASK.2)
 - ⬜ GET/POST /api/tasks — глобальный реестр (с фильтрами по роли, группе, статусу, просрочке)
