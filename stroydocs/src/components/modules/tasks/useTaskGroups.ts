@@ -28,7 +28,7 @@ function buildGroupTree(groups: TaskGroupItem[]): TaskGroupItem[] {
     map.set(g.id, { ...g, children: [] });
   }
   const roots: TaskGroupItem[] = [];
-  for (const g of map.values()) {
+  for (const g of Array.from(map.values())) {
     if (g.parentId) {
       const parent = map.get(g.parentId);
       if (parent) {

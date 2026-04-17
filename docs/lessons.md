@@ -231,12 +231,19 @@ HTTP 200 — дефолт, явно передавать не нужно.
 Правило: при добавлении нового state в хук сразу добавлять его в return-объект.
 Проверять возвращаемый объект хука совпадает с тем что деструктурирует компонент.
 
-**`Array.entries()` в `for...of` без `Array.from()` — ошибка при target < ES2015.**
-`for (const [i, v] of arr.entries())` вызывает TS-ошибку
-`Type 'IterableIterator' can only be iterated through when using '--downlevelIteration'`.
-Правило (аналогично `[...new Set(...)]`): **всегда** оборачивать в `Array.from()`:
-`for (const [i, v] of Array.from(arr.entries()))`.
-Относится к любым методам возвращающим `IterableIterator`: `.entries()`, `.keys()`, `.values()`.
+**`Array/Map/Set .entries()/.keys()/.values()` в `for...of` без `Array.from()` — ошибка при target < ES2015.**
+`for (const [i, v] of arr.entries())` и `for (const g of map.values())` вызывают TS-ошибку
+`Type 'MapIterator<T>' (или 'IterableIterator') can only be iterated through when using '--downlevelIteration'`.
+Ошибка проявляется только на `next build` — локально без `node_modules` молчит.
+Правило: **всегда** оборачивать в `Array.from()`:
+```typescript
+for (const [i, v] of Array.from(arr.entries())) { ... }
+for (const g of Array.from(map.values())) { ... }
+for (const k of Array.from(map.keys())) { ... }
+```
+Зафиксировано в `useTaskGroups.ts` (`map.values()`).
+Относится к: `Array.entries/keys/values`, `Map.entries/keys/values`, `Set.values`.
+Поиск нарушений: `grep -rn "\.values()\|\.keys()\|\.entries()" src | grep "for.*of" | grep -v "Array\.from" | grep -v "Object\."`
 
 ---
 
