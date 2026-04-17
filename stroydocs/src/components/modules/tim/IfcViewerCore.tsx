@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Vector2 } from 'three';
-import { ViewerToolbar } from './ViewerToolbar';
+import type * as THREE_NS from 'three';
+import { ViewerToolbar, type CameraView } from './ViewerToolbar';
 import { ClippingPanel } from './ClippingPanel';
 import { LayerPanel } from './LayerPanel';
 import { ViewerContextMenu } from './ViewerContextMenu';
@@ -20,6 +21,27 @@ import type { ViewerScene } from './ifcSceneSetup';
 const POLL_INTERVAL_MS = 5_000;
 /** Через сколько мс в статусе CONVERTING показать fallback-панель */
 const FALLBACK_AFTER_MS = 10 * 60 * 1000; // 10 минут
+
+/** Локализованные метки видов для overlay в левом верхнем углу canvas */
+const VIEW_LABELS: Record<CameraView, string> = {
+  perspective: 'Перспектива',
+  front: 'Спереди',
+  back: 'Сзади',
+  left: 'Слева',
+  right: 'Справа',
+  top: 'Сверху',
+  bottom: 'Снизу',
+};
+
+/** Смещение камеры от центра модели для каждого ортогонального вида */
+const VIEW_AXIS_OFFSET: Record<Exclude<CameraView, 'perspective'>, [number, number, number]> = {
+  front: [0, 0, 1],
+  back: [0, 0, -1],
+  right: [1, 0, 0],
+  left: [-1, 0, 0],
+  top: [0, 1, 0],
+  bottom: [0, -1, 0],
+};
 
 interface Props {
   /** ID объекта строительства (используется для запроса /glb-url) */
@@ -70,6 +92,13 @@ export function IfcViewerCore({
   const [selectedGuid, setSelectedGuid] = useState<string | null>(null);
   const [layersOpen, setLayersOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  /** Текущий вид камеры (перспектива / 6 ортогональных) — управляется дропдауном «Вид» */
+  const [currentView, setCurrentView] = useState<CameraView>('perspective');
+  /** Сохранённая позиция перспективной камеры — восстанавливается при возврате из орто-вида */
+  const perspectiveStateRef = useRef<{
+    position: [number, number, number];
+    target: [number, number, number];
+  } | null>(null);
 
   // ─── Состояние конвертации BIM-модели ────────────────────────────────────────
   const [conversionState, setConversionState] = useState<ConversionUiState | null>(null);
@@ -109,6 +138,88 @@ export function IfcViewerCore({
     s.camera.position.copy(center).addScalar(Math.max(size.x, size.y, size.z) * 1.5);
     s.controls.target.copy(center);
     s.controls.update();
+  }, []);
+
+  /**
+   * Переключение между перспективным и ортогональным видами.
+   * Для орто-вида создаём OrthographicCamera и пересоздаём OrbitControls —
+   * попытка `controls.object = camera` оставляет внутренний стейт (spherical,
+   * lastPosition), привязанный к старой камере, и даёт рывки при первом drag.
+   */
+  const applyView = useCallback(async (view: CameraView) => {
+    const s = sceneRef.current;
+    if (!s) return;
+    const THREE = await import('three');
+    const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
+
+    const { clientWidth: w, clientHeight: h } = s.renderer.domElement;
+    const aspect = h > 0 ? w / h : 1;
+
+    const box = new THREE.Box3().setFromObject(s.scene);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z) || 10;
+
+    // Перед сменой на ортогональный вид — запомнить позицию текущей перспективной камеры
+    if (view !== 'perspective' && s.camera instanceof THREE.PerspectiveCamera) {
+      const p = s.camera.position;
+      const t = s.controls.target;
+      perspectiveStateRef.current = {
+        position: [p.x, p.y, p.z],
+        target: [t.x, t.y, t.z],
+      };
+    }
+
+    let camera: THREE_NS.PerspectiveCamera | THREE_NS.OrthographicCamera;
+    let target: THREE_NS.Vector3;
+
+    if (view === 'perspective') {
+      const pcam = new THREE.PerspectiveCamera(45, aspect, 0.01, Math.max(100000, maxDim * 100));
+      const saved = perspectiveStateRef.current;
+      if (saved) {
+        pcam.position.set(saved.position[0], saved.position[1], saved.position[2]);
+        target = new THREE.Vector3(saved.target[0], saved.target[1], saved.target[2]);
+      } else {
+        // Дефолтный fit по центру модели (паттерн как в loadGlbModel)
+        pcam.position
+          .copy(center)
+          .addScaledVector(new THREE.Vector3(1, 1, 1).normalize(), maxDim * 1.8);
+        target = center.clone();
+      }
+      camera = pcam;
+    } else {
+      const halfH = maxDim;
+      const halfW = halfH * aspect;
+      const ocam = new THREE.OrthographicCamera(
+        -halfW, halfW, halfH, -halfH,
+        -maxDim * 10, maxDim * 10,
+      );
+      const axis = VIEW_AXIS_OFFSET[view];
+      ocam.position
+        .copy(center)
+        .add(new THREE.Vector3(axis[0], axis[1], axis[2]).multiplyScalar(maxDim * 2));
+      // Для видов сверху/снизу стандартный up (0,1,0) даёт вырождение — камера смотрит
+      // вдоль оси Y. Перенаправляем up на ось -Z, чтобы верх сцены совпадал с направлением «север».
+      if (view === 'top' || view === 'bottom') {
+        ocam.up.set(0, 0, -1);
+      } else {
+        ocam.up.set(0, 1, 0);
+      }
+      ocam.lookAt(center);
+      camera = ocam;
+      target = center.clone();
+    }
+
+    // Пересоздаём OrbitControls — смена .object оставляет stale internal state
+    s.controls.dispose();
+    const controls = new OrbitControls(camera, s.renderer.domElement);
+    controls.enableDamping = true;
+    controls.target.copy(target);
+    controls.update();
+
+    s.controls = controls;
+    s.camera = camera;
+    setCurrentView(view);
   }, []);
 
   // ─── Действия на экране прогресса/ошибки ─────────────────────────────────────
@@ -286,8 +397,17 @@ export function IfcViewerCore({
       const s = sceneRef.current;
       if (!s || !containerRef.current) return;
       const { clientWidth: w, clientHeight: h } = containerRef.current;
-      s.camera.aspect = w / h;
-      s.camera.updateProjectionMatrix();
+      // PerspectiveCamera хранит aspect, OrthographicCamera — left/right/top/bottom
+      if ('isPerspectiveCamera' in s.camera && s.camera.isPerspectiveCamera) {
+        s.camera.aspect = w / h;
+        s.camera.updateProjectionMatrix();
+      } else if ('isOrthographicCamera' in s.camera && s.camera.isOrthographicCamera) {
+        const halfH = (s.camera.top - s.camera.bottom) / 2;
+        const halfW = halfH * (w / h);
+        s.camera.left = -halfW;
+        s.camera.right = halfW;
+        s.camera.updateProjectionMatrix();
+      }
       s.renderer.setSize(w, h);
       s.css2dRenderer.setSize(w, h);
     }
@@ -339,6 +459,8 @@ export function IfcViewerCore({
       <ViewerToolbar
         displayMode={displayModes.mode}
         onDisplayModeChange={displayModes.setMode}
+        currentView={currentView}
+        onViewChange={applyView}
         onReset={handleReset}
         onFit={handleFit}
         onClipping={clipping.toggle}
@@ -359,9 +481,9 @@ export function IfcViewerCore({
       <div className="relative min-h-0 flex-1">
       <div ref={containerRef} className="h-full w-full" />
 
-      {/* Метка вида */}
+      {/* Метка вида — динамически отражает currentView */}
       <div className="pointer-events-none absolute left-2 top-2 z-10 rounded bg-white/70 px-2 py-0.5 text-xs text-gray-500 backdrop-blur">
-        Перспектива
+        {VIEW_LABELS[currentView]}
       </div>
 
       {/* Легенда цветов по типу IFC — только в режиме «По типу» */}
