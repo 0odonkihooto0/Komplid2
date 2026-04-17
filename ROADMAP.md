@@ -1512,6 +1512,58 @@
 
 ---
 
+---
+
+## МОДУЛЬ 19 — Справочники (Reference Data) ⬜
+
+> **Аналог:** ЦУС → Главное меню «Справочники» → Общие справочники (стр. 366–372 руководства)
+> **Цель:** единый UI-фреймворк для всех справочников системы по принципу ЦУС: «Работа со всеми справочниками организована по единому принципу».
+
+### Инфраструктура (REF.1)
+- ⬜ Универсальный компонент `<ReferenceTable>` — таблица с настройкой колонок (боковая панель чекбоксов), фильтрацией, сортировкой, пагинацией, bulk-операциями
+- ⬜ Универсальный Excel-экспорт: 3 варианта (все доступные колонки / отображаемые / все данные)
+- ⬜ Универсальный диалог редактирования `<ReferenceEditDialog>` (декларативные поля)
+- ⬜ Меню действий (⋮): Информация / Редактировать / Удалить / Скопировать ссылку
+- ⬜ Массовое удаление через чекбоксы
+- ⬜ Диалог подтверждения удаления
+- ⬜ Shareable link: `/references/[slug]/entry/[id]` — прямая ссылка на запись
+
+### Audit (REF.2)
+- ⬜ Модель `ReferenceAudit` (entityType, entityId, action, oldValues Json, newValues Json, userId, timestamp)
+- ⬜ Боковая панель «История изменений» с датой/временем/пользователем/дифом
+- ⬜ Утилита `lib/reference-audit.ts` — обёртка над Prisma для автоматической записи в аудит
+
+### Базовые справочники (REF.3–REF.5)
+- ⬜ Currency (Валюты): name, shortName, shortSymbol, fullName, englishName, caseForm, code — с seed 20 мировых валют
+- ⬜ BudgetType (Типы бюджета): name, code — seed Федеральный/Региональный/Местный/Старший кредитор/Собственные/Заёмные
+- ⬜ BudgetExpenseItem (Бюджетные статьи расходов): name, code, parentId (иерархия)
+- ⬜ ContractKind (Виды контрактов): name, code — seed 10 видов из ЦУС (СМР/ПИР/Поставка/Экспертиза и т.д.) — заменяет enum ContractType
+- ⬜ MeasurementUnit (Единицы измерения): name, shortName, ruCode, intCode — seed ГОСТ 8.417-2002
+- ⬜ DeclensionCase (Падежи): name, shortName
+- ⬜ DocumentType (Типы документов): name, code, module
+- ⬜ ProblemIssueType (Типы проблемных вопросов) — конвертация enum в справочник
+- ⬜ DefectCategory (Категории недостатков) — конвертация enum в справочник
+
+### UI и навигация (REF.6)
+- ⬜ Главное меню → пункт «Справочники» (BookOpen icon)
+- ⬜ Страница `/references` — каталог справочников с категориями (Общие / Строительные / Финансовые / Документарные)
+- ⬜ Страница `/references/[slug]` — конкретный справочник через `<ReferenceTable>`
+- ⬜ Защита admin-only для системных справочников; per-organization для пользовательских
+
+### Интеграция существующих (REF.7)
+- ⬜ KsiNode → интегрирован в `/references/ksi` через тот же фреймворк
+- ⬜ MaterialNomenclature → `/references/nomenclature`
+- ⬜ DocumentTemplate → `/references/document-templates`
+- ⬜ StampTitle → `/references/stamp-titles`
+- ⬜ TaskType → `/references/task-types`
+
+### Замена hardcoded значений (REF.8)
+- ⬜ Поле Currency во всех местах где сейчас `currency String @default("RUB")` — заменить на `currencyId` FK
+- ⬜ Поле ContractKind вместо enum ContractType
+- ⬜ Поле BudgetType вместо enum FundingType (миграция данных)
+
+---
+
 # КАК РАБОТАТЬ С ЭТИМ ФАЙЛОМ
 
 В начале каждой рабочей сессии говори Claude Code:
