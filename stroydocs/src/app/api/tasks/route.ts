@@ -38,6 +38,7 @@ export async function GET(req: NextRequest) {
     const visibleTo = searchParams.get('visibleTo');
     const labelIdsParam = searchParams.get('labelIds');
     const labelIds = labelIdsParam ? labelIdsParam.split(',').filter(Boolean) : [];
+    const templateId = searchParams.get('templateId');
 
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
     const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') ?? '20', 10)));
@@ -57,6 +58,7 @@ export async function GET(req: NextRequest) {
     const additionalFilters: Prisma.TaskWhereInput = {
       ...(groupId ? { groupId } : {}),
       ...(typeId ? { typeId } : {}),
+      ...(templateId ? { templateId } : {}),
       ...(search ? { title: { contains: search, mode: 'insensitive' as const } } : {}),
       ...(labelIds.length > 0 ? { labels: { some: { labelId: { in: labelIds } } } } : {}),
     };
