@@ -34,7 +34,7 @@ export function CreateTaskGroupDialog({ open, onOpenChange, defaultParentId }: P
   const { groups } = useTaskGroups();
   const createMutation = useCreateTaskGroup();
 
-  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: { visibility: 'EVERYONE', order: 0 },
   });

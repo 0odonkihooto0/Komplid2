@@ -97,6 +97,35 @@ PostgreSQL складывает unquoted идентификаторы в lowerca
 
 ## TypeScript / ESLint
 
+**`useForm<z.infer<schema>>` + `.default()` в схеме → TS2345 на деплое.**
+`z.infer<typeof schema>` возвращает OUTPUT-тип Zod (после применения дефолтов): поля с `.default()` становятся обязательными.
+`zodResolver` ожидает INPUT-тип (до Zod-обработки): те же поля — опциональные (`field?: T | undefined`).
+Explicit generic `useForm<OutputType>` задаёт `TFieldValues = OutputType`, но resolver принимает `ResolverOptions<InputType>` → TypeScript бьёт TS2345 при сборке.
+Ошибка видна ТОЛЬКО на `next build` (type-check фаза) — локально без `node_modules` молчит.
+Затронуто: `AddScheduleDialog.tsx` (`.default('DAY')`, `.default(1)`, `.default(true)`, `.default(false)`),
+`CreateTaskGroupDialog.tsx` (`.default(0)`), `CreateTaskLabelDialog.tsx` (`.default('#6366f1')`),
+`CreateTaskTemplateDialog.tsx` (`.default('MEDIUM')`, `.default('hours')`).
+**Два корректных варианта:**
+```typescript
+// Вариант 1 (предпочтительный): убрать explicit generic — RHF выводит тип сам
+const { handleSubmit } = useForm({
+  resolver: zodResolver(schema),
+});
+// type FormData = z.infer<typeof schema> ОСТАВИТЬ если используется в onSubmit, setValue и т.п.
+
+// Вариант 2: использовать INPUT-тип явно
+type FormData = z.input<typeof schema>;
+const { handleSubmit } = useForm<FormData>({
+  resolver: zodResolver(schema),
+});
+```
+**Правило**: если схема содержит `.default()` на любом поле — **не использовать** `useForm<z.infer<typeof schema>>`.
+Альтернативно: `useForm<z.input<typeof schema>>` (как в `AddDefectDialog.tsx` — правильный паттерн).
+Поиск потенциальных нарушений: файлы с одновременным `useForm<` и `.default(` в схеме:
+```bash
+grep -rl "useForm<" src --include="*.tsx" | xargs grep -l "\.default("
+```
+
 **`Record<string, unknown>` не совместим с Prisma `InputJsonValue` — ошибка сборки.**
 `z.record(z.string(), z.unknown())` даёт тип `Record<string, unknown>`. При передаче в Prisma
 JSON-поле TypeScript ругается: «Type 'Record<string, unknown>' is missing the following
