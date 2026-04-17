@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { NotificationsDropdown } from './NotificationsDropdown';
+import { TasksQuickPanel } from './TasksQuickPanel';
 
 export function Header() {
   const { data: session } = useSession();
@@ -24,6 +25,7 @@ export function Header() {
     <header className="flex h-14 items-center justify-between border-b bg-card px-6">
       <div />
       <div className="flex items-center gap-2">
+        <TasksQuickPanel />
         <NotificationsDropdown />
         {/* Dropdown пользователя */}
         <DropdownMenu>
