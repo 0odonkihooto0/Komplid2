@@ -463,7 +463,7 @@ export function IfcViewerCore({
         onViewChange={applyView}
         onReset={handleReset}
         onFit={handleFit}
-        onClipping={clipping.toggle}
+        onClipping={clipping.togglePanel}
         clippingActive={clipping.active}
         onMeasure={measure.toggleActive}
         measureActive={measure.active}
@@ -510,14 +510,15 @@ export function IfcViewerCore({
         />
       )}
 
-      {/* Панель управления разрезом */}
-      {clipping.active && (
+      {/* Панель управления разрезами (до 3 плоскостей одновременно) */}
+      {clipping.panelOpen && (
         <ClippingPanel
-          axis={clipping.axis}
-          value={clipping.value}
-          onAxisChange={clipping.handleAxisChange}
-          onValueChange={clipping.handleValueChange}
-          onClear={clipping.clear}
+          planes={clipping.planes}
+          onAdd={clipping.addPlane}
+          onUpdate={clipping.updatePlane}
+          onRemove={clipping.removePlane}
+          onClearAll={clipping.clearAll}
+          onClose={clipping.closePanel}
         />
       )}
 
