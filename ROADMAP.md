@@ -1383,12 +1383,15 @@
 - ✅ TaskReport (progress, newDeadline, s3Keys[], authorId)
 - ✅ Миграция `20260417000000_add_task_manager_module` + seed системных TaskType в `prisma/seed.ts`
 
-### API (TASK.2)
-- ⬜ GET/POST /api/tasks — глобальный реестр (с фильтрами по роли, группе, статусу, просрочке)
-- ⬜ Task actions: /start, /send-to-review, /review-start, /accept, /return-to-revision, /discuss, /mark-irrelevant, /redirect, /delegate, /copy, /to-template
-- ⬜ /api/task-groups, /api/task-labels, /api/task-types, /api/task-templates, /api/task-schedules
-- ⬜ /api/tasks/[id]/checklist, /api/tasks/[id]/reports
-- ⬜ BullMQ воркер task-schedule.worker — генерация задач по расписанию
+### API (TASK.2) ✅ (2026-04-17)
+- ✅ GET/POST /api/tasks — глобальный реестр (группировки + 9 counts за один запрос, visibleTo=me, фильтры)
+- ✅ GET/PATCH/DELETE /api/tasks/[id] — карточка задачи с полными relations
+- ✅ Task actions /api/tasks/[id]/actions: start, send-to-review, cancel-review, review-start, accept, return-to-revision, discuss, mark-irrelevant, redirect, delegate, copy, to-template, create-subtask (state machine с проверкой роли и статуса)
+- ✅ /api/task-groups CRUD + /api/task-labels CRUD + /api/task-types (GET/POST/DELETE, ADMIN-guard) + /api/task-templates CRUD + /api/task-templates/[id]/instantiate + /api/task-schedules CRUD
+- ✅ /api/tasks/[id]/checklist (GET/POST/PATCH/DELETE) + /api/tasks/[id]/reports (GET/POST) + /api/tasks/[id]/public-link (POST/DELETE)
+- ✅ BullMQ воркер src/lib/workers/task-schedule.worker.ts — cron */15 * * * *, shouldRun по repeatType, createSubTasks support
+- ✅ src/lib/task-visibility.ts — canUserSeeTask + buildTaskVisibilityWhere (multi-tenancy через project.organizationId)
+- ✅ src/lib/validations/task.ts — все Zod-схемы модуля (13 action variants discriminatedUnion)
 
 ### UI — глобальная страница (TASK.3)
 - ⬜ /planner — глобальный планировщик
