@@ -11,6 +11,7 @@ export interface GlobalTask {
   title: string;
   status: TaskStatus;
   priority: TaskPriority;
+  createdAt: string;
   plannedStartDate: string | null;
   deadline: string | null;
   isReadByAuthor: boolean;
