@@ -379,6 +379,9 @@ model User {
   taskReportsAuthored   TaskReport[]   @relation("TaskReportAuthor")
   taskComments          TaskComment[]  @relation("TaskCommentAuthor")
 
+  // Модуль 19 — Справочники
+  referenceAudits ReferenceAudit[]
+
   @@index([organizationId])
   @@map("users")
 }
@@ -5795,4 +5798,23 @@ model TaskComment {
 
   @@index([taskId])
   @@map("task_comments")
+}
+
+/// Аудит изменений справочников (Модуль 19 — REF.2 История изменений)
+model ReferenceAudit {
+  id             String  @id @default(uuid())
+  slug           String
+  entryId        String
+  action         String  // 'CREATE' | 'UPDATE' | 'DELETE'
+  oldData        Json?
+  newData        Json?
+  userId         String
+  user           User    @relation(fields: [userId], references: [id])
+  organizationId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([slug, entryId])
+  @@index([userId])
+  @@map("reference_audits")
 }
