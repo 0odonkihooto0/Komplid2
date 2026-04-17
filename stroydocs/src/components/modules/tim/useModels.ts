@@ -164,3 +164,44 @@ export function useDeleteModel(projectId: string) {
     },
   });
 }
+
+export function useMakeCurrent(projectId: string) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (modelId: string) => {
+      await apiFetch<{ id: string }>(
+        `/api/projects/${projectId}/bim/models/${modelId}/make-current`,
+        { method: 'POST' }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bim-models', projectId] });
+      toast({ title: 'Версия помечена актуальной' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Ошибка', description: error.message, variant: 'destructive' });
+    },
+  });
+}
+
+export function useDownloadModel(projectId: string) {
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (modelId: string) => {
+      const json = await apiFetch<{ url: string; fileName: string }>(
+        `/api/projects/${projectId}/bim/models/${modelId}/download`
+      );
+      return json.data;
+    },
+    onSuccess: ({ url }) => {
+      // Открываем presigned URL в новой вкладке — браузер запустит загрузку
+      window.open(url, '_blank');
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Ошибка загрузки', description: error.message, variant: 'destructive' });
+    },
+  });
+}
