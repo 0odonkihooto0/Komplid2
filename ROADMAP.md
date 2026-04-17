@@ -1402,12 +1402,15 @@
 - ✅ SidebarNav: пункт «Планировщик задач» ClipboardList href=/planner
 - ✅ /api/tasks: расширен counts — добавлены today и week (deadline-based)
 
-### 5 представлений (TASK.4)
-- ⬜ Список задач (TanStack Table)
-- ⬜ Канбан-доска (колонки по статусам, drag-n-drop @dnd-kit)
-- ⬜ Календарь (react-big-calendar или dhtmlx)
-- ⬜ Краткий список (минималистичный)
-- ⬜ Новостная лента (хронологический поток)
+### 5 представлений (TASK.4) ✅ (2026-04-17)
+- ✅ Многовкладочная система (localStorage `stroydocs-planner-views` + X-кнопка закрытия + dropdown +)
+- ✅ Синхронизация фильтров с URL query (grouping, groupId, search, period)
+- ✅ Список задач (TanStack Table) — уже был реализован
+- ✅ Канбан-доска (7 колонок по статусам, @dnd-kit DnD, проверка ролей, quick-create)
+- ✅ Календарь (react-big-calendar + dateFnsLocalizer, month/week/day/agenda, drag deadline)
+- ✅ Краткий список (compact rows, мобильный дизайн)
+- ✅ Лента новостей (Task + TaskReport, хронологически, пагинация «Загрузить ещё»)
+- ✅ API GET /api/tasks/feed (задачи + отчёты слиты и отсортированы по timestamp desc)
 
 ### Шаблоны и автоматизация (TASK.5)
 - ⬜ Создание шаблона с нуля / из задачи
