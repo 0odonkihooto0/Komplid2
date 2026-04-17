@@ -242,6 +242,30 @@ HTTP 200 — дефолт, явно передавать не нужно.
 
 ## React / Next.js
 
+**Строковый литерал в объекте массива расширяется до `string` — TS2322 при присваивании к `union literal` типу.**
+При построении массива `[{ type: 'created', ... }, ...spread]` TypeScript инферит тип элемента как объединение
+типов всех элементов. Если хотя бы один объект имеет `type: 'someValue'` без `as const`, TypeScript расширяет
+его до `string`. При присваивании к `TypedEntry[]` где `type: 'created' | 'report'` — TS2322 на деплое.
+Ошибка видна ТОЛЬКО на `next build` (type-check фаза) — локально без `node_modules` молчит.
+Обнаружено в `TaskHistoryTab.tsx:34` — объект `{ type: 'created' }` без `as const`, тогда как соседние
+элементы в `.map()` уже использовали `type: 'report' as const`.
+**Правило**: в объектах внутри массивов всегда использовать `as const` для строковых литералов,
+если тип поля — union literal:
+```typescript
+// Неправильно — TypeScript расширяет 'created' до string:
+const entries: HistoryEntry[] = [
+  { type: 'created', ... },
+  ...items.map(i => ({ type: 'report' as const, ... })),
+];
+
+// Правильно — все литералы узкие:
+const entries: HistoryEntry[] = [
+  { type: 'created' as const, ... },
+  ...items.map(i => ({ type: 'report' as const, ... })),
+];
+```
+Поиск потенциальных нарушений: гетерогенные массивы с `as const` на части элементов, но не на всех.
+
 **`ApiResponse<T>` — discriminated union, `.data` без `success`-проверки не компилируется.**
 `ApiResponse<T>` из `@/types/api` — union-тип:
 `{ success: true; data: T } | { success: false; error: string; details?: unknown }`.
