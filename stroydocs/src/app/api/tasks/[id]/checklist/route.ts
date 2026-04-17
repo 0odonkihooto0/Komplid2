@@ -40,6 +40,37 @@ export async function GET(_req: NextRequest, { params }: Params) {
   }
 }
 
+export async function PATCH(req: NextRequest, { params }: Params) {
+  try {
+    const session = await getSessionOrThrow();
+    const { id } = await params;
+
+    const task = await loadTaskForUser(id, session.user.id, session.user.organizationId);
+    if (!task) return errorResponse('Задача не найдена', 404);
+
+    const body: unknown = await req.json();
+    const parsed = (body as { reorder?: Array<{ id: string; order: number }> });
+    if (!Array.isArray(parsed.reorder)) {
+      return errorResponse('Некорректный формат запроса', 400);
+    }
+
+    await db.$transaction(
+      parsed.reorder.map(({ id: itemId, order }) =>
+        db.taskChecklistItem.updateMany({
+          where: { id: itemId, taskId: id },
+          data: { order },
+        }),
+      ),
+    );
+
+    return successResponse({ ok: true });
+  } catch (err) {
+    if (err instanceof NextResponse) return err;
+    console.error('[tasks/checklist] PATCH:', err);
+    return errorResponse('Ошибка сервера', 500);
+  }
+}
+
 export async function POST(req: NextRequest, { params }: Params) {
   try {
     const session = await getSessionOrThrow();

@@ -16,6 +16,7 @@ interface Props {
   counts: TaskCounts;
   onSearchChange: (v: string) => void;
   onPeriodChange: (v: string) => void;
+  onCreateTask?: () => void;
   onCreateTemplate?: () => void;
   onSelectTemplate?: () => void;
 }
@@ -26,7 +27,7 @@ const PERIODS = [
   { key: 'all', label: 'Всё время', countKey: 'all' as const },
 ];
 
-export function PlannerToolbar({ search, period, counts, onSearchChange, onPeriodChange, onCreateTemplate, onSelectTemplate }: Props) {
+export function PlannerToolbar({ search, period, counts, onSearchChange, onPeriodChange, onCreateTask, onCreateTemplate, onSelectTemplate }: Props) {
   const [localSearch, setLocalSearch] = useState(search);
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -54,7 +55,7 @@ export function PlannerToolbar({ search, period, counts, onSearchChange, onPerio
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-48">
-          <DropdownMenuItem disabled>Задача (TASK.6)</DropdownMenuItem>
+          <DropdownMenuItem onClick={onCreateTask}>Задача</DropdownMenuItem>
           <DropdownMenuItem onClick={onCreateTemplate}>Новый шаблон</DropdownMenuItem>
           <DropdownMenuItem onClick={onSelectTemplate}>На основе шаблона</DropdownMenuItem>
         </DropdownMenuContent>

@@ -14,6 +14,8 @@ import { TaskFeedView } from '@/components/modules/tasks/TaskFeedView';
 import { TaskTemplatesView } from '@/components/modules/tasks/TaskTemplatesView';
 import { CreateTaskTemplateDialog } from '@/components/modules/tasks/CreateTaskTemplateDialog';
 import { SelectTemplateDialog } from '@/components/modules/tasks/SelectTemplateDialog';
+import { TaskDetailDialog } from '@/components/modules/tasks/TaskDetailDialog';
+import { CreateTaskDialogFull } from '@/components/modules/tasks/CreateTaskDialogFull';
 import { useGlobalTasks } from '@/components/modules/tasks/useGlobalTasks';
 import { useTaskGroups } from '@/components/modules/tasks/useTaskGroups';
 import { useTaskTemplates } from '@/components/modules/tasks/useTaskTemplates';
@@ -76,9 +78,11 @@ export default function PlannerPage() {
   const [period, setPeriod] = useState('all');
   const [page, setPage] = useState(1);
 
-  // Диалоги шаблонов
+  // Диалоги
   const [createTemplateOpen, setCreateTemplateOpen] = useState(false);
   const [selectTemplateOpen, setSelectTemplateOpen] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [createTaskOpen, setCreateTaskOpen] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -165,6 +169,7 @@ export default function PlannerPage() {
           counts={counts}
           onSearchChange={handleSearchChange}
           onPeriodChange={handlePeriodChange}
+          onCreateTask={() => setCreateTaskOpen(true)}
           onCreateTemplate={() => setCreateTemplateOpen(true)}
           onSelectTemplate={() => setSelectTemplateOpen(true)}
         />
@@ -187,6 +192,7 @@ export default function PlannerPage() {
                 page={page}
                 totalPages={totalPages}
                 onPageChange={setPage}
+                onTaskClick={setSelectedTaskId}
               />
             )}
             {activeView.type === 'kanban' && (
@@ -195,6 +201,7 @@ export default function PlannerPage() {
                 grouping={grouping}
                 groupId={groupId}
                 search={search}
+                onTaskClick={setSelectedTaskId}
               />
             )}
             {activeView.type === 'calendar' && (
@@ -208,6 +215,7 @@ export default function PlannerPage() {
               <TaskBriefListView
                 tasks={tasks}
                 isLoading={isLoading}
+                onTaskClick={setSelectedTaskId}
               />
             )}
             {activeView.type === 'feed' && (
@@ -228,6 +236,14 @@ export default function PlannerPage() {
       <SelectTemplateDialog
         open={selectTemplateOpen}
         onOpenChange={setSelectTemplateOpen}
+      />
+      <TaskDetailDialog
+        taskId={selectedTaskId}
+        onClose={() => setSelectedTaskId(null)}
+      />
+      <CreateTaskDialogFull
+        open={createTaskOpen}
+        onOpenChange={setCreateTaskOpen}
       />
     </div>
   );

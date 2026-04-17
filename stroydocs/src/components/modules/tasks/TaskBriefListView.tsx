@@ -19,9 +19,10 @@ function formatDate(iso: string | null) {
 interface Props {
   tasks: GlobalTask[];
   isLoading: boolean;
+  onTaskClick?: (id: string) => void;
 }
 
-export function TaskBriefListView({ tasks, isLoading }: Props) {
+export function TaskBriefListView({ tasks, isLoading, onTaskClick }: Props) {
   if (isLoading) {
     return (
       <div className="divide-y">
@@ -55,7 +56,8 @@ export function TaskBriefListView({ tasks, isLoading }: Props) {
         return (
           <div
             key={task.id}
-            className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50"
+            className={cn('flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50', onTaskClick && 'cursor-pointer')}
+            onClick={() => onTaskClick?.(task.id)}
           >
             <span className={cn('h-2 w-2 shrink-0 rounded-full', PRIORITY_COLORS[task.priority])} />
 

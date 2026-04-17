@@ -285,7 +285,7 @@ export function TaskListView({ tasks, isLoading, total, page, totalPages, onPage
               </TableRow>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className="hover:bg-gray-50">
+                <TableRow key={row.id} className="cursor-pointer hover:bg-gray-50" onClick={() => handleTaskClick(row.original.id)}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="py-2">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}

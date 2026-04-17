@@ -377,6 +377,7 @@ model User {
   taskGroupsAuthored    TaskGroup[]    @relation("TaskGroupAuthor")
   taskTemplatesAuthored TaskTemplate[] @relation("TaskTemplateAuthor")
   taskReportsAuthored   TaskReport[]   @relation("TaskReportAuthor")
+  taskComments          TaskComment[]  @relation("TaskCommentAuthor")
 
   @@index([organizationId])
   @@map("users")
@@ -2370,6 +2371,7 @@ model Task {
   labels    TaskLabelOnTask[]
   checklist TaskChecklistItem[]
   reports   TaskReport[]
+  comments  TaskComment[]
 
   @@index([projectId])
   @@index([assigneeId])
@@ -5779,4 +5781,18 @@ model TaskReport {
 
   @@index([taskId])
   @@map("task_reports")
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation("TaskCommentAuthor", fields: [authorId], references: [id])
+  text      String
+  s3Keys    String[] @default([])
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+  @@map("task_comments")
 }
