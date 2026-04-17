@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Menu, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { SectionTree } from './SectionTree';
 import { ModelVersionsTable } from './ModelVersionsTable';
 import { UploadModelDialog } from './UploadModelDialog';
@@ -18,6 +19,8 @@ interface ModelsViewProps {
 export function ModelsView({ objectId }: ModelsViewProps) {
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
+  // Mobile (<768px): дерево разделов в Sheet-drawer вместо боковой панели
+  const [sectionsOpen, setSectionsOpen] = useState(false);
   // При «Загрузить новую версию» из меню ⋮ — пред-заполняем имя и раздел
   const [uploadDefaults, setUploadDefaults] = useState<{
     name?: string; sectionId?: string | null;
@@ -45,8 +48,8 @@ export function ModelsView({ objectId }: ModelsViewProps) {
 
   return (
     <div className="flex h-full min-h-0">
-      {/* Левая панель — дерево разделов */}
-      <div className="w-60 border-r flex-shrink-0 overflow-y-auto p-3">
+      {/* Левая панель — дерево разделов (десктоп) */}
+      <div className="hidden md:flex w-60 border-r flex-shrink-0 overflow-y-auto p-3">
         {sectionsQuery.isLoading ? (
           <p className="text-sm text-muted-foreground px-2">Загрузка...</p>
         ) : (
@@ -59,20 +62,52 @@ export function ModelsView({ objectId }: ModelsViewProps) {
         )}
       </div>
 
+      {/* Mobile drawer (<768px) — дерево разделов в Sheet */}
+      <Sheet open={sectionsOpen} onOpenChange={setSectionsOpen}>
+        <SheetContent side="left" className="w-72 p-3 overflow-y-auto">
+          <SheetTitle className="mb-3">Разделы</SheetTitle>
+          {sectionsQuery.isLoading ? (
+            <p className="text-sm text-muted-foreground px-2">Загрузка...</p>
+          ) : (
+            <SectionTree
+              sections={sections}
+              selectedId={selectedSectionId}
+              onSelect={(id) => {
+                setSelectedSectionId(id);
+                setSectionsOpen(false);
+              }}
+              projectId={objectId}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
+
       {/* Правая панель — список моделей */}
       <div className="flex-1 overflow-y-auto p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-lg font-semibold">
-              Версии модели {models.length}
-            </h2>
-            {selectedSectionName && (
-              <p className="text-sm text-muted-foreground">Раздел: {selectedSectionName}</p>
-            )}
+        <div className="flex items-center justify-between mb-4 gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <Button
+              variant="outline"
+              size="icon"
+              className="md:hidden h-9 w-9 shrink-0"
+              onClick={() => setSectionsOpen(true)}
+              aria-label="Разделы"
+            >
+              <Menu className="h-4 w-4" />
+            </Button>
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold">
+                Версии модели {models.length}
+              </h2>
+              {selectedSectionName && (
+                <p className="text-sm text-muted-foreground truncate">Раздел: {selectedSectionName}</p>
+              )}
+            </div>
           </div>
-          <Button onClick={openUploadFresh} className="gap-2">
+          <Button onClick={openUploadFresh} className="gap-2 shrink-0">
             <Plus className="h-4 w-4" />
-            Загрузить версию модели
+            <span className="hidden sm:inline">Загрузить версию модели</span>
+            <span className="sm:hidden">Загрузить</span>
           </Button>
         </div>
 

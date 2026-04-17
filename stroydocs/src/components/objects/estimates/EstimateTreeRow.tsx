@@ -118,7 +118,7 @@ function ChapterRow({ row, data }: { row: Row<TreeRow>; data: EstimateChapterDet
 // ─── Строка позиции ──────────────────────────────────────────────────────────
 
 function ItemRow({
-  row,
+  row: _row,
   data,
   editMode,
   readOnly,

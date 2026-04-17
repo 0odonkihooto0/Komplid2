@@ -83,8 +83,6 @@ export function ApprovalTimeline({ route, workflowBaseUrl, queryKey, currentUser
 
   const routeStatus = ROUTE_STATUS[route.status];
   const isPending = route.status === 'PENDING';
-  const currentStep = isPending ? route.steps[route.currentStepIdx] : null;
-  const isCurrentApprover = !!currentStep && currentStep.userId === currentUserId;
 
   return (
     <div className="space-y-3">

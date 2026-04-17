@@ -1,5 +1,5 @@
 import { logger } from '@/lib/logger';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';

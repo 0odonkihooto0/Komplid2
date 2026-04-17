@@ -7,7 +7,6 @@ import { DataTable } from '@/components/shared/DataTable';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Trash2, Plus, Link2 } from 'lucide-react';
 import Link from 'next/link';
-import { formatDate, formatCurrency } from '@/utils/format';
 import { useLinkedContracts } from './useLinkedContracts';
 import { LinkContractDialog } from './LinkContractDialog';
 import type { ContractStatus } from '@prisma/client';

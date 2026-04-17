@@ -38,7 +38,6 @@ import {
   type SEDDocType,
   type SEDStatus,
   type SEDFilters,
-  EMPTY_FILTERS,
 } from './useSEDList';
 
 const DOC_TYPE_LABELS: Record<SEDDocType, string> = {

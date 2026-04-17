@@ -53,8 +53,6 @@ export interface ReorderPlannerTaskInput {
 }
 
 export function usePlannerTasks(projectId: string, versionId?: string | null) {
-  const queryClient = useQueryClient();
-
   const { data: tasks = [], isLoading, error } = useQuery<PlannerTask[]>({
     queryKey: ['planner-tasks', projectId, versionId ?? 'all'],
     queryFn: async () => {
