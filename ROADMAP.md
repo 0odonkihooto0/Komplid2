@@ -1539,13 +1539,17 @@
 - ✅ `<ReferenceAuditPanel>` — боковая панель 480px: список с подгрузкой, иконки по action, ФИО + relative time + tooltip точного времени, раскрывающийся дифф полей для UPDATE
 - ✅ Кнопка «История» (иконка History) в `<ReferenceTable>` открывает панель (скрыта если `auditable: false`)
 
-### Базовые справочники (REF.3–REF.5)
-- ⬜ Currency (Валюты): name, shortName, shortSymbol, fullName, englishName, caseForm, code — с seed 20 мировых валют
-- ⬜ BudgetType (Типы бюджета): name, code — seed Федеральный/Региональный/Местный/Старший кредитор/Собственные/Заёмные
+### Базовые справочники (REF.3) ✅ 2026-04-18
+- ✅ Currency (Валюты): 9 валют (RUB/USD/EUR/CNY/JPY/GBP/CHF/KZT/BYN), ISO 4217, scope: organization — `prisma/seeds/reference-books.ts`
+- ✅ BudgetType (Типы бюджета): 6 типов (FED/REG/LOC/OWN/CREDIT/SENIOR_CREDITOR) с HEX-цветами для дашборда
+- ✅ MeasurementUnitRef (Единицы измерения): 25 единиц ГОСТ 8.417-2002 по категориям, scope: organization
+- ✅ DeclensionCase (Падежи): 6 падежей русского языка, scope: system, adminOnly: true
+- ✅ buildWhere в API-роуте расширен: системные записи (isSystem=true, organizationId=null) видны всем организациям через OR-фильтр
+- ✅ registry.ts заполнен: 4 схемы (currencies/budgetTypes/measurementUnits/declensionCases)
+
+### Базовые справочники (REF.4–REF.5)
 - ⬜ BudgetExpenseItem (Бюджетные статьи расходов): name, code, parentId (иерархия)
 - ⬜ ContractKind (Виды контрактов): name, code — seed 10 видов из ЦУС (СМР/ПИР/Поставка/Экспертиза и т.д.) — заменяет enum ContractType
-- ⬜ MeasurementUnit (Единицы измерения): name, shortName, ruCode, intCode — seed ГОСТ 8.417-2002
-- ⬜ DeclensionCase (Падежи): name, shortName
 - ⬜ DocumentType (Типы документов): name, code, module
 - ⬜ ProblemIssueType (Типы проблемных вопросов) — конвертация enum в справочник
 - ⬜ DefectCategory (Категории недостатков) — конвертация enum в справочник

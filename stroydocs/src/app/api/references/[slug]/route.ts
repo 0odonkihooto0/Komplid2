@@ -28,15 +28,21 @@ function buildWhere(
   scope: 'system' | 'organization',
   search?: string | null
 ): Record<string, unknown> {
-  const where: Record<string, unknown> = {};
-  if (scope === 'organization') where.organizationId = orgId;
+  const conditions: Record<string, unknown>[] = [];
+
+  if (scope === 'organization') {
+    // Системные записи (isSystem=true, organizationId=null) видны всем организациям
+    conditions.push({ OR: [{ organizationId: orgId }, { organizationId: null, isSystem: true }] });
+  }
+
   if (search) {
     const textFields = fields
       .filter((f) => f.type === 'string' || f.type === 'textarea')
       .map((f) => ({ [f.key]: { contains: search, mode: 'insensitive' } }));
-    if (textFields.length > 0) where.OR = textFields;
+    if (textFields.length > 0) conditions.push({ OR: textFields });
   }
-  return where;
+
+  return conditions.length > 0 ? { AND: conditions } : {};
 }
 
 function buildZodShape(fields: ReferenceFieldSchema[]): Record<string, z.ZodTypeAny> {
