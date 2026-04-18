@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { getReferenceSchema } from '@/lib/references/registry';
+import type { Prisma } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,7 +62,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     }
 
     const items = await db.referenceAudit.findMany({
-      where: where as Parameters<typeof db.referenceAudit.findMany>[0]['where'],
+      where: where as unknown as Prisma.ReferenceAuditWhereInput,
       orderBy: { createdAt: 'desc' },
       take: limit + 1,
       include: {

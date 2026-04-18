@@ -220,6 +220,11 @@ model Organization {
   // Модуль 19 — Аудит справочников
   referenceAudits ReferenceAudit[]
 
+  // Модуль 19 — Базовые справочники (REF.3)
+  currencies          Currency[]
+  budgetTypes         BudgetType[]
+  measurementUnitsRef MeasurementUnitRef[]
+
   @@map("organizations")
 }
 
@@ -5827,4 +5832,71 @@ model ReferenceAudit {
   @@index([entityType, entityId])
   @@index([organizationId, entityType])
   @@map("reference_audits")
+}
+
+// ─────────────────────────────────────────────────────────────────
+// МОДУЛЬ 19 — Базовые справочники (REF.3)
+// ─────────────────────────────────────────────────────────────────
+
+model Currency {
+  id             String        @id @default(uuid())
+  name           String
+  shortName      String
+  shortSymbol    String
+  fullName       String?
+  englishName    String?
+  caseForm       String?
+  code           String        @unique
+  numericCode    String?
+  isSystem       Boolean       @default(false)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([organizationId])
+  @@map("currencies")
+}
+
+model BudgetType {
+  id             String        @id @default(uuid())
+  name           String
+  code           String        @unique
+  color          String?
+  order          Int           @default(0)
+  isSystem       Boolean       @default(false)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([organizationId])
+  @@map("budget_types")
+}
+
+model MeasurementUnitRef {
+  id             String        @id @default(uuid())
+  name           String
+  shortName      String
+  ruCode         String?
+  intCode        String?
+  category       String?
+  isSystem       Boolean       @default(false)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([organizationId])
+  @@map("measurement_units_ref")
+}
+
+model DeclensionCase {
+  id        String  @id @default(uuid())
+  name      String
+  shortName String  @unique
+  order     Int     @default(0)
+  isSystem  Boolean @default(true)
+
+  @@map("declension_cases")
 }

@@ -9,6 +9,7 @@ import { seedKsiFromXlsx } from './seeds/seed-ksi';
 import { seedThematicReports } from './seeds/thematic-reports';
 import { seedReportTemplates } from './seeds/report-templates';
 import { seedDefectTemplates } from './seeds/defect-templates';
+import { seedReferenceBooks } from './seeds/reference-books';
 
 const prisma = new PrismaClient();
 
@@ -265,6 +266,9 @@ async function main() {
 
   // === Шаблоны дефектов (Модуль 11) ===
   await seedDefectTemplates(prisma);
+
+  // === Базовые справочники (Модуль 19 — REF.3) ===
+  await seedReferenceBooks(prisma);
 
   // === Системные типы задач (Модуль 18 — Планировщик задач) ===
   const SYSTEM_TASK_TYPES = [
