@@ -4,8 +4,9 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { getReferenceSchema } from '@/lib/references/registry';
+import { writeAudit } from '@/lib/references/audit';
 import type { ReferenceFieldSchema } from '@/lib/references/types';
-import { Prisma } from '@prisma/client';
+import { ReferenceAuditAction } from '@prisma/client';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -124,15 +125,13 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     const entry = await modelClient.create({ data });
 
     if (schema.auditable !== false) {
-      await db.referenceAudit.create({
-        data: {
-          slug: params.slug,
-          entryId: entry.id as string,
-          action: 'CREATE',
-          newData: entry as unknown as Prisma.InputJsonValue,
-          userId: session.user.id,
-          organizationId: schema.scope === 'organization' ? session.user.organizationId : null,
-        },
+      await writeAudit({
+        entityType: params.slug,
+        entityId: entry.id as string,
+        action: ReferenceAuditAction.CREATE,
+        newValues: entry as Record<string, unknown>,
+        userId: session.user.id,
+        organizationId: schema.scope === 'organization' ? session.user.organizationId : null,
       });
     }
 

@@ -4,7 +4,8 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { getReferenceSchema } from '@/lib/references/registry';
-import { Prisma } from '@prisma/client';
+import { writeAudit } from '@/lib/references/audit';
+import { ReferenceAuditAction } from '@prisma/client';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -52,17 +53,15 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       const fullRecords = await modelClient.findMany({
         where: { id: { in: validIds } },
       });
-      await db.$transaction(
+      await Promise.all(
         fullRecords.map((rec) =>
-          db.referenceAudit.create({
-            data: {
-              slug: params.slug,
-              entryId: rec.id as string,
-              action: 'DELETE',
-              oldData: rec as unknown as Prisma.InputJsonValue,
-              userId: session.user.id,
-              organizationId: schema.scope === 'organization' ? session.user.organizationId : null,
-            },
+          writeAudit({
+            entityType: params.slug,
+            entityId: rec.id as string,
+            action: ReferenceAuditAction.DELETE,
+            oldValues: rec as Record<string, unknown>,
+            userId: session.user.id,
+            organizationId: schema.scope === 'organization' ? session.user.organizationId : null,
           })
         )
       );
