@@ -225,6 +225,11 @@ model Organization {
   budgetTypes         BudgetType[]
   measurementUnitsRef MeasurementUnitRef[]
 
+  // Модуль 19 — Справочники REF.4
+  contractKinds       ContractKind[]
+  documentTypesRef    DocumentTypeRef[]
+  budgetExpenseItems  BudgetExpenseItem[]
+
   @@map("organizations")
 }
 
@@ -5899,4 +5904,59 @@ model DeclensionCase {
   isSystem  Boolean @default(true)
 
   @@map("declension_cases")
+}
+
+// ─────────────────────────────────────────────────────────────────
+// МОДУЛЬ 19 — Справочники REF.4
+// ─────────────────────────────────────────────────────────────────
+
+model ContractKind {
+  id             String        @id @default(uuid())
+  name           String
+  code           String        @unique
+  shortName      String?
+  order          Int           @default(0)
+  isSystem       Boolean       @default(false)
+  isActive       Boolean       @default(true)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@map("contract_kinds")
+}
+
+model DocumentTypeRef {
+  id             String        @id @default(uuid())
+  name           String
+  code           String        @unique
+  module         String?
+  order          Int           @default(0)
+  isSystem       Boolean       @default(false)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@map("document_types_ref")
+}
+
+model BudgetExpenseItem {
+  id             String              @id @default(uuid())
+  name           String
+  code           String
+  parentId       String?
+  parent         BudgetExpenseItem?  @relation("BudgetExpenseTree", fields: [parentId], references: [id])
+  children       BudgetExpenseItem[] @relation("BudgetExpenseTree")
+  level          Int                 @default(0)
+  order          Int                 @default(0)
+  isSystem       Boolean             @default(false)
+  isActive       Boolean             @default(true)
+  organizationId String?
+  organization   Organization?       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([parentId])
+  @@map("budget_expense_items")
 }

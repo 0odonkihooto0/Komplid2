@@ -77,6 +77,68 @@ export const REFERENCE_REGISTRY: Record<string, ReferenceSchema> = {
       { key: 'isSystem',  label: 'Системный',    type: 'boolean', required: false, readonly: true, hiddenByDefault: true },
     ],
   },
+
+  // ── REF.4 ──────────────────────────────────────────────────────
+
+  contractKinds: {
+    slug: 'contractKinds',
+    name: 'Виды контрактов',
+    pluralName: 'Виды контрактов',
+    nameSingular: 'вид контракта',
+    category: 'documentary',
+    model: 'contractKind',
+    scope: 'organization',
+    auditable: true,
+    fields: [
+      { key: 'name',      label: 'Наименование',         type: 'string',  required: true,  width: 320 },
+      { key: 'code',      label: 'Код',                  type: 'string',  required: true,  width: 140 },
+      { key: 'shortName', label: 'Краткое наименование', type: 'string',  required: false, width: 120 },
+      { key: 'isActive',  label: 'Активный',             type: 'boolean', required: false, width: 100 },
+      { key: 'order',     label: 'Порядок',              type: 'number',  required: false, width: 100, hiddenByDefault: true },
+      { key: 'isSystem',  label: 'Системный',            type: 'boolean', required: false, readonly: true, hiddenByDefault: true },
+    ],
+  },
+
+  documentTypes: {
+    slug: 'documentTypes',
+    name: 'Типы документов',
+    pluralName: 'Типы документов',
+    nameSingular: 'тип документа',
+    category: 'documentary',
+    model: 'documentTypeRef',
+    scope: 'organization',
+    auditable: true,
+    fields: [
+      { key: 'name',     label: 'Наименование', type: 'string',  required: true,  width: 280 },
+      { key: 'code',     label: 'Код',          type: 'string',  required: true,  width: 160 },
+      { key: 'module',   label: 'Модуль',       type: 'string',  required: false, width: 120 },
+      { key: 'order',    label: 'Порядок',      type: 'number',  required: false, width: 100, hiddenByDefault: true },
+      { key: 'isSystem', label: 'Системный',    type: 'boolean', required: false, readonly: true, hiddenByDefault: true },
+    ],
+  },
+
+  budgetExpenseItems: {
+    slug: 'budgetExpenseItems',
+    name: 'Статьи расходов',
+    pluralName: 'Статьи расходов',
+    nameSingular: 'статью расходов',
+    category: 'financial',
+    model: 'budgetExpenseItem',
+    scope: 'organization',
+    auditable: true,
+    hierarchical: true,
+    parentKey: 'parentId',
+    fields: [
+      { key: 'name',     label: 'Наименование', type: 'string',  required: true,  width: 280 },
+      { key: 'code',     label: 'Код',          type: 'string',  required: true,  width: 120 },
+      { key: 'isActive', label: 'Активный',     type: 'boolean', required: false, width: 100 },
+      { key: 'order',    label: 'Порядок',      type: 'number',  required: false, width: 100, hiddenByDefault: true },
+      { key: 'isSystem', label: 'Системный',    type: 'boolean', required: false, readonly: true, hiddenByDefault: true },
+      // Не рендерятся в таблице/форме, но принимаются API при создании дочерних записей
+      { key: 'parentId', label: 'Родитель',     type: 'string',  required: false, hidden: true },
+      { key: 'level',    label: 'Уровень',      type: 'number',  required: false, hidden: true },
+    ],
+  },
 };
 
 export function getReferenceSchema(slug: string): ReferenceSchema | null {

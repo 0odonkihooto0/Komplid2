@@ -35,7 +35,8 @@ export function useReferenceTable(schema: ReferenceSchema): ReferenceTableState 
   const queryClient = useQueryClient();
 
   const [page, setPageState] = useState(1);
-  const pageSize = 50;
+  // Иерархические справочники загружают все записи сразу
+  const pageSize = schema.hierarchical ? 500 : 50;
   const [search, setSearchState] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -83,7 +84,9 @@ export function useReferenceTable(schema: ReferenceSchema): ReferenceTableState 
 
   const clearSelection = useCallback(() => setSelectedIds([]), []);
 
-  const queryKey = ['references', schema.slug, page, pageSize, search, sortBy, sortOrder];
+  // Для иерархических справочников пагинация не используется — всегда страница 1
+  const effectivePage = schema.hierarchical ? 1 : page;
+  const queryKey = ['references', schema.slug, effectivePage, pageSize, search, sortBy, sortOrder];
 
   const { data, isLoading } = useQuery<{
     data: Record<string, unknown>[];
@@ -92,7 +95,7 @@ export function useReferenceTable(schema: ReferenceSchema): ReferenceTableState 
     queryKey,
     queryFn: async () => {
       const sp = new URLSearchParams({
-        page: String(page),
+        page: String(effectivePage),
         limit: String(pageSize),
         sort: sortBy,
         order: sortOrder,

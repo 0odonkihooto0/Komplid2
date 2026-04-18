@@ -16,6 +16,8 @@ export interface ReferenceFieldSchema {
   hiddenByDefault?: boolean;
   readonly?: boolean;
   width?: number;
+  /** Поле не рендерится в таблице и форме, но принимается API (parentId, level) */
+  hidden?: boolean;
 }
 
 export interface ReferenceSchema {
@@ -29,4 +31,8 @@ export interface ReferenceSchema {
   adminOnly?: boolean;
   scope: 'system' | 'organization';
   auditable?: boolean;
+  /** Отображать справочник как дерево (tree-table) */
+  hierarchical?: boolean;
+  /** Имя поля родительской записи, например 'parentId' */
+  parentKey?: string;
 }

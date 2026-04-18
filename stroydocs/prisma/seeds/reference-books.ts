@@ -230,10 +230,128 @@ export async function seedDeclensionCases(prisma: PrismaClient): Promise<void> {
   console.log(`✅ Загружено ${DECLENSION_CASES.length} падежей`);
 }
 
+// ─────────────────────────────────────────────────────────────────
+// REF.4 — Виды контрактов (ContractKind)
+// ─────────────────────────────────────────────────────────────────
+
+const CONTRACT_KINDS = [
+  { code: 'SMR',               name: 'Строительно-монтажные работы',                                                                  shortName: 'СМР', order: 0 },
+  { code: 'SURVEY_BUILDING',   name: 'Проведение работ по обследованию здания',                                                        shortName: null,  order: 1 },
+  { code: 'TECH_CUSTOMER',     name: 'Осуществление функций технического заказчика и проведение строительного контроля',               shortName: null,  order: 2 },
+  { code: 'EXPERTISE',         name: 'Проведение экспертизы',                                                                          shortName: null,  order: 3 },
+  { code: 'SMR_TERMINATED',    name: 'Строительно-монтажные работы (расторгнуто)',                                                     shortName: null,  order: 4 },
+  { code: 'AUTHOR_SUPERVISION',name: 'Авторский надзор',                                                                               shortName: null,  order: 5 },
+  { code: 'SUPPLY',            name: 'Договор поставки',                                                                               shortName: null,  order: 6 },
+  { code: 'PIR',               name: 'Договор ПИР',                                                                                    shortName: 'ПИР', order: 7 },
+  { code: 'AGENT',             name: 'Агентский договор',                                                                              shortName: null,  order: 8 },
+  { code: 'TECH_CONNECTION',   name: 'Технологическое присоединение',                                                                  shortName: null,  order: 9 },
+  { code: 'OTHER',             name: 'Прочие',                                                                                         shortName: null,  order: 10 },
+];
+
+export async function seedContractKinds(prisma: PrismaClient): Promise<void> {
+  console.log('Загрузка справочника видов контрактов...');
+  for (const ck of CONTRACT_KINDS) {
+    await prisma.contractKind.upsert({
+      where: { code: ck.code },
+      update: { name: ck.name, shortName: ck.shortName, order: ck.order, isSystem: true },
+      create: { ...ck, isSystem: true, isActive: true, organizationId: null },
+    });
+  }
+  console.log(`✅ Загружено ${CONTRACT_KINDS.length} видов контрактов`);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// REF.4 — Типы документов (DocumentTypeRef)
+// ─────────────────────────────────────────────────────────────────
+
+const DOCUMENT_TYPES = [
+  // Исполнительная документация
+  { code: 'AOSR',                  name: 'Акт освидетельствования скрытых работ',                                     module: 'ID',  order: 0 },
+  { code: 'OZR',                   name: 'Общий журнал работ',                                                         module: 'ID',  order: 1 },
+  { code: 'KS_2',                  name: 'Акт о приёмке выполненных работ (КС-2)',                                     module: 'ID',  order: 2 },
+  { code: 'KS_3',                  name: 'Справка о стоимости выполненных работ (КС-3)',                               module: 'ID',  order: 3 },
+  { code: 'AVK',                   name: 'Акт входного контроля',                                                      module: 'ID',  order: 4 },
+  { code: 'KS_6A',                 name: 'Журнал учёта выполненных работ (КС-6а)',                                     module: 'ID',  order: 5 },
+  { code: 'KS_11',                 name: 'Акт приёмки законченного строительством объекта (КС-11)',                    module: 'ID',  order: 6 },
+  { code: 'KS_14',                 name: 'Акт приёмки законченного строительством объекта приёмочной комиссией (КС-14)', module: 'ID', order: 7 },
+  { code: 'GENERAL_DOCUMENT',      name: 'Общий документ (свободная форма)',                                           module: 'ID',  order: 8 },
+  { code: 'TECHNICAL_READINESS_ACT', name: 'Акт технической готовности',                                              module: 'ID',  order: 9 },
+  // Система электронного документооборота
+  { code: 'LETTER',                name: 'Письмо',                                                                     module: 'SED', order: 0 },
+  { code: 'ORDER',                 name: 'Приказ',                                                                     module: 'SED', order: 1 },
+  { code: 'PROTOCOL',              name: 'Протокол',                                                                   module: 'SED', order: 2 },
+  { code: 'ACT',                   name: 'Акт',                                                                        module: 'SED', order: 3 },
+  { code: 'MEMO',                  name: 'Докладная записка',                                                          module: 'SED', order: 4 },
+  { code: 'NOTIFICATION',          name: 'Уведомление',                                                                module: 'SED', order: 5 },
+  { code: 'OTHER_SED',             name: 'Иное',                                                                       module: 'SED', order: 6 },
+];
+
+export async function seedDocumentTypes(prisma: PrismaClient): Promise<void> {
+  console.log('Загрузка справочника типов документов...');
+  for (const dt of DOCUMENT_TYPES) {
+    await prisma.documentTypeRef.upsert({
+      where: { code: dt.code },
+      update: { name: dt.name, module: dt.module, order: dt.order, isSystem: true },
+      create: { ...dt, isSystem: true, organizationId: null },
+    });
+  }
+  console.log(`✅ Загружено ${DOCUMENT_TYPES.length} типов документов`);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// REF.4 — Бюджетные статьи расходов (BudgetExpenseItem)
+// ─────────────────────────────────────────────────────────────────
+
+async function upsertBudgetItem(
+  prisma: PrismaClient,
+  data: { code: string; name: string; level: number; order: number; parentId: string | null }
+): Promise<string> {
+  const existing = await prisma.budgetExpenseItem.findFirst({
+    where: { code: data.code, organizationId: null },
+  });
+  if (existing) {
+    await prisma.budgetExpenseItem.update({
+      where: { id: existing.id },
+      data: { name: data.name, level: data.level, order: data.order, parentId: data.parentId, isSystem: true },
+    });
+    return existing.id;
+  }
+  const created = await prisma.budgetExpenseItem.create({
+    data: { ...data, isSystem: true, isActive: true, organizationId: null },
+  });
+  return created.id;
+}
+
+export async function seedBudgetExpenseItems(prisma: PrismaClient): Promise<void> {
+  console.log('Загрузка справочника статей расходов...');
+
+  // Уровень 0 — корневые статьи
+  const smrId  = await upsertBudgetItem(prisma, { code: 'SMR_WORKS',      name: 'Строительно-монтажные работы',      level: 0, order: 0, parentId: null });
+  const matId  = await upsertBudgetItem(prisma, { code: 'MATERIALS',      name: 'Материалы',                         level: 0, order: 1, parentId: null });
+  await upsertBudgetItem(prisma, { code: 'EQUIPMENT',      name: 'Оборудование',                   level: 0, order: 2, parentId: null });
+  await upsertBudgetItem(prisma, { code: 'PIR_COSTS',     name: 'Проектно-изыскательские работы', level: 0, order: 3, parentId: null });
+  await upsertBudgetItem(prisma, { code: 'OTHER_EXPENSES',name: 'Прочие расходы',                 level: 0, order: 4, parentId: null });
+
+  // Уровень 1 — статьи СМР
+  await upsertBudgetItem(prisma, { code: 'GENERAL_CONSTRUCTION', name: 'Общестроительные', level: 1, order: 0, parentId: smrId });
+  await upsertBudgetItem(prisma, { code: 'SPECIAL_WORKS',        name: 'Специальные',      level: 1, order: 1, parentId: smrId });
+
+  // Уровень 1 — статьи Материалы
+  await upsertBudgetItem(prisma, { code: 'METAL_STRUCTURES', name: 'Металлоконструкции',    level: 1, order: 0, parentId: matId });
+  await upsertBudgetItem(prisma, { code: 'CONCRETE',         name: 'Бетон и железобетон',   level: 1, order: 1, parentId: matId });
+  await upsertBudgetItem(prisma, { code: 'BRICK',            name: 'Кирпич',                level: 1, order: 2, parentId: matId });
+
+  console.log('✅ Загружено дерево статей расходов (5 корневых, 5 дочерних)');
+}
+
 export async function seedReferenceBooks(prisma: PrismaClient): Promise<void> {
   await seedCurrencies(prisma);
   await seedBudgetTypes(prisma);
   await seedMeasurementUnits(prisma);
   await seedDeclensionCases(prisma);
   console.log('✅ Базовые справочники (REF.3): загружены');
+  await seedContractKinds(prisma);
+  await seedDocumentTypes(prisma);
+  await seedBudgetExpenseItems(prisma);
+  console.log('✅ Справочники REF.4: загружены');
 }
