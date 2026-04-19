@@ -42,42 +42,62 @@ export function SidebarNav({ isCollapsed }: Props) {
 
   return (
     <TooltipProvider delayDuration={100}>
-      <nav className="space-y-1 px-2">
+      {!isCollapsed && (
+        <p className="mb-1.5 px-4 font-mono text-[10px] uppercase tracking-[0.08em] text-white/40">
+          Навигация
+        </p>
+      )}
+      <nav className="space-y-0.5 px-2">
         {navItems.map((item) => {
           const isActive = item.href === '/'
             ? pathname === '/'
             : pathname.startsWith(item.href);
 
-          // Badge для входящих документов (Входящие)
-          const inboxBadge = item.showInboxBadge && inboxCount > 0 ? (
-            <span className="ml-auto flex h-4 min-w-[16px] items-center justify-center rounded-full bg-blue-500 text-[9px] font-bold text-white px-0.5">
-              {inboxCount > 9 ? '9+' : inboxCount}
+          // TODO: design conflict — счётчики рядом с пунктами навигации (Objects, Tasks и т.п.)
+          // требуют новых агрегирующих endpoint-ов; рендерим бейдж только когда count определён
+          // (для Inbox count уже есть useInboxCount). Пустых плейсхолдеров "0" не показываем.
+          const count: number | undefined = item.showInboxBadge ? inboxCount : undefined;
+          const hasCount = typeof count === 'number' && count > 0;
+
+          const badge = hasCount ? (
+            <span
+              className={cn(
+                'ml-auto flex h-[18px] min-w-[18px] items-center justify-center rounded-[999px] px-1 font-mono text-[10px] font-semibold',
+                isActive
+                  ? 'bg-white/15 text-white'
+                  : 'bg-white/10 text-white/80'
+              )}
+            >
+              {count > 99 ? '99+' : count}
             </span>
           ) : null;
 
-          const showCollapsedDot = isCollapsed && inboxCount > 0 && item.showInboxBadge;
+          const showCollapsedDot = isCollapsed && hasCount;
 
           const linkContent = (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center rounded-md text-sm font-medium transition-colors',
-                isCollapsed ? 'justify-center px-2 py-2' : 'gap-3 px-3 py-2',
+                'flex items-center rounded-[6px] text-[13px] font-medium transition-colors',
+                isCollapsed ? 'justify-center px-2 py-2' : 'gap-3 px-3 py-1.5',
                 isActive
-                  ? 'bg-blue-600/30 text-white'
-                  : 'text-white/70 hover:text-white hover:bg-white/[0.08]'
+                  ? 'bg-white/10 text-white'
+                  : 'text-white/65 hover:text-white hover:bg-white/[0.06]'
               )}
             >
               <div className="relative flex-shrink-0">
                 <item.icon className="h-4 w-4" />
                 {/* Badge в свёрнутом режиме — поверх иконки */}
                 {showCollapsedDot && (
-                  <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-blue-500" />
+                  <span
+                    className="absolute -top-1 -right-1 h-2 w-2 rounded-full"
+                    style={{ background: 'var(--accent-bg)' }}
+                  />
                 )}
               </div>
-              {!isCollapsed && item.label}
-              {!isCollapsed && inboxBadge}
+              {!isCollapsed && <span className="truncate">{item.label}</span>}
+              {!isCollapsed && badge}
             </Link>
           );
 

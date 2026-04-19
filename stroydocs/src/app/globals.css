@@ -2,29 +2,137 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Design tokens — Komplid design refresh.
+ * OKLch used directly: Chrome ≥111, Safari ≥15.4, Firefox ≥113 (late 2023).
+ * Project has no browserslist constraint for older browsers.
+ * Legacy HSL slots (--primary, --foreground, ...) retained so existing
+ * shadcn/ui primitives keep working during the iterative migration.
+ */
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
+    /* Новые семантические токены (OKLch) */
+    --bg: oklch(0.985 0.002 85);
+    --bg-elev: oklch(1 0 0);
+    --bg-inset: oklch(0.965 0.003 85);
+    --ink: oklch(0.22 0.008 255);
+    --ink-soft: oklch(0.45 0.008 255);
+    --ink-muted: oklch(0.58 0.007 255);
+    --border-token: oklch(0.91 0.004 255);
+    --border-strong: oklch(0.82 0.006 255);
+
+    /* Акцент — палитра Steel (по умолчанию) */
+    --accent-bg: oklch(0.72 0.16 62);
+    --accent-ink: oklch(0.17 0.008 255);
+
+    /* Семантические цвета */
+    --ok: oklch(0.65 0.14 155);
+    --warn: oklch(0.72 0.15 72);
+    --err: oklch(0.62 0.18 27);
+    --info: oklch(0.62 0.12 250);
+
+    /* Сайдбар всегда тёмный — часть идентичности бренда */
+    --sidebar-bg: oklch(0.22 0.008 255);
+    --sidebar-ink: oklch(0.88 0.006 255);
+    --sidebar-hover: oklch(0.28 0.01 255);
+
+    /* Тени */
+    --shadow-1: 0 1px 2px rgba(17, 24, 39, 0.04), 0 1px 3px rgba(17, 24, 39, 0.03);
+    --shadow-2: 0 4px 12px rgba(17, 24, 39, 0.06), 0 1px 2px rgba(17, 24, 39, 0.04);
+
+    /* Радиусы */
+    --r-1: 4px;
+    --r-2: 6px;
+    --r-3: 8px;
+    --r-4: 12px;
+    --r-pill: 999px;
+
+    /* Legacy HSL — оставлены для обратной совместимости с shadcn/ui */
+    --background: 48 20% 98%;
+    --foreground: 222 20% 15%;
     --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
+    --card-foreground: 222 20% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    /* Акцентный синий #2563EB = hsl(217, 91%, 53%) */
-    --primary: 217 91% 53%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 220 14.3% 95.9%;
+    --popover-foreground: 222 20% 15%;
+    --primary: 33 70% 52%;
+    --primary-foreground: 222 20% 15%;
+    --secondary: 220 14% 95.9%;
     --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
+    --muted: 220 14% 95.9%;
     --muted-foreground: 220 8.9% 46.1%;
-    --accent: 220 14.3% 95.9%;
+    --accent: 220 14% 95.9%;
     --accent-foreground: 220.9 39.3% 11%;
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 8 70% 50%;
     --destructive-foreground: 210 20% 98%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 217 91% 53%;
+    --ring: 33 70% 52%;
     --radius: 0.5rem;
+  }
+
+  .dark {
+    --bg: oklch(0.17 0.008 255);
+    --bg-elev: oklch(0.21 0.008 255);
+    --bg-inset: oklch(0.2 0.008 255);
+    --ink: oklch(0.95 0.004 255);
+    --ink-soft: oklch(0.72 0.008 255);
+    --ink-muted: oklch(0.58 0.007 255);
+    --border-token: oklch(0.28 0.008 255);
+    --border-strong: oklch(0.38 0.008 255);
+
+    --ok: oklch(0.72 0.14 155);
+    --warn: oklch(0.78 0.15 72);
+    --err: oklch(0.7 0.17 27);
+    --info: oklch(0.72 0.12 250);
+
+    --sidebar-bg: oklch(0.14 0.008 255);
+    --sidebar-ink: oklch(0.88 0.006 255);
+    --sidebar-hover: oklch(0.22 0.01 255);
+
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.25);
+    --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.25);
+
+    /* Legacy HSL — dark */
+    --background: 222 20% 10%;
+    --foreground: 210 20% 96%;
+    --card: 222 18% 13%;
+    --card-foreground: 210 20% 96%;
+    --popover: 222 18% 13%;
+    --popover-foreground: 210 20% 96%;
+    --primary: 33 70% 60%;
+    --primary-foreground: 222 20% 10%;
+    --secondary: 222 15% 18%;
+    --secondary-foreground: 210 20% 96%;
+    --muted: 222 15% 18%;
+    --muted-foreground: 220 10% 65%;
+    --accent: 222 15% 20%;
+    --accent-foreground: 210 20% 96%;
+    --destructive: 8 70% 55%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 222 15% 22%;
+    --input: 222 15% 22%;
+    --ring: 33 70% 60%;
+  }
+
+  /* Палитра Cobalt */
+  :root[data-accent='cobalt'] {
+    --accent-bg: oklch(0.58 0.18 258);
+    --accent-ink: oklch(0.98 0.004 255);
+  }
+  .dark[data-accent='cobalt'] {
+    --accent-bg: oklch(0.62 0.18 258);
+    --accent-ink: oklch(0.98 0.004 255);
+  }
+
+  /* Палитра Lime */
+  :root[data-accent='lime'] {
+    --accent-bg: oklch(0.76 0.18 128);
+    --accent-ink: oklch(0.17 0.008 255);
+  }
+  .dark[data-accent='lime'] {
+    --accent-bg: oklch(0.78 0.18 128);
+    --accent-ink: oklch(0.17 0.008 255);
   }
 }
 
@@ -34,5 +142,14 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: 'cv11', 'ss01', 'ss02';
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
   }
 }

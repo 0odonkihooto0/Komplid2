@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { TasksQuickPanel } from './TasksQuickPanel';
+import { SearchTrigger } from './SearchTrigger';
+import { ThemeToggle } from './ThemeToggle';
 
 export function Header() {
   const { data: session } = useSession();
@@ -22,12 +24,16 @@ export function Header() {
   const initials = user ? `${user.lastName[0]}${user.firstName[0]}` : '';
 
   return (
-    <header className="flex h-14 items-center justify-between border-b bg-card px-6">
-      <div />
-      <div className="flex items-center gap-2">
+    <header className="flex h-14 items-center gap-4 border-b bg-card px-6">
+      {/* Свободное пространство слева — оставлено под хлебные крошки при дальнейшем развитии */}
+      <div className="flex-1" />
+      <div className="flex flex-1 justify-center">
+        <SearchTrigger />
+      </div>
+      <div className="flex flex-1 items-center justify-end gap-1">
+        <ThemeToggle />
         <TasksQuickPanel />
         <NotificationsDropdown />
-        {/* Dropdown пользователя */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
