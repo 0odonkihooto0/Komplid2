@@ -30,7 +30,7 @@ export function SidebarProjectsList() {
 
   return (
     <div className="px-2">
-      <p className="mb-1 px-3 text-xs font-medium text-white/50 uppercase">
+      <p className="mb-1.5 px-3 font-mono text-[10px] uppercase tracking-[0.08em] text-white/40">
         Объекты
       </p>
       <div className="space-y-0.5">
@@ -41,10 +41,10 @@ export function SidebarProjectsList() {
               key={obj.id}
               href={`/objects/${obj.id}/passport`}
               className={cn(
-                'flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors',
+                'flex items-center gap-2 rounded-[6px] px-3 py-1.5 text-[13px] transition-colors',
                 isActive
-                  ? 'bg-blue-600/30 text-white'
-                  : 'text-white/70 hover:text-white hover:bg-white/[0.08]'
+                  ? 'bg-white/10 text-white'
+                  : 'text-white/65 hover:text-white hover:bg-white/[0.06]'
               )}
             >
               <FolderOpen className="h-3.5 w-3.5 shrink-0" />

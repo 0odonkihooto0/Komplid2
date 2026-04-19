@@ -44,7 +44,7 @@ export function SidebarObjectModules({ objectId, isCollapsed }: Props) {
   return (
     <TooltipProvider delayDuration={100}>
       {!isCollapsed && (
-        <p className="mb-1 px-3 text-xs font-medium text-white/50 uppercase">
+        <p className="mb-1.5 px-3 font-mono text-[10px] uppercase tracking-[0.08em] text-white/40">
           Модули объекта
         </p>
       )}
@@ -58,16 +58,16 @@ export function SidebarObjectModules({ objectId, isCollapsed }: Props) {
               key={href}
               href={href}
               className={cn(
-                'flex items-center rounded-md text-sm font-medium transition-colors',
+                'flex items-center rounded-[6px] text-[13px] font-medium transition-colors',
                 isCollapsed ? 'justify-center px-2 py-1.5' : 'gap-2 px-3 py-1.5',
                 isActive
-                  ? 'bg-blue-600/30 text-white'
-                  : 'text-white/60 hover:text-white hover:bg-white/[0.08]'
+                  ? 'bg-white/10 text-white'
+                  : 'text-white/60 hover:text-white hover:bg-white/[0.06]'
               )}
             >
               <item.icon className="h-3.5 w-3.5 flex-shrink-0" />
               {!isCollapsed && (
-                <span className="truncate text-xs">{item.label}</span>
+                <span className="truncate">{item.label}</span>
               )}
             </Link>
           );
