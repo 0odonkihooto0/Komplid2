@@ -1,4 +1,4 @@
-import { GanttContent } from './GanttContent';
+import { GanttContent } from '@/components/modules/gantt/GanttContent';
 
 export const dynamic = 'force-dynamic';
 

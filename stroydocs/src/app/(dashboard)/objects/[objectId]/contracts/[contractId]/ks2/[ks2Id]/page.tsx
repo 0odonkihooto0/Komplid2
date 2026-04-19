@@ -1,4 +1,4 @@
-import { Ks2DetailContent } from '@/app/(dashboard)/projects/[projectId]/contracts/[contractId]/ks2/[ks2Id]/Ks2DetailContent';
+import { Ks2DetailContent } from '@/components/modules/ks2/Ks2DetailContent';
 
 export default function ObjectKs2DetailPage({
   params,

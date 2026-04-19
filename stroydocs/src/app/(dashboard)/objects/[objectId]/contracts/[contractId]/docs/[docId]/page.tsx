@@ -1,4 +1,4 @@
-import { ExecutionDocDetailContent } from '@/app/(dashboard)/projects/[projectId]/contracts/[contractId]/docs/[docId]/ExecutionDocDetailContent';
+import { ExecutionDocDetailContent } from '@/components/modules/execution-docs/ExecutionDocDetailContent';
 
 export default function ObjectDocDetailPage({
   params,

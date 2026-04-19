@@ -1,4 +1,4 @@
-import { ContractDetailContent } from './ContractDetailContent';
+import { ContractDetailContent } from '@/components/modules/contracts/ContractDetailContent';
 
 export default function ContractDetailPage({
   params,

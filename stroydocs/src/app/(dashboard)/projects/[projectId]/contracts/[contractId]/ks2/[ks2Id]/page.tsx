@@ -1,4 +1,4 @@
-import { Ks2DetailContent } from './Ks2DetailContent';
+import { Ks2DetailContent } from '@/components/modules/ks2/Ks2DetailContent';
 
 interface Props {
   params: { projectId: string; contractId: string; ks2Id: string };

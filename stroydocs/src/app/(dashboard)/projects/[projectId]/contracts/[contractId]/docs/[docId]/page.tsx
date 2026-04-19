@@ -1,4 +1,4 @@
-import { ExecutionDocDetailContent } from './ExecutionDocDetailContent';
+import { ExecutionDocDetailContent } from '@/components/modules/execution-docs/ExecutionDocDetailContent';
 
 export const dynamic = 'force-dynamic';
 

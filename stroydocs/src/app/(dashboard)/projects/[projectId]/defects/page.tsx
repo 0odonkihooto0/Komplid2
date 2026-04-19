@@ -1,4 +1,4 @@
-import { DefectsContent } from './DefectsContent';
+import { DefectsContent } from '@/components/modules/defects/DefectsContent';
 
 export const dynamic = 'force-dynamic';
 
