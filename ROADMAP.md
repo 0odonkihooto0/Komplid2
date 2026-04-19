@@ -9,6 +9,17 @@
 
 ---
 
+### Добавлено (2026-04-19) — Консолидация UI объектов
+
+- ✅ Папка `src/app/(dashboard)/projects/` удалена полностью; все UI-страницы живут на канонических URL `/objects/[objectId]/*`
+- ✅ 9 компонентов, физически лежавших внутри route-папок (`ContractDetailContent`, `ContractTabsList`/`Content`, `useContractDialogs`, `GanttContent`, `ExecutionDocDetailContent`, `Ks2DetailContent`, `DefectsContent`, `ProjectsContent`), перенесены в `src/components/modules/*`; 2 файла (`ProjectDetailContent`, `ProjectContractsTab`) удалены как мёртвый код
+- ✅ 6 реальных страниц (defects, contracts/[cid], gantt, docs/[did], estimates/[iid], ks2/[kid]) перенесены из `projects/[projectId]/` в `objects/[objectId]/`; URL-сегмент в TypeScript-интерфейсах `params` — `objectId`, в тело компонентов значение прокидывается как `projectId` (имя prop совпадает с FK в Prisma)
+- ✅ 4 клиентских `router.push` на `/projects/...` (`ImportEstimateDialog` 3×, `EstimateImportHistory` 1×) + `handleBack` в превью сметы переведены на `/objects/...`; `/projects/:path*` убран из `src/middleware.ts` (редиректы в `next.config.mjs` срабатывают раньше middleware)
+- ✅ `next.config.mjs` → `redirects()`: `/projects` → `/objects`, `/projects/:id` → `/objects/:id/passport`, `/projects/:id/:path*` → `/objects/:id/:path*` (HTTP 308, сохраняет закладки пользователей)
+- ✅ API-путь `/api/projects/[projectId]/*` не трогался — остаётся каноническим (рассинхрон UI↔API — осознанное решение, см. `docs/patterns.md`)
+
+---
+
 ### Добавлено (2026-04-19) — Консолидация API объектов
 
 - ✅ Канонический путь API для всех операций над `BuildingObject` — `/api/projects/[projectId]/*`; папка `src/app/api/objects/` удалена целиком (0 `route.ts`)
