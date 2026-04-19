@@ -562,5 +562,17 @@ P2037 (Too many connections) — НЕ ретраить, нужен PgBouncer.
 
 ---
 
+**FK-constraint в миграции на таблицу, которую создаёт другая (более поздняя) миграция — P0001/42P01 в проде.**
+Ситуация: модели `Currency` и `BudgetType` были добавлены в `schema.prisma` через `db push` в dev-окружении, без создания файла миграции. Затем миграция REF.8 (`20260419010000`) добавила FK-constraint вида `FOREIGN KEY ("currencyId") REFERENCES "currencies"("id")` — но таблица `currencies` не существовала на prod-БД ни в одной из предшествующих миграций. Результат: PostgreSQL ошибка `42P01 relation "currencies" does not exist` → `start.sh` поймал ошибку и пометил миграцию как `--applied` без фактического выполнения SQL → колонки `currencyId`, `contractKindId`, `budgetTypeId` отсутствуют в БД → runtime `P2022: column does not exist`.
+
+Исправление: переписать `20260419010000` — добавить колонки без FK (`IF NOT EXISTS`). Создать `20260419020000` — идемпотентная миграция, которая:
+1. Создаёт пропущенные таблицы (`CREATE TABLE IF NOT EXISTS`)
+2. Добавляет колонки (`ALTER TABLE ... ADD COLUMN IF NOT EXISTS`)
+3. Добавляет FK-constraints через `DO $$ BEGIN ... EXCEPTION WHEN duplicate_object THEN NULL; END $$;`
+
+Правило: **никогда не добавлять FK-constraint в миграцию, если целевая таблица создаётся другой миграцией, которую Prisma не гарантированно применила раньше** — особенно если эта таблица могла существовать только через `db push`. Всегда проверять, что для каждой модели, на которую ссылается новый FK, существует `CREATE TABLE` в одном из предшествующих файлов миграций (`prisma/migrations/*/migration.sql`). Быстрая проверка: `grep -rl "CREATE TABLE.*имя_таблицы" prisma/migrations/`. Если grep пустой — создать отдельную миграцию для таблицы прежде чем добавлять FK.
+
+---
+
 > Правило: после каждой исправленной ошибки добавить урок сюда.
 > Команда: "Добавь урок в docs/lessons.md: [описание ошибки]"
