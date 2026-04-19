@@ -635,5 +635,19 @@ P2037 (Too many connections) — НЕ ретраить, нужен PgBouncer.
 
 ---
 
+**`ApprovalStepStatus` vs `ApprovalRouteStatus` — путаница двух enum одного модуля.**
+Ошибка: `status: 'PENDING'` использовался в фильтре `approvalRoute.steps.some.status`, но `PENDING` — это значение `ApprovalRouteStatus` (уровень маршрута), а не `ApprovalStepStatus` (уровень шага).
+`ApprovalRouteStatus`: `PENDING | APPROVED | REJECTED | RESET | PENDING_REMARKS`
+`ApprovalStepStatus`: `WAITING | APPROVED | REJECTED`
+Результат: `PrismaClientValidationError` в продакшне, вкладка «Требует действия» СЭД ломалась на всех запросах.
+**Правило**: при написании `approvalRoute.steps.some { status: '...' }` — всегда проверять `ApprovalStepStatus` в schema.prisma. Шаги согласования ждут через `WAITING`, не `PENDING`. Быстрая проверка: `grep -A5 "enum ApprovalStepStatus" prisma/schema.prisma`.
+
+**TanStack Query: уникальные ключи для одного endpoint = N параллельных запросов.**
+После дизайн-рефреша дашборда 8 новых виджетов (`GprMonitoringWidget`, `SkMonitoringWidget`, `DefectStatusWidget`, `FundingPlanWidget`, `ContractsPaymentWidget`, `ContractsPaymentDonutWidget`, `FinancingStatusWidget`, `PaidByProjectWidget`) получили уникальные query keys (`'dashboard-analytics-gpr-monitoring'`, `'dashboard-analytics-sk'` и т.д.) при обращении к одному и тому же endpoint `/api/dashboard/analytics` с одинаковыми параметрами. TanStack Query дедуплицирует только запросы с **одинаковым ключом** — при 8 уникальных ключах в DevTools появилось 10+ параллельных запросов к одному URL, timeline уходил за 80 секунд.
+**Правило**: если несколько компонентов читают разные поля из ОДНОГО API-ответа — они ОБЯЗАНЫ использовать ОДИН shared query key. Каждый компонент берёт свои поля из общего кэша. Уникальный key нужен только если endpoint принимает разные параметры (например, `SmrOsvoenoWidget` добавляет `year` → отдельный ключ правомерен).
+Быстрая проверка дублирования: `grep -r "queryKey.*dashboard-analytics" src/components/dashboard/` — все entry к одному endpoint должны быть одинаковыми.
+
+---
+
 > Правило: после каждой исправленной ошибки добавить урок сюда.
 > Команда: "Добавь урок в docs/lessons.md: [описание ошибки]"

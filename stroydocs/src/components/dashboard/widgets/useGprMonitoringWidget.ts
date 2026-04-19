@@ -41,7 +41,7 @@ export function useGprMonitoringWidget({ objectIds = [] }: UseGprMonitoringWidge
 
   // Запрос данных аналитики
   const { data, isLoading } = useQuery<DashboardAnalyticsData>({
-    queryKey: ['dashboard-analytics-gpr-monitoring', objectIds],
+    queryKey: ['dashboard-analytics', objectIds],
     queryFn: async () => {
       const params = new URLSearchParams();
       objectIds.forEach((id) => params.append('objectIds[]', id));

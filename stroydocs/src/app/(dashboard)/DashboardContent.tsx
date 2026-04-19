@@ -55,6 +55,7 @@ export function DashboardContent() {
         ? json.data
         : { projectsCount: 0, contractsCount: 0, employeesCount: 0, pendingInvitations: 0, recentContracts: [] };
     },
+    staleTime: 60_000,
   });
 
   // Загружаем список объектов для панели фильтров

@@ -9,7 +9,8 @@ export const dynamic = 'force-dynamic';
 
 // Дефолтные виджеты для новых пользователей
 const DEFAULT_WIDGETS = [
-  { type: 'objects',                title: 'Объекты',           position: 0, colSpan: 2, isVisible: true },
+  { type: 'objects_base',           title: 'База объектов',     position: 0, colSpan: 1, isVisible: true },
+  { type: 'objects',                title: 'Объекты (список)',  position: 21, colSpan: 2, isVisible: false },
   { type: 'contracts_status',       title: 'Статус договоров',  position: 1, colSpan: 1, isVisible: true },
   { type: 'id_readiness',           title: 'Готовность ИД',     position: 2, colSpan: 2, isVisible: true },
   { type: 'defects_monitor',        title: 'Дефектовка',        position: 3, colSpan: 1, isVisible: true },
@@ -34,7 +35,7 @@ const DEFAULT_WIDGETS = [
 
 // Типы виджетов которые добавляются к существующим пользователям при обновлении
 const NEW_WIDGET_TYPES = [
-  'objects', 'map', 'issues', 'contracts_by_type', 'stages',
+  'objects_base', 'objects', 'map', 'issues', 'contracts_by_type', 'stages',
   'gpr_monitoring', 'sk_monitoring_chart', 'sk_monitoring_table',
   'defect_status', 'funding_plan', 'contracts_payment_bar',
   'contracts_payment_donut', 'smr_osvoeno', 'financing_status', 'paid_by_project',
