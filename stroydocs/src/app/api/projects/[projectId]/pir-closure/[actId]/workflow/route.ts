@@ -93,3 +93,38 @@ export async function POST(_req: NextRequest, { params }: Params) {
     return errorResponse('Внутренняя ошибка сервера', 500);
   }
 }
+
+// DELETE — остановить и сбросить маршрут согласования акта закрытия ПИР
+export async function DELETE(_req: NextRequest, { params }: Params) {
+  try {
+    const session = await getSessionOrThrow();
+
+    const act = await db.pIRClosureAct.findFirst({
+      where: {
+        id: params.actId,
+        projectId: params.projectId,
+        buildingObject: { organizationId: session.user.organizationId },
+      },
+      select: { id: true, approvalRouteId: true },
+    });
+    if (!act) return errorResponse('Акт закрытия не найден', 404);
+
+    if (!act.approvalRouteId) {
+      return errorResponse('Маршрут не найден', 404);
+    }
+
+    // Удалить маршрут согласования и вернуть акт в статус «Проведён»
+    await db.approvalRoute.delete({ where: { id: act.approvalRouteId } });
+
+    await db.pIRClosureAct.update({
+      where: { id: params.actId },
+      data: { approvalRouteId: null, status: 'CONDUCTED' },
+    });
+
+    return successResponse({ ok: true });
+  } catch (error) {
+    if (error instanceof NextResponse) return error;
+    logger.error({ err: error }, 'Ошибка сброса согласования акта закрытия ПИР');
+    return errorResponse('Внутренняя ошибка сервера', 500);
+  }
+}

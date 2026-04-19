@@ -90,6 +90,27 @@ export async function PATCH(
       },
     });
 
+    // Уведомляем отправителя, когда получатель прочитал письмо
+    if (parsed.data.status === 'READ' && correspondence.status === 'SENT') {
+      const senderUsers = await db.user.findMany({
+        where: { organizationId: correspondence.senderOrgId, isActive: true },
+        select: { id: true },
+      });
+      if (senderUsers.length > 0) {
+        await db.notification.createMany({
+          data: senderUsers.map((u: { id: string }) => ({
+            userId: u.id,
+            type: 'CORRESPONDENCE_READ',
+            title: 'Письмо прочитано',
+            body: `Письмо «${correspondence.subject}» прочитано получателем`,
+            entityType: 'Correspondence',
+            entityId: correspondence.id,
+          })),
+          skipDuplicates: true,
+        });
+      }
+    }
+
     return successResponse(updated);
   } catch (error) {
     if (error instanceof NextResponse) return error;

@@ -80,9 +80,16 @@ export async function POST(
 
     const { startDate, endDate, ...rest } = parsed.data;
 
+    // Авторасчёт НДС при наличии обоих значений
+    const vatAmount =
+      rest.vatRate != null && rest.totalAmount != null
+        ? rest.totalAmount * rest.vatRate / 100
+        : undefined;
+
     const contract = await db.contract.create({
       data: {
         ...rest,
+        ...(vatAmount !== undefined && { vatAmount }),
         startDate: startDate ? new Date(startDate) : null,
         endDate: endDate ? new Date(endDate) : null,
         projectId: params.projectId,
