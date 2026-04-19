@@ -89,10 +89,7 @@ const config: Config = {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
-        'r-1': 'var(--r-1)',
-        'r-2': 'var(--r-2)',
-        'r-3': 'var(--r-3)',
-        'r-4': 'var(--r-4)',
+        panel: 'var(--r-3)',
         pill: 'var(--r-pill)',
       },
       boxShadow: {
