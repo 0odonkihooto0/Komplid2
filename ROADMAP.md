@@ -8,6 +8,15 @@
 **Статусы:** ⬜ не начато · 🔄 в работе · ✅ готово · ⏸ отложено
 
 ---
+
+### Добавлено (2026-04-19) — Консолидация API объектов
+
+- ✅ Канонический путь API для всех операций над `BuildingObject` — `/api/projects/[projectId]/*`; папка `src/app/api/objects/` удалена целиком (0 `route.ts`)
+- ✅ 170 дублирующих маршрутов удалены, 67 уникальных перенесены в каноническое место; поведенческие различия перенесены в `projects/`-версии до удаления (SED views/filters + FTS, TYPE_PREFIX для номеров ИД на русском, changeType в доп. соглашениях с пересчётом суммы договора + НДС, budgetTypeId в источниках финансирования, авторасчёт НДС при создании договора, расширенные include для комментариев ИД и версий смет, и др.)
+- ✅ 127 клиентских файлов (`components/*`, `hooks/*`, страниц) переведены с `/api/objects/...` на `/api/projects/...`; фронтовые URL-страницы `/objects/[objectId]/*` не менялись (рассинхрон API и UI URL — осознанное решение: FK в Prisma `projectId`, исторически UI-сегмент `objects`)
+- ✅ `tsc --noEmit` зелёный после каждого этапа; `grep '/api/objects' src/` пусто
+
+---
 ---
 
 # СКВОЗНАЯ ИНФРАСТРУКТУРА (Фазы 1–3.6 ✅)
@@ -184,7 +193,7 @@
 - ✅ Секция «Карта и координаты» — react-leaflet карта (OSM tiles), мультиточечные маркеры из ProjectCoordinate (очередь строительства), Nominatim geocoding по адресу объекта, контекстное меню маркера (Изменить / Удалить), диалог добавления/редактирования точки
 - ✅ Секция «График реализации» — полоса стадий (Экспертиза, Обследование, Изыскания, ПД, СМР, Ввод) с Badge + div-прогресс-бар плана СМР по плановым датам паспорта
 - ✅ Кнопки действий в шапке: «Печатная форма» (POST /info-report/generate-pdf, заглушка 501), «Сводный отчёт» (placeholder), «История загрузок» (placeholder)
-- ✅ Виджет «ПИР»: общая сумма ПИР-контрактов (по имени категории), освоение (акты закрытия ПИР SIGNED), % выполнения, дата плана, отклонение ▲/▼ в рублях (PirWidget + GET /api/objects/[objectId]/passport/widgets)
+- ✅ Виджет «ПИР»: общая сумма ПИР-контрактов (по имени категории), освоение (акты закрытия ПИР SIGNED), % выполнения, дата плана, отклонение ▲/▼ в рублях (PirWidget + GET /api/projects/[projectId]/passport/widgets)
 - ✅ Виджет «СМР»: общая сумма контрактов, освоение (КС-2 APPROVED), % выполнения, даты начала/окончания, отклонение ▲/▼ в рублях (SmrWidget + usePassportWidgets)
 - ✅ Тип строительства (Select: Новое строительство / Реконструкция / Капитальный ремонт / Техническое перевооружение)
 - ✅ Регион (Select из 85 субъектов РФ по ОКТМО, `RF_SUBJECTS` в constants.ts)
@@ -257,7 +266,7 @@
 - ✅ loading.tsx + error.tsx для всех 13 вкладок (/objects/[objectId]/*)
 - ✅ Мобильный layout — адаптивный sidebar с гамбургер-меню (ObjectModuleSidebar)
 - ✅ Сворачиваемая информационная панель объекта (ObjectInfoHeader, ЦУС стр. 20–21) — отображается вверху каждого модуля; свёрнута по умолчанию (localStorage); при раскрытии — 4 мини-виджета (Оплачено по контрактам, Выполнение по графикам, Освоение ПИР, Освоение СМР/КС-2) + сводка по предписаниям / ИД / проектной документации; навигация ← → между объектами с сохранением пути модуля
-- ✅ GET /api/objects/[objectId]/summary — агрегация данных для панели: суммы контрактов + FACT-оплаты, ГПР (amount × progress), КС-2 (APPROVED), счётчики ИД и ПД по статусам, prev/nextObjectId; кэш Redis 5 мин
+- ✅ GET /api/projects/[projectId]/summary — агрегация данных для панели: суммы контрактов + FACT-оплаты, ГПР (amount × progress), КС-2 (APPROVED), счётчики ИД и ПД по статусам, prev/nextObjectId; кэш Redis 5 мин
 - ✅ ObjectModuleSidebar обновлён: Паспорт/Показатели/Финансирование/Задачи/Фото убраны как отдельные пункты → единый «Информация» (2026-04-10)
 - ✅ Tab-навигация паспорта: `passport/layout.tsx` (Задачи / Проблемные вопросы / Фотогалерея)
 
@@ -437,7 +446,7 @@
 - ✅ Вложения: `GET /sed/[docId]/attachments` (список с presigned URL) + `GET/DELETE /attachments/[attachmentId]` (удаление только черновиков)
 - ✅ `CreateSEDDocumentDialog.tsx` — полноэкранный диалог создания (тип, отправитель/получатель физлицо + организация, номер, дата, TipTap текст, TagInput тэги, Dropzone + S3 вложения)
 - ✅ `TagInput.tsx` (shared) — компонент ввода тэгов: Enter/запятая → Badge с ×, Backspace для удаления
-- ✅ `GET /api/objects/[objectId]/sed/next-number` — предпросмотр следующего номера без advisory lock
+- ✅ `GET /api/projects/[projectId]/sed/next-number` — предпросмотр следующего номера без advisory lock
 - ✅ `createSEDSchema` расширена: `senderUserId`, `receiverUserId`, `receiverOrgId`, `date`, `number` (кастомный override)
 - ✅ SEDDocumentCard — полноэкранная карточка документа (5 вкладок: Информация, Параметры, Подписание, Связи, Основания; лента ДО, боковая панель 280px, авто-маркировка isRead)
 
@@ -522,7 +531,7 @@
 - ✅ 5 системных категорий (seed): Заключение договоров, Дорожная карта, Подготовка к строительству, Разрешительная документация, Приёмка объекта
 - ✅ ConfigureCategoriesDialog — чекбоксы вкл/выкл системных категорий в сайдбаре
 - ✅ CreateActivityDocumentDialog — создание с предзаполненной категорией (или Select если «Все»)
-- ✅ API CRUD: `/api/objects/[objectId]/activity-categories` + `/configure` + `/activity-documents`
+- ✅ API CRUD: `/api/projects/[projectId]/activity-categories` + `/configure` + `/activity-documents`
 - ✅ Миграция: `20260411010000_add_activity_models`
 
 ### Вкладка «Планировщик проекта» ✅
@@ -532,8 +541,8 @@
 - ✅ Контекстное меню: Редактировать | Добавить подзадачу | Удалить
 - ✅ Версионирование УП (ProjectManagementVersion, isCurrent)
 - ✅ Фильтрация по версии УП
-- ✅ API CRUD: `/api/objects/[objectId]/planner-tasks`, `/api/objects/[objectId]/planner-versions`
-- ✅ Reorder API: `/api/objects/[objectId]/planner-tasks/reorder`
+- ✅ API CRUD: `/api/projects/[projectId]/planner-tasks`, `/api/projects/[projectId]/planner-versions`
+- ✅ Reorder API: `/api/projects/[projectId]/planner-tasks/reorder`
 - ✅ URL: `/objects/[objectId]/project-management/planner`
 
 ### Вкладка «Версии УП» ✅
@@ -550,7 +559,7 @@
 - ✅ Виджет 2 — «Плановые платежи»: LineChart с двумя линиями — помесячно и накопительным итогом
 - ✅ Виджет 3 — «Фактические vs Плановые»: совмещённый LineChart двух накопительных линий (план/факт) с объединённой осью X
 - ✅ Виджет 4 — «Статусы контрактов»: PieChart donut (Подписан / Не подписан / Расторгнут), количество + процент
-- ✅ API: `GET /api/objects/[objectId]/contract-analytics?from=&to=` → `{ costByContract, plannedPayments, factPayments, statusDistribution }`
+- ✅ API: `GET /api/projects/[projectId]/contract-analytics?from=&to=` → `{ costByContract, plannedPayments, factPayments, statusDistribution }`
 - ✅ URL: `/objects/[objectId]/project-management/analytics`
 
 **База данных (Модуль 4)**
@@ -595,10 +604,10 @@
 - ✅ `create-version` — новая версия документа с наследованием замечаний (`DesignDocComment`)
 - ✅ `create-copy` — независимая копия документа без наследования замечаний
 - ✅ GET design-docs: параметр `?includeDeleted=true` (только для роли ADMIN)
-- ✅ Печать Задания на проектирование (ЗП) — PDF Handlebars (`templates/pir/design-task.hbs`): блоки УТВЕРЖДАЮ/СОГЛАСОВАНО + таблица параметров; `POST /api/objects/[oid]/design-tasks/[tid]/print`
+- ✅ Печать Задания на проектирование (ЗП) — PDF Handlebars (`templates/pir/design-task.hbs`): блоки УТВЕРЖДАЮ/СОГЛАСОВАНО + таблица параметров; `POST /api/projects/[projectId]/design-tasks/[tid]/print`
 - ✅ Печать Задания на изыскания (ЗИИ) — тот же шаблон, `isSurveyTask=true`, заголовок «ЗАДАНИЕ НА ИЗЫСКАНИЯ»
-- ✅ Печать Акта закрытия ПИР — PDF Handlebars (`templates/pir/closure-act.hbs`): реквизиты, таблица позиций, итого, подписи; `POST /api/objects/[oid]/pir-closure/[aid]/print`; заглушка активирована
-- ✅ Кнопка «Документооборот ▾» в карточке документа ПИР → «Создать в СЭД»: `POST /api/objects/[oid]/design-docs/[did]/send-to-sed` создаёт `SEDDocument` (тип OTHER, внутренний) + `SEDLink(entityType=DESIGN_DOC)` → редирект на новый СЭД-документ
+- ✅ Печать Акта закрытия ПИР — PDF Handlebars (`templates/pir/closure-act.hbs`): реквизиты, таблица позиций, итого, подписи; `POST /api/projects/[projectId]/pir-closure/[aid]/print`; заглушка активирована
+- ✅ Кнопка «Документооборот ▾» в карточке документа ПИР → «Создать в СЭД»: `POST /api/projects/[projectId]/design-docs/[did]/send-to-sed` создаёт `SEDDocument` (тип OTHER, внутренний) + `SEDLink(entityType=DESIGN_DOC)` → редирект на новый СЭД-документ
 
 **База данных (Модуль 5)**
 - ✅ `DesignTask`, `DesignTaskParam`, `DesignTaskComment`
@@ -618,12 +627,12 @@
 - ✅ Дерево категорий в левой панели «Документация» (`PIRCategoryTree`): навигация по разделам, кнопка «+» для пользовательских разделов
 - ✅ API: `POST /api/projects/[pid]/pir-config` (создать конфиг + предустановки ПП РФ №87), `GET/PATCH /api/projects/[pid]/pir-config/categories`
 - ✅ Миграция `20260411040000_add_pir_object_type_config`
-- ✅ Вкладка «Изменения» в карточке документа ПИР (`DesignDocChangelog`): таблица Версия/Описание/Автор/Дата, ручное добавление записей через диалог; API `GET/POST /api/objects/[oid]/design-docs/[did]/changes`
-- ✅ Вкладка «ТИМ» в карточке документа ПИР (`DesignDocTimTab`): связанные BIM-элементы через `BimElementLink(entityType=DESIGN_DOC)`, группировка по модели, placeholder при отсутствии связей; API `GET /api/objects/[oid]/design-docs/[did]/tim-links`; счётчик в табе
+- ✅ Вкладка «Изменения» в карточке документа ПИР (`DesignDocChangelog`): таблица Версия/Описание/Автор/Дата, ручное добавление записей через диалог; API `GET/POST /api/projects/[projectId]/design-docs/[did]/changes`
+- ✅ Вкладка «ТИМ» в карточке документа ПИР (`DesignDocTimTab`): связанные BIM-элементы через `BimElementLink(entityType=DESIGN_DOC)`, группировка по модели, placeholder при отсутствии связей; API `GET /api/projects/[projectId]/design-docs/[did]/tim-links`; счётчик в табе
 - ✅ Вкладка «Подписание» в карточке документа ПИР: заглушка ЭЦП (КриптоПро CSP), индикатор статуса `APPROVED`
 - ✅ Шапка карточки ПИР-документа по ЦУС стр. 106: строка 1 «Документ ПИР № {number} от {date}», строка 2 «Версия №{v} | {status} | Внешний № — | Согласование {approvalStatus} | Подписание {signStatus}»; 7 вкладок с динамическими счётчиками
-- ✅ Лист согласования ПИР (PDF): шаблон `templates/pir/approval-sheet.hbs` (колонки Уровень/ФИО/Организация/Должность/Статус/Дата/Комментарий), генератор `generatePIRApprovalSheetPdf()` в `pir-pdf-generator.ts`, кнопка «Скачать ▾» во вкладке «Согласование» для DesignTask и DesignDocument; `POST /api/objects/[oid]/design-tasks/[tid]/approval-sheet` + `POST /api/objects/[oid]/design-docs/[did]/approval-sheet`; организации подтягиваются из ContractParticipant по роли; работает даже без активного маршрута
-- ✅ Лист подписания ПИР (шаблон-заглушка): `templates/pir/signing-sheet.hbs` (таблица с пустыми полями подписей + уведомление о КриптоПро CSP), `generatePIRSigningSheetPdf()`, `POST /api/objects/[oid]/design-docs/[did]/signing-sheet`; кнопка «Скачать ▾» во вкладке «Подписание» карточки документа ПИР
+- ✅ Лист согласования ПИР (PDF): шаблон `templates/pir/approval-sheet.hbs` (колонки Уровень/ФИО/Организация/Должность/Статус/Дата/Комментарий), генератор `generatePIRApprovalSheetPdf()` в `pir-pdf-generator.ts`, кнопка «Скачать ▾» во вкладке «Согласование» для DesignTask и DesignDocument; `POST /api/projects/[projectId]/design-tasks/[tid]/approval-sheet` + `POST /api/projects/[projectId]/design-docs/[did]/approval-sheet`; организации подтягиваются из ContractParticipant по роли; работает даже без активного маршрута
+- ✅ Лист подписания ПИР (шаблон-заглушка): `templates/pir/signing-sheet.hbs` (таблица с пустыми полями подписей + уведомление о КриптоПро CSP), `generatePIRSigningSheetPdf()`, `POST /api/projects/[projectId]/design-docs/[did]/signing-sheet`; кнопка «Скачать ▾» во вкладке «Подписание» карточки документа ПИР
 
 ---
 
@@ -946,7 +955,7 @@
 - ✅ Вложенный DropdownMenu «Создать документ» в шапке модуля (`CreateDocDropdown.tsx`): 3 группы — Общестроительные работы / Акты КС / Другие; поддерживает `DropdownMenuSub`
 - ✅ Карточка `GENERAL_DOCUMENT` (`GeneralDocDialog.tsx`): поля номер/дата/название/примечание, загрузка файлов через Dropzone → S3, вкладки Информация/Файлы/Согласование/Подписание, кнопки «Сохранить» и «Провести» (→ IN_REVIEW)
 - ✅ `useGeneralDoc.ts` — хук с `createMutation`, `updateMutation`, `submitMutation`, `uploadAttachment`, `deleteAttachment`
-- ✅ API вложений: `GET/POST/DELETE /api/objects/[oid]/contracts/[cid]/execution-docs/[did]/attachments` (паттерн Gantt-вложений)
+- ✅ API вложений: `GET/POST/DELETE /api/projects/[projectId]/contracts/[cid]/execution-docs/[did]/attachments` (паттерн Gantt-вложений)
 - ✅ `ExecutionDocsTable` + `useExecutionDocs` расширены: prop `types?: ExecutionDocType[]`, query `?types=TYPE1,TYPE2`
 - ✅ `id-classification.ts`: KS_6A → ACCOUNTING_JOURNAL; KS_11/KS_14 → INSPECTION_ACT; GENERAL_DOCUMENT → OTHER_ID
 - ✅ Миграция `20260414070000_add_general_docs`: ALTER TYPE добавляет 4 значения; ALTER TABLE добавляет `documentDate`, `note`, `attachmentS3Keys`
@@ -969,7 +978,7 @@
 
 ### Добавлено (2026-04-14) — Специализированные формы КС-11 и КС-14
 - ✅ **Prisma**: `KsActFormData` — новая модель (1:1 к `ExecutionDoc`); поля пп.3,7,9-15; JSON-разделы: `participants`, `indicators`, `workList`, `commissionMembers` (только КС-14); миграция `20260414110000_add_ks_act_form_data`
-- ✅ **API** (`/api/objects/[oid]/contracts/[cid]/ks-acts/`):
+- ✅ **API** (`/api/projects/[projectId]/contracts/[cid]/ks-acts/`):
   - `GET/POST /ks-acts` — список и создание КС-11/КС-14 (атомарное создание `ExecutionDoc + KsActFormData`)
   - `GET/PATCH /ks-acts/[id]` — деталь и обновление данных формы (upsert)
   - `POST /ks-acts/[id]/print` — генерация PDF через Handlebars + Puppeteer, загрузка в Timeweb S3, возврат pre-signed URL
@@ -1504,7 +1513,7 @@
 - ✅ Все 7 виджетов зарегистрированы в `DashboardWidgetsGrid` + `DEFAULT_WIDGETS` (position 14–20, `isVisible: false`)
 
 ## ЦУС — Индикаторы инфопанели объекта + ObjectPassportDialog (апрель 2026, стр. 311, 334–346)
-- ✅ API `GET /api/objects/[objectId]/dashboard-indicators` → `{ gprExec, pirOsv, smrOsv, payments }` — каждый индикатор: `planTotal`, `planToday`, `factTotal`, `percent`, `status` (OK/OVERDUE/AHEAD)
+- ✅ API `GET /api/projects/[projectId]/dashboard-indicators` → `{ gprExec, pirOsv, smrOsv, payments }` — каждый индикатор: `planTotal`, `planToday`, `factTotal`, `percent`, `status` (OK/OVERDUE/AHEAD)
 - ✅ `ObjectInfoHeader`: 4 богатых `IndicatorWidget` с цветовым семафором (красный/жёлтый/зелёный), форматом млрд/млн, строкой «План на <дата>: X» и статусом (Просрочено / Перевыполнение / В срок)
 - ✅ `ObjectPassportDialog`: всплывающее окно с 8 вкладками (Паспорт / Показатели / Финансирование / Контракты / Стройконтроль / Проблемные вопросы / Задачи / Фотогалерея)
 - ✅ `MapWidget` → вкладка «Таблица»: клик на строку объекта открывает `ObjectPassportDialog`
@@ -1594,7 +1603,7 @@
 - ✅ `src/lib/references/resolvers.ts` — хелперы `getCurrencyByCode/getBudgetTypeByCode/getContractKindByCode` с Redis TTL 1ч
 - ✅ API: warehouse-movements/create-from, create-based-on — копируют `currencyId`
 - ✅ API: `/api/dashboard/analytics` — `contractsByType` теперь группирует по `contractKindId`; `/api/dashboard/contracts-by-type` фильтрует по `contractKindId`
-- ✅ API: `/api/objects/[objectId]/funding` — принимает и возвращает `budgetTypeId`/`budgetType`
+- ✅ API: `/api/projects/[projectId]/funding` — принимает и возвращает `budgetTypeId`/`budgetType`
 - ✅ UI: `ContractsWidget` показывает `ContractKind.name` вместо enum-лейблов; `__NONE__` с иконкой ⚠️
 - ✅ UI: `CreateContractDialog` — новый Select «Вид работ» из справочника ContractKind
 - ✅ UI: `ContractsList` — баннер «У N договоров не указан вид работ»
