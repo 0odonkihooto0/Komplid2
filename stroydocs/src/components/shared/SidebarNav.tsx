@@ -10,6 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useQuery } from '@tanstack/react-query';
 import { useInboxCount } from '@/hooks/useInboxCount';
 import { NotificationDropdown } from './NotificationDropdown';
 
@@ -18,19 +19,26 @@ interface NavItem {
   label: string;
   icon: LucideIcon;
   showInboxBadge?: boolean;
+  statsKey?: 'projectsCount' | 'documentsTotal' | 'tasksTotal';
 }
 
 const navItems: NavItem[] = [
   { href: '/', label: 'Главная', icon: LayoutDashboard },
   { href: '/inbox', label: 'Входящие', icon: Inbox, showInboxBadge: true },
-  { href: '/planner', label: 'Планировщик задач', icon: ClipboardList },
-  { href: '/objects', label: 'Объекты', icon: Building2 },
+  { href: '/planner', label: 'Планировщик задач', icon: ClipboardList, statsKey: 'tasksTotal' },
+  { href: '/objects', label: 'Объекты', icon: Building2, statsKey: 'projectsCount' },
   { href: '/analytics', label: 'Аналитика', icon: BarChart3 },
   { href: '/monitoring', label: 'Мониторинг', icon: Monitor },
-  { href: '/documents', label: 'Документы', icon: FileText },
+  { href: '/documents', label: 'Документы', icon: FileText, statsKey: 'documentsTotal' },
   { href: '/templates', label: 'Шаблоны', icon: BookOpen },
   { href: '/references', label: 'Справочники', icon: Library },
 ];
+
+interface StatsData {
+  projectsCount: number;
+  documentsTotal: number;
+  tasksTotal: number;
+}
 
 interface Props {
   isCollapsed: boolean;
@@ -39,6 +47,17 @@ interface Props {
 export function SidebarNav({ isCollapsed }: Props) {
   const pathname = usePathname();
   const inboxCount = useInboxCount();
+
+  const { data: stats } = useQuery<StatsData>({
+    queryKey: ['dashboard-stats'],
+    queryFn: async () => {
+      const res = await fetch('/api/dashboard/stats');
+      const json = await res.json();
+      return json.success ? json.data : { projectsCount: 0, documentsTotal: 0, tasksTotal: 0 };
+    },
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+  });
 
   return (
     <TooltipProvider delayDuration={100}>
@@ -53,10 +72,11 @@ export function SidebarNav({ isCollapsed }: Props) {
             ? pathname === '/'
             : pathname.startsWith(item.href);
 
-          // TODO: design conflict — счётчики рядом с пунктами навигации (Objects, Tasks и т.п.)
-          // требуют новых агрегирующих endpoint-ов; рендерим бейдж только когда count определён
-          // (для Inbox count уже есть useInboxCount). Пустых плейсхолдеров "0" не показываем.
-          const count: number | undefined = item.showInboxBadge ? inboxCount : undefined;
+          const count: number | undefined = item.showInboxBadge
+            ? inboxCount
+            : item.statsKey && stats
+              ? stats[item.statsKey]
+              : undefined;
           const hasCount = typeof count === 'number' && count > 0;
 
           const badge = hasCount ? (

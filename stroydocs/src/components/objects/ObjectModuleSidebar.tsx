@@ -20,28 +20,33 @@ import {
   Layers,
   Box,
 } from 'lucide-react';
+import { CountBadge } from '@/components/shared/CountBadge';
+import { useObjectCounts } from '@/hooks/useObjectCounts';
+import type { ObjectCounts } from '@/hooks/useObjectCounts';
+
+type SidebarKey = keyof ObjectCounts['sidebar'];
 
 interface ModuleItem {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   soon?: true;
+  countKey?: SidebarKey;
 }
 
 const MODULES: ModuleItem[] = [
-  { label: 'Информация',     href: 'info',       icon: Info },
-  { label: 'СЭД',                  href: 'sed',                        icon: Mail },
-  { label: 'Управление проектом', href: 'project-management/contracts', icon: Briefcase },
-  { label: 'ПИР',           href: 'pir/design-task',      icon: Layers },
-  { label: 'ТИМ',           href: 'tim',                  icon: Box },
-  // Будущие модули — доступны после реализации соответствующих шагов
-  { label: 'ГПР',            href: 'gpr/structure', icon: Calendar },
-  { label: 'Ресурсы',        href: 'resources',  icon: Package },
-  { label: 'Журналы',        href: 'journals',   icon: BookOpen },
-  { label: 'ИД',             href: 'id',         icon: FileText },
-  { label: 'Стройконтроль',  href: 'sk/inspections', icon: Shield },
-  { label: 'Сметы',          href: 'estimates', icon: Scale },
-  { label: 'Отчёты',         href: 'reports',    icon: BarChart2 },
+  { label: 'Информация',          href: 'info',                        icon: Info },
+  { label: 'СЭД',                 href: 'sed',                         icon: Mail,     countKey: 'sed' },
+  { label: 'Управление проектом', href: 'project-management/contracts', icon: Briefcase, countKey: 'management' },
+  { label: 'ПИР',                 href: 'pir/design-task',             icon: Layers,   countKey: 'pir' },
+  { label: 'ТИМ',                 href: 'tim',                         icon: Box },
+  { label: 'ГПР',                 href: 'gpr/structure',               icon: Calendar, countKey: 'gpr' },
+  { label: 'Ресурсы',             href: 'resources',                   icon: Package,  countKey: 'resources' },
+  { label: 'Журналы',             href: 'journals',                    icon: BookOpen, countKey: 'journals' },
+  { label: 'ИД',                  href: 'id',                          icon: FileText, countKey: 'id' },
+  { label: 'Стройконтроль',       href: 'sk/inspections',              icon: Shield,   countKey: 'stroykontrol' },
+  { label: 'Сметы',               href: 'estimates',                   icon: Scale },
+  { label: 'Отчёты',              href: 'reports',                     icon: BarChart2 },
 ];
 
 interface Props {
@@ -51,12 +56,14 @@ interface Props {
 export function ObjectModuleSidebar({ objectId }: Props) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { data: counts } = useObjectCounts(objectId);
 
   const navItems = (
     <nav className="space-y-1 px-2">
-      {MODULES.map(({ label, href, icon: Icon, soon }) => {
+      {MODULES.map(({ label, href, icon: Icon, soon, countKey }) => {
         const fullHref = `/objects/${objectId}/${href}`;
         const isActive = pathname.startsWith(fullHref);
+        const count = countKey ? counts?.sidebar[countKey] : undefined;
 
         return (
           <Link
@@ -74,10 +81,12 @@ export function ObjectModuleSidebar({ objectId }: Props) {
           >
             <Icon className="h-4 w-4 shrink-0" />
             <span>{label}</span>
-            {soon && (
+            {soon ? (
               <span className="ml-auto rounded bg-muted px-1 text-[10px] text-muted-foreground">
                 скоро
               </span>
+            ) : (
+              <CountBadge count={count as number | null | undefined} />
             )}
           </Link>
         );
