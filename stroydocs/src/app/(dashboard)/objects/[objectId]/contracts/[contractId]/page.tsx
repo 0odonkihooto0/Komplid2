@@ -1,6 +1,6 @@
 import { ContractDetailContent } from '@/components/modules/contracts/ContractDetailContent';
 
-export default function ObjectContractDetailPage({
+export default function ContractDetailPage({
   params,
 }: {
   params: { objectId: string; contractId: string };
