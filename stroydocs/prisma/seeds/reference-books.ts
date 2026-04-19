@@ -354,4 +354,81 @@ export async function seedReferenceBooks(prisma: PrismaClient): Promise<void> {
   await seedDocumentTypes(prisma);
   await seedBudgetExpenseItems(prisma);
   console.log('✅ Справочники REF.4: загружены');
+  await seedTaskTypeRefs(prisma);
+  await seedDefectCategoryRefs(prisma);
+  await seedProblemIssueTypeRefs(prisma);
+  console.log('✅ Справочники REF.5 (типы задач / категории дефектов / типы вопросов): загружены');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// REF.5 — Типы задач (TaskTypeRef)
+// ─────────────────────────────────────────────────────────────────
+
+export async function seedTaskTypeRefs(prisma: PrismaClient): Promise<void> {
+  console.log('Загрузка справочника типов задач (REF.5)...');
+  const items = [
+    { code: 'task',    name: 'Задача',    color: '#2563EB', icon: 'CheckSquare', order: 1 },
+    { code: 'meeting', name: 'Встреча',   color: '#7C3AED', icon: 'Users',       order: 2 },
+    { code: 'fix',     name: 'Доработки', color: '#DC2626', icon: 'Wrench',      order: 3 },
+  ];
+  for (const item of items) {
+    await prisma.taskTypeRef.upsert({
+      where: { code: item.code },
+      update: { name: item.name, color: item.color, icon: item.icon, order: item.order, isSystem: true },
+      create: { ...item, isSystem: true, isActive: true, organizationId: null },
+    });
+  }
+  console.log(`✅ Загружено ${items.length} типов задач`);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// REF.5 — Категории недостатков (DefectCategoryRef)
+// ─────────────────────────────────────────────────────────────────
+
+export async function seedDefectCategoryRefs(prisma: PrismaClient): Promise<void> {
+  console.log('Загрузка справочника категорий недостатков (REF.5)...');
+  const items = [
+    { code: 'QUALITY_VIOLATION',   name: '(ОТ) Нарушение правил охраны труда', color: '#DC2626', requiresSuspension: true,  order: 1 },
+    { code: 'TECHNOLOGY_VIOLATION',name: '(Т) Нарушение технологии работ',      color: '#D97706', requiresSuspension: false, order: 2 },
+    { code: 'FIRE_SAFETY',         name: 'Пожарная безопасность',               color: '#EA580C', requiresSuspension: true,  order: 3 },
+    { code: 'ECOLOGY',             name: 'Экология и природоохрана',             color: '#16A34A', requiresSuspension: false, order: 4 },
+    { code: 'DOCUMENTATION',       name: 'Нарушения в документации',             color: '#2563EB', requiresSuspension: false, order: 5 },
+    { code: 'OTHER',               name: 'Прочее',                               color: '#6B7280', requiresSuspension: false, order: 6 },
+  ];
+  for (const item of items) {
+    await prisma.defectCategoryRef.upsert({
+      where: { code: item.code },
+      update: { name: item.name, color: item.color, requiresSuspension: item.requiresSuspension, order: item.order, isSystem: true },
+      create: { ...item, isSystem: true, isActive: true, organizationId: null },
+    });
+  }
+  console.log(`✅ Загружено ${items.length} категорий недостатков`);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// REF.5 — Типы проблемных вопросов (ProblemIssueTypeRef)
+// ─────────────────────────────────────────────────────────────────
+
+export async function seedProblemIssueTypeRefs(prisma: PrismaClient): Promise<void> {
+  console.log('Загрузка справочника типов проблемных вопросов (REF.5)...');
+  const items = [
+    { code: 'CORRECTION_PSD',  name: 'Корректировка ПСД',            order: 1 },
+    { code: 'LAND_LEGAL',      name: 'Земельно-правовые',             order: 2 },
+    { code: 'PRODUCTION',      name: 'Производственные',              order: 3 },
+    { code: 'ORG_LEGAL',       name: 'Организационно-правовые',       order: 4 },
+    { code: 'CONTRACT_WORK',   name: 'Договорная работа',             order: 5 },
+    { code: 'FINANCIAL',       name: 'Финансирование',                order: 6 },
+    { code: 'MATERIAL_SUPPLY', name: 'Поставка материалов',           order: 7 },
+    { code: 'WORK_QUALITY',    name: 'Качество работ',                order: 8 },
+    { code: 'DEADLINES',       name: 'Сроки',                         order: 9 },
+    { code: 'OTHER',           name: 'Прочие',                        order: 10 },
+  ];
+  for (const item of items) {
+    await prisma.problemIssueTypeRef.upsert({
+      where: { code: item.code },
+      update: { name: item.name, order: item.order, isSystem: true },
+      create: { ...item, isSystem: true, isActive: true, organizationId: null },
+    });
+  }
+  console.log(`✅ Загружено ${items.length} типов проблемных вопросов`);
 }

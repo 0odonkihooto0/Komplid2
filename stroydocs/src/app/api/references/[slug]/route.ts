@@ -77,6 +77,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     if (!schema) return errorResponse('Справочник не найден', 404);
 
     const sp = req.nextUrl.searchParams;
+    const countOnly = sp.get('count') === 'true';
     const search = sp.get('search')?.trim().slice(0, 200) || null;
     const sort = sp.get('sort') || 'createdAt';
     const order = sp.get('order') === 'asc' ? 'asc' : 'desc';
@@ -89,6 +90,11 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
 
     const where = buildWhere(schema.fields, session.user.organizationId, schema.scope, search);
     const modelClient = getModelClient(schema.model);
+
+    if (countOnly) {
+      const count = await modelClient.count({ where });
+      return successResponse({ count });
+    }
 
     const [rows, total] = await Promise.all([
       modelClient.findMany({ where, orderBy: { [safeSort]: order }, skip, take: limit }),

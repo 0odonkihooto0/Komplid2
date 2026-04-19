@@ -1557,15 +1557,23 @@
 - ✅ `useReferenceTable` — при `hierarchical: true` загружает limit=500 без пагинации
 - ✅ registry.ts — 3 новые схемы: contractKinds / documentTypes / budgetExpenseItems (category: documentary/financial)
 
-### Базовые справочники (REF.5)
-- ⬜ ProblemIssueType (Типы проблемных вопросов) — конвертация enum в справочник
-- ⬜ DefectCategory (Категории недостатков) — конвертация enum в справочник
+### Базовые справочники (REF.5) ✅ 2026-04-19
+- ✅ `DefectCategoryRef` — 6 записей (QUALITY_VIOLATION/TECHNOLOGY_VIOLATION/FIRE_SAFETY/ECOLOGY/DOCUMENTATION/OTHER), поля: name, code, color, requiresSuspension, isSystem, isActive; миграция `add_type_refs`
+- ✅ `ProblemIssueTypeRef` — 10 записей (CORRECTION_PSD/…/OTHER), поля: name, code, isSystem, isActive; миграция `add_type_refs`
+- ✅ `TaskTypeRef` — 3 записи (task/meeting/fix), поля: name, code, color, icon, isSystem, isActive; отдельная таблица `task_types_ref` от `task_types`
+- ✅ Опциональные FK: `Defect.categoryRefId → DefectCategoryRef`, `ProblemIssue.typeRefId → ProblemIssueTypeRef` (enum-поля сохранены для обратной совместимости)
+- ✅ `src/lib/references/ref-mapper.ts` — Redis-кэшированный маппер `code → ref.id`; используется в Defect/ProblemIssue API (POST create, PATCH update)
+- ✅ `prisma/seeds/migrate-enums-to-refs.ts` — однократный миграционный скрипт: `npx ts-node prisma/seeds/migrate-enums-to-refs.ts`
+- ✅ registry.ts: 3 новые схемы — `taskTypeRefs` (common), `defectCategories` (construction), `problemIssueTypes` (construction)
 
-### UI и навигация (REF.6)
-- ⬜ Главное меню → пункт «Справочники» (BookOpen icon)
-- ⬜ Страница `/references` — каталог справочников с категориями (Общие / Строительные / Финансовые / Документарные)
-- ⬜ Страница `/references/[slug]` — конкретный справочник через `<ReferenceTable>`
-- ⬜ Защита admin-only для системных справочников; per-organization для пользовательских
+### UI и навигация (REF.6) ✅ 2026-04-19
+- ✅ Навигация: пункт «Справочники» (Library icon) в SidebarNav — href='/references'
+- ✅ `/references` — каталог-страница: поиск, группировка по категориям (Общие/Строительные/Финансовые/Документарные), карточки с иконкой/описанием/счётчиком записей, вкладки «Все / Системные» (только для ADMIN)
+- ✅ `/references/[slug]` — страница конкретного справочника с хлебными крошками и `<ReferenceTable>`
+- ✅ `/references/[slug]/entry/[id]` — full-page shareable-link на запись справочника с кнопкой «Редактировать»
+- ✅ `description?` и `icon?` добавлены в `ReferenceSchema`; заполнены для всех 10 справочников REF.3-REF.5
+- ✅ API: `GET /api/references/[slug]?count=true` — возвращает `{ count: N }` для каталога
+- ✅ `src/lib/references/constants.ts` — CATEGORY_LABELS, CATEGORY_ORDER (переиспользуется в каталоге и slug-страницах)
 
 ### Интеграция существующих (REF.7)
 - ⬜ KsiNode → интегрирован в `/references/ksi` через тот же фреймворк

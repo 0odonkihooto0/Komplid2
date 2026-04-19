@@ -10,6 +10,8 @@ export const REFERENCE_REGISTRY: Record<string, ReferenceSchema> = {
     model: 'currency',
     scope: 'organization',
     auditable: true,
+    description: 'Валюты и денежные единицы (ISO 4217)',
+    icon: 'DollarSign',
     fields: [
       { key: 'name',        label: 'Наименование',         type: 'string',  required: true,  width: 180 },
       { key: 'shortName',   label: 'Буквенный код',        type: 'string',  required: true,  width: 100 },
@@ -32,6 +34,8 @@ export const REFERENCE_REGISTRY: Record<string, ReferenceSchema> = {
     model: 'budgetType',
     scope: 'organization',
     auditable: true,
+    description: 'Типы источников финансирования',
+    icon: 'Wallet',
     fields: [
       { key: 'name',     label: 'Наименование', type: 'string',  required: true,  width: 240 },
       { key: 'code',     label: 'Код',          type: 'string',  required: true,  width: 140 },
@@ -50,6 +54,8 @@ export const REFERENCE_REGISTRY: Record<string, ReferenceSchema> = {
     model: 'measurementUnitRef',
     scope: 'organization',
     auditable: true,
+    description: 'Единицы измерения по ГОСТ 8.417-2002',
+    icon: 'Ruler',
     fields: [
       { key: 'name',      label: 'Наименование',      type: 'string',  required: true,  width: 200 },
       { key: 'shortName', label: 'Обозначение',       type: 'string',  required: true,  width: 120 },
@@ -70,6 +76,8 @@ export const REFERENCE_REGISTRY: Record<string, ReferenceSchema> = {
     scope: 'system',
     adminOnly: true,
     auditable: true,
+    description: 'Падежи русского языка для склонения',
+    icon: 'Languages',
     fields: [
       { key: 'name',      label: 'Наименование', type: 'string',  required: true,  width: 180 },
       { key: 'shortName', label: 'Краткое',      type: 'string',  required: true,  width: 100 },
@@ -89,6 +97,8 @@ export const REFERENCE_REGISTRY: Record<string, ReferenceSchema> = {
     model: 'contractKind',
     scope: 'organization',
     auditable: true,
+    description: 'Виды договоров и контрактов',
+    icon: 'Handshake',
     fields: [
       { key: 'name',      label: 'Наименование',         type: 'string',  required: true,  width: 320 },
       { key: 'code',      label: 'Код',                  type: 'string',  required: true,  width: 140 },
@@ -108,6 +118,8 @@ export const REFERENCE_REGISTRY: Record<string, ReferenceSchema> = {
     model: 'documentTypeRef',
     scope: 'organization',
     auditable: true,
+    description: 'Типы документов ИД и СЭД-модулей',
+    icon: 'FileType2',
     fields: [
       { key: 'name',     label: 'Наименование', type: 'string',  required: true,  width: 280 },
       { key: 'code',     label: 'Код',          type: 'string',  required: true,  width: 160 },
@@ -128,6 +140,8 @@ export const REFERENCE_REGISTRY: Record<string, ReferenceSchema> = {
     auditable: true,
     hierarchical: true,
     parentKey: 'parentId',
+    description: 'Иерархия статей расходов',
+    icon: 'Receipt',
     fields: [
       { key: 'name',     label: 'Наименование', type: 'string',  required: true,  width: 280 },
       { key: 'code',     label: 'Код',          type: 'string',  required: true,  width: 120 },
@@ -137,6 +151,72 @@ export const REFERENCE_REGISTRY: Record<string, ReferenceSchema> = {
       // Не рендерятся в таблице/форме, но принимаются API при создании дочерних записей
       { key: 'parentId', label: 'Родитель',     type: 'string',  required: false, hidden: true },
       { key: 'level',    label: 'Уровень',      type: 'number',  required: false, hidden: true },
+    ],
+  },
+
+  // ── REF.5 ──────────────────────────────────────────────────────
+
+  taskTypeRefs: {
+    slug: 'taskTypeRefs',
+    name: 'Типы задач',
+    pluralName: 'Типы задач',
+    nameSingular: 'тип задачи',
+    category: 'common',
+    model: 'taskTypeRef',
+    scope: 'organization',
+    auditable: true,
+    description: 'Типы задач планировщика',
+    icon: 'CheckSquare',
+    fields: [
+      { key: 'name',     label: 'Наименование', type: 'string',  required: true,  width: 200 },
+      { key: 'code',     label: 'Код',          type: 'string',  required: true,  width: 140 },
+      { key: 'color',    label: 'Цвет',         type: 'color',   required: false, width: 100 },
+      { key: 'icon',     label: 'Иконка',       type: 'string',  required: false, width: 120 },
+      { key: 'order',    label: 'Порядок',      type: 'number',  required: false, width: 100, hiddenByDefault: true },
+      { key: 'isActive', label: 'Активный',     type: 'boolean', required: false, width: 100 },
+      { key: 'isSystem', label: 'Системный',    type: 'boolean', required: false, readonly: true, hiddenByDefault: true },
+    ],
+  },
+
+  defectCategories: {
+    slug: 'defectCategories',
+    name: 'Категории недостатков',
+    pluralName: 'Категории недостатков',
+    nameSingular: 'категорию недостатков',
+    category: 'construction',
+    model: 'defectCategoryRef',
+    scope: 'organization',
+    auditable: true,
+    description: 'Категории строительных недостатков',
+    icon: 'AlertTriangle',
+    fields: [
+      { key: 'name',               label: 'Наименование',         type: 'string',  required: true,  width: 280 },
+      { key: 'code',               label: 'Код',                  type: 'string',  required: true,  width: 160 },
+      { key: 'color',              label: 'Цвет',                 type: 'color',   required: false, width: 100 },
+      { key: 'requiresSuspension', label: 'Требует приостановки', type: 'boolean', required: false, width: 160 },
+      { key: 'order',              label: 'Порядок',              type: 'number',  required: false, width: 100, hiddenByDefault: true },
+      { key: 'isActive',           label: 'Активный',             type: 'boolean', required: false, width: 100 },
+      { key: 'isSystem',           label: 'Системный',            type: 'boolean', required: false, readonly: true, hiddenByDefault: true },
+    ],
+  },
+
+  problemIssueTypes: {
+    slug: 'problemIssueTypes',
+    name: 'Типы проблемных вопросов',
+    pluralName: 'Типы проблемных вопросов',
+    nameSingular: 'тип проблемного вопроса',
+    category: 'construction',
+    model: 'problemIssueTypeRef',
+    scope: 'organization',
+    auditable: true,
+    description: 'Типы проблемных вопросов',
+    icon: 'HelpCircle',
+    fields: [
+      { key: 'name',     label: 'Наименование', type: 'string',  required: true,  width: 280 },
+      { key: 'code',     label: 'Код',          type: 'string',  required: true,  width: 200 },
+      { key: 'order',    label: 'Порядок',      type: 'number',  required: false, width: 100, hiddenByDefault: true },
+      { key: 'isActive', label: 'Активный',     type: 'boolean', required: false, width: 100 },
+      { key: 'isSystem', label: 'Системный',    type: 'boolean', required: false, readonly: true, hiddenByDefault: true },
     ],
   },
 };

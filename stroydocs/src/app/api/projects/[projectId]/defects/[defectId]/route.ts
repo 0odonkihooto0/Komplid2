@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { invalidateAnalyticsCache } from '@/lib/analytics/cache';
+import { getDefectCategoryRefId } from '@/lib/references/ref-mapper';
 
 interface Params { projectId: string; defectId: string }
 
@@ -69,12 +70,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Params }) {
     }
 
     const { deadline, ...rest } = parsed.data;
+    const categoryRefId = rest.category ? await getDefectCategoryRefId(rest.category) : undefined;
 
     const updated = await db.defect.update({
       where: { id: params.defectId },
       data: {
         ...rest,
         ...(deadline !== undefined ? { deadline: deadline ? new Date(deadline) : null } : {}),
+        ...(categoryRefId !== undefined ? { categoryRefId: categoryRefId ?? null } : {}),
       },
       include: DEFECT_INCLUDE,
     });

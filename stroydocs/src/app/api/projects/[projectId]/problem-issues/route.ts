@@ -5,6 +5,7 @@ import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { z } from 'zod';
 import { ProblemIssueType } from '@prisma/client';
+import { getProblemIssueTypeRefId } from '@/lib/references/ref-mapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -81,6 +82,7 @@ export async function POST(
     if (!parsed.success) return errorResponse('Ошибка валидации', 400, parsed.error.issues);
 
     const { deadline, ...rest } = parsed.data;
+    const typeRefId = await getProblemIssueTypeRefId(rest.type);
 
     const issue = await db.problemIssue.create({
       data: {
@@ -88,6 +90,7 @@ export async function POST(
         projectId: params.projectId,
         authorId: session.user.id,
         ...(deadline ? { deadline: new Date(deadline) } : {}),
+        ...(typeRefId ? { typeRefId } : {}),
       },
       include: {
         author: { select: { id: true, firstName: true, lastName: true } },
