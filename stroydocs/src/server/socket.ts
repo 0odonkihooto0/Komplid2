@@ -12,8 +12,11 @@ import { createServer } from 'http';
 import { Server, type Socket } from 'socket.io';
 import { jwtVerify } from 'jose';
 import { PrismaClient } from '@prisma/client';
+import { buildDatabaseUrl, SOCKET_CONNECTION_LIMIT } from '@/lib/database-url';
 
-const db = new PrismaClient();
+const db = new PrismaClient({
+  datasources: { db: { url: buildDatabaseUrl(SOCKET_CONNECTION_LIMIT) } },
+});
 
 const httpServer = createServer();
 const io = new Server(httpServer, {

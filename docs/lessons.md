@@ -7,6 +7,27 @@
 
 ## Prisma / База данных
 
+**P2037 `Too many database connections` / `remaining connection slots are reserved for roles with the SUPERUSER attribute` — две независимые причины в одном баге.**
+
+Продакшн-логи показывали массовый P2037 на всех роутах (`/api/task-labels`, `/api/objects`, `/api/task-groups`, `/api/task-types`, `/api/tasks`, `/api/objects/[id]/summary`, `passport/widgets`, `dashboard-indicators`). PostgreSQL отдавал `FATAL: sorry, too many clients already` и `FATAL: remaining connection slots are reserved for roles with the SUPERUSER attribute` — слоты БД выгреблены самим приложением.
+
+**Причина 1 — наивная склейка `DATABASE_URL + '?connection_limit=10&pool_timeout=20'` ломает URL при любой существующей query-строке.**
+Typical Timeweb Managed PostgreSQL URL: `postgresql://user:pass@host/db?sslmode=require`. После `+ '?...'` получается `...?sslmode=require?connection_limit=10&pool_timeout=20`. По спецификации URI всё после ПЕРВОГО `?` — одна query-строка: `sslmode=require?connection_limit=10&pool_timeout=20`. PostgreSQL/Prisma читают `sslmode` со значением `require?connection_limit=10` (мусор, но может быть проигнорирован), а `connection_limit` они **не видят** вообще. Prisma применяет дефолт `num_physical_cpus * 2 + 1` — на 8-ядерном VPS это 17 соединений на один `PrismaClient`.
+
+**Причина 2 — второй `PrismaClient` в `server.js` без лимита.**
+Продакшн-контейнер запускает `node server.js`, который встраивает Socket.io для чата. `server.js` создавал собственный `new PrismaClient()` (без URL-параметров) для сохранения сообщений — это **второй** пул в том же Node-процессе, независимый от синглтона `src/lib/db.ts`. Плюс дефолтный размер пула = ещё +17 соединений. Итого на одном VPS: `17 (Next.js) + 17 (Socket.io) = 34` соединения от одного контейнера. `max_connections=100` у Timeweb Managed PostgreSQL с ~3 reserved — при любом всплеске нагрузки (одновременные запросы на dashboard + чат) слоты кончаются.
+
+**Решение**:
+1. `src/lib/database-url.ts` — helper `buildDatabaseUrl(limit, timeout=20)`, корректно выбирает `?` или `&` в зависимости от наличия query-строки. Экспортирует `DEFAULT_APP_CONNECTION_LIMIT=5` (Next.js), `SOCKET_CONNECTION_LIMIT=2` (server.js), `WORKER_CONNECTION_LIMIT=2` (BullMQ воркеры). Все лимиты переопределяемы через env.
+2. `scripts/database-url.cjs` — CommonJS-копия для `server.js` (CJS-entry, не может импортировать TS). Обязательно копировать в Docker-образ (`COPY scripts/database-url.cjs ./scripts/`).
+3. `src/lib/db.ts`, `server.js`, `src/server/socket.ts`, все `src/lib/workers/*.worker.ts` — используют `buildDatabaseUrl()` с соответствующим лимитом.
+
+**Правило на будущее**:
+- **Никогда не делать `process.env.DATABASE_URL + '?param=value'`.** Использовать `buildDatabaseUrl()` — он умеет различать `?` vs `&`. Поиск нарушений: `grep -r "DATABASE_URL.*+.*\?" src/`.
+- **Никогда не создавать `new PrismaClient()` без явного `datasources.db.url`** в долгоживущих процессах (серверы, воркеры). Синглтон `src/lib/db.ts` — единственный допустимый создатель без явного URL.
+- P2037 от собственного приложения **не ретраить** — это не транзиентная ошибка, ретрай только усугубит. Лечить корень: либо уменьшить пул, либо добавить PgBouncer (Transaction pooling).
+- При добавлении нового CJS-entry (не `src/`) для production — **сразу** добавить его в `COPY` в `Dockerfile`, иначе `MODULE_NOT_FOUND` в рантайме.
+
 **Прямой каст Prisma `Json` поля к кастомному типу — ошибка сборки `may be a mistake because neither type sufficiently overlaps`.**
 Prisma `Json` поля возвращают тип `JsonValue` (или `JsonArray` после `Array.isArray` narrowing). TypeScript не считает `JsonValue` достаточно совместимым с кастомными интерфейсами (например `KsActParticipant[]`) — прямой `as CustomType[]` вызывает ошибку `Conversion of type 'JsonArray' to type '...' may be a mistake`.
 Ошибка проявляется только на деплое (тип-чек Next.js build) — локально без `node_modules` пропускается.

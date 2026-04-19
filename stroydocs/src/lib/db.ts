@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 // Валидация env-переменных при старте — падаем явно, не тихо
 import '@/lib/env';
 import { logger } from '@/lib/logger';
+import { buildDatabaseUrl, DEFAULT_APP_CONNECTION_LIMIT } from '@/lib/database-url';
 
 /** Коды транзиентных ошибок Prisma — повтор может помочь */
 const TRANSIENT_PRISMA_CODES = new Set(['P1001', 'P1008', 'P1017']);
@@ -34,7 +35,10 @@ function createPrismaClient() {
   const base = new PrismaClient({
     datasources: {
       db: {
-        url: process.env.DATABASE_URL + '?connection_limit=10&pool_timeout=20',
+        // buildDatabaseUrl корректно выбирает `?` или `&` в зависимости от
+        // наличия query-строки в DATABASE_URL (sslmode и т.п.). Наивное
+        // `url + '?...'` ломает connection_limit при любом существующем `?` — P2037.
+        url: buildDatabaseUrl(DEFAULT_APP_CONNECTION_LIMIT),
       },
     },
   });

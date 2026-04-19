@@ -15,12 +15,23 @@ const next = require('next');
 const { Server: SocketIOServer } = require('socket.io');
 const { jwtVerify } = require('jose');
 const { PrismaClient } = require('@prisma/client');
+const {
+  buildDatabaseUrl,
+  SOCKET_CONNECTION_LIMIT,
+} = require('./scripts/database-url.cjs');
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = process.env.HOSTNAME ?? '0.0.0.0';
 const port = parseInt(process.env.PORT ?? '3000', 10);
 
-const db = new PrismaClient();
+// Отдельный клиент Socket.io-чата с ограниченным пулом — без этого у нас в одном
+// Node-процессе уже был второй пул PrismaClient без лимита, который вместе с
+// Next.js-клиентом выгребал все слоты PostgreSQL (P2037).
+const db = new PrismaClient({
+  datasources: {
+    db: { url: buildDatabaseUrl(SOCKET_CONNECTION_LIMIT) },
+  },
+});
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
