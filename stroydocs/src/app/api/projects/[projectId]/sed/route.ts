@@ -112,7 +112,7 @@ export async function GET(
           ...baseWhere,
           status: 'REQUIRES_ACTION',
           approvalRoute: {
-            steps: { some: { userId: session.user.id, status: 'PENDING' } },
+            steps: { some: { userId: session.user.id, status: 'WAITING' } },
           },
         };
         break;

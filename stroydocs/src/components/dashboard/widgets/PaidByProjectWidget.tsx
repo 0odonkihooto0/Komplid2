@@ -29,7 +29,7 @@ export function PaidByProjectWidget({ objectIds = [] }: Props) {
   const idsParam = objectIds.map((id) => `objectIds[]=${id}`).join('&');
 
   const { data: analytics, isLoading } = useQuery<AnalyticsData>({
-    queryKey: ['dashboard-analytics-paid-by-project', objectIds],
+    queryKey: ['dashboard-analytics', objectIds],
     queryFn: async () => {
       const res = await fetch(`/api/dashboard/analytics${idsParam ? `?${idsParam}` : ''}`);
       const json = await res.json();
