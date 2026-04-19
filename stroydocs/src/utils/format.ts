@@ -50,6 +50,13 @@ export function formatBytes(bytes: number): string {
   return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
+/** Форматирование числа для счётчиков: 1200 → "1.2k", 1500000 → "1.5M" */
+export function formatCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+  return String(n);
+}
+
 /** Форматирование суммы в рублях */
 export function formatCurrency(amount: number) {
   return new Intl.NumberFormat('ru-RU', {
