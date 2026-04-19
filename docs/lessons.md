@@ -649,5 +649,15 @@ P2037 (Too many connections) — НЕ ретраить, нужен PgBouncer.
 
 ---
 
+**Next.js App Router: sidebar `<Link>` без `prefetch={false}` = RSC-лавина при загрузке страницы.**
+Каждая видимая ссылка в sidebar (`/inbox`, `/planner`, `/objects`, `/analytics`, `/monitoring`, `/documents`, `/templates`, `/references`) автоматически запрашивала RSC-payload соответствующего маршрута при входе в viewport. При 9 ссылках — 9 параллельных серверных рендеров страниц при загрузке dashboard, DOMContentLoaded растягивался до 30+ секунд. В DevTools это выглядит как дублирующиеся запросы: `analytics` (план `/analytics`), `monitoring` (план `/monitoring`) — без `?_rsc=` суффикса в Name-колонке, что вводит в заблуждение.
+**Правило**: в sidebar-навигации (постоянно видимые ссылки) **всегда** ставить `prefetch={false}`. Навигационные ссылки нет смысла префетчить агрессивно — пользователь кликает по одной ссылке, и только тогда нужен маршрут. `prefetch={false}` добавить к `<Link>` в `SidebarNav.tsx`; не распространять на `<Link>` внутри страниц (там автопрефетч полезен). Поиск нарушений: `grep -r "prefetch" src/components/shared/SidebarNav.tsx` — все nav-Links обязаны иметь `prefetch={false}`.
+
+**TanStack Query: разные ключи для одного API-вызова с одинаковыми параметрами = N дублирующихся запросов.**
+`IdReadinessWidget` использовал ключ `['dashboard-objects-summary-mini']` и `MapWidget`/`ObjectsBaseWidget` — `['dashboard-objects-summary', objectIds]`. Все трое вызывали `/api/dashboard/objects-summary` без фильтра objectIds. Итог: 2 HTTP-запроса к одному URL вместо 1. Исправлено: `IdReadinessWidget` переведён на `['dashboard-objects-summary', [] as string[]]` — при пустом фильтре ключ совпадает с MapWidget/ObjectsBaseWidget → TanStack Query дедуплицирует до 1 запроса.
+**Правило**: перед добавлением нового виджета с `useQuery` — проверить `grep -r "queryKey.*имя-endpoint" src/components/` и убедиться что нет дубликатов. Виджеты к одному endpoint с одинаковыми параметрами должны использовать один ключ. Исключение: если параметры реально разные (например, year в SmrOsvoenoWidget) — отдельный ключ правомерен.
+
+---
+
 > Правило: после каждой исправленной ошибки добавить урок сюда.
 > Команда: "Добавь урок в docs/lessons.md: [описание ошибки]"

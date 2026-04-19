@@ -78,6 +78,7 @@ export function SidebarNav({ isCollapsed }: Props) {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={false}
               className={cn(
                 'flex items-center rounded-[6px] text-[13px] font-medium transition-colors',
                 isCollapsed ? 'justify-center px-2 py-2' : 'gap-3 px-3 py-1.5',
