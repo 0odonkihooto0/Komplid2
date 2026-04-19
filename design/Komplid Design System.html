@@ -1,0 +1,1289 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Komplid — Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Spacing (4px grid) */
+    --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px;
+    --s-6: 24px; --s-8: 32px; --s-10: 40px; --s-12: 48px;
+    /* Radii */
+    --r-1: 4px; --r-2: 6px; --r-3: 8px; --r-4: 12px; --r-pill: 999px;
+    /* Type */
+    --font-ui: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+
+    /* Palette A — Steel & Amber (warm industrial) — DEFAULT */
+    --pa-accent: oklch(0.72 0.16 62);       /* amber */
+    --pa-accent-ink: oklch(0.28 0.08 62);
+    --pa-accent-soft: oklch(0.72 0.16 62 / 0.12);
+    --pa-link: oklch(0.62 0.12 250);
+  }
+
+  /* Light theme */
+  html[data-theme="light"] {
+    --bg:        oklch(0.985 0.002 85);
+    --bg-elev:   oklch(1 0 0);
+    --bg-inset:  oklch(0.965 0.003 85);
+    --bg-hover:  oklch(0.955 0.004 85);
+    --bg-active: oklch(0.93 0.006 85);
+    --ink:       oklch(0.22 0.008 255);
+    --ink-soft:  oklch(0.45 0.008 255);
+    --ink-mute:  oklch(0.58 0.007 255);
+    --border:    oklch(0.91 0.004 255);
+    --border-strong: oklch(0.82 0.006 255);
+    --shadow-1: 0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.03);
+    --shadow-2: 0 4px 12px rgba(17,24,39,0.06), 0 1px 2px rgba(17,24,39,0.04);
+    --side-bg: oklch(0.22 0.008 255);
+    --side-ink: oklch(0.88 0.006 255);
+    --side-mute: oklch(0.62 0.008 255);
+    --side-hover: oklch(0.28 0.01 255);
+    --side-border: oklch(0.3 0.009 255);
+    --ok: oklch(0.65 0.14 155);
+    --warn: oklch(0.72 0.15 72);
+    --err: oklch(0.62 0.18 27);
+    --info: oklch(0.62 0.12 250);
+  }
+  /* Dark theme */
+  html[data-theme="dark"] {
+    --bg:        oklch(0.17 0.008 255);
+    --bg-elev:   oklch(0.21 0.008 255);
+    --bg-inset:  oklch(0.195 0.008 255);
+    --bg-hover:  oklch(0.245 0.009 255);
+    --bg-active: oklch(0.28 0.01 255);
+    --ink:       oklch(0.95 0.004 255);
+    --ink-soft:  oklch(0.75 0.007 255);
+    --ink-mute:  oklch(0.58 0.008 255);
+    --border:    oklch(0.28 0.008 255);
+    --border-strong: oklch(0.36 0.009 255);
+    --shadow-1: 0 1px 2px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.25);
+    --shadow-2: 0 6px 20px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25);
+    --side-bg: oklch(0.14 0.009 255);
+    --side-ink: oklch(0.92 0.006 255);
+    --side-mute: oklch(0.6 0.008 255);
+    --side-hover: oklch(0.2 0.01 255);
+    --side-border: oklch(0.24 0.008 255);
+    --ok: oklch(0.72 0.14 155);
+    --warn: oklch(0.78 0.15 72);
+    --err: oklch(0.7 0.17 27);
+    --info: oklch(0.72 0.12 250);
+  }
+
+  /* Accent palettes */
+  html[data-palette="steel"] {
+    --accent: oklch(0.72 0.16 62);
+    --accent-ink: #1a0f00;
+    --accent-soft: oklch(0.72 0.16 62 / 0.14);
+    --accent-strong: oklch(0.62 0.18 55);
+  }
+  html[data-palette="cobalt"] {
+    --accent: oklch(0.58 0.18 258);
+    --accent-ink: #fff;
+    --accent-soft: oklch(0.58 0.18 258 / 0.14);
+    --accent-strong: oklch(0.5 0.2 258);
+  }
+  html[data-palette="lime"] {
+    --accent: oklch(0.76 0.18 128);
+    --accent-ink: #0e1806;
+    --accent-soft: oklch(0.76 0.18 128 / 0.14);
+    --accent-strong: oklch(0.66 0.2 128);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-ui);
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--ink);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "cv11","ss01","ss03";
+  }
+
+  /* ============ APP SHELL ============ */
+  .app {
+    display: grid;
+    grid-template-columns: 224px 200px 1fr;
+    height: 100vh;
+    overflow: hidden;
+  }
+  .sidebar {
+    background: var(--side-bg);
+    color: var(--side-ink);
+    border-right: 1px solid var(--side-border);
+    display: flex; flex-direction: column;
+    min-height: 0;
+  }
+  .sidebar__head {
+    height: 48px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--side-border);
+  }
+  .brand {
+    display: flex; align-items: center; gap: 8px;
+    font-weight: 600; font-size: 14px; letter-spacing: -0.01em;
+    color: var(--side-ink);
+  }
+  .brand__mark {
+    width: 22px; height: 22px; border-radius: 5px;
+    background: var(--accent);
+    display: grid; place-items: center;
+    color: var(--accent-ink);
+    font-family: var(--font-mono);
+    font-size: 13px; font-weight: 700;
+  }
+  .icon-btn {
+    width: 26px; height: 26px; border-radius: 5px;
+    display: grid; place-items: center;
+    background: transparent; border: 0; cursor: pointer;
+    color: var(--side-mute);
+  }
+  .icon-btn:hover { background: var(--side-hover); color: var(--side-ink); }
+
+  .side-section {
+    padding: 12px 8px 4px;
+  }
+  .side-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--side-mute);
+    padding: 0 8px 6px;
+  }
+  .side-nav { display: flex; flex-direction: column; gap: 1px; }
+  .side-link {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    color: var(--side-ink);
+    font-size: 13px;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .side-link:hover { background: var(--side-hover); }
+  .side-link[aria-current="page"] {
+    background: var(--side-hover);
+    color: var(--side-ink);
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+  .side-link .ic { width: 14px; height: 14px; color: var(--side-mute); }
+  .side-link[aria-current="page"] .ic { color: var(--accent); }
+  .side-link .count {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--side-mute);
+    background: var(--side-hover);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  .sidebar__foot {
+    margin-top: auto;
+    padding: 10px 12px;
+    border-top: 1px solid var(--side-border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--accent);
+    color: var(--accent-ink);
+    display: grid; place-items: center;
+    font-size: 11px; font-weight: 600;
+  }
+  .user-meta { font-size: 12px; line-height: 1.2; min-width: 0; }
+  .user-meta b { font-weight: 500; display: block; color: var(--side-ink);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;}
+  .user-meta span { color: var(--side-mute); font-size: 11px;}
+
+  /* ============ MODULE SIDEBAR (column 2) ============ */
+  .modbar {
+    background: var(--bg-inset);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    min-height: 0; overflow: auto;
+  }
+  .modbar__head {
+    padding: 12px 14px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .obj-crumb {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .obj-name {
+    margin: 4px 0 6px;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+  .obj-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--ok);
+    padding: 2px 6px 2px 4px;
+    border-radius: 3px;
+    background: color-mix(in oklch, var(--ok) 12%, transparent);
+  }
+  .obj-status::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--ok);
+  }
+
+  .mod-nav { padding: 6px 6px; display: flex; flex-direction: column; gap: 1px;}
+  .mod-link {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 8px;
+    border-radius: 5px;
+    color: var(--ink-soft);
+    font-size: 12.5px;
+    cursor: pointer;
+  }
+  .mod-link:hover { background: var(--bg-hover); color: var(--ink); }
+  .mod-link[aria-current="page"] {
+    background: var(--accent-soft);
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .mod-link .ic { width: 13px; height: 13px; color: var(--ink-mute); }
+  .mod-link[aria-current="page"] .ic { color: var(--accent-strong); }
+  .mod-link .count {
+    margin-left: auto;
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--ink-mute);
+  }
+  .mod-link[aria-current="page"] .count { color: var(--ink-soft); }
+  .mod-link.soon { opacity: 0.42; pointer-events: none; }
+  .mod-link.soon::after {
+    content: 'скоро';
+    margin-left: auto;
+    font-family: var(--font-mono); font-size: 9px;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--ink-mute);
+  }
+
+  /* ============ CONTENT ============ */
+  .content {
+    display: flex; flex-direction: column;
+    min-width: 0; min-height: 0;
+    background: var(--bg);
+  }
+  .topbar {
+    height: 48px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 16px;
+    background: var(--bg-elev);
+  }
+  .crumbs {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--ink-mute);
+  }
+  .crumbs a { color: var(--ink-soft); text-decoration: none; }
+  .crumbs a:hover { color: var(--ink); }
+  .crumbs .sep { color: var(--ink-mute); }
+  .crumbs b { color: var(--ink); font-weight: 500; }
+
+  .search {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 8px 4px 6px;
+    background: var(--bg-inset);
+    border: 1px solid var(--border);
+    border-radius: var(--r-2);
+    width: 280px;
+    font-size: 12px; color: var(--ink-mute);
+  }
+  .search kbd {
+    margin-left: auto;
+    font-family: var(--font-mono); font-size: 10px;
+    padding: 1px 4px;
+    border: 1px solid var(--border-strong);
+    border-radius: 3px;
+    color: var(--ink-mute);
+    background: var(--bg-elev);
+  }
+  .topbar-btn {
+    width: 28px; height: 28px; border-radius: 5px;
+    display: grid; place-items: center;
+    border: 1px solid var(--border);
+    background: var(--bg-elev);
+    color: var(--ink-soft);
+    cursor: pointer; position: relative;
+  }
+  .topbar-btn:hover { background: var(--bg-hover); color: var(--ink); }
+  .topbar-btn .dot {
+    position: absolute; top: 5px; right: 5px;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 2px var(--bg-elev);
+  }
+
+  .scroll {
+    flex: 1; min-height: 0; overflow: auto;
+  }
+
+  /* ============ PAGE ============ */
+  .page { padding: 16px 20px 40px; width: 100%; max-width: none; }
+  .page-head {
+    display: flex; align-items: flex-end; gap: 16px;
+    padding: 8px 0 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .page-title { font-size: 20px; font-weight: 600; letter-spacing: -0.015em; margin: 0; }
+  .page-desc { font-size: 12.5px; color: var(--ink-mute); margin: 3px 0 0; }
+  .page-head__right { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 28px; padding: 0 10px;
+    border-radius: var(--r-2);
+    font-size: 12.5px; font-weight: 500;
+    border: 1px solid var(--border);
+    background: var(--bg-elev);
+    color: var(--ink);
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+  .btn--primary {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: var(--accent);
+  }
+  .btn--primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+  .btn--ghost { background: transparent; border-color: transparent; }
+  .btn--ghost:hover { background: var(--bg-hover); }
+  .btn .ic { width: 13px; height: 13px; }
+
+  /* ============ KPI ============ */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .kpi {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--r-3);
+    padding: 14px 14px 12px;
+    position: relative;
+  }
+  .kpi__label {
+    font-family: var(--font-mono);
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--ink-mute);
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .kpi__label .ic { width: 11px; height: 11px; }
+  .kpi__value {
+    font-size: 26px; font-weight: 600; letter-spacing: -0.02em;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .kpi__delta {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ok);
+    margin-left: 8px;
+    font-weight: 500;
+  }
+  .kpi__delta--neg { color: var(--err); }
+  .kpi__bar {
+    margin-top: 10px; height: 3px; border-radius: 2px;
+    background: var(--bg-inset); overflow: hidden;
+  }
+  .kpi__bar > span { display: block; height: 100%; background: var(--accent); }
+  .kpi__foot {
+    margin-top: 6px;
+    font-size: 11px; color: var(--ink-mute);
+    font-variant-numeric: tabular-nums;
+    display: flex; justify-content: space-between;
+  }
+
+  /* ============ GRID ROWS ============ */
+  .grid-row {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .grid-row--2 { grid-template-columns: 1.6fr 1fr; }
+  .grid-row--3 { grid-template-columns: repeat(3, 1fr); }
+
+  .panel {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--r-3);
+    overflow: hidden;
+  }
+  .panel__head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel__title {
+    font-size: 13px; font-weight: 600; letter-spacing: -0.005em;
+  }
+  .panel__label {
+    font-family: var(--font-mono);
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--ink-mute);
+  }
+  .panel__right { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+  .tabs { display: flex; gap: 2px; background: var(--bg-inset); padding: 2px; border-radius: 5px; }
+  .tab {
+    font-size: 11.5px; font-weight: 500;
+    padding: 3px 8px; border-radius: 4px;
+    color: var(--ink-soft); cursor: pointer;
+  }
+  .tab[aria-selected="true"] {
+    background: var(--bg-elev);
+    color: var(--ink);
+    box-shadow: var(--shadow-1);
+  }
+  .panel__body { padding: 12px 14px; }
+  .panel__body--flush { padding: 0; }
+
+  /* ============ CHART ============ */
+  .chart-wrap {
+    padding: 14px;
+  }
+  .chart-legend {
+    display: flex; gap: 14px;
+    font-family: var(--font-mono);
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--ink-mute);
+    margin-bottom: 10px;
+  }
+  .chart-legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+  .chart-legend .sw { width: 8px; height: 8px; border-radius: 2px; }
+
+  /* ============ TABLE ============ */
+  table.tbl {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  .tbl th {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em;
+    font-weight: 500;
+    color: var(--ink-mute);
+    padding: 8px 14px;
+    background: var(--bg-inset);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0;
+  }
+  .tbl td {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .tbl tr:last-child td { border-bottom: 0; }
+  .tbl tr:hover td { background: var(--bg-hover); }
+  .tbl .mono { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-soft); }
+  .tbl .num { text-align: right; }
+  .tbl .muted { color: var(--ink-mute); }
+
+  /* Status chips */
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--font-mono);
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
+    padding: 2px 6px 2px 5px;
+    border-radius: 3px;
+    background: var(--bg-inset);
+    color: var(--ink-soft);
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .chip::before {
+    content: ''; width: 5px; height: 5px; border-radius: 50%;
+    background: currentColor;
+  }
+  .chip--ok    { color: var(--ok);   background: color-mix(in oklch, var(--ok) 12%, transparent); border-color: color-mix(in oklch, var(--ok) 22%, transparent);}
+  .chip--warn  { color: var(--warn); background: color-mix(in oklch, var(--warn) 12%, transparent); border-color: color-mix(in oklch, var(--warn) 22%, transparent);}
+  .chip--err   { color: var(--err);  background: color-mix(in oklch, var(--err) 12%, transparent); border-color: color-mix(in oklch, var(--err) 22%, transparent);}
+  .chip--info  { color: var(--info); background: color-mix(in oklch, var(--info) 12%, transparent); border-color: color-mix(in oklch, var(--info) 22%, transparent);}
+  .chip--accent{ color: var(--accent-strong); background: var(--accent-soft); border-color: transparent; }
+
+  /* Progress inline */
+  .prog {
+    display: grid; grid-template-columns: 1fr auto; gap: 8px;
+    align-items: center; min-width: 120px;
+  }
+  .prog__bar {
+    height: 5px; border-radius: 3px;
+    background: var(--bg-inset); overflow: hidden;
+  }
+  .prog__fill {
+    height: 100%; background: var(--accent);
+  }
+  .prog__fill--warn { background: var(--warn); }
+  .prog__fill--err { background: var(--err); }
+  .prog__val {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--ink-soft);
+    min-width: 34px; text-align: right;
+  }
+
+  /* Activity */
+  .act { display: flex; flex-direction: column; }
+  .act__item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12.5px;
+  }
+  .act__item:last-child { border-bottom: 0; }
+  .act__dot {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--bg-inset); border: 1px solid var(--border);
+    display: grid; place-items: center;
+    color: var(--ink-soft);
+    margin-top: 1px;
+  }
+  .act__dot .ic { width: 10px; height: 10px; }
+  .act__body b { font-weight: 500; }
+  .act__body .t { color: var(--ink); }
+  .act__body .m { color: var(--ink-mute); font-size: 11.5px; margin-top: 1px;}
+  .act__time {
+    font-family: var(--font-mono); font-size: 10.5px;
+    color: var(--ink-mute);
+    white-space: nowrap;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+
+  /* Deadlines list */
+  .dl { display: flex; flex-direction: column;}
+  .dl__item {
+    display: grid; grid-template-columns: 40px 1fr auto; gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+  .dl__item:last-child { border-bottom: 0;}
+  .dl__date {
+    font-family: var(--font-mono);
+    text-align: center;
+    color: var(--ink-soft);
+  }
+  .dl__date b { display: block; font-size: 16px; color: var(--ink); font-weight: 600;}
+  .dl__date span { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-mute);}
+  .dl__title { font-size: 12.5px; color: var(--ink);}
+  .dl__meta { font-size: 11px; color: var(--ink-mute); margin-top: 1px;}
+
+  /* Inputs (for design-system swatches later) */
+
+  /* Settings (tweaks) panel */
+  .tweaks {
+    position: fixed; bottom: 16px; right: 16px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--r-4);
+    box-shadow: var(--shadow-2);
+    width: 272px;
+    z-index: 50;
+    font-family: var(--font-ui);
+    overflow: hidden;
+  }
+  .tweaks__head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tweaks__title {
+    font-family: var(--font-mono);
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em;
+    color: var(--ink-mute);
+  }
+  .tweaks__body { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+  .tweaks__row label {
+    display: block; font-size: 11px; color: var(--ink-mute);
+    margin-bottom: 6px;
+    font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.12em;
+  }
+  .seg {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--bg-inset);
+    padding: 2px;
+    border-radius: 6px;
+    gap: 2px;
+  }
+  .seg--3 { grid-template-columns: 1fr 1fr 1fr; }
+  .seg > button {
+    font-family: inherit;
+    border: 0; background: transparent; cursor: pointer;
+    font-size: 12px; font-weight: 500;
+    padding: 5px 8px; border-radius: 4px;
+    color: var(--ink-soft);
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  }
+  .seg > button[aria-pressed="true"] {
+    background: var(--bg-elev);
+    color: var(--ink);
+    box-shadow: var(--shadow-1);
+  }
+  .swatch {
+    width: 12px; height: 12px; border-radius: 50%;
+    display: inline-block;
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+
+  /* Utility */
+  .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+</style>
+</head>
+<body>
+
+<div class="app" data-screen-label="Dashboard">
+  <!-- =============== MAIN SIDEBAR =============== -->
+  <aside class="sidebar" aria-label="Main">
+    <div class="sidebar__head">
+      <div class="brand">
+        <span class="brand__mark">K</span>
+        <span>Komplid</span>
+      </div>
+      <button class="icon-btn" aria-label="Свернуть">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+    </div>
+
+    <div class="side-section">
+      <div class="side-label">Главное</div>
+      <nav class="side-nav">
+        <a class="side-link" aria-current="page">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+          Дашборд
+        </a>
+        <a class="side-link">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4v10l-9 4-9-4V7z"/><path d="M3 7l9 4 9-4"/><path d="M12 11v10"/></svg>
+          Объекты <span class="count">47</span>
+        </a>
+        <a class="side-link">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12l4 4v12H4z"/><path d="M14 4v5h5"/></svg>
+          Документы <span class="count">1.2k</span>
+        </a>
+        <a class="side-link">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 2v4"/><path d="M16 2v4"/></svg>
+          Задачи <span class="count">23</span>
+        </a>
+        <a class="side-link">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          Аналитика
+        </a>
+        <a class="side-link">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v4H4z"/><path d="M4 12h10v4H4z"/><path d="M4 20h6"/></svg>
+          Входящие <span class="count">8</span>
+        </a>
+      </nav>
+    </div>
+
+    <div class="side-section">
+      <div class="side-label">Организация</div>
+      <nav class="side-nav">
+        <a class="side-link">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="17" cy="7" r="3"/><path d="M23 21v-2a3 3 0 0 0-2-2.83"/></svg>
+          Участники
+        </a>
+        <a class="side-link">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v6"/><path d="M12 17v6"/><path d="M4.22 4.22l4.24 4.24"/><path d="M15.54 15.54l4.24 4.24"/><path d="M1 12h6"/><path d="M17 12h6"/></svg>
+          Настройки
+        </a>
+      </nav>
+    </div>
+
+    <div class="sidebar__foot">
+      <div class="avatar">АП</div>
+      <div class="user-meta">
+        <b>Александр Петров</b>
+        <span>Прораб · СУ-4</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- =============== MODULE SIDEBAR =============== -->
+  <aside class="modbar" aria-label="Модули объекта">
+    <div class="modbar__head">
+      <div class="obj-crumb">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        ОБЪЕКТ · OBJ-0427
+      </div>
+      <div class="obj-name">ЖК «Северная долина», к. 14</div>
+      <span class="obj-status">В работе</span>
+    </div>
+    <nav class="mod-nav">
+      <a class="mod-link"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/></svg>Информация<span class="count">12</span></a>
+      <a class="mod-link"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 8h16"/></svg>СЭД<span class="count">48</span></a>
+      <a class="mod-link" aria-current="page"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16v13H4z"/><path d="M9 7V4h6v3"/></svg>Управление проектом<span class="count">6</span></a>
+      <a class="mod-link"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M3 12l9 9 9-9"/></svg>ПИР<span class="count">23</span></a>
+      <a class="mod-link"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18"/><path d="M3 12h18"/><path d="M12 3v18"/></svg>ТИМ</a>
+      <a class="mod-link"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 10h18"/></svg>ГПР<span class="count">3</span></a>
+      <a class="mod-link"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8l-9-5-9 5v8l9 5z"/></svg>Ресурсы<span class="count">112</span></a>
+      <a class="mod-link"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h12a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3V4z"/></svg>Журналы<span class="count">7</span></a>
+      <a class="mod-link"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>ИД<span class="count">84</span></a>
+      <a class="mod-link"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z"/></svg>Стройконтроль<span class="count">5</span></a>
+      <a class="mod-link"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M3 7h18"/><path d="M3 17h18"/></svg>Сметы</a>
+      <a class="mod-link soon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Чат</a>
+      <a class="mod-link"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 17l4-4 4 2 5-6"/></svg>Отчёты</a>
+    </nav>
+  </aside>
+
+  <!-- =============== CONTENT =============== -->
+  <section class="content">
+    <header class="topbar">
+      <div class="crumbs">
+        <a>Объекты</a><span class="sep">/</span>
+        <a>OBJ-0427</a><span class="sep">/</span>
+        <b>Управление проектом</b>
+      </div>
+      <div class="search">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+        Найти документ, задачу, объект…
+        <kbd>⌘K</kbd>
+      </div>
+      <button class="topbar-btn" aria-label="Уведомления">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="dot"></span>
+      </button>
+      <button class="topbar-btn" id="themeBtn" aria-label="Сменить тему">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <button class="btn btn--primary">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Новый договор
+      </button>
+    </header>
+
+    <div class="scroll">
+      <div class="page">
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">Обзор объекта</h1>
+            <p class="page-desc">ЖК «Северная долина», корпус 14 · Заказчик ООО «Строй‑Инвест» · Обновлено 17 апр, 14:22</p>
+          </div>
+          <div class="page-head__right">
+            <button class="btn">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+              Фильтры
+            </button>
+            <button class="btn">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Экспорт
+            </button>
+            <div class="tabs">
+              <div class="tab" aria-selected="true">День</div>
+              <div class="tab">Неделя</div>
+              <div class="tab">Месяц</div>
+              <div class="tab">Квартал</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI ROW -->
+        <div class="kpi-row">
+          <div class="kpi">
+            <div class="kpi__label">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+              Готовность СМР
+            </div>
+            <div class="kpi__value">62.4<span class="kpi__delta">+1.8%</span></div>
+            <div class="kpi__bar"><span style="width:62.4%"></span></div>
+            <div class="kpi__foot"><span>План 65%</span><span>Δ −2.6 пп</span></div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__label">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Освоение бюджета
+            </div>
+            <div class="kpi__value">1 284<span style="font-size:14px;color:var(--ink-mute);font-weight:500;"> млн ₽</span></div>
+            <div class="kpi__bar"><span style="width:58%"></span></div>
+            <div class="kpi__foot"><span>58% от 2 215 млн</span><span class="" style="color:var(--ok)">+42.6 млн</span></div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__label">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+              Закрытые КС-2
+            </div>
+            <div class="kpi__value">27<span class="kpi__delta">+3</span></div>
+            <div class="kpi__bar"><span style="width:73%;background:var(--ok)"></span></div>
+            <div class="kpi__foot"><span>из 37 плановых</span><span>73%</span></div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__label">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/></svg>
+              Открытые замечания СК
+            </div>
+            <div class="kpi__value">14<span class="kpi__delta kpi__delta--neg">+2</span></div>
+            <div class="kpi__bar"><span style="width:42%;background:var(--warn)"></span></div>
+            <div class="kpi__foot"><span>3 просрочено</span><span style="color:var(--err)">критичных: 1</span></div>
+          </div>
+        </div>
+
+        <!-- ROW 2: CHART + DEADLINES -->
+        <div class="grid-row grid-row--2">
+          <div class="panel">
+            <div class="panel__head">
+              <span class="panel__label">График</span>
+              <div class="panel__title">Освоение СМР · план vs. факт</div>
+              <div class="panel__right">
+                <div class="tabs">
+                  <div class="tab" aria-selected="true">30 дней</div>
+                  <div class="tab">90 дней</div>
+                  <div class="tab">Год</div>
+                </div>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <div class="chart-legend">
+                <span class="lg"><span class="sw" style="background:var(--accent)"></span>Факт</span>
+                <span class="lg"><span class="sw" style="background:var(--ink-mute);opacity:0.4"></span>План</span>
+                <span class="lg"><span class="sw" style="background:var(--info);border-radius:50%"></span>КС-2 подписан</span>
+              </div>
+              <svg viewBox="0 0 600 220" width="100%" height="220" preserveAspectRatio="none" aria-label="Chart">
+                <!-- grid -->
+                <g stroke="var(--border)" stroke-width="1">
+                  <line x1="0" y1="40"  x2="600" y2="40" />
+                  <line x1="0" y1="90"  x2="600" y2="90" />
+                  <line x1="0" y1="140" x2="600" y2="140" />
+                  <line x1="0" y1="190" x2="600" y2="190" />
+                </g>
+                <!-- plan line (dashed) -->
+                <polyline fill="none" stroke="var(--ink-mute)" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.55"
+                  points="0,175 60,160 120,148 180,135 240,120 300,108 360,92 420,78 480,62 540,48 600,30"/>
+                <!-- fact area -->
+                <path d="M0,185 L60,170 L120,162 L180,152 L240,138 L300,128 L360,118 L420,102 L480,92 L540,80 L600,68 L600,220 L0,220 Z"
+                  fill="var(--accent)" opacity="0.14"/>
+                <polyline fill="none" stroke="var(--accent)" stroke-width="2.2"
+                  points="0,185 60,170 120,162 180,152 240,138 300,128 360,118 420,102 480,92 540,80 600,68"/>
+                <!-- KS2 markers -->
+                <g fill="var(--info)" stroke="var(--bg-elev)" stroke-width="2">
+                  <circle cx="120" cy="162" r="4"/>
+                  <circle cx="300" cy="128" r="4"/>
+                  <circle cx="480" cy="92" r="4"/>
+                </g>
+              </svg>
+              <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px;color:var(--ink-mute);letter-spacing:0.1em;margin-top:6px;text-transform:uppercase;">
+                <span>18 мар</span><span>25 мар</span><span>1 апр</span><span>8 апр</span><span>15 апр</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel__head">
+              <span class="panel__label">Сроки</span>
+              <div class="panel__title">Ближайшие дедлайны</div>
+              <div class="panel__right"><button class="btn btn--ghost" style="font-size:11.5px">Все →</button></div>
+            </div>
+            <div class="dl">
+              <div class="dl__item">
+                <div class="dl__date"><b>18</b><span>апр</span></div>
+                <div>
+                  <div class="dl__title">КС-2 №27 · Монолит 9–12 эт.</div>
+                  <div class="dl__meta">Требует подписи · ООО «МонолитСпецстрой»</div>
+                </div>
+                <span class="chip chip--warn">завтра</span>
+              </div>
+              <div class="dl__item">
+                <div class="dl__date"><b>22</b><span>апр</span></div>
+                <div>
+                  <div class="dl__title">ОЗР раздел 5.2 · Кровля</div>
+                  <div class="dl__meta">Получение ответа от проектировщика</div>
+                </div>
+                <span class="chip">5 дн</span>
+              </div>
+              <div class="dl__item">
+                <div class="dl__date"><b>25</b><span>апр</span></div>
+                <div>
+                  <div class="dl__title">Входной контроль · партия арматуры А500</div>
+                  <div class="dl__meta">Лаборатория «СтройТест» · акт №344</div>
+                </div>
+                <span class="chip chip--info">8 дн</span>
+              </div>
+              <div class="dl__item">
+                <div class="dl__date"><b>30</b><span>апр</span></div>
+                <div>
+                  <div class="dl__title">Предписание СК-0019 · ПБ на 7 этаже</div>
+                  <div class="dl__meta">Повторная проверка, инспектор А. Сидоров</div>
+                </div>
+                <span class="chip chip--err">просрочено 2 д</span>
+              </div>
+              <div class="dl__item">
+                <div class="dl__date"><b>03</b><span>мая</span></div>
+                <div>
+                  <div class="dl__title">Закрытие этапа ГПР · Этап III</div>
+                  <div class="dl__meta">Контрольная точка, авторский надзор</div>
+                </div>
+                <span class="chip">16 дн</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROW 3: CONTRACTS TABLE + ACTIVITY -->
+        <div class="grid-row grid-row--2">
+          <div class="panel">
+            <div class="panel__head">
+              <span class="panel__label">Договоры</span>
+              <div class="panel__title">Активные договоры подряда</div>
+              <div class="panel__right">
+                <button class="btn btn--ghost">
+                  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+                  Фильтр
+                </button>
+                <button class="btn btn--ghost" style="font-size:11.5px">Все (17) →</button>
+              </div>
+            </div>
+            <div class="panel__body panel__body--flush">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th style="width:94px">№</th>
+                    <th>Подрядчик / предмет</th>
+                    <th style="width:120px">Статус</th>
+                    <th style="width:150px">Выполнено</th>
+                    <th class="num" style="width:120px">Сумма, млн ₽</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="mono">DP-2026-041</td>
+                    <td>
+                      <div>ООО «МонолитСпецстрой»</div>
+                      <div class="muted" style="font-size:11px">Монолитные работы, 9–18 эт.</div>
+                    </td>
+                    <td><span class="chip chip--ok">В работе</span></td>
+                    <td>
+                      <div class="prog">
+                        <div class="prog__bar"><div class="prog__fill" style="width:78%"></div></div>
+                        <div class="prog__val">78%</div>
+                      </div>
+                    </td>
+                    <td class="num">412.5</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">DP-2026-038</td>
+                    <td>
+                      <div>АО «ФасадПлюс»</div>
+                      <div class="muted" style="font-size:11px">Навесной вентилируемый фасад</div>
+                    </td>
+                    <td><span class="chip chip--ok">В работе</span></td>
+                    <td>
+                      <div class="prog">
+                        <div class="prog__bar"><div class="prog__fill" style="width:42%"></div></div>
+                        <div class="prog__val">42%</div>
+                      </div>
+                    </td>
+                    <td class="num">218.0</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">DP-2026-034</td>
+                    <td>
+                      <div>ООО «ЭлектроСтрой‑М»</div>
+                      <div class="muted" style="font-size:11px">Внутренние слаботочные сети</div>
+                    </td>
+                    <td><span class="chip chip--warn">Ожидание</span></td>
+                    <td>
+                      <div class="prog">
+                        <div class="prog__bar"><div class="prog__fill prog__fill--warn" style="width:18%"></div></div>
+                        <div class="prog__val">18%</div>
+                      </div>
+                    </td>
+                    <td class="num">64.3</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">DP-2026-029</td>
+                    <td>
+                      <div>ООО «ТеплоИнж»</div>
+                      <div class="muted" style="font-size:11px">ИТП, отопление, теплосеть</div>
+                    </td>
+                    <td><span class="chip chip--info">Проект</span></td>
+                    <td>
+                      <div class="prog">
+                        <div class="prog__bar"><div class="prog__fill" style="width:12%"></div></div>
+                        <div class="prog__val">12%</div>
+                      </div>
+                    </td>
+                    <td class="num">87.9</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">DP-2026-022</td>
+                    <td>
+                      <div>ЗАО «ГидроИзол»</div>
+                      <div class="muted" style="font-size:11px">Гидроизоляция стилобата</div>
+                    </td>
+                    <td><span class="chip chip--err">Претензия</span></td>
+                    <td>
+                      <div class="prog">
+                        <div class="prog__bar"><div class="prog__fill prog__fill--err" style="width:88%"></div></div>
+                        <div class="prog__val">88%</div>
+                      </div>
+                    </td>
+                    <td class="num">41.2</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">DP-2026-017</td>
+                    <td>
+                      <div>ООО «КровляМастер»</div>
+                      <div class="muted" style="font-size:11px">Мягкая кровля, водостоки</div>
+                    </td>
+                    <td><span class="chip chip--ok">В работе</span></td>
+                    <td>
+                      <div class="prog">
+                        <div class="prog__bar"><div class="prog__fill" style="width:55%"></div></div>
+                        <div class="prog__val">55%</div>
+                      </div>
+                    </td>
+                    <td class="num">52.6</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel__head">
+              <span class="panel__label">Активность</span>
+              <div class="panel__title">Последние события</div>
+            </div>
+            <div class="act">
+              <div class="act__item">
+                <div class="act__dot"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+                <div class="act__body">
+                  <div class="t"><b>А. Петров</b> подписал КС-2 №26 · Монолит 5–8 эт.</div>
+                  <div class="m">Сумма 38 млн ₽ · договор DP-2026-041</div>
+                </div>
+                <span class="act__time">14:22</span>
+              </div>
+              <div class="act__item">
+                <div class="act__dot" style="color:var(--warn)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg></div>
+                <div class="act__body">
+                  <div class="t"><b>СК‑инспектор И. Волков</b> создал предписание СК‑0019</div>
+                  <div class="m">Нарушение ПБ, сектор 7.2 · до 30 апр</div>
+                </div>
+                <span class="act__time">13:48</span>
+              </div>
+              <div class="act__item">
+                <div class="act__dot" style="color:var(--info)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 4h16v16H4z"/><path d="M4 8h16"/></svg></div>
+                <div class="act__body">
+                  <div class="t"><b>Е. Волкова</b> загрузила рабочую документацию раздел АР‑5</div>
+                  <div class="m">12 чертежей · версия 03 · на проверке</div>
+                </div>
+                <span class="act__time">11:05</span>
+              </div>
+              <div class="act__item">
+                <div class="act__dot"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+                <div class="act__body">
+                  <div class="t"><b>Система</b> обновила ГПР · версия 14</div>
+                  <div class="m">Пересчёт по факту · 247 задач, смещение +3 дня</div>
+                </div>
+                <span class="act__time">09:30</span>
+              </div>
+              <div class="act__item">
+                <div class="act__dot" style="color:var(--accent-strong)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+                <div class="act__body">
+                  <div class="t"><b>М. Иванов</b> · комментарий к AOSR‑0412</div>
+                  <div class="m">«Уточнить протокол входного контроля по п. 4.8»</div>
+                </div>
+                <span class="act__time">вчера</span>
+              </div>
+              <div class="act__item">
+                <div class="act__dot"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 16V8l-9-5-9 5v8l9 5z"/></svg></div>
+                <div class="act__body">
+                  <div class="t"><b>Склад</b> · поступление арматуры А500 · 42 т</div>
+                  <div class="m">ТТН №00834 · требуется ВК</div>
+                </div>
+                <span class="act__time">вчера</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROW 4: SMALL PANELS -->
+        <div class="grid-row grid-row--3">
+          <div class="panel">
+            <div class="panel__head">
+              <span class="panel__label">ПИР</span>
+              <div class="panel__title">Статус документации</div>
+            </div>
+            <div class="panel__body">
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>Согласовано</span><span class="mono" style="font-family:var(--font-mono);color:var(--ink-mute)">58 / 84</span></div>
+                  <div class="prog__bar"><div class="prog__fill" style="width:69%"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>На проверке</span><span class="mono" style="font-family:var(--font-mono);color:var(--ink-mute)">18 / 84</span></div>
+                  <div class="prog__bar"><div class="prog__fill prog__fill--warn" style="width:21%"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>Замечания</span><span class="mono" style="font-family:var(--font-mono);color:var(--ink-mute)">8 / 84</span></div>
+                  <div class="prog__bar"><div class="prog__fill prog__fill--err" style="width:10%"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel__head">
+              <span class="panel__label">Ресурсы</span>
+              <div class="panel__title">На складе, ключевые позиции</div>
+            </div>
+            <div class="panel__body panel__body--flush">
+              <table class="tbl">
+                <tbody>
+                  <tr><td>Арматура А500С d16</td><td class="num">86.4 т</td><td style="width:52px"><span class="chip chip--ok">OK</span></td></tr>
+                  <tr><td>Бетон B25 W6</td><td class="num">240 м³</td><td><span class="chip chip--ok">OK</span></td></tr>
+                  <tr><td>Плиты XPS 50мм</td><td class="num">1 120 м²</td><td><span class="chip chip--warn">&lt;10%</span></td></tr>
+                  <tr><td>Кирпич КР-р-по 250</td><td class="num">8 400 шт</td><td><span class="chip">план</span></td></tr>
+                  <tr><td>ГКЛ 12.5 влагостойкий</td><td class="num">0 шт</td><td><span class="chip chip--err">деф.</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel__head">
+              <span class="panel__label">Команда</span>
+              <div class="panel__title">На объекте сегодня</div>
+              <div class="panel__right">
+                <span class="mono" style="font-family:var(--font-mono);font-size:11px;color:var(--ink-mute)">142 / 160</span>
+              </div>
+            </div>
+            <div class="panel__body">
+              <div style="display:grid;grid-template-columns:1fr auto;gap:10px;font-size:12px;">
+                <div>Монтажники (МонолитСпец)</div><div class="mono" style="font-family:var(--font-mono);color:var(--ink-soft)">48</div>
+                <div>Каменщики (КровляМ.)</div><div class="mono" style="font-family:var(--font-mono);color:var(--ink-soft)">22</div>
+                <div>Электрики (ЭСМ)</div><div class="mono" style="font-family:var(--font-mono);color:var(--ink-soft)">12</div>
+                <div>Отделочники</div><div class="mono" style="font-family:var(--font-mono);color:var(--ink-soft)">31</div>
+                <div>ИТР</div><div class="mono" style="font-family:var(--font-mono);color:var(--ink-soft)">19</div>
+                <div style="color:var(--ink-mute)">Не на объекте</div><div class="mono" style="font-family:var(--font-mono);color:var(--ink-mute)">10</div>
+                <div style="color:var(--err)">На больничном</div><div class="mono" style="font-family:var(--font-mono);color:var(--err)">8</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- =============== TWEAKS PANEL =============== -->
+<aside class="tweaks" id="tweaksPanel" hidden>
+  <header class="tweaks__head">
+    <span class="tweaks__title">Tweaks</span>
+    <button class="icon-btn" id="tweaksClose" style="margin-left:auto;color:var(--ink-mute)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </header>
+  <div class="tweaks__body">
+    <div class="tweaks__row">
+      <label>Тема</label>
+      <div class="seg" data-seg="theme">
+        <button data-value="light" aria-pressed="true">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M6 6L4.5 4.5M19.5 19.5L18 18M6 18l-1.5 1.5M19.5 4.5L18 6"/></svg>
+          Светлая
+        </button>
+        <button data-value="dark">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          Тёмная
+        </button>
+      </div>
+    </div>
+    <div class="tweaks__row">
+      <label>Акцент</label>
+      <div class="seg seg--3" data-seg="palette">
+        <button data-value="steel" aria-pressed="true"><span class="swatch" style="background:oklch(0.72 0.16 62)"></span>Steel</button>
+        <button data-value="cobalt"><span class="swatch" style="background:oklch(0.58 0.18 258)"></span>Cobalt</button>
+        <button data-value="lime"><span class="swatch" style="background:oklch(0.76 0.18 128)"></span>Lime</button>
+      </div>
+    </div>
+    <div class="tweaks__row">
+      <label>Плотность</label>
+      <div class="seg" data-seg="density">
+        <button data-value="dense" aria-pressed="true">Плотная</button>
+        <button data-value="relaxed">Свободная</button>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<script>
+  // Defaults block for host edit-mode persistence
+  const DEFAULTS = /*EDITMODE-BEGIN*/{
+    "theme": "light",
+    "palette": "steel",
+    "density": "dense"
+  }/*EDITMODE-END*/;
+
+  const root = document.documentElement;
+  function apply(key, val){
+    if (key === 'theme')   root.setAttribute('data-theme', val);
+    if (key === 'palette') root.setAttribute('data-palette', val);
+    if (key === 'density') root.setAttribute('data-density', val);
+    document.querySelectorAll(`.seg[data-seg="${key}"] button`).forEach(b => {
+      b.setAttribute('aria-pressed', b.dataset.value === val ? 'true' : 'false');
+    });
+  }
+  // init from localStorage or defaults
+  const saved = JSON.parse(localStorage.getItem('komplid_tweaks') || 'null') || DEFAULTS;
+  Object.entries(saved).forEach(([k,v]) => apply(k,v));
+
+  function setValue(key, val){
+    const next = { ...saved, [key]: val };
+    Object.assign(saved, next);
+    localStorage.setItem('komplid_tweaks', JSON.stringify(saved));
+    apply(key, val);
+    try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [key]: val } }, '*'); } catch(e){}
+  }
+
+  document.querySelectorAll('.seg').forEach(seg => {
+    const key = seg.dataset.seg;
+    seg.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-value]');
+      if (!btn) return;
+      setValue(key, btn.dataset.value);
+    });
+  });
+
+  // Topbar theme toggle
+  document.getElementById('themeBtn').addEventListener('click', () => {
+    const cur = root.getAttribute('data-theme') || 'light';
+    setValue('theme', cur === 'light' ? 'dark' : 'light');
+  });
+
+  // Edit-mode integration
+  const tweaks = document.getElementById('tweaksPanel');
+  document.getElementById('tweaksClose').addEventListener('click', () => tweaks.hidden = true);
+  window.addEventListener('message', (e) => {
+    const data = e.data || {};
+    if (data.type === '__activate_edit_mode') tweaks.hidden = false;
+    if (data.type === '__deactivate_edit_mode') tweaks.hidden = true;
+  });
+  try { window.parent.postMessage({ type: '__edit_mode_available' }, '*'); } catch(e){}
+</script>
+</body>
+</html>
