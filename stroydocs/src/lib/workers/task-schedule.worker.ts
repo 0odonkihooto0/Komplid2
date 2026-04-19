@@ -9,6 +9,7 @@
 
 import { Worker, Queue } from 'bullmq';
 import { PrismaClient } from '@prisma/client';
+import { buildDatabaseUrl, WORKER_CONNECTION_LIMIT } from '../database-url';
 
 function getRedisOptions() {
   const url = process.env.REDIS_URL ?? 'redis://localhost:6379';
@@ -22,7 +23,9 @@ function getRedisOptions() {
   };
 }
 
-const db = new PrismaClient();
+const db = new PrismaClient({
+  datasources: { db: { url: buildDatabaseUrl(WORKER_CONNECTION_LIMIT) } },
+});
 
 const SCHEDULE_QUEUE = 'task-schedule';
 const CRON_PATTERN = '*/15 * * * *';

@@ -12,6 +12,7 @@ import { Worker, Queue } from 'bullmq';
 import { PrismaClient } from '@prisma/client';
 import { workingDaysBetween } from '../../utils/workingDays';
 import { enqueueNotification } from '../queue';
+import { buildDatabaseUrl, WORKER_CONNECTION_LIMIT } from '../database-url';
 
 // Парсим REDIS_URL в plain-объект опций для BullMQ.
 // BullMQ v5 бандлит свою версию ioredis — передача внешнего IORedis-инстанса
@@ -28,7 +29,9 @@ function getRedisOptions() {
   };
 }
 
-const db = new PrismaClient();
+const db = new PrismaClient({
+  datasources: { db: { url: buildDatabaseUrl(WORKER_CONNECTION_LIMIT) } },
+});
 
 const SCHEDULE_QUEUE = 'inspection-schedule';
 const CRON_PATTERN = '0 6 * * 1-5'; // 09:00 МСК = 06:00 UTC, Пн–Пт

@@ -11,6 +11,7 @@ import { PrismaClient, BimModelStatus, Prisma } from '@prisma/client';
 import type { ParseBimJob } from '../queues/parse-bim';
 import { enqueueNotification } from '../queue';
 import { getConvertIfcQueue } from '../queues/convert-ifc.queue';
+import { buildDatabaseUrl, WORKER_CONNECTION_LIMIT } from '../database-url';
 
 // Парсим REDIS_URL в plain-объект опций для BullMQ.
 // BullMQ v5 бандлит свою версию ioredis — передача внешнего IORedis-инстанса
@@ -29,7 +30,10 @@ function getRedisOptions() {
 
 // В воркере создаём отдельный PrismaClient (не синглтон из lib/db),
 // чтобы не конфликтовать с Next.js Request Context.
-const db = new PrismaClient();
+// Лимит пула воркера маленький — один процесс = немного параллельных запросов.
+const db = new PrismaClient({
+  datasources: { db: { url: buildDatabaseUrl(WORKER_CONNECTION_LIMIT) } },
+});
 
 // Размер одного батча при upsert — не переполняем память при тысячах элементов
 const BATCH_SIZE = 500;

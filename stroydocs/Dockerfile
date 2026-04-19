@@ -92,6 +92,9 @@ COPY --from=builder /app/dist/workers ./dist/workers
 COPY scripts/start.sh ./start.sh
 COPY scripts/check-migration-integrity.js ./scripts/check-migration-integrity.js
 COPY scripts/find-failed-migration.js ./scripts/find-failed-migration.js
+# CJS helper для server.js — сборка DATABASE_URL с connection_limit/pool_timeout.
+# Без него server.js упадёт с MODULE_NOT_FOUND в production.
+COPY scripts/database-url.cjs ./scripts/database-url.cjs
 
 RUN sed -i 's/\r//' /app/start.sh
 

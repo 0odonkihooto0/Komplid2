@@ -9,6 +9,7 @@ import { Worker } from 'bullmq';
 import { PrismaClient, Prisma } from '@prisma/client';
 import type { RunClashJob } from '../queues/run-clash.queue';
 import { enqueueNotification } from '../queue';
+import { buildDatabaseUrl, WORKER_CONNECTION_LIMIT } from '../database-url';
 
 // Парсим REDIS_URL в plain-объект опций для BullMQ.
 // BullMQ v5 бандлит свою версию ioredis — передача внешнего IORedis-инстанса
@@ -27,7 +28,10 @@ function getRedisOptions() {
 
 // В воркере создаём отдельный PrismaClient (не синглтон из lib/db),
 // чтобы не конфликтовать с Next.js Request Context.
-const db = new PrismaClient();
+// Лимит пула воркера маленький — один процесс = немного параллельных запросов.
+const db = new PrismaClient({
+  datasources: { db: { url: buildDatabaseUrl(WORKER_CONNECTION_LIMIT) } },
+});
 
 /** Элемент результата коллизии от IfcOpenShell-сервиса */
 interface ClashServiceItem {
