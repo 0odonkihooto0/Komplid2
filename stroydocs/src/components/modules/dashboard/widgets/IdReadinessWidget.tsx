@@ -17,8 +17,11 @@ interface Props { projectId?: string }
 
 export function IdReadinessWidget({ projectId: configProjectId }: Props) {
   // Если projectId не задан в конфиге — берём первый активный объект организации
+  // Без фильтра objectIds — всегда загружаем все объекты (нужен первый для автоподстановки).
+  // Ключ ['dashboard-objects-summary', []] совпадает с ключом MapWidget/ObjectsBaseWidget
+  // при пустом фильтре → TanStack Query дедуплицирует запрос, 1 HTTP-запрос вместо 2.
   const { data: objectsData, isLoading: objectsLoading } = useQuery<ObjectSummary[]>({
-    queryKey: ['dashboard-objects-summary-mini'],
+    queryKey: ['dashboard-objects-summary', [] as string[]],
     queryFn: async () => {
       const res = await fetch('/api/dashboard/objects-summary');
       const json = await res.json();
