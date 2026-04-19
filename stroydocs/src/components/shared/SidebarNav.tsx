@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Building2, FileText, BookOpen, BarChart3, Monitor, Inbox, ClipboardList, type LucideIcon } from 'lucide-react';
+import { LayoutDashboard, Building2, FileText, BookOpen, BarChart3, Monitor, Inbox, ClipboardList, Library, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -29,6 +29,7 @@ const navItems: NavItem[] = [
   { href: '/monitoring', label: 'Мониторинг', icon: Monitor },
   { href: '/documents', label: 'Документы', icon: FileText },
   { href: '/templates', label: 'Шаблоны', icon: BookOpen },
+  { href: '/references', label: 'Справочники', icon: Library },
 ];
 
 interface Props {

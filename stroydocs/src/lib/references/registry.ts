@@ -10,6 +10,8 @@ export const REFERENCE_REGISTRY: Record<string, ReferenceSchema> = {
     model: 'currency',
     scope: 'organization',
     auditable: true,
+    description: 'Валюты и денежные единицы (ISO 4217)',
+    icon: 'DollarSign',
     fields: [
       { key: 'name',        label: 'Наименование',         type: 'string',  required: true,  width: 180 },
       { key: 'shortName',   label: 'Буквенный код',        type: 'string',  required: true,  width: 100 },
@@ -32,6 +34,8 @@ export const REFERENCE_REGISTRY: Record<string, ReferenceSchema> = {
     model: 'budgetType',
     scope: 'organization',
     auditable: true,
+    description: 'Типы источников финансирования',
+    icon: 'Wallet',
     fields: [
       { key: 'name',     label: 'Наименование', type: 'string',  required: true,  width: 240 },
       { key: 'code',     label: 'Код',          type: 'string',  required: true,  width: 140 },
@@ -50,6 +54,8 @@ export const REFERENCE_REGISTRY: Record<string, ReferenceSchema> = {
     model: 'measurementUnitRef',
     scope: 'organization',
     auditable: true,
+    description: 'Единицы измерения по ГОСТ 8.417-2002',
+    icon: 'Ruler',
     fields: [
       { key: 'name',      label: 'Наименование',      type: 'string',  required: true,  width: 200 },
       { key: 'shortName', label: 'Обозначение',       type: 'string',  required: true,  width: 120 },
@@ -70,6 +76,8 @@ export const REFERENCE_REGISTRY: Record<string, ReferenceSchema> = {
     scope: 'system',
     adminOnly: true,
     auditable: true,
+    description: 'Падежи русского языка для склонения',
+    icon: 'Languages',
     fields: [
       { key: 'name',      label: 'Наименование', type: 'string',  required: true,  width: 180 },
       { key: 'shortName', label: 'Краткое',      type: 'string',  required: true,  width: 100 },
@@ -89,6 +97,8 @@ export const REFERENCE_REGISTRY: Record<string, ReferenceSchema> = {
     model: 'contractKind',
     scope: 'organization',
     auditable: true,
+    description: 'Виды договоров и контрактов',
+    icon: 'Handshake',
     fields: [
       { key: 'name',      label: 'Наименование',         type: 'string',  required: true,  width: 320 },
       { key: 'code',      label: 'Код',                  type: 'string',  required: true,  width: 140 },
@@ -108,6 +118,8 @@ export const REFERENCE_REGISTRY: Record<string, ReferenceSchema> = {
     model: 'documentTypeRef',
     scope: 'organization',
     auditable: true,
+    description: 'Типы документов ИД и СЭД-модулей',
+    icon: 'FileType2',
     fields: [
       { key: 'name',     label: 'Наименование', type: 'string',  required: true,  width: 280 },
       { key: 'code',     label: 'Код',          type: 'string',  required: true,  width: 160 },
@@ -128,6 +140,8 @@ export const REFERENCE_REGISTRY: Record<string, ReferenceSchema> = {
     auditable: true,
     hierarchical: true,
     parentKey: 'parentId',
+    description: 'Иерархия статей расходов',
+    icon: 'Receipt',
     fields: [
       { key: 'name',     label: 'Наименование', type: 'string',  required: true,  width: 280 },
       { key: 'code',     label: 'Код',          type: 'string',  required: true,  width: 120 },
@@ -151,6 +165,8 @@ export const REFERENCE_REGISTRY: Record<string, ReferenceSchema> = {
     model: 'taskTypeRef',
     scope: 'organization',
     auditable: true,
+    description: 'Типы задач планировщика',
+    icon: 'CheckSquare',
     fields: [
       { key: 'name',     label: 'Наименование', type: 'string',  required: true,  width: 200 },
       { key: 'code',     label: 'Код',          type: 'string',  required: true,  width: 140 },
@@ -171,6 +187,8 @@ export const REFERENCE_REGISTRY: Record<string, ReferenceSchema> = {
     model: 'defectCategoryRef',
     scope: 'organization',
     auditable: true,
+    description: 'Категории строительных недостатков',
+    icon: 'AlertTriangle',
     fields: [
       { key: 'name',               label: 'Наименование',         type: 'string',  required: true,  width: 280 },
       { key: 'code',               label: 'Код',                  type: 'string',  required: true,  width: 160 },
@@ -191,6 +209,8 @@ export const REFERENCE_REGISTRY: Record<string, ReferenceSchema> = {
     model: 'problemIssueTypeRef',
     scope: 'organization',
     auditable: true,
+    description: 'Типы проблемных вопросов',
+    icon: 'HelpCircle',
     fields: [
       { key: 'name',     label: 'Наименование', type: 'string',  required: true,  width: 280 },
       { key: 'code',     label: 'Код',          type: 'string',  required: true,  width: 200 },

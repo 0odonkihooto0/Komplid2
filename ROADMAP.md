@@ -1566,11 +1566,14 @@
 - ✅ `prisma/seeds/migrate-enums-to-refs.ts` — однократный миграционный скрипт: `npx ts-node prisma/seeds/migrate-enums-to-refs.ts`
 - ✅ registry.ts: 3 новые схемы — `taskTypeRefs` (common), `defectCategories` (construction), `problemIssueTypes` (construction)
 
-### UI и навигация (REF.6)
-- ⬜ Главное меню → пункт «Справочники» (BookOpen icon)
-- ⬜ Страница `/references` — каталог справочников с категориями (Общие / Строительные / Финансовые / Документарные)
-- ⬜ Страница `/references/[slug]` — конкретный справочник через `<ReferenceTable>`
-- ⬜ Защита admin-only для системных справочников; per-organization для пользовательских
+### UI и навигация (REF.6) ✅ 2026-04-19
+- ✅ Навигация: пункт «Справочники» (Library icon) в SidebarNav — href='/references'
+- ✅ `/references` — каталог-страница: поиск, группировка по категориям (Общие/Строительные/Финансовые/Документарные), карточки с иконкой/описанием/счётчиком записей, вкладки «Все / Системные» (только для ADMIN)
+- ✅ `/references/[slug]` — страница конкретного справочника с хлебными крошками и `<ReferenceTable>`
+- ✅ `/references/[slug]/entry/[id]` — full-page shareable-link на запись справочника с кнопкой «Редактировать»
+- ✅ `description?` и `icon?` добавлены в `ReferenceSchema`; заполнены для всех 10 справочников REF.3-REF.5
+- ✅ API: `GET /api/references/[slug]?count=true` — возвращает `{ count: N }` для каталога
+- ✅ `src/lib/references/constants.ts` — CATEGORY_LABELS, CATEGORY_ORDER (переиспользуется в каталоге и slug-страницах)
 
 ### Интеграция существующих (REF.7)
 - ⬜ KsiNode → интегрирован в `/references/ksi` через тот же фреймворк
