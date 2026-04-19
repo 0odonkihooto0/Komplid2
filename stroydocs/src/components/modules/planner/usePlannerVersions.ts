@@ -17,7 +17,7 @@ export function usePlannerVersions(projectId: string) {
   const { data: versions = [], isLoading } = useQuery<PlannerVersion[]>({
     queryKey: ['planner-versions', projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/planner-versions`);
+      const res = await fetch(`/api/projects/${projectId}/planner-versions`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return json.data;
@@ -32,7 +32,7 @@ export function useCreatePlannerVersion(projectId: string) {
 
   return useMutation({
     mutationFn: async (data: { name: string }) => {
-      const res = await fetch(`/api/objects/${projectId}/planner-versions`, {
+      const res = await fetch(`/api/projects/${projectId}/planner-versions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -56,7 +56,7 @@ export function useUpdatePlannerVersion(projectId: string) {
 
   return useMutation({
     mutationFn: async ({ versionId, ...data }: { versionId: string; name?: string; isCurrent?: boolean }) => {
-      const res = await fetch(`/api/objects/${projectId}/planner-versions/${versionId}`, {
+      const res = await fetch(`/api/projects/${projectId}/planner-versions/${versionId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -80,7 +80,7 @@ export function useDeletePlannerVersion(projectId: string) {
 
   return useMutation({
     mutationFn: async (versionId: string) => {
-      const res = await fetch(`/api/objects/${projectId}/planner-versions/${versionId}`, {
+      const res = await fetch(`/api/projects/${projectId}/planner-versions/${versionId}`, {
         method: 'DELETE',
       });
       const json = await res.json();

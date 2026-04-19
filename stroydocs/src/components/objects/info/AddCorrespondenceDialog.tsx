@@ -47,7 +47,7 @@ export function AddCorrespondenceDialog({ open, onOpenChange, objectId }: Props)
   const { data: participants = [] } = useQuery<ObjectParticipant[]>({
     queryKey: ['object-participants', objectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/participants`);
+      const res = await fetch(`/api/projects/${objectId}/participants`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return json.data;

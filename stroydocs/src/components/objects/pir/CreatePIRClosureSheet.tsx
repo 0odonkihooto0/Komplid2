@@ -49,7 +49,7 @@ export function CreatePIRClosureSheet({ open, onOpenChange, projectId }: Props) 
   const { data: participants = [] } = useQuery<ParticipantOrg[]>({
     queryKey: ['participants', projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/participants`);
+      const res = await fetch(`/api/projects/${projectId}/participants`);
       const json: ApiResponse<ParticipantOrg[]> = await res.json();
       return json.success ? json.data : [];
     },

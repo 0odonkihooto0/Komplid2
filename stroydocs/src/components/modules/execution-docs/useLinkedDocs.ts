@@ -20,7 +20,7 @@ interface LinkedDocEntry {
 
 // Хук: загрузить список связанных документов
 export function useLinkedDocs(projectId: string, contractId: string, docId: string) {
-  const baseUrl = `/api/objects/${projectId}/contracts/${contractId}/execution-docs/${docId}/linked-docs`;
+  const baseUrl = `/api/projects/${projectId}/contracts/${contractId}/execution-docs/${docId}/linked-docs`;
 
   const { data = [], isLoading } = useQuery<LinkedDocEntry[]>({
     queryKey: ['linked-docs', docId],
@@ -43,7 +43,7 @@ export function useSearchAvailableDocs(
   orgFilter: boolean,
   enabled: boolean
 ) {
-  const baseUrl = `/api/objects/${projectId}/contracts/${contractId}/execution-docs/${docId}/linked-docs`;
+  const baseUrl = `/api/projects/${projectId}/contracts/${contractId}/execution-docs/${docId}/linked-docs`;
 
   const { data = [], isLoading } = useQuery<LinkedDoc[]>({
     queryKey: ['linked-docs-search', docId, query, orgFilter],
@@ -62,7 +62,7 @@ export function useSearchAvailableDocs(
 // Хук: добавить связанный документ
 export function useAddLinkedDoc(projectId: string, contractId: string, docId: string) {
   const queryClient = useQueryClient();
-  const baseUrl = `/api/objects/${projectId}/contracts/${contractId}/execution-docs/${docId}/linked-docs`;
+  const baseUrl = `/api/projects/${projectId}/contracts/${contractId}/execution-docs/${docId}/linked-docs`;
 
   return useMutation({
     mutationFn: async ({ targetDocId }: { targetDocId: string }) => {
@@ -84,7 +84,7 @@ export function useAddLinkedDoc(projectId: string, contractId: string, docId: st
 // Хук: удалить связанный документ по linkId
 export function useDeleteLinkedDoc(projectId: string, contractId: string, docId: string) {
   const queryClient = useQueryClient();
-  const baseUrl = `/api/objects/${projectId}/contracts/${contractId}/execution-docs/${docId}/linked-docs`;
+  const baseUrl = `/api/projects/${projectId}/contracts/${contractId}/execution-docs/${docId}/linked-docs`;
 
   return useMutation({
     mutationFn: async (linkId: string) => {

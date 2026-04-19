@@ -31,7 +31,7 @@ export function AosrRegistryRowItem({ row, projectId, contractId, onSave }: Prop
     setDownloading(true);
     try {
       const res = await fetch(
-        `/api/objects/${projectId}/contracts/${contractId}/execution-docs/${row.id}/generate-pdf`,
+        `/api/projects/${projectId}/contracts/${contractId}/execution-docs/${row.id}/generate-pdf`,
         { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) }
       );
       const json = await res.json();

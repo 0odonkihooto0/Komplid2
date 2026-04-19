@@ -33,7 +33,7 @@ export function useManagementContracts(projectId: string) {
   const { data: contracts = [], isLoading: contractsLoading } = useQuery<MgmtContractItem[]>({
     queryKey: ['contracts', projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/contracts`);
+      const res = await fetch(`/api/projects/${projectId}/contracts`);
       const json = await res.json();
       return json.success ? json.data : [];
     },

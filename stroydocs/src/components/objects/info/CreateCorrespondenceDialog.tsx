@@ -43,7 +43,7 @@ export function CreateCorrespondenceDialog({ open, onOpenChange, objectId }: Pro
   const { data: participants = [] } = useQuery<ObjectParticipantItem[]>({
     queryKey: ['object-participants', objectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/participants`);
+      const res = await fetch(`/api/projects/${objectId}/participants`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return json.data;
@@ -73,7 +73,7 @@ export function CreateCorrespondenceDialog({ open, onOpenChange, objectId }: Pro
         tags: values.tagsInput ? values.tagsInput.split(',').map((t) => t.trim()).filter(Boolean) : [],
         sentAt: values.sentAtDate ? new Date(values.sentAtDate).toISOString() : undefined,
       };
-      const res = await fetch(`/api/objects/${objectId}/correspondence`, {
+      const res = await fetch(`/api/projects/${objectId}/correspondence`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -83,7 +83,7 @@ export function CreateCorrespondenceDialog({ open, onOpenChange, objectId }: Pro
       const created = json.data as { id: string };
 
       if (send) {
-        const sendRes = await fetch(`/api/objects/${objectId}/correspondence/${created.id}/send`, { method: 'POST' });
+        const sendRes = await fetch(`/api/projects/${objectId}/correspondence/${created.id}/send`, { method: 'POST' });
         const sendJson = await sendRes.json();
         if (!sendJson.success) throw new Error(sendJson.error ?? 'Ошибка отправки');
       }

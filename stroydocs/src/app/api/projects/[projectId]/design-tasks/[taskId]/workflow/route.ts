@@ -94,3 +94,38 @@ export async function POST(_req: NextRequest, { params }: Params) {
     return errorResponse('Внутренняя ошибка сервера', 500);
   }
 }
+
+// DELETE — остановить и сбросить маршрут согласования задания ПИР
+export async function DELETE(_req: NextRequest, { params }: Params) {
+  try {
+    const session = await getSessionOrThrow();
+
+    const task = await db.designTask.findFirst({
+      where: {
+        id: params.taskId,
+        projectId: params.projectId,
+        buildingObject: { organizationId: session.user.organizationId },
+      },
+      select: { id: true, approvalRouteId: true },
+    });
+    if (!task) return errorResponse('Задание не найдено', 404);
+
+    if (!task.approvalRouteId) {
+      return errorResponse('Маршрут не найден', 404);
+    }
+
+    // Удалить маршрут согласования и вернуть задание в статус «Прошло проверку»
+    await db.approvalRoute.delete({ where: { id: task.approvalRouteId } });
+
+    await db.designTask.update({
+      where: { id: params.taskId },
+      data: { approvalRouteId: null, status: 'REVIEW_PASSED' },
+    });
+
+    return successResponse({ ok: true });
+  } catch (error) {
+    if (error instanceof NextResponse) return error;
+    logger.error({ err: error }, 'Ошибка сброса согласования задания ПИР');
+    return errorResponse('Внутренняя ошибка сервера', 500);
+  }
+}

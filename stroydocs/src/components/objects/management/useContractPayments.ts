@@ -21,7 +21,7 @@ export function useContractPayments(projectId: string, contractId: string) {
   const { data: payments = [], isLoading } = useQuery<ContractPaymentItem[]>({
     queryKey,
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/contracts/${contractId}/payments`);
+      const res = await fetch(`/api/projects/${projectId}/contracts/${contractId}/payments`);
       const json = await res.json();
       return json.success ? json.data : [];
     },
@@ -30,7 +30,7 @@ export function useContractPayments(projectId: string, contractId: string) {
 
   const addMutation = useMutation({
     mutationFn: async (data: CreateContractPaymentInput) => {
-      const res = await fetch(`/api/objects/${projectId}/contracts/${contractId}/payments`, {
+      const res = await fetch(`/api/projects/${projectId}/contracts/${contractId}/payments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -45,7 +45,7 @@ export function useContractPayments(projectId: string, contractId: string) {
   const deleteMutation = useMutation({
     mutationFn: async (paymentId: string) => {
       const res = await fetch(
-        `/api/objects/${projectId}/contracts/${contractId}/payments/${paymentId}`,
+        `/api/projects/${projectId}/contracts/${contractId}/payments/${paymentId}`,
         { method: 'DELETE' },
       );
       const json = await res.json();

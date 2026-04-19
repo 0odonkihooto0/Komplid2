@@ -27,7 +27,7 @@ export function useGeneralDoc(objectId: string, contractId: string) {
   const createMutation = useMutation({
     mutationFn: async (data: { type: ExecutionDocType; title?: string; documentDate?: string; note?: string }) => {
       const res = await fetch(
-        `/api/objects/${objectId}/contracts/${contractId}/execution-docs`,
+        `/api/projects/${objectId}/contracts/${contractId}/execution-docs`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -41,7 +41,7 @@ export function useGeneralDoc(objectId: string, contractId: string) {
       const docId = json.data.id as string;
       if (data.documentDate || data.note) {
         await fetch(
-          `/api/objects/${objectId}/contracts/${contractId}/execution-docs/${docId}`,
+          `/api/projects/${objectId}/contracts/${contractId}/execution-docs/${docId}`,
           {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -65,7 +65,7 @@ export function useGeneralDoc(objectId: string, contractId: string) {
   const updateMutation = useMutation({
     mutationFn: async ({ docId, data }: { docId: string; data: GeneralDocData }) => {
       const res = await fetch(
-        `/api/objects/${objectId}/contracts/${contractId}/execution-docs/${docId}`,
+        `/api/projects/${objectId}/contracts/${contractId}/execution-docs/${docId}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -89,7 +89,7 @@ export function useGeneralDoc(objectId: string, contractId: string) {
   const submitMutation = useMutation({
     mutationFn: async (docId: string) => {
       const res = await fetch(
-        `/api/objects/${objectId}/contracts/${contractId}/execution-docs/${docId}`,
+        `/api/projects/${objectId}/contracts/${contractId}/execution-docs/${docId}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -116,7 +116,7 @@ export function useGeneralDoc(objectId: string, contractId: string) {
       const formData = new FormData();
       formData.append('file', file);
       const res = await fetch(
-        `/api/objects/${objectId}/contracts/${contractId}/execution-docs/${docId}/attachments`,
+        `/api/projects/${objectId}/contracts/${contractId}/execution-docs/${docId}/attachments`,
         { method: 'POST', body: formData },
       );
       const json = await res.json();
@@ -136,7 +136,7 @@ export function useGeneralDoc(objectId: string, contractId: string) {
   const deleteAttachment = async (docId: string, s3Key: string): Promise<boolean> => {
     try {
       const res = await fetch(
-        `/api/objects/${objectId}/contracts/${contractId}/execution-docs/${docId}/attachments?key=${encodeURIComponent(s3Key)}`,
+        `/api/projects/${objectId}/contracts/${contractId}/execution-docs/${docId}/attachments?key=${encodeURIComponent(s3Key)}`,
         { method: 'DELETE' },
       );
       const json = await res.json();

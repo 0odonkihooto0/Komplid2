@@ -64,7 +64,7 @@ export interface UpdateExpertisePayload {
 export function usePIRRegistryDetail(projectId: string, regId: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const baseUrl = `/api/objects/${projectId}/pir-registries/${regId}`;
+  const baseUrl = `/api/projects/${projectId}/pir-registries/${regId}`;
 
   const { data: registry, isLoading, isError } = useQuery<PIRRegistryDetail>({
     queryKey: ['pir-registry', regId],

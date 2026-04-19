@@ -69,7 +69,7 @@ export function CreateRFIDialog({ open, onOpenChange, objectId }: Props) {
         deadline: values.deadlineDate ? new Date(values.deadlineDate).toISOString() : undefined,
         assigneeId: values.assigneeId || undefined,
       };
-      const res = await fetch(`/api/objects/${objectId}/rfi`, {
+      const res = await fetch(`/api/projects/${objectId}/rfi`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

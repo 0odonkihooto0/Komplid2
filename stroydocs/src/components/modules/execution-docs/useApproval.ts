@@ -27,7 +27,7 @@ interface ApiResponse<T> {
 export function useApproval(projectId: string, contractId: string, docId: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const baseUrl = `/api/objects/${projectId}/contracts/${contractId}/execution-docs/${docId}/approval`;
+  const baseUrl = `/api/projects/${projectId}/contracts/${contractId}/execution-docs/${docId}/approval`;
 
   const { data: route, isLoading } = useQuery<ApprovalRoute | null>({
     queryKey: ['approval', docId],

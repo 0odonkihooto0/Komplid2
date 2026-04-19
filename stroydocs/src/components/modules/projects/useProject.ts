@@ -19,7 +19,7 @@ export function useProject(projectId: string) {
   const { data: project, isLoading } = useQuery<ProjectDetail>({
     queryKey: ['project', projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}`);
+      const res = await fetch(`/api/projects/${projectId}`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return json.data;

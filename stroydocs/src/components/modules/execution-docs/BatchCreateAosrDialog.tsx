@@ -41,7 +41,7 @@ export function BatchCreateAosrDialog({ open, onOpenChange, projectId, contractI
   const { data: records = [], isLoading } = useQuery<WorkRecord[]>({
     queryKey: ['work-records-for-batch', contractId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/contracts/${contractId}/work-records`);
+      const res = await fetch(`/api/projects/${projectId}/contracts/${contractId}/work-records`);
       const json = await res.json();
       return json.data || [];
     },
@@ -51,7 +51,7 @@ export function BatchCreateAosrDialog({ open, onOpenChange, projectId, contractI
   const batchCreateMutation = useMutation({
     mutationFn: async (workRecordIds: string[]) => {
       const res = await fetch(
-        `/api/objects/${projectId}/contracts/${contractId}/execution-docs/batch-create`,
+        `/api/projects/${projectId}/contracts/${contractId}/execution-docs/batch-create`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

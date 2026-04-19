@@ -15,7 +15,7 @@ export interface ContractExecution {
 }
 
 function base(projectId: string, contractId: string) {
-  return `/api/objects/${projectId}/contracts/${contractId}/execution-progress`;
+  return `/api/projects/${projectId}/contracts/${contractId}/execution-progress`;
 }
 
 export function useExecutionProgress(projectId: string, contractId: string) {

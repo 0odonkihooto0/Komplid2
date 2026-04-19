@@ -51,7 +51,7 @@ interface ExecutionDocDetail {
 export function useExecutionDocDetail(projectId: string, contractId: string, docId: string) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const baseUrl = `/api/objects/${projectId}/contracts/${contractId}/execution-docs/${docId}`;
+  const baseUrl = `/api/projects/${projectId}/contracts/${contractId}/execution-docs/${docId}`;
 
   const { data: doc, isLoading } = useQuery<ExecutionDocDetail>({
     queryKey: ['execution-doc', docId],

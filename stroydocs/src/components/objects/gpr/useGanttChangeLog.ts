@@ -48,7 +48,7 @@ export function useGanttChangeLog(
     queryKey: ['gantt-changelog', objectId, versionId, page, filters],
     queryFn: async () => {
       const url = new URL(
-        `/api/objects/${objectId}/gantt-versions/${versionId}/changelog`,
+        `/api/projects/${objectId}/gantt-versions/${versionId}/changelog`,
         window.location.origin,
       );
       url.searchParams.set('take', String(PAGE_SIZE));

@@ -41,7 +41,7 @@ interface ApiResponse<T> {
 export function useSigningTab(projectId: string, contractId: string, docId: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const baseUrl = `/api/objects/${projectId}/contracts/${contractId}/execution-docs/${docId}/signing`;
+  const baseUrl = `/api/projects/${projectId}/contracts/${contractId}/execution-docs/${docId}/signing`;
 
   const [mode, setMode] = useState<'template' | 'manual'>('template');
   const [selectedTemplateId, setSelectedTemplateId] = useState('contract-participants');

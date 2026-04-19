@@ -52,7 +52,7 @@ export function DesignDocTimTab({ projectId, docId }: Props) {
     queryKey: ['design-doc-tim-links', docId],
     queryFn: async () => {
       const res = await fetch(
-        `/api/objects/${projectId}/design-docs/${docId}/tim-links`
+        `/api/projects/${projectId}/design-docs/${docId}/tim-links`
       );
       if (!res.ok) throw new Error('Ошибка загрузки ТИМ-связей');
       const json: ApiResponse = await res.json();

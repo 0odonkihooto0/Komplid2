@@ -38,7 +38,7 @@ export function DocumentVersionsPanel({
     // Скачать конкретную версию через presigned URL
     try {
       const res = await fetch(
-        `/api/objects/${projectId}/project-documents/${document!.id}/versions/download`,
+        `/api/projects/${projectId}/project-documents/${document!.id}/versions/download`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

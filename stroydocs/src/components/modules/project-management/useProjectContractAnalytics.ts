@@ -48,7 +48,7 @@ export function useProjectContractAnalytics(objectId: string, from: string, to: 
   return useQuery<ContractAnalyticsData>({
     queryKey: ['contract-analytics', objectId, from, to],
     queryFn: async () => {
-      const res  = await fetch(`/api/objects/${objectId}/contract-analytics?from=${from}&to=${to}`);
+      const res  = await fetch(`/api/projects/${objectId}/contract-analytics?from=${from}&to=${to}`);
       const json = await res.json() as { success: boolean; data: ContractAnalyticsData; error?: string };
       if (!json.success) throw new Error(json.error ?? 'Ошибка загрузки аналитики');
       return json.data;

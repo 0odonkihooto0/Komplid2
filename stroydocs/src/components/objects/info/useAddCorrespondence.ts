@@ -18,7 +18,7 @@ export function useAddCorrespondence(objectId: string) {
   const createMutation = useMutation({
     mutationFn: async ({ subject, senderOrgId, receiverOrgId, body, files }: CreatePayload) => {
       // 1. Создаём черновик письма
-      const createRes = await fetch(`/api/objects/${objectId}/correspondence`, {
+      const createRes = await fetch(`/api/projects/${objectId}/correspondence`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -36,7 +36,7 @@ export function useAddCorrespondence(objectId: string) {
       // 2. Загружаем вложения через pre-signed URL
       for (const file of files) {
         const attachRes = await fetch(
-          `/api/objects/${objectId}/correspondence/${corrId}/attachments`,
+          `/api/projects/${objectId}/correspondence/${corrId}/attachments`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -56,7 +56,7 @@ export function useAddCorrespondence(objectId: string) {
 
       // 3. Отправляем письмо: DRAFT → SENT, создаёт уведомление получателю
       const sendRes = await fetch(
-        `/api/objects/${objectId}/correspondence/${corrId}/send`,
+        `/api/projects/${objectId}/correspondence/${corrId}/send`,
         { method: 'POST' }
       );
       const sendJson = await sendRes.json();

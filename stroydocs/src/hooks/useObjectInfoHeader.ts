@@ -75,7 +75,7 @@ export function useObjectInfoHeader(objectId: string) {
   const { data: summary, isLoading: isSummaryLoading } = useQuery<ObjectSummaryData>({
     queryKey: ['object-summary', objectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/summary`);
+      const res = await fetch(`/api/projects/${objectId}/summary`);
       const json: unknown = await res.json();
       const typed = json as { success: boolean; data: ObjectSummaryData; error?: string };
       if (!typed.success) throw new Error(typed.error ?? 'Ошибка загрузки сводки');
@@ -88,7 +88,7 @@ export function useObjectInfoHeader(objectId: string) {
   const { data: indicators, isLoading: isIndicatorsLoading } = useQuery<DashboardIndicatorsData>({
     queryKey: ['dashboard-indicators', objectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/dashboard-indicators`);
+      const res = await fetch(`/api/projects/${objectId}/dashboard-indicators`);
       const json: unknown = await res.json();
       const typed = json as { success: boolean; data: DashboardIndicatorsData; error?: string };
       if (!typed.success) throw new Error(typed.error ?? 'Ошибка загрузки индикаторов');

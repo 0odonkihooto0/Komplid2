@@ -21,7 +21,7 @@ export function usePassportWidgets(projectId: string) {
   return useQuery<PassportWidgetData>({
     queryKey: ['passport-widgets', projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/passport/widgets`);
+      const res = await fetch(`/api/projects/${projectId}/passport/widgets`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return json.data as PassportWidgetData;

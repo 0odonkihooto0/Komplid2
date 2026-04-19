@@ -16,7 +16,7 @@ export function BatchXmlExportButton({ projectId, contractId }: Props) {
 
   const exportMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/id-export-batch`, {
+      const res = await fetch(`/api/projects/${projectId}/id-export-batch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(contractId ? { contractId } : {}),

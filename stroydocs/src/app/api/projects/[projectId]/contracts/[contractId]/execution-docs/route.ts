@@ -97,11 +97,20 @@ export async function POST(
       workRecordInfo = workRecord.workItem?.name ?? '';
     }
 
-    // Генерация номера документа
+    // Генерация номера документа (русские префиксы)
+    const TYPE_PREFIX: Partial<Record<ExecutionDocType, string>> = {
+      AOSR: 'АОСР',
+      OZR: 'ОЖР',
+      TECHNICAL_READINESS_ACT: 'АТГ',
+      GENERAL_DOCUMENT: 'ДОК',
+      KS_6A: 'КС6А',
+      KS_11: 'КС11',
+      KS_14: 'КС14',
+    };
     const count = await db.executionDoc.count({
       where: { contractId: params.contractId, type },
     });
-    const number = `${type}-${String(count + 1).padStart(3, '0')}`;
+    const number = `${TYPE_PREFIX[type] ?? type}-${String(count + 1).padStart(3, '0')}`;
 
     // Автогенерация заголовка
     const autoTitle = title || `${EXECUTION_DOC_TYPE_LABELS[type]}${workRecordInfo ? ` — ${workRecordInfo}` : ''}`;

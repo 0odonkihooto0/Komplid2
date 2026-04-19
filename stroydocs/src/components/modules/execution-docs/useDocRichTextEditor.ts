@@ -10,7 +10,7 @@ export function useDocRichTextEditor(
 ) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const baseUrl = `/api/objects/${projectId}/contracts/${contractId}/execution-docs/${docId}`;
+  const baseUrl = `/api/projects/${projectId}/contracts/${contractId}/execution-docs/${docId}`;
 
   /** Загрузить рендеренный HTML для TipTap (overrideHtml или Handlebars-рендер) */
   const { data: htmlData, isLoading } = useQuery<{ html: string }>({

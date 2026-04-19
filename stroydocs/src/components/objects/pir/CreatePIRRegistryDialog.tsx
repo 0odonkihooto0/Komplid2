@@ -43,7 +43,7 @@ export function CreatePIRRegistryDialog({ open, onOpenChange, projectId }: Props
   const { data: participants = [] } = useQuery<ParticipantOrg[]>({
     queryKey: ['participants', projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/participants`);
+      const res = await fetch(`/api/projects/${projectId}/participants`);
       const json: { success: boolean; data: ParticipantOrg[] } = await res.json();
       if (!json.success) return [];
       return json.data;

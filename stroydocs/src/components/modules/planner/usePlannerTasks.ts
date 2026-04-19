@@ -57,8 +57,8 @@ export function usePlannerTasks(projectId: string, versionId?: string | null) {
     queryKey: ['planner-tasks', projectId, versionId ?? 'all'],
     queryFn: async () => {
       const url = versionId
-        ? `/api/objects/${projectId}/planner-tasks?versionId=${versionId}`
-        : `/api/objects/${projectId}/planner-tasks`;
+        ? `/api/projects/${projectId}/planner-tasks?versionId=${versionId}`
+        : `/api/projects/${projectId}/planner-tasks`;
       const res = await fetch(url);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
@@ -74,7 +74,7 @@ export function useCreatePlannerTask(projectId: string) {
 
   return useMutation({
     mutationFn: async (data: CreatePlannerTaskInput) => {
-      const res = await fetch(`/api/objects/${projectId}/planner-tasks`, {
+      const res = await fetch(`/api/projects/${projectId}/planner-tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -98,7 +98,7 @@ export function useUpdatePlannerTask(projectId: string) {
 
   return useMutation({
     mutationFn: async ({ taskId, ...data }: UpdatePlannerTaskInput) => {
-      const res = await fetch(`/api/objects/${projectId}/planner-tasks/${taskId}`, {
+      const res = await fetch(`/api/projects/${projectId}/planner-tasks/${taskId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -122,7 +122,7 @@ export function useDeletePlannerTask(projectId: string) {
 
   return useMutation({
     mutationFn: async (taskId: string) => {
-      const res = await fetch(`/api/objects/${projectId}/planner-tasks/${taskId}`, {
+      const res = await fetch(`/api/projects/${projectId}/planner-tasks/${taskId}`, {
         method: 'DELETE',
       });
       const json = await res.json();
@@ -143,7 +143,7 @@ export function useReorderPlannerTask(projectId: string) {
 
   return useMutation({
     mutationFn: async ({ taskId, newParentTaskId, newOrder }: ReorderPlannerTaskInput) => {
-      const res = await fetch(`/api/objects/${projectId}/planner-tasks/reorder`, {
+      const res = await fetch(`/api/projects/${projectId}/planner-tasks/reorder`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ taskId, newParentTaskId, newOrder }),

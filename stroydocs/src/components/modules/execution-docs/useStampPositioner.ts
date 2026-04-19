@@ -39,7 +39,7 @@ export function useStampPositioner({
   const [certifiedByName, setCertifiedByName] = useState('');
   const [certifiedByPos, setCertifiedByPos] = useState('');
 
-  const baseUrl = `/api/objects/${projectId}/contracts/${contractId}/execution-docs/${docId}`;
+  const baseUrl = `/api/projects/${projectId}/contracts/${contractId}/execution-docs/${docId}`;
 
   // Обработчик клика по PDF-странице (нормализованные координаты)
   const handlePageClick = useCallback((page: number, x: number, y: number) => {

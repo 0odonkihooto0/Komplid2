@@ -14,7 +14,7 @@ export function useEditDocFields(
 ) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const baseUrl = `/api/objects/${projectId}/contracts/${contractId}/execution-docs/${docId}`;
+  const baseUrl = `/api/projects/${projectId}/contracts/${contractId}/execution-docs/${docId}`;
 
   /** Сохранить overrideFields в БД */
   const saveFieldsMutation = useMutation({

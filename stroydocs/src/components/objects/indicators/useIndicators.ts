@@ -15,7 +15,7 @@ export function useIndicators(projectId: string) {
   const { data, isLoading } = useQuery<IndicatorsData>({
     queryKey: ['indicators', projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/indicators`);
+      const res = await fetch(`/api/projects/${projectId}/indicators`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return json.data;

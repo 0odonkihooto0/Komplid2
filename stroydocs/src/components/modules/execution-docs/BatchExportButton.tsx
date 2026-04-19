@@ -41,7 +41,7 @@ export function BatchExportButton({ projectId, contractId }: Props) {
     queryKey: ['execution-docs-for-export', contractId],
     queryFn: async () => {
       const res = await fetch(
-        `/api/objects/${projectId}/contracts/${contractId}/execution-docs`
+        `/api/projects/${projectId}/contracts/${contractId}/execution-docs`
       );
       const json = await res.json();
       return json.data || [];
@@ -52,7 +52,7 @@ export function BatchExportButton({ projectId, contractId }: Props) {
   const exportMutation = useMutation({
     mutationFn: async (docIds: string[]) => {
       const res = await fetch(
-        `/api/objects/${projectId}/contracts/${contractId}/execution-docs/batch-export`,
+        `/api/projects/${projectId}/contracts/${contractId}/execution-docs/batch-export`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

@@ -67,7 +67,7 @@ export function GlobalSearchBar({ objectId }: { objectId: string }) {
     setIsLoading(true);
 
     fetch(
-      `/api/objects/${objectId}/search?q=${encodeURIComponent(debouncedQuery)}`,
+      `/api/projects/${objectId}/search?q=${encodeURIComponent(debouncedQuery)}`,
       { signal: controller.signal }
     )
       .then((res) => res.json())

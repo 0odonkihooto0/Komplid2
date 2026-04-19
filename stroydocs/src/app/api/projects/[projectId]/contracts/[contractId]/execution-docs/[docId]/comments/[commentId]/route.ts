@@ -30,15 +30,32 @@ export async function PATCH(
     });
     if (!comment) return errorResponse('Замечание не найдено', 404);
 
+    const { status, suggestion, responsibleId, plannedResolveDate, actualResolveDate } =
+      parsed.data;
+
     const updated = await db.docComment.update({
       where: { id: params.commentId },
       data: {
-        status: parsed.data.status,
-        ...(parsed.data.status === 'RESOLVED' && {
+        status,
+        suggestion: suggestion !== undefined ? suggestion : undefined,
+        responsibleId: responsibleId !== undefined ? responsibleId : undefined,
+        plannedResolveDate:
+          plannedResolveDate !== undefined
+            ? plannedResolveDate
+              ? new Date(plannedResolveDate)
+              : null
+            : undefined,
+        actualResolveDate:
+          actualResolveDate !== undefined
+            ? actualResolveDate
+              ? new Date(actualResolveDate)
+              : null
+            : undefined,
+        ...(status === 'RESOLVED' && {
           resolvedById: session.user.id,
           resolvedAt: new Date(),
         }),
-        ...(parsed.data.status === 'OPEN' && {
+        ...(status === 'OPEN' && {
           resolvedById: null,
           resolvedAt: null,
         }),
@@ -46,6 +63,8 @@ export async function PATCH(
       include: {
         author: { select: { id: true, firstName: true, lastName: true } },
         resolvedBy: { select: { id: true, firstName: true, lastName: true } },
+        responsible: { select: { id: true, firstName: true, lastName: true } },
+        _count: { select: { replies: true } },
       },
     });
 

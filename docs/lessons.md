@@ -393,6 +393,39 @@ BullMQ воркеры: `maxRetriesPerRequest: null` (требование BullMQ
 
 ---
 
+## Архитектура API
+
+**Два параллельных пути API для одной сущности = 171 потенциальный дубликат + багтрекер.**
+В `stroydocs/src/app/api/` исторически сосуществовали `api/objects/[objectId]/*` (238 `route.ts`)
+и `api/projects/[projectId]/*` (382 `route.ts`) — следствие незавершённой миграции URL. 170 из
+них были парами-«близнецами», из которых ~15 имели скрытые расхождения (например,
+`[objectId]/route.ts` поддерживал `actualStartDate` в PUT, twin в projects/ — нет; `sed/route.ts`
+полностью отличался workflow-моделью видимости; `change-orders` в objects/ имел `changeType` +
+пересчёт суммы договора в транзакции, в projects/ был только простой `create`). Слепое удаление
+«дубликатов» через `rm` потеряло бы поведение из objects/-веток.
+
+Поверх этого: клиент вызывал **оба** пути вперемешку (~248 вхождений `/api/objects/` в 127 файлах,
+плюс ~400 `/api/projects/` в других местах), из-за чего починка бага в одном пути не чинила его
+на другом — это источник постоянных «почему тут работает, а там нет».
+
+**Правило**: канонический путь API для `BuildingObject` — только `/api/projects/[projectId]/*`.
+UI-URL `/objects/[objectId]/*` сохраняется (сознательный рассинхрон API↔UI, привязан к имени FK
+`projectId` в Prisma). При появлении идеи «сделать URL API консистентным с UI» — **нет**.
+Переименование `projectId` ломает `$queryRaw`, миграции и `@relation`-поля, которые завязаны на
+колонку `projectId` в `Contract`, `Defect`, `ProblemIssue`, `PIRClosureAct`, `GanttVersion`,
+`GanttStage`, `FundingRecord` и др.
+
+**Процесс слияния параллельного API** (если когда-нибудь повторится): автоматический классификатор
+пар (`sed -E 's/\bobjectId\b/projectId/g'` + `diff -u`) переводит 171 ручной дифф в ~20 ручных
+(только NEEDS_REVIEW). Для каждого NEEDS_REVIEW делается **port-first, delete-second**: сначала
+переносятся улучшения в целевую ветку отдельным коммитом, только затем удаляется источник.
+Multi-tenancy (`db.buildingObject.findFirst({ where: { id, organizationId } })`) при любом переносе
+сверяется в обеих версиях и берётся более строгий вариант. Фронтовая замена только первого сегмента
+URL `/api/objects` → `/api/projects`: имена переменных в template literals (`${objectId}`) не
+трогаются — это клиентский код, значения остаются теми же.
+
+---
+
 ## Среда разработки / CI
 
 **`npx tsc --noEmit` и `npx eslint` не работают без node_modules.**
@@ -459,7 +492,7 @@ Typescript видит тип `_count` в результате `groupBy` как `
 `(r._count as { id: number }).id` или `(r._count as Record<string, number>)[fieldName]`.
 
 **Поле `normativeRefs` добавлено в API-ответ, но не добавлено в TypeScript-интерфейс `DefectItem`.**
-API `/api/objects/[objectId]/defects/[defectId]` включает `normativeRefs` через `include`.
+API `/api/projects/[projectId]/defects/[defectId]` включает `normativeRefs` через `include`.
 `DefectDetailCard.tsx` использует `defect.normativeRefs` — но `DefectItem` в `useDefects.ts` не имел этого поля.
 Результат: TS2551 `Property 'normativeRefs' does not exist on type 'DefectItem'` на деплое.
 Локально не видно: tsc требует `node_modules` для проверки, без них ошибка молчит.

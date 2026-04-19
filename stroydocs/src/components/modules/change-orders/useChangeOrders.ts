@@ -22,7 +22,7 @@ export interface ChangeOrderItem {
 }
 
 function base(projectId: string, contractId: string) {
-  return `/api/objects/${projectId}/contracts/${contractId}/change-orders`;
+  return `/api/projects/${projectId}/contracts/${contractId}/change-orders`;
 }
 
 export function useChangeOrders(projectId: string, contractId: string) {

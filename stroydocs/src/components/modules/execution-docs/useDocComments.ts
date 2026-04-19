@@ -40,7 +40,7 @@ export interface DocComment {
 export function useDocComments(projectId: string, contractId: string, docId: string) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const baseUrl = `/api/objects/${projectId}/contracts/${contractId}/execution-docs/${docId}/comments`;
+  const baseUrl = `/api/projects/${projectId}/contracts/${contractId}/execution-docs/${docId}/comments`;
 
   const { data: comments = [], isLoading } = useQuery<DocComment[]>({
     queryKey: ['doc-comments', docId],

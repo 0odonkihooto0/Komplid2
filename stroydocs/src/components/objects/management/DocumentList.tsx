@@ -95,7 +95,7 @@ export function DocumentList({ projectId, folderId, folderName }: DocumentListPr
   async function handleDownload(doc: ProjectDocument) {
     try {
       const res = await fetch(
-        `/api/objects/${projectId}/project-documents/${doc.id}/download`,
+        `/api/projects/${projectId}/project-documents/${doc.id}/download`,
       );
       const json = await res.json();
       if (!json.success) throw new Error(json.error ?? 'Ошибка получения ссылки');
@@ -130,7 +130,7 @@ export function DocumentList({ projectId, folderId, folderName }: DocumentListPr
         <div className="flex items-center gap-2">
           {/* Скачать ZIP */}
           <a
-            href={`/api/objects/${projectId}/project-documents/archive?folderId=${folderId}`}
+            href={`/api/projects/${projectId}/project-documents/archive?folderId=${folderId}`}
             download
             className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm hover:bg-muted/50"
           >

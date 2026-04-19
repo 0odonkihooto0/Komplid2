@@ -16,7 +16,7 @@ export function useAosrRegistry(projectId: string, contractId: string) {
     queryKey,
     queryFn: async () => {
       const res = await fetch(
-        `/api/objects/${projectId}/contracts/${contractId}/aosr-registry`
+        `/api/projects/${projectId}/contracts/${contractId}/aosr-registry`
       );
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
@@ -27,7 +27,7 @@ export function useAosrRegistry(projectId: string, contractId: string) {
   const patchMutation = useMutation({
     mutationFn: async ({ docId, field, value }: { docId: string; field: string; value: string }) => {
       const res = await fetch(
-        `/api/objects/${projectId}/contracts/${contractId}/aosr-registry/${docId}`,
+        `/api/projects/${projectId}/contracts/${contractId}/aosr-registry/${docId}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },

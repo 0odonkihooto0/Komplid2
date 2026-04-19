@@ -61,7 +61,7 @@ export default function PIRRegistryDetailPage() {
   const { data: docsData } = useQuery<{ data: DesignDocOption[] }>({
     queryKey: ['design-docs', objectId, 'ALL', ''],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/design-docs?limit=200`);
+      const res = await fetch(`/api/projects/${objectId}/design-docs?limit=200`);
       const json: { success: boolean; data: { data: DesignDocOption[] } } = await res.json();
       return json.data;
     },

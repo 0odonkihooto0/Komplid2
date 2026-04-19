@@ -17,7 +17,7 @@ export function useSEDFolders(objectId: string) {
   const { data: folders = [], isLoading } = useQuery<SEDFolderItem[]>({
     queryKey: ['sed-folders', objectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/sed/folders`);
+      const res = await fetch(`/api/projects/${objectId}/sed/folders`);
       const json = await res.json().catch(() => ({ success: false, error: `HTTP ${res.status}` }));
       if (!res.ok || !json.success) throw new Error(json.error ?? `HTTP ${res.status}`);
       return json.data;
@@ -29,7 +29,7 @@ export function useSEDFolders(objectId: string) {
 
   const createFolder = useMutation({
     mutationFn: async (name: string) => {
-      const res = await fetch(`/api/objects/${objectId}/sed/folders`, {
+      const res = await fetch(`/api/projects/${objectId}/sed/folders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
@@ -43,7 +43,7 @@ export function useSEDFolders(objectId: string) {
 
   const renameFolder = useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      const res = await fetch(`/api/objects/${objectId}/sed/folders/${id}`, {
+      const res = await fetch(`/api/projects/${objectId}/sed/folders/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
@@ -57,7 +57,7 @@ export function useSEDFolders(objectId: string) {
 
   const deleteFolder = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/objects/${objectId}/sed/folders/${id}`, {
+      const res = await fetch(`/api/projects/${objectId}/sed/folders/${id}`, {
         method: 'DELETE',
       });
       const json = await res.json().catch(() => ({ success: false }));
@@ -68,7 +68,7 @@ export function useSEDFolders(objectId: string) {
 
   const moveDocToFolder = useMutation({
     mutationFn: async ({ docId, folderId }: { docId: string; folderId: string }) => {
-      const res = await fetch(`/api/objects/${objectId}/sed/${docId}/folders`, {
+      const res = await fetch(`/api/projects/${objectId}/sed/${docId}/folders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ folderId }),

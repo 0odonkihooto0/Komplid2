@@ -52,7 +52,7 @@ export function getPerformer(item: EstimateListItem): string {
 // ─── Хук ────────────────────────────────────────────────────────────────────
 
 const BASE = (objectId: string, contractId: string) =>
-  `/api/objects/${objectId}/contracts/${contractId}/estimate-versions`;
+  `/api/projects/${objectId}/contracts/${contractId}/estimate-versions`;
 
 export function useEstimateList(objectId: string, categoryId: string | null) {
   const { toast } = useToast();
@@ -66,7 +66,7 @@ export function useEstimateList(objectId: string, categoryId: string | null) {
   const { data: contracts = [], isLoading: contractsLoading } = useQuery<ContractOption[]>({
     queryKey: ['contracts', objectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/contracts`);
+      const res = await fetch(`/api/projects/${objectId}/contracts`);
       const json = await res.json() as { success: boolean; data: ContractOption[] };
       return json.success ? json.data : [];
     },

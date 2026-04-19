@@ -33,7 +33,20 @@ export async function GET(
           select: { id: true, firstName: true, lastName: true },
         },
         category: { select: { id: true, name: true } },
-        _count: { select: { chapters: true } },
+        contract: {
+          select: {
+            id: true,
+            name: true,
+            number: true,
+            participants: {
+              select: {
+                role: true,
+                organization: { select: { name: true } },
+              },
+            },
+          },
+        },
+        _count: { select: { chapters: true, childVersions: true } },
       },
       orderBy: { createdAt: 'desc' },
     });

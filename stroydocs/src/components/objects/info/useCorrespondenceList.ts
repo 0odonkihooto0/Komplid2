@@ -43,7 +43,7 @@ export function useCorrespondenceList(objectId: string) {
     if (search.trim()) params.set('search', search.trim());
     params.set('page', String(page));
     params.set('limit', '50');
-    return `/api/objects/${objectId}/correspondence?${params.toString()}`;
+    return `/api/projects/${objectId}/correspondence?${params.toString()}`;
   };
 
   const { data, isLoading, error, refetch } = useQuery<{

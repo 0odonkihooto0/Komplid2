@@ -9,7 +9,7 @@ export function useAddNormativeRef(objectId: string, defectId: string) {
   return useMutation({
     mutationFn: async (data: { reference: string; description?: string }) => {
       const res = await fetch(
-        `/api/objects/${objectId}/defects/${defectId}/normative-refs`,
+        `/api/projects/${objectId}/defects/${defectId}/normative-refs`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -35,7 +35,7 @@ export function useDeleteNormativeRef(objectId: string, defectId: string) {
   return useMutation({
     mutationFn: async (refId: string) => {
       const res = await fetch(
-        `/api/objects/${objectId}/defects/${defectId}/normative-refs/${refId}`,
+        `/api/projects/${objectId}/defects/${defectId}/normative-refs/${refId}`,
         { method: 'DELETE' },
       );
       const json = await res.json();

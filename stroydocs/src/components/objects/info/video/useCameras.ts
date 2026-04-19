@@ -45,7 +45,7 @@ export function useCameras(objectId: string) {
   const { data: cameras = [], isLoading } = useQuery<VideoCamera[]>({
     queryKey,
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/cameras`);
+      const res = await fetch(`/api/projects/${objectId}/cameras`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return json.data as VideoCamera[];
@@ -54,7 +54,7 @@ export function useCameras(objectId: string) {
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateCameraData) => {
-      const res = await fetch(`/api/objects/${objectId}/cameras`, {
+      const res = await fetch(`/api/projects/${objectId}/cameras`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -74,7 +74,7 @@ export function useCameras(objectId: string) {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateCameraData }) => {
-      const res = await fetch(`/api/objects/${objectId}/cameras/${id}`, {
+      const res = await fetch(`/api/projects/${objectId}/cameras/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -94,7 +94,7 @@ export function useCameras(objectId: string) {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/objects/${objectId}/cameras/${id}`, {
+      const res = await fetch(`/api/projects/${objectId}/cameras/${id}`, {
         method: 'DELETE',
       });
       const json = await res.json();

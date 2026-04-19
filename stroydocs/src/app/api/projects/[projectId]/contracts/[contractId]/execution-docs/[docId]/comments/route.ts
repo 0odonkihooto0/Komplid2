@@ -24,6 +24,8 @@ export async function GET(
       include: {
         author: { select: { id: true, firstName: true, lastName: true } },
         resolvedBy: { select: { id: true, firstName: true, lastName: true } },
+        responsible: { select: { id: true, firstName: true, lastName: true } },
+        _count: { select: { replies: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -60,16 +62,35 @@ export async function POST(
       return errorResponse('Ошибка валидации', 400, parsed.error.issues);
     }
 
+    // Авто-нумерация замечания в рамках документа
+    const existingCount = await db.docComment.count({
+      where: { executionDocId: params.docId },
+    });
+
+    const { plannedResolveDate, ...restData } = parsed.data;
+
     const comment = await db.docComment.create({
       data: {
-        ...parsed.data,
+        ...restData,
+        plannedResolveDate: plannedResolveDate ? new Date(plannedResolveDate) : undefined,
+        commentNumber: existingCount + 1,
         executionDocId: params.docId,
         authorId: session.user.id,
       },
       include: {
         author: { select: { id: true, firstName: true, lastName: true } },
+        responsible: { select: { id: true, firstName: true, lastName: true } },
+        _count: { select: { replies: true } },
       },
     });
+
+    // При наличии согласования — приостановить маршрут если документ на согласовании
+    if (doc.status === 'IN_REVIEW') {
+      await db.approvalRoute.updateMany({
+        where: { executionDocId: params.docId, status: 'PENDING' },
+        data: { status: 'PENDING_REMARKS' },
+      });
+    }
 
     return successResponse(comment);
   } catch (error) {

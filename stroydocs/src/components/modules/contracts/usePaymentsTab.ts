@@ -21,7 +21,7 @@ export interface ContractPaymentItem {
 }
 
 function base(projectId: string, contractId: string) {
-  return `/api/objects/${projectId}/contracts/${contractId}/payments`;
+  return `/api/projects/${projectId}/contracts/${contractId}/payments`;
 }
 
 export function usePaymentsTab(projectId: string, contractId: string) {

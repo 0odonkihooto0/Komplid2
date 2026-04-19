@@ -79,7 +79,7 @@ export function useGanttAnalytics(
     queryKey: ['gantt-analytics', objectId, versionId, startDate, endDate, reportDate],
     queryFn: async () => {
       const url = new URL(
-        `/api/objects/${objectId}/gantt-versions/${versionId}/analytics`,
+        `/api/projects/${objectId}/gantt-versions/${versionId}/analytics`,
         window.location.origin,
       );
       if (startDate) url.searchParams.set('startDate', startDate);

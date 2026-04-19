@@ -69,7 +69,7 @@ export function useDesignDocs(
 ) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const baseUrl = `/api/objects/${projectId}/design-docs`;
+  const baseUrl = `/api/projects/${projectId}/design-docs`;
 
   const params = new URLSearchParams({ limit: '50' });
   if (docType) params.set('docType', docType);

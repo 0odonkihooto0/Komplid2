@@ -96,7 +96,7 @@ export function DefectsContent({ projectId, embedded }: Props) {
           Зафиксировать дефект
         </Button>
         <Button variant="outline" size="sm" asChild>
-          <a href={`/api/objects/${projectId}/defects/report?format=csv`} download="defects-report.csv">
+          <a href={`/api/projects/${projectId}/defects/report?format=csv`} download="defects-report.csv">
             <Download className="mr-2 h-4 w-4" />
             Скачать отчёт CSV
           </a>

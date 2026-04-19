@@ -23,7 +23,7 @@ export function useDefectPhotos(objectId: string, defectId: string) {
         entityType: 'Defect',
         entityId: defectId,
       });
-      const res = await fetch(`/api/objects/${objectId}/photos?${params.toString()}`);
+      const res = await fetch(`/api/projects/${objectId}/photos?${params.toString()}`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error ?? 'Ошибка загрузки фото');
       return json.data ?? [];

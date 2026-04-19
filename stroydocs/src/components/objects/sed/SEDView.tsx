@@ -34,7 +34,7 @@ export function SEDView({ objectId }: { objectId: string }) {
 
   // Счётчик "Требует действия" для badge в сайдбаре
   useEffect(() => {
-    fetch(`/api/objects/${objectId}/sed?view=requires&limit=1`)
+    fetch(`/api/projects/${objectId}/sed?view=requires&limit=1`)
       .then((r) => r.json())
       .then((j: { success: boolean; data?: { total?: number } }) => {
         if (j.success) setRequiresCount(j.data?.total ?? 0);
@@ -45,7 +45,7 @@ export function SEDView({ objectId }: { objectId: string }) {
   const handleBulkMarkRead = useCallback(
     async (ids: string[], isRead: boolean) => {
       try {
-        const res = await fetch(`/api/objects/${objectId}/sed/mark-read`, {
+        const res = await fetch(`/api/projects/${objectId}/sed/mark-read`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ documentIds: ids, isRead }),

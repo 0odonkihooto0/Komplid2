@@ -24,7 +24,7 @@ export function useContractsTable(projectId: string) {
   const { data: contracts = [], isLoading } = useQuery<ContractItem[]>({
     queryKey: ['contracts', projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/contracts`);
+      const res = await fetch(`/api/projects/${projectId}/contracts`);
       const json = await res.json();
       return json.success ? json.data : [];
     },

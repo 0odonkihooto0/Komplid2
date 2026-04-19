@@ -35,7 +35,7 @@ export interface CreateVersionInput {
 }
 
 const BASE = (projectId: string, contractId: string) =>
-  `/api/objects/${projectId}/contracts/${contractId}/estimate-versions`;
+  `/api/projects/${projectId}/contracts/${contractId}/estimate-versions`;
 
 export function useEstimateVersions(projectId: string) {
   const { toast } = useToast();
@@ -48,7 +48,7 @@ export function useEstimateVersions(projectId: string) {
   const { data: contracts = [], isLoading: contractsLoading } = useQuery<ContractOption[]>({
     queryKey: ['contracts', projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/contracts`);
+      const res = await fetch(`/api/projects/${projectId}/contracts`);
       const json = await res.json() as { success: boolean; data: ContractOption[] };
       return json.success ? json.data : [];
     },

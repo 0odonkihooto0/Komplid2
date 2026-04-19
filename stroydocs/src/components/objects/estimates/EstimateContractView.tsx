@@ -50,7 +50,7 @@ export function EstimateContractView({ objectId }: Props) {
   } = contract;
 
   const exportUrl = selectedContractId
-    ? `/api/objects/${objectId}/contracts/${selectedContractId}/estimate-contract/export`
+    ? `/api/projects/${objectId}/contracts/${selectedContractId}/estimate-contract/export`
     : '#';
 
   const canSave = !!selectedContractId && checkedVersionIds.size > 0;

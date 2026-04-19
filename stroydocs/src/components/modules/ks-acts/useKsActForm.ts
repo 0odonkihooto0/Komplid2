@@ -62,7 +62,7 @@ export function useKsActDetail(objectId: string, contractId: string, actId: stri
     queryKey: ['ks-acts', contractId, actId],
     queryFn: async () => {
       const res = await fetch(
-        `/api/objects/${objectId}/contracts/${contractId}/ks-acts/${actId}`,
+        `/api/projects/${objectId}/contracts/${contractId}/ks-acts/${actId}`,
       );
       const json = await res.json();
       if (!json.success) throw new Error(json.error ?? 'Ошибка загрузки');
@@ -79,7 +79,7 @@ export function useUpdateKsAct(objectId: string, contractId: string) {
   return useMutation({
     mutationFn: async ({ actId, data }: { actId: string; data: KsActFormFields }) => {
       const res = await fetch(
-        `/api/objects/${objectId}/contracts/${contractId}/ks-acts/${actId}`,
+        `/api/projects/${objectId}/contracts/${contractId}/ks-acts/${actId}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -107,7 +107,7 @@ export function useAutofillParticipants(objectId: string, contractId: string) {
   return useMutation({
     mutationFn: async (actId: string) => {
       const res = await fetch(
-        `/api/objects/${objectId}/contracts/${contractId}/ks-acts/${actId}/autofill`,
+        `/api/projects/${objectId}/contracts/${contractId}/ks-acts/${actId}/autofill`,
         { method: 'POST' },
       );
       const json = await res.json();
@@ -126,7 +126,7 @@ export function usePrintKsAct(objectId: string, contractId: string) {
   return useMutation({
     mutationFn: async (actId: string) => {
       const res = await fetch(
-        `/api/objects/${objectId}/contracts/${contractId}/ks-acts/${actId}/print`,
+        `/api/projects/${objectId}/contracts/${contractId}/ks-acts/${actId}/print`,
         { method: 'POST' },
       );
       const json = await res.json();

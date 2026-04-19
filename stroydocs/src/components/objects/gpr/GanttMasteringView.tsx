@@ -98,7 +98,7 @@ export function GanttMasteringView({ objectId }: Props) {
   function handleExportExcel() {
     if (!selectedVersionId) return;
     window.open(
-      `/api/objects/${objectId}/gantt-versions/${selectedVersionId}/mastering/export?year=${year}`,
+      `/api/projects/${objectId}/gantt-versions/${selectedVersionId}/mastering/export?year=${year}`,
       '_blank',
     );
   }

@@ -55,7 +55,7 @@ export interface CreatePIRClosurePayload {
 export function usePIRClosureActs(projectId: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const baseUrl = `/api/objects/${projectId}/pir-closure`;
+  const baseUrl = `/api/projects/${projectId}/pir-closure`;
 
   const { data, isLoading, isError } = useQuery<ApiListResponse>({
     queryKey: ['pir-closure-acts', projectId],

@@ -45,7 +45,7 @@ export function useFunding(projectId: string) {
   const { data: sources = [], isLoading } = useQuery<FundingSource[]>({
     queryKey: ['funding', projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/funding`);
+      const res = await fetch(`/api/projects/${projectId}/funding`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return json.data;
@@ -54,7 +54,7 @@ export function useFunding(projectId: string) {
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateFundingData) => {
-      const res = await fetch(`/api/objects/${projectId}/funding`, {
+      const res = await fetch(`/api/projects/${projectId}/funding`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -78,7 +78,7 @@ export function useFunding(projectId: string) {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/objects/${projectId}/funding/${id}`, {
+      const res = await fetch(`/api/projects/${projectId}/funding/${id}`, {
         method: 'DELETE',
       });
       const json = await res.json();

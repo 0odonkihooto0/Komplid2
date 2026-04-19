@@ -12,7 +12,7 @@ export function useObjectContracts(objectId: string) {
   const { data: contracts = [], isLoading } = useQuery<ObjectContract[]>({
     queryKey: ['object-contracts', objectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/contracts`);
+      const res = await fetch(`/api/projects/${objectId}/contracts`);
       const json = await res.json();
       if (!json.success) return [];
       return json.data as ObjectContract[];

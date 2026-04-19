@@ -73,7 +73,7 @@ export function CreateJournalDialog({ open, onOpenChange, projectId, defaultType
   const { data: contracts = [] } = useQuery<ContractOption[]>({
     queryKey: ['contracts', projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/contracts`);
+      const res = await fetch(`/api/projects/${projectId}/contracts`);
       const json = await res.json();
       if (!json.success) return [];
       return json.data.map((c: ContractOption) => ({

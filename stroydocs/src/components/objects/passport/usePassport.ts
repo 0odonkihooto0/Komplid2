@@ -71,7 +71,7 @@ export function usePassport(projectId: string) {
   const { data: project, isLoading } = useQuery<PassportProject>({
     queryKey: ['project', projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}`);
+      const res = await fetch(`/api/projects/${projectId}`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return json.data;
@@ -80,7 +80,7 @@ export function usePassport(projectId: string) {
 
   const updateMutation = useMutation({
     mutationFn: async (data: PassportUpdateData) => {
-      const res = await fetch(`/api/objects/${projectId}`, {
+      const res = await fetch(`/api/projects/${projectId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

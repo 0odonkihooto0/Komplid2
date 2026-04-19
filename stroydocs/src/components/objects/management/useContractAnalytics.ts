@@ -87,7 +87,7 @@ export function useContractAnalytics(projectId: string, year: number) {
     queryKey: ['management-analytics', projectId, year],
     queryFn: async () => {
       const res = await fetch(
-        `/api/objects/${projectId}/management-analytics?year=${year}`,
+        `/api/projects/${projectId}/management-analytics?year=${year}`,
       );
       const json = await res.json();
       if (!json.success) throw new Error(json.error ?? 'Ошибка загрузки аналитики');

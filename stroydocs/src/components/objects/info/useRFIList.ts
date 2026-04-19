@@ -39,7 +39,7 @@ export function useRFIList(objectId: string) {
     if (search.trim()) params.set('search', search.trim());
     params.set('page', String(page));
     params.set('limit', '50');
-    return `/api/objects/${objectId}/rfi?${params.toString()}`;
+    return `/api/projects/${objectId}/rfi?${params.toString()}`;
   };
 
   const { data, isLoading, error, refetch } = useQuery<{

@@ -57,7 +57,7 @@ export function useArchive(contractId: string) {
     }) => {
       // 1. Создание записи в БД и получение pre-signed URL
       const res = await fetch(
-        `/api/objects/${data.projectId}/contracts/${contractId}/archive`,
+        `/api/projects/${data.projectId}/contracts/${contractId}/archive`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -96,7 +96,7 @@ export function useArchive(contractId: string) {
   const deleteMutation = useMutation({
     mutationFn: async ({ projectId, archiveId }: { projectId: string; archiveId: string }) => {
       const res = await fetch(
-        `/api/objects/${projectId}/contracts/${contractId}/archive/${archiveId}`,
+        `/api/projects/${projectId}/contracts/${contractId}/archive/${archiveId}`,
         { method: 'DELETE' }
       );
       const json = await res.json();
@@ -119,7 +119,7 @@ export function useArchive(contractId: string) {
       certifiedByPos: string;
     }) => {
       const res = await fetch(
-        `/api/objects/${data.projectId}/contracts/${contractId}/archive/${data.archiveId}/certify`,
+        `/api/projects/${data.projectId}/contracts/${contractId}/archive/${data.archiveId}/certify`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

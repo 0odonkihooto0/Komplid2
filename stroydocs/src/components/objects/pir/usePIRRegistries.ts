@@ -58,7 +58,7 @@ export interface CreatePIRRegistryPayload {
 export function usePIRRegistries(projectId: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const baseUrl = `/api/objects/${projectId}/pir-registries`;
+  const baseUrl = `/api/projects/${projectId}/pir-registries`;
 
   const { data, isLoading, isError } = useQuery<PIRRegistryListResponse>({
     queryKey: ['pir-registries', projectId],

@@ -77,9 +77,9 @@ export interface CreateContractInput {
 
 // ─── Хук ─────────────────────────────────────────────────────────────────────
 
-const BASE_CONTRACTS = (pid: string) => `/api/objects/${pid}/contracts`;
-const BASE_VERSIONS = (pid: string, cid: string) => `/api/objects/${pid}/contracts/${cid}/estimate-versions`;
-const BASE_ESTIMATE_CONTRACT = (pid: string, cid: string) => `/api/objects/${pid}/contracts/${cid}/estimate-contract`;
+const BASE_CONTRACTS = (pid: string) => `/api/projects/${pid}/contracts`;
+const BASE_VERSIONS = (pid: string, cid: string) => `/api/projects/${pid}/contracts/${cid}/estimate-versions`;
+const BASE_ESTIMATE_CONTRACT = (pid: string, cid: string) => `/api/projects/${pid}/contracts/${cid}/estimate-contract`;
 
 export function useEstimateContract(projectId: string) {
   const { toast } = useToast();

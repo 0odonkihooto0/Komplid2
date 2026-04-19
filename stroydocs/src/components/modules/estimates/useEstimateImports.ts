@@ -38,7 +38,7 @@ export interface EstimateImport {
 }
 
 export function apiUrl(projectId: string, contractId: string, path = '') {
-  return `/api/objects/${projectId}/contracts/${contractId}/estimates${path}`;
+  return `/api/projects/${projectId}/contracts/${contractId}/estimates${path}`;
 }
 
 /** Хук для работы со списком импортов */
