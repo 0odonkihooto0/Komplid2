@@ -18,6 +18,7 @@ const config: Config = {
     },
     extend: {
       colors: {
+        // Legacy HSL slots (shadcn/ui)
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -51,11 +52,52 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        // New OKLch design tokens
+        bg: 'var(--bg)',
+        'bg-elev': 'var(--bg-elev)',
+        'bg-inset': 'var(--bg-inset)',
+        ink: 'var(--ink)',
+        'ink-soft': 'var(--ink-soft)',
+        'ink-muted': 'var(--ink-muted)',
+        'border-strong': 'var(--border-strong)',
+        'accent-bg': 'var(--accent-bg)',
+        'accent-ink': 'var(--accent-ink)',
+        ok: 'var(--ok)',
+        warn: 'var(--warn)',
+        err: 'var(--err)',
+        info: 'var(--info)',
+        'sidebar-bg': 'var(--sidebar-bg)',
+        'sidebar-ink': 'var(--sidebar-ink)',
+        'sidebar-hover': 'var(--sidebar-hover)',
+      },
+      fontFamily: {
+        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-jetbrains)', 'ui-monospace', 'Menlo', 'monospace'],
+      },
+      fontSize: {
+        xs2: ['10px', { lineHeight: '1.3', letterSpacing: '0.14em' }],
+        xs: ['11px', { lineHeight: '1.4' }],
+        sm: ['12px', { lineHeight: '1.45' }],
+        base: ['13px', { lineHeight: '1.45' }],
+        md: ['14px', { lineHeight: '1.5' }],
+        lg: ['15px', { lineHeight: '1.5' }],
+        xl: ['17px', { lineHeight: '1.4' }],
+        'page-title': ['20px', { lineHeight: '1.3', letterSpacing: '-0.015em' }],
+        kpi: ['26px', { lineHeight: '1.1', letterSpacing: '-0.02em' }],
       },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+        'r-1': 'var(--r-1)',
+        'r-2': 'var(--r-2)',
+        'r-3': 'var(--r-3)',
+        'r-4': 'var(--r-4)',
+        pill: 'var(--r-pill)',
+      },
+      boxShadow: {
+        'panel-1': 'var(--shadow-1)',
+        'panel-2': 'var(--shadow-2)',
       },
       keyframes: {
         'accordion-down': {
