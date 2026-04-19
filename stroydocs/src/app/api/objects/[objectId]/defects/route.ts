@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { invalidateAnalyticsCache } from '@/lib/analytics/cache';
+import { getDefectCategoryRefId } from '@/lib/references/ref-mapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -102,6 +103,7 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
     }
 
     const { deadline, ...rest } = parsed.data;
+    const categoryRefId = await getDefectCategoryRefId(rest.category);
 
     const defect = await db.defect.create({
       data: {
@@ -109,6 +111,7 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
         projectId,
         authorId: session.user.id,
         ...(deadline ? { deadline: new Date(deadline) } : {}),
+        ...(categoryRefId ? { categoryRefId } : {}),
       },
       include: DEFECT_INCLUDE,
     });

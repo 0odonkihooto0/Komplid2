@@ -230,6 +230,11 @@ model Organization {
   documentTypesRef    DocumentTypeRef[]
   budgetExpenseItems  BudgetExpenseItem[]
 
+  // Модуль 19 — Справочники REF.5
+  taskTypeRefs         TaskTypeRef[]
+  defectCategoryRefs   DefectCategoryRef[]
+  problemIssueTypeRefs ProblemIssueTypeRef[]
+
   @@map("organizations")
 }
 
@@ -2133,6 +2138,11 @@ model Defect {
   substituteInspectorId String?
   substituteInspector   User?   @relation("DefectSubstituteInspector", fields: [substituteInspectorId], references: [id])
 
+  // Модуль 19 — REF.5: FK-справочник параллельно enum (обратная совместимость)
+  // TODO: В следующей major-версии удалить поле category, оставить только categoryRefId
+  categoryRefId String?
+  categoryRef   DefectCategoryRef? @relation(fields: [categoryRefId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -2147,6 +2157,7 @@ model Defect {
   @@index([assigneeId])
   @@index([deadline])
   @@index([inspectionId])
+  @@index([categoryRefId])
   @@map("defects")
 }
 
@@ -5029,6 +5040,11 @@ model ProblemIssue {
   verifierOrgId String?
   verifierOrg   Organization? @relation("ProblemIssueVerifier", fields: [verifierOrgId], references: [id])
 
+  // Модуль 19 — REF.5: FK-справочник параллельно enum (обратная совместимость)
+  // TODO: В следующей major-версии удалить поле type, оставить только typeRefId
+  typeRefId String?
+  typeRef   ProblemIssueTypeRef? @relation(fields: [typeRefId], references: [id])
+
   projectId      String
   buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
@@ -5044,6 +5060,7 @@ model ProblemIssue {
   @@index([projectId, status])
   @@index([assigneeOrgId])
   @@index([verifierOrgId])
+  @@index([typeRefId])
   @@map("problem_issues")
 }
 
@@ -5959,4 +5976,65 @@ model BudgetExpenseItem {
 
   @@index([parentId])
   @@map("budget_expense_items")
+}
+
+// === Модуль 19 — Справочники REF.5 ===
+
+/// Справочник типов задач (Модуль 19 — замена/расширение TaskType)
+model TaskTypeRef {
+  id             String        @id @default(uuid())
+  name           String
+  code           String        @unique
+  color          String?
+  icon           String?
+  order          Int           @default(0)
+  isSystem       Boolean       @default(false)
+  isActive       Boolean       @default(true)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([organizationId])
+  @@map("task_types_ref")
+}
+
+/// Справочник категорий недостатков (Модуль 19 — редактируемая версия enum DefectCategory)
+model DefectCategoryRef {
+  id                 String        @id @default(uuid())
+  name               String
+  code               String        @unique
+  color              String?
+  order              Int           @default(0)
+  requiresSuspension Boolean       @default(false)
+  isSystem           Boolean       @default(false)
+  isActive           Boolean       @default(true)
+  organizationId     String?
+  organization       Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  defects Defect[]
+
+  @@index([organizationId])
+  @@map("defect_categories_ref")
+}
+
+/// Справочник типов проблемных вопросов (Модуль 19 — редактируемая версия enum ProblemIssueType)
+model ProblemIssueTypeRef {
+  id             String        @id @default(uuid())
+  name           String
+  code           String        @unique
+  order          Int           @default(0)
+  isSystem       Boolean       @default(false)
+  isActive       Boolean       @default(true)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  issues ProblemIssue[]
+
+  @@index([organizationId])
+  @@map("problem_issue_types_ref")
 }

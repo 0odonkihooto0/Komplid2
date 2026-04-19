@@ -139,6 +139,66 @@ export const REFERENCE_REGISTRY: Record<string, ReferenceSchema> = {
       { key: 'level',    label: 'Уровень',      type: 'number',  required: false, hidden: true },
     ],
   },
+
+  // ── REF.5 ──────────────────────────────────────────────────────
+
+  taskTypeRefs: {
+    slug: 'taskTypeRefs',
+    name: 'Типы задач',
+    pluralName: 'Типы задач',
+    nameSingular: 'тип задачи',
+    category: 'common',
+    model: 'taskTypeRef',
+    scope: 'organization',
+    auditable: true,
+    fields: [
+      { key: 'name',     label: 'Наименование', type: 'string',  required: true,  width: 200 },
+      { key: 'code',     label: 'Код',          type: 'string',  required: true,  width: 140 },
+      { key: 'color',    label: 'Цвет',         type: 'color',   required: false, width: 100 },
+      { key: 'icon',     label: 'Иконка',       type: 'string',  required: false, width: 120 },
+      { key: 'order',    label: 'Порядок',      type: 'number',  required: false, width: 100, hiddenByDefault: true },
+      { key: 'isActive', label: 'Активный',     type: 'boolean', required: false, width: 100 },
+      { key: 'isSystem', label: 'Системный',    type: 'boolean', required: false, readonly: true, hiddenByDefault: true },
+    ],
+  },
+
+  defectCategories: {
+    slug: 'defectCategories',
+    name: 'Категории недостатков',
+    pluralName: 'Категории недостатков',
+    nameSingular: 'категорию недостатков',
+    category: 'construction',
+    model: 'defectCategoryRef',
+    scope: 'organization',
+    auditable: true,
+    fields: [
+      { key: 'name',               label: 'Наименование',         type: 'string',  required: true,  width: 280 },
+      { key: 'code',               label: 'Код',                  type: 'string',  required: true,  width: 160 },
+      { key: 'color',              label: 'Цвет',                 type: 'color',   required: false, width: 100 },
+      { key: 'requiresSuspension', label: 'Требует приостановки', type: 'boolean', required: false, width: 160 },
+      { key: 'order',              label: 'Порядок',              type: 'number',  required: false, width: 100, hiddenByDefault: true },
+      { key: 'isActive',           label: 'Активный',             type: 'boolean', required: false, width: 100 },
+      { key: 'isSystem',           label: 'Системный',            type: 'boolean', required: false, readonly: true, hiddenByDefault: true },
+    ],
+  },
+
+  problemIssueTypes: {
+    slug: 'problemIssueTypes',
+    name: 'Типы проблемных вопросов',
+    pluralName: 'Типы проблемных вопросов',
+    nameSingular: 'тип проблемного вопроса',
+    category: 'construction',
+    model: 'problemIssueTypeRef',
+    scope: 'organization',
+    auditable: true,
+    fields: [
+      { key: 'name',     label: 'Наименование', type: 'string',  required: true,  width: 280 },
+      { key: 'code',     label: 'Код',          type: 'string',  required: true,  width: 200 },
+      { key: 'order',    label: 'Порядок',      type: 'number',  required: false, width: 100, hiddenByDefault: true },
+      { key: 'isActive', label: 'Активный',     type: 'boolean', required: false, width: 100 },
+      { key: 'isSystem', label: 'Системный',    type: 'boolean', required: false, readonly: true, hiddenByDefault: true },
+    ],
+  },
 };
 
 export function getReferenceSchema(slug: string): ReferenceSchema | null {

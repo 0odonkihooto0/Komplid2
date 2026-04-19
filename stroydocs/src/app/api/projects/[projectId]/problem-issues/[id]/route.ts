@@ -5,6 +5,7 @@ import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { z } from 'zod';
 import { ProblemIssueType, ProblemIssueStatus } from '@prisma/client';
+import { getProblemIssueTypeRefId } from '@/lib/references/ref-mapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +41,7 @@ export async function PATCH(
     if (!parsed.success) return errorResponse('Ошибка валидации', 400, parsed.error.issues);
 
     const { deadline, status, ...rest } = parsed.data;
+    const typeRefId = rest.type ? await getProblemIssueTypeRefId(rest.type) : undefined;
 
     // При закрытии — фиксируем дату закрытия
     const closedAt =
@@ -52,6 +54,7 @@ export async function PATCH(
         ...(status !== undefined ? { status } : {}),
         ...(closedAt !== undefined ? { closedAt } : {}),
         ...(deadline !== undefined ? { deadline: deadline ? new Date(deadline) : null } : {}),
+        ...(typeRefId !== undefined ? { typeRefId: typeRefId ?? null } : {}),
       },
       include: {
         author: { select: { id: true, firstName: true, lastName: true } },
