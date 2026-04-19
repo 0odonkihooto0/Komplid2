@@ -31,8 +31,13 @@ function buildWhere(
   const conditions: Record<string, unknown>[] = [];
 
   if (scope === 'organization') {
-    // Системные записи (isSystem=true, organizationId=null) видны всем организациям
-    conditions.push({ OR: [{ organizationId: orgId }, { organizationId: null, isSystem: true }] });
+    // Если модель имеет поле isSystem — системные записи (isSystem=true, organizationId=null) видны всем
+    const hasIsSystem = fields.some((f) => f.key === 'isSystem');
+    if (hasIsSystem) {
+      conditions.push({ OR: [{ organizationId: orgId }, { organizationId: null, isSystem: true }] });
+    } else {
+      conditions.push({ organizationId: orgId });
+    }
   }
 
   if (search) {
@@ -79,14 +84,15 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     const sp = req.nextUrl.searchParams;
     const countOnly = sp.get('count') === 'true';
     const search = sp.get('search')?.trim().slice(0, 200) || null;
-    const sort = sp.get('sort') || 'createdAt';
+    const fallbackSort = schema.defaultSort ?? 'createdAt';
+    const sort = sp.get('sort') || fallbackSort;
     const order = sp.get('order') === 'asc' ? 'asc' : 'desc';
     const page = Math.max(1, Number(sp.get('page') || 1));
     const limit = Math.min(200, Math.max(1, Number(sp.get('limit') || 50)));
     const skip = (page - 1) * limit;
 
-    const validSortKeys = schema.fields.map((f) => f.key).concat(['createdAt', 'updatedAt', 'id']);
-    const safeSort = validSortKeys.includes(sort) ? sort : 'createdAt';
+    const validSortKeys = schema.fields.map((f) => f.key).concat([fallbackSort, 'id']);
+    const safeSort = validSortKeys.includes(sort) ? sort : fallbackSort;
 
     const where = buildWhere(schema.fields, session.user.organizationId, schema.scope, search);
     const modelClient = getModelClient(schema.model);

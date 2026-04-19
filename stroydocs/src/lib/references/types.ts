@@ -39,4 +39,9 @@ export interface ReferenceSchema {
   hierarchical?: boolean;
   /** Имя поля родительской записи, например 'parentId' */
   parentKey?: string;
+  /** При true — всегда использовать серверную пагинацию (не загружать все сразу).
+   *  Применяется для больших иерархических справочников (КСИ 1000+ записей). */
+  lazyLoad?: boolean;
+  /** Поле для сортировки по умолчанию. Если не задано — используется 'createdAt'. */
+  defaultSort?: string;
 }

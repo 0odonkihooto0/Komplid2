@@ -1575,12 +1575,15 @@
 - ✅ API: `GET /api/references/[slug]?count=true` — возвращает `{ count: N }` для каталога
 - ✅ `src/lib/references/constants.ts` — CATEGORY_LABELS, CATEGORY_ORDER (переиспользуется в каталоге и slug-страницах)
 
-### Интеграция существующих (REF.7)
-- ⬜ KsiNode → интегрирован в `/references/ksi` через тот же фреймворк
-- ⬜ MaterialNomenclature → `/references/nomenclature`
-- ⬜ DocumentTemplate → `/references/document-templates`
-- ⬜ StampTitle → `/references/stamp-titles`
-- ⬜ TaskType → `/references/task-types`
+### Интеграция существующих (REF.7) ✅ 2026-04-19
+- ✅ KsiNode → `/references/ksi`; scope='system' (просмотр всем, запись только ADMIN); hierarchical+lazyLoad=true — серверная пагинация с поиском по code/name; уровень иерархии отображается отступом
+- ✅ MaterialNomenclature → `/references/nomenclature`; scope='organization'
+- ✅ DocumentTemplate → `/references/document-templates`; scope='organization'; category — select с опциями DocTemplateCategory
+- ✅ StampTitle → `/references/stamp-titles`; scope='organization'
+- ✅ TaskType → `/references/task-types`; scope='organization'
+- ✅ Фикс `buildWhere`: модели без поля `isSystem` фильтруются только по `organizationId` (нет Prisma-ошибки unknown field)
+- ✅ `ReferenceSchema` расширена полем `lazyLoad?: boolean`; при true — tree-рендеринг отключён, серверная пагинация включена
+- ✅ Иконки FolderTree/Package/Stamp/FileText/Tag добавлены в ICON_MAP страницы `/references/[slug]`
 
 ### Замена hardcoded значений (REF.8)
 - ⬜ Поле Currency во всех местах где сейчас `currency String @default("RUB")` — заменить на `currencyId` FK

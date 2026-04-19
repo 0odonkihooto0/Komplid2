@@ -54,16 +54,19 @@ export function ReferenceTable({ schema }: Props) {
     return () => clearTimeout(t);
   }, [debouncedSearch, state]);
 
-  // При загрузке иерархического справочника раскрываем корневые узлы
+  // lazyLoad=true — использовать серверную пагинацию без tree-рендеринга
+  const treeMode = schema.hierarchical && !schema.lazyLoad;
+
+  // При загрузке иерархического справочника (без lazyLoad) раскрываем корневые узлы
   useEffect(() => {
-    if (schema.hierarchical && state.rows.length > 0 && expandedIds.size === 0) {
+    if (treeMode && state.rows.length > 0 && expandedIds.size === 0) {
       const rootIds = state.rows
         .filter((r) => !r[schema.parentKey!])
         .map((r) => r.id as string);
       setExpandedIds(new Set(rootIds));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schema.hierarchical, state.rows.length]);
+  }, [treeMode, state.rows.length]);
 
   const visibleFields = schema.fields.filter(
     (f) => !f.hidden && (!f.hiddenByDefault || state.columnVisibility[f.key] !== false)
@@ -83,12 +86,12 @@ export function ReferenceTable({ schema }: Props) {
     });
   }, []);
 
-  // Tree-режим: строим и разворачиваем дерево
+  // Tree-режим: строим и разворачиваем дерево (только без lazyLoad)
   const treeRows = useMemo(() => {
-    if (!schema.hierarchical || !schema.parentKey) return null;
+    if (!treeMode || !schema.parentKey) return null;
     const roots = buildTree(state.rows, schema.parentKey);
     return flattenVisible(roots, expandedIds);
-  }, [schema.hierarchical, schema.parentKey, state.rows, expandedIds]);
+  }, [treeMode, schema.parentKey, state.rows, expandedIds]);
 
   const displayRows = treeRows ?? state.rows;
 
@@ -122,15 +125,15 @@ export function ReferenceTable({ schema }: Props) {
               {visibleFields.map((f) => (
                 <TableHead
                   key={f.key}
-                  className={schema.hierarchical ? 'select-none' : 'cursor-pointer select-none'}
+                  className={treeMode ? 'select-none' : 'cursor-pointer select-none'}
                   style={f.width ? { width: f.width } : undefined}
-                  onClick={schema.hierarchical ? undefined : () =>
+                  onClick={treeMode ? undefined : () =>
                     state.setSorting(f.key, state.sortBy === f.key && state.sortOrder === 'asc' ? 'desc' : 'asc')
                   }
                 >
                   <span className="flex items-center gap-1">
                     {f.label}
-                    {!schema.hierarchical && state.sortBy === f.key && (
+                    {!treeMode && state.sortBy === f.key && (
                       state.sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
                     )}
                   </span>
@@ -170,7 +173,7 @@ export function ReferenceTable({ schema }: Props) {
                   {visibleFields.map((f, fi) => (
                     <TableCell key={f.key} className="py-2">
                       {/* Первая колонка в tree-режиме: отступ + expand/collapse */}
-                      {schema.hierarchical && fi === 0 ? (
+                      {treeMode && fi === 0 ? (
                         <span className="flex items-center gap-1" style={{ paddingLeft: depth * 20 }}>
                           {children.length > 0 ? (
                             <button
@@ -185,6 +188,11 @@ export function ReferenceTable({ schema }: Props) {
                           ) : (
                             <span className="inline-block w-4 flex-shrink-0" />
                           )}
+                          <span>{String(row[f.key] ?? '')}</span>
+                        </span>
+                      ) : schema.hierarchical && schema.lazyLoad && fi === 0 ? (
+                        /* lazyLoad+hierarchical: плоский список с отступом по полю level */
+                        <span className="flex items-center gap-1" style={{ paddingLeft: (Number(row.level ?? 0)) * 16 }}>
                           <span>{String(row[f.key] ?? '')}</span>
                         </span>
                       ) : f.type === 'boolean' ? (row[f.key] ? 'Да' : 'Нет') :
@@ -208,7 +216,7 @@ export function ReferenceTable({ schema }: Props) {
                         <DropdownMenuItem onClick={() => { setEditEntry(row); setCreateChildDefault(null); setEditOpen(true); }}>
                           <Pencil className="h-4 w-4 mr-2" />Редактировать
                         </DropdownMenuItem>
-                        {schema.hierarchical && schema.parentKey && (
+                        {treeMode && schema.parentKey && (
                           <>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => {
@@ -241,8 +249,8 @@ export function ReferenceTable({ schema }: Props) {
         </Table>
       </div>
 
-      {/* Пагинация — только для плоских справочников */}
-      {!schema.hierarchical && (
+      {/* Пагинация — для плоских справочников и hierarchical+lazyLoad */}
+      {(!schema.hierarchical || schema.lazyLoad) && (
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>Всего: {state.total}</span>
           <div className="flex items-center gap-2">
