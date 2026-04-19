@@ -57,7 +57,7 @@ export function EstimateImportHistory({ projectId, contractId }: Props) {
                   size="sm"
                   onClick={() =>
                     router.push(
-                      `/projects/${projectId}/contracts/${contractId}/estimates/${imp.id}`
+                      `/objects/${projectId}/contracts/${contractId}/estimates/${imp.id}`
                     )
                   }
                 >

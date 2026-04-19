@@ -1,4 +1,4 @@
-import { ProjectsContent } from '../projects/ProjectsContent';
+import { ProjectsContent } from '@/components/modules/projects/ProjectsContent';
 
 export const dynamic = 'force-dynamic';
 

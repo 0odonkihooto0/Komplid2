@@ -34,6 +34,29 @@ const nextConfig = {
     return config;
   },
 
+  // Обратная совместимость: старые закладки /projects/... → /objects/...
+  // (исторически UI был на /projects/, переименовано в /objects/).
+  // API-путь /api/projects/... НЕ редиректится — он канонический.
+  async redirects() {
+    return [
+      {
+        source: '/projects',
+        destination: '/objects',
+        permanent: true,
+      },
+      {
+        source: '/projects/:projectId',
+        destination: '/objects/:projectId/passport',
+        permanent: true,
+      },
+      {
+        source: '/projects/:projectId/:path*',
+        destination: '/objects/:projectId/:path*',
+        permanent: true,
+      },
+    ];
+  },
+
   // CORS: ограничиваем API-роуты только разрешёнными источниками
   async headers() {
     const allowedOrigin = process.env.APP_URL ?? 'https://app.stroydocs.ru';

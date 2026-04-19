@@ -11,7 +11,6 @@ export const config = {
   matcher: [
     '/',
     '/objects/:path*',
-    '/projects/:path*',
     '/organizations/:path*',
     '/documents/:path*',
   ],

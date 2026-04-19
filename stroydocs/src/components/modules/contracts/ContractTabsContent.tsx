@@ -29,7 +29,7 @@ import { BatchExportButton } from '@/components/modules/execution-docs/BatchExpo
 import { BatchXmlExportButton } from '@/components/modules/execution-docs/BatchXmlExportButton';
 import { IdRegistryPanel } from '@/components/modules/id-registry/IdRegistryPanel';
 import { AosrRegistryTable } from '@/components/modules/execution-docs/AosrRegistryTable';
-import { GanttContent } from './gantt/GanttContent';
+import { GanttContent } from '@/components/modules/gantt/GanttContent';
 import { DailyLogTab } from '@/components/modules/daily-logs/DailyLogTab';
 import { ChangeOrdersTab } from '@/components/modules/change-orders/ChangeOrdersTab';
 import { PaymentsTab } from '@/components/modules/contracts/PaymentsTab';

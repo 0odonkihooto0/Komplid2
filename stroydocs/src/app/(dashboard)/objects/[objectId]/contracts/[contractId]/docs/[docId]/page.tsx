@@ -1,10 +1,12 @@
-import { ExecutionDocDetailContent } from '@/app/(dashboard)/projects/[projectId]/contracts/[contractId]/docs/[docId]/ExecutionDocDetailContent';
+import { ExecutionDocDetailContent } from '@/components/modules/execution-docs/ExecutionDocDetailContent';
 
-export default function ObjectDocDetailPage({
-  params,
-}: {
+export const dynamic = 'force-dynamic';
+
+interface Props {
   params: { objectId: string; contractId: string; docId: string };
-}) {
+}
+
+export default function ExecutionDocDetailPage({ params }: Props) {
   return (
     <ExecutionDocDetailContent
       projectId={params.objectId}
