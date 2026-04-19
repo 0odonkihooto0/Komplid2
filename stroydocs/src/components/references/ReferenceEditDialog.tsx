@@ -30,6 +30,8 @@ import type { ReferenceSchema, ReferenceFieldSchema } from '@/lib/references/typ
 interface Props {
   schema: ReferenceSchema;
   entry?: Record<string, unknown>;
+  /** Начальные значения скрытых полей при создании дочерней записи (parentId, level) */
+  defaultValues?: Record<string, unknown>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
@@ -39,7 +41,7 @@ interface Props {
 function buildShape(fields: ReferenceFieldSchema[], patch: boolean): Record<string, z.ZodTypeAny> {
   const shape: Record<string, z.ZodTypeAny> = {};
   for (const f of fields) {
-    if (f.readonly) continue;
+    if (f.readonly || f.hidden) continue;
     let s: z.ZodTypeAny;
     switch (f.type) {
       case 'number': s = z.coerce.number(); break;
@@ -53,7 +55,7 @@ function buildShape(fields: ReferenceFieldSchema[], patch: boolean): Record<stri
   return shape;
 }
 
-export function ReferenceEditDialog({ schema, entry, open, onOpenChange, onSuccess, queryKey }: Props) {
+export function ReferenceEditDialog({ schema, entry, defaultValues, open, onOpenChange, onSuccess, queryKey }: Props) {
   const queryClient = useQueryClient();
   const isEdit = !!entry;
 
@@ -68,15 +70,18 @@ export function ReferenceEditDialog({ schema, entry, open, onOpenChange, onSucce
   useEffect(() => {
     if (open) reset(entry ?? {});
   }, [open, entry, reset]);
+  // defaultValues не включаем в reset — они передаются напрямую в body при create
 
   async function onSubmit(values: Record<string, unknown>) {
     const url = isEdit
       ? `/api/references/${schema.slug}/${entry!.id as string}`
       : `/api/references/${schema.slug}`;
+    // При создании дочерней записи добавляем скрытые поля (parentId, level)
+    const body = isEdit ? values : { ...(defaultValues ?? {}), ...values };
     const res = await fetch(url, {
       method: isEdit ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(values),
+      body: JSON.stringify(body),
     });
     const json = await res.json();
     if (!json.success) {
@@ -88,7 +93,7 @@ export function ReferenceEditDialog({ schema, entry, open, onOpenChange, onSucce
     onSuccess();
   }
 
-  const editableFields = schema.fields.filter((f) => !f.readonly);
+  const editableFields = schema.fields.filter((f) => !f.readonly && !f.hidden);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

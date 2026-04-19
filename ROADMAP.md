@@ -1547,10 +1547,17 @@
 - ✅ buildWhere в API-роуте расширен: системные записи (isSystem=true, organizationId=null) видны всем организациям через OR-фильтр
 - ✅ registry.ts заполнен: 4 схемы (currencies/budgetTypes/measurementUnits/declensionCases)
 
-### Базовые справочники (REF.4–REF.5)
-- ⬜ BudgetExpenseItem (Бюджетные статьи расходов): name, code, parentId (иерархия)
-- ⬜ ContractKind (Виды контрактов): name, code — seed 10 видов из ЦУС (СМР/ПИР/Поставка/Экспертиза и т.д.) — заменяет enum ContractType
-- ⬜ DocumentType (Типы документов): name, code, module
+### Базовые справочники (REF.4) ✅ 2026-04-18
+- ✅ ContractKind (Виды контрактов): 11 системных записей (СМР/ПИР/Поставка/Экспертиза и т.д.), scope: organization — миграция `add_contract_doc_budget_references`
+- ✅ DocumentTypeRef (Типы документов): 17 системных записей (10 × module='ID' + 7 × module='SED'), scope: organization
+- ✅ BudgetExpenseItem (Бюджетные статьи расходов): иерархия 3 уровня (5 корневых + 5 дочерних), scope: organization
+- ✅ `ReferenceSchema` расширен: `hierarchical?`, `parentKey?`; `ReferenceFieldSchema` — `hidden?`
+- ✅ `ReferenceTable` поддерживает tree-режим: expand/collapse, отступы по уровням, «Добавить дочернюю запись» в меню действий
+- ✅ `ReferenceEditDialog` — prop `defaultValues?` для предзаполнения скрытых полей (parentId, level) при создании дочерних записей
+- ✅ `useReferenceTable` — при `hierarchical: true` загружает limit=500 без пагинации
+- ✅ registry.ts — 3 новые схемы: contractKinds / documentTypes / budgetExpenseItems (category: documentary/financial)
+
+### Базовые справочники (REF.5)
 - ⬜ ProblemIssueType (Типы проблемных вопросов) — конвертация enum в справочник
 - ⬜ DefectCategory (Категории недостатков) — конвертация enum в справочник
 
