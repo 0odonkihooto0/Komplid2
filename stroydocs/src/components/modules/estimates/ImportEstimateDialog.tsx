@@ -81,7 +81,7 @@ export function ImportEstimateDialog({ open, onOpenChange, projectId, contractId
         handleClose();
         if (result.status === 'PREVIEW') {
           router.push(
-            `/projects/${projectId}/contracts/${contractId}/estimates/${result.importId}`
+            `/objects/${projectId}/contracts/${contractId}/estimates/${result.importId}`
           );
         }
       } else {
@@ -95,11 +95,11 @@ export function ImportEstimateDialog({ open, onOpenChange, projectId, contractId
           handleClose();
           if (data?.id && data.status === 'PREVIEW') {
             router.push(
-              `/projects/${projectId}/contracts/${contractId}/estimates/${data.id}`
+              `/objects/${projectId}/contracts/${contractId}/estimates/${data.id}`
             );
           } else if (data?.duplicateOf) {
             router.push(
-              `/projects/${projectId}/contracts/${contractId}/estimates/${data.duplicateOf}`
+              `/objects/${projectId}/contracts/${contractId}/estimates/${data.duplicateOf}`
             );
           }
         },
