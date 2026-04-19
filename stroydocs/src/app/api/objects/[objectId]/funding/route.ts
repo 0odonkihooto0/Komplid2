@@ -9,6 +9,7 @@ export const dynamic = 'force-dynamic';
 
 const fundingSchema = z.object({
   type: z.enum(['BUDGET', 'EXTRA_BUDGET', 'CREDIT', 'OWN']),
+  budgetTypeId: z.string().uuid().optional().nullable(),
   name: z.string().min(1).max(200),
   amount: z.number().positive(),
   period: z.string().max(50).optional(),
@@ -35,6 +36,7 @@ export async function GET(
 
     const sources = await db.fundingSource.findMany({
       where: { projectId: params.objectId },
+      include: { budgetType: { select: { id: true, name: true, code: true, color: true } } },
       orderBy: { createdAt: 'asc' },
     });
 

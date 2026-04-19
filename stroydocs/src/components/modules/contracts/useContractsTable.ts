@@ -12,6 +12,7 @@ export interface ContractItem {
   number: string;
   name: string;
   type: ContractType;
+  contractKindId: string | null;
   status: ContractStatus;
   startDate: string | null;
   endDate: string | null;

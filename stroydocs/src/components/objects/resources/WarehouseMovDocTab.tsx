@@ -24,7 +24,7 @@ const VAT_TYPE_LABELS: Record<string, string> = {
   'INCLUDED': 'НДС в сумме',
 };
 
-// Метки валюты
+// Метки валюты (fallback для legacy string-поля)
 const CURRENCY_LABELS: Record<string, string> = {
   'RUB': 'Рубли (₽)',
   'USD': 'Доллар (USD)',
@@ -58,7 +58,10 @@ export function WarehouseMovDocTab({ movement }: Props) {
 
   const vatTypeLabel = movement.vatType ? (VAT_TYPE_LABELS[movement.vatType] ?? movement.vatType) : null;
   const vatRateLabel = movement.vatRate != null ? `${movement.vatRate}%` : null;
-  const currencyLabel = movement.currency ? (CURRENCY_LABELS[movement.currency] ?? movement.currency) : 'Рубли (₽)';
+  // Предпочитаем справочное название; fallback — legacy string поле
+  const currencyLabel = movement.currencyRef
+    ? `${movement.currencyRef.name} (${movement.currencyRef.shortSymbol})`
+    : (CURRENCY_LABELS[movement.currency] ?? movement.currency ?? 'Рубли (₽)');
 
   return (
     <div className="pt-2 max-w-lg">

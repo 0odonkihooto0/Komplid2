@@ -70,8 +70,8 @@ export async function GET(req: NextRequest) {
           where: { status: 'APPROVED', contract: { buildingObject: objWhere }, periodEnd: { gte: dateFrom, lte: dateTo } },
           select: { periodEnd: true, totalAmount: true },
         }), []),
-        // 5. Контракты по типам
-        safe(() => db.contract.groupBy({ by: ['type'], where: { status: { in: ['ACTIVE', 'COMPLETED'] }, buildingObject: objWhere }, _count: { id: true } }), []),
+        // 5. Контракты по виду работ (ContractKind FK)
+        safe(() => db.contract.groupBy({ by: ['contractKindId'], where: { status: { in: ['ACTIVE', 'COMPLETED'] }, buildingObject: objWhere }, _count: { id: true }, orderBy: { _count: { id: 'desc' } } }), []),
         // 6. Мониторинг ГПР
         safe(() => db.ganttTask.findMany({
           where: { version: { isActive: true, stage: { name: { contains: 'СМР', mode: 'insensitive' }, project: objWhere } } },
@@ -122,8 +122,25 @@ export async function GET(req: NextRequest) {
       const gprPirAnalytics = buildGprMonthly(pirTasksRaw, pirActsRaw);
       const gprSmrAnalytics = buildGprMonthly(smrTasksRaw, ks2ActsRaw);
 
-      // ─── 5. contractsByType ───────────────────────────────────────────────
-      const contractsByType = contractsByTypeRaw.map((r) => ({ type: r.type as string, count: cnt(r) }));
+      // ─── 5. contractsByType (по виду работ — ContractKind) ───────────────
+      const contractKindIds = Array.from(new Set(
+        contractsByTypeRaw.map((r) => r.contractKindId).filter((id): id is string => id !== null)
+      ));
+      const contractKinds = contractKindIds.length > 0
+        ? await db.contractKind.findMany({ where: { id: { in: contractKindIds } }, select: { id: true, name: true } })
+        : [];
+      const kindNameMap = new Map(contractKinds.map((k) => [k.id, k.name]));
+      const contractsByType = [
+        ...contractsByTypeRaw.map((r) => ({
+          type: r.contractKindId ?? '__NONE__',
+          kindName: r.contractKindId ? (kindNameMap.get(r.contractKindId) ?? r.contractKindId) : 'Не указан',
+          count: cnt(r),
+        })),
+      ].sort((a, b) => {
+        if (a.type === '__NONE__') return 1;
+        if (b.type === '__NONE__') return -1;
+        return b.count - a.count;
+      });
 
       // ─── 6. gprMonitoring — группировка по объекту ────────────────────────
       const gprMap = new Map<string, { name: string; planStart: Date; planEnd: Date; progressSum: number; count: number }>();
