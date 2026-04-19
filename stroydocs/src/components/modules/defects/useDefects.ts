@@ -112,6 +112,7 @@ export function useCreateDefect(projectId: string) {
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['defects', projectId] });
+      void qc.invalidateQueries({ queryKey: ['counts', 'object', projectId] });
       toast({ title: 'Дефект зафиксирован' });
     },
     onError: (err: Error) => toast({ title: 'Ошибка', description: err.message, variant: 'destructive' }),

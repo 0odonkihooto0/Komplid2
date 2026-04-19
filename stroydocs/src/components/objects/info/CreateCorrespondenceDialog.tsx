@@ -91,6 +91,7 @@ export function CreateCorrespondenceDialog({ open, onOpenChange, objectId }: Pro
     },
     onSuccess: (_data, { send }) => {
       queryClient.invalidateQueries({ queryKey: ['correspondence', objectId] });
+      queryClient.invalidateQueries({ queryKey: ['counts', 'object', objectId] });
       toast({ title: send ? 'Письмо отправлено' : 'Черновик сохранён' });
       close();
     },

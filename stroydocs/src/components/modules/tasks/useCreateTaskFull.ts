@@ -89,8 +89,12 @@ export function useCreateTaskFull() {
       if (!json.success) throw new Error(json.error ?? 'Ошибка создания');
       return json.data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: ['global-tasks'] });
+      void queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      if (variables.projectId) {
+        void queryClient.invalidateQueries({ queryKey: ['counts', 'object', variables.projectId] });
+      }
       toast({ title: 'Задача создана' });
     },
     onError: (err: Error) => {

@@ -61,6 +61,7 @@ export function useJournalRegistry(objectId: string) {
     onSuccess: () => {
       toast({ title: 'Журнал создан' });
       queryClient.invalidateQueries({ queryKey: ['journals', objectId] });
+      queryClient.invalidateQueries({ queryKey: ['counts', 'object', objectId] });
     },
     onError: (err: Error) => {
       toast({ title: err.message, variant: 'destructive' });

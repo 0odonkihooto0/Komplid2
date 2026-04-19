@@ -106,6 +106,7 @@ export function useDesignDocs(
     onSuccess: () => {
       toast({ title: 'Документ создан' });
       invalidate();
+      queryClient.invalidateQueries({ queryKey: ['counts', 'object', projectId] });
     },
     onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
   });
@@ -121,6 +122,7 @@ export function useDesignDocs(
     onSuccess: () => {
       toast({ title: 'Документ удалён' });
       invalidate();
+      queryClient.invalidateQueries({ queryKey: ['counts', 'object', projectId] });
     },
     onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
   });

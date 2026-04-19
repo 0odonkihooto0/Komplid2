@@ -177,7 +177,7 @@ export function ContractTabsContent({
           </Button>
         </div>
         {activeTab === 'execution-docs' && <ExecutionDocsTable contractId={contractId} projectId={projectId} />}
-        <CreateExecutionDocDialog open={createDocOpen} onOpenChange={setCreateDocOpen} contractId={contractId} />
+        <CreateExecutionDocDialog open={createDocOpen} onOpenChange={setCreateDocOpen} contractId={contractId} projectId={projectId} />
         <BatchCreateAosrDialog open={batchAosrOpen} onOpenChange={setBatchAosrOpen} projectId={projectId} contractId={contractId} />
       </TabsContent>
 
