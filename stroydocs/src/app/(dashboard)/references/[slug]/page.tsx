@@ -3,6 +3,7 @@ import Link from 'next/link';
 import {
   DollarSign, Wallet, Ruler, Languages, Handshake, FileType2,
   Receipt, CheckSquare, AlertTriangle, HelpCircle, Library,
+  FolderTree, Package, Stamp, FileText, Tag,
   type LucideIcon,
 } from 'lucide-react';
 import { getReferenceSchema } from '@/lib/references/registry';
@@ -21,6 +22,11 @@ const ICON_MAP: Record<string, LucideIcon> = {
   AlertTriangle,
   HelpCircle,
   Library,
+  FolderTree,
+  Package,
+  Stamp,
+  FileText,
+  Tag,
 };
 
 export default function ReferenceSlugPage({ params }: { params: { slug: string } }) {

@@ -35,10 +35,11 @@ export function useReferenceTable(schema: ReferenceSchema): ReferenceTableState 
   const queryClient = useQueryClient();
 
   const [page, setPageState] = useState(1);
-  // Иерархические справочники загружают все записи сразу
-  const pageSize = schema.hierarchical ? 500 : 50;
+  // Иерархические справочники загружают все записи сразу,
+  // кроме lazyLoad=true (большие справочники типа КСИ — серверная пагинация)
+  const pageSize = (schema.hierarchical && !schema.lazyLoad) ? 500 : 50;
   const [search, setSearchState] = useState('');
-  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortBy, setSortBy] = useState(schema.defaultSort ?? 'createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
@@ -84,8 +85,8 @@ export function useReferenceTable(schema: ReferenceSchema): ReferenceTableState 
 
   const clearSelection = useCallback(() => setSelectedIds([]), []);
 
-  // Для иерархических справочников пагинация не используется — всегда страница 1
-  const effectivePage = schema.hierarchical ? 1 : page;
+  // Для иерархических справочников без lazyLoad пагинация не используется — всегда страница 1
+  const effectivePage = (schema.hierarchical && !schema.lazyLoad) ? 1 : page;
   const queryKey = ['references', schema.slug, effectivePage, pageSize, search, sortBy, sortOrder];
 
   const { data, isLoading } = useQuery<{
