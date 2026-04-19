@@ -55,7 +55,7 @@ export function SelectTemplateDialog({ open, onOpenChange }: Props) {
   const { data: objects = [] } = useQuery<BuildingObject[]>({
     queryKey: ['building-objects-list'],
     queryFn: async () => {
-      const res = await fetch('/api/objects');
+      const res = await fetch('/api/projects');
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return (json.data as Array<{ id: string; name: string }>);

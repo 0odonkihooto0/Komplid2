@@ -41,7 +41,7 @@ export function useCreateTaskFull() {
   const { data: projects = [] } = useQuery<Project[]>({
     queryKey: ['projects-list'],
     queryFn: async () => {
-      const res = await fetch('/api/objects?limit=100');
+      const res = await fetch('/api/projects?limit=100');
       const json = await res.json();
       return (json.success ? json.data : []) as Project[];
     },

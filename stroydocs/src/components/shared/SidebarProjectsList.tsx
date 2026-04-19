@@ -18,7 +18,7 @@ export function SidebarProjectsList() {
     // Дедупликация с ObjectsTable через тот же queryKey
     queryKey: ['projects'],
     queryFn: async () => {
-      const res = await fetch('/api/objects');
+      const res = await fetch('/api/projects');
       const json = await res.json();
       return json.success ? json.data : [];
     },
