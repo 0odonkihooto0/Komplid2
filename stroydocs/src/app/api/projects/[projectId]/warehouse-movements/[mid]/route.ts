@@ -45,6 +45,7 @@ export async function GET(
         order: { select: { id: true, number: true, status: true } },
         createdBy: { select: { id: true, firstName: true, lastName: true, email: true } },
         project: { select: { name: true } },
+        currencyRef: { select: { id: true, name: true, shortName: true, shortSymbol: true, code: true } },
       },
     });
 

@@ -1514,7 +1514,7 @@
 
 ---
 
-## МОДУЛЬ 19 — Справочники (Reference Data) ⬜
+## МОДУЛЬ 19 — Справочники (Reference Data) ✅
 
 > **Аналог:** ЦУС → Главное меню «Справочники» → Общие справочники (стр. 366–372 руководства)
 > **Цель:** единый UI-фреймворк для всех справочников системы по принципу ЦУС: «Работа со всеми справочниками организована по единому принципу».
@@ -1585,10 +1585,21 @@
 - ✅ `ReferenceSchema` расширена полем `lazyLoad?: boolean`; при true — tree-рендеринг отключён, серверная пагинация включена
 - ✅ Иконки FolderTree/Package/Stamp/FileText/Tag добавлены в ICON_MAP страницы `/references/[slug]`
 
-### Замена hardcoded значений (REF.8)
-- ⬜ Поле Currency во всех местах где сейчас `currency String @default("RUB")` — заменить на `currencyId` FK
-- ⬜ Поле ContractKind вместо enum ContractType
-- ⬜ Поле BudgetType вместо enum FundingType (миграция данных)
+### Замена hardcoded значений (REF.8) ✅ 2026-04-19
+- ✅ `WarehouseMovement`: добавлен `currencyId String?` → `currencyRef Currency?`; старое поле `currency String` сохранено с TODO-комментарием
+- ✅ `Contract`: добавлен `contractKindId String?` → `contractKind ContractKind?` (ContractType enum **оставлен** — ортогональные измерения)
+- ✅ `FundingSource`: добавлен `budgetTypeId String?` → `budgetType BudgetType?`; старый `type FundingType` сохранён с TODO-комментарием
+- ✅ Миграция `prisma/migrations/20260419010000_add_currency_contractkind_budgettype_fk/migration.sql`
+- ✅ Миграционный скрипт `prisma/seeds/migrate-currencies.ts` (идемпотентный, best-effort маппинг)
+- ✅ `src/lib/references/resolvers.ts` — хелперы `getCurrencyByCode/getBudgetTypeByCode/getContractKindByCode` с Redis TTL 1ч
+- ✅ API: warehouse-movements/create-from, create-based-on — копируют `currencyId`
+- ✅ API: `/api/dashboard/analytics` — `contractsByType` теперь группирует по `contractKindId`; `/api/dashboard/contracts-by-type` фильтрует по `contractKindId`
+- ✅ API: `/api/objects/[objectId]/funding` — принимает и возвращает `budgetTypeId`/`budgetType`
+- ✅ UI: `ContractsWidget` показывает `ContractKind.name` вместо enum-лейблов; `__NONE__` с иконкой ⚠️
+- ✅ UI: `CreateContractDialog` — новый Select «Вид работ» из справочника ContractKind
+- ✅ UI: `ContractsList` — баннер «У N договоров не указан вид работ»
+- ✅ UI: `WarehouseMovDocTab` — отображение валюты через `currencyRef.name` (fallback на legacy)
+- ✅ Тип `useFunding.FundingSource` расширен `budgetTypeId/budgetType`; добавлен `useBudgetTypes` хук
 
 ---
 

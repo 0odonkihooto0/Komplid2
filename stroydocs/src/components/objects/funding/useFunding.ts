@@ -12,9 +12,18 @@ export const FUNDING_TYPE_LABELS: Record<FundingType, string> = {
   OWN_FUNDS: 'Собственные средства',
 };
 
+export interface BudgetTypeOption {
+  id: string;
+  name: string;
+  code: string;
+  color: string | null;
+}
+
 export interface FundingSource {
   id: string;
   type: FundingType;
+  budgetTypeId: string | null;
+  budgetType: BudgetTypeOption | null;
   name: string;
   amount: number;
   period: string | null;
@@ -24,6 +33,7 @@ export interface FundingSource {
 
 export interface CreateFundingData {
   type: FundingType;
+  budgetTypeId?: string | null;
   name: string;
   amount: number;
   period?: string;
@@ -88,4 +98,17 @@ export function useFunding(projectId: string) {
   });
 
   return { sources, isLoading, createMutation, deleteMutation };
+}
+
+export function useBudgetTypes() {
+  return useQuery<BudgetTypeOption[]>({
+    queryKey: ['references', 'budgetTypes'],
+    queryFn: async () => {
+      const res = await fetch('/api/references/budgetTypes?limit=50');
+      const json = await res.json();
+      if (!json.success) return [];
+      return (json.data?.items ?? json.data) as BudgetTypeOption[];
+    },
+    staleTime: 10 * 60 * 1000,
+  });
 }

@@ -3,7 +3,6 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
-import type { ContractType } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +12,7 @@ export async function GET(req: NextRequest) {
     const orgId = session.user.organizationId;
 
     const sp = req.nextUrl.searchParams;
+    // type теперь contractKindId (UUID) или '__NONE__' для договоров без вида работ
     const type = sp.get('type');
     const objectIds = sp.getAll('objectIds[]').filter(Boolean);
 
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
     const contracts = await db.contract.findMany({
       where: {
-        type: type as ContractType,
+        contractKindId: type === '__NONE__' ? null : type,
         status: { in: ['ACTIVE', 'COMPLETED'] },
         buildingObject: objWhere,
       },
@@ -33,6 +33,8 @@ export async function GET(req: NextRequest) {
         number: true,
         name: true,
         type: true,
+        contractKindId: true,
+        contractKind: { select: { name: true } },
         status: true,
         startDate: true,
         projectId: true,
@@ -45,7 +47,7 @@ export async function GET(req: NextRequest) {
     return successResponse(contracts);
   } catch (error) {
     if (error instanceof NextResponse) return error;
-    logger.error({ err: error }, 'Ошибка получения контрактов по типу для дашборда');
+    logger.error({ err: error }, 'Ошибка получения контрактов по виду для дашборда');
     return errorResponse('Внутренняя ошибка сервера', 500);
   }
 }

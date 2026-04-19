@@ -63,6 +63,7 @@ export async function POST(
         vatType: source.vatType,
         vatRate: source.vatRate,
         currency: source.currency,
+        currencyId: source.currencyId,
         lines: {
           create: source.lines.map((line) => ({
             nomenclatureId: line.nomenclatureId,

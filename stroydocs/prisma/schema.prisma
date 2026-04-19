@@ -621,6 +621,10 @@ model Contract {
   // Модуль 9 — Журналы
   specialJournals SpecialJournal[]
 
+  // Вид работ (справочник ContractKind — ортогонален ContractType)
+  contractKindId String?
+  contractKind   ContractKind? @relation(fields: [contractKindId], references: [id])
+
   // Модуль «Информация» — ЦУС
   limitRisks LimitRisk[]
 
@@ -636,6 +640,7 @@ model Contract {
   @@index([projectId])
   @@index([parentId])
   @@index([parentContractId])
+  @@index([contractKindId])
   @@map("contracts")
 }
 
@@ -2331,7 +2336,10 @@ model ChangeOrder {
 /// Источник финансирования объекта
 model FundingSource {
   id     String      @id @default(uuid())
-  type   FundingType
+  type   FundingType // TODO(REF.8 major release): удалить enum поле, оставить только FK
+  budgetTypeId String?
+  budgetType   BudgetType? @relation(fields: [budgetTypeId], references: [id])
+
   name   String // Название источника
   amount Float // Сумма (руб.)
   period String? // Период (например "2024 Q1")
@@ -4185,7 +4193,9 @@ model WarehouseMovement {
   consignee        String?   // Грузополучатель
   vatType          String?   // Тип НДС (НДС сверху / НДС в сумме)
   vatRate          Float?    // Ставка НДС (0, 10, 20)
-  currency         String    @default("RUB") // Валюта документа
+  currency         String    @default("RUB") // TODO(REF.8 major release): удалить поле, оставить только FK
+  currencyId       String?   // Ссылка на справочник валют
+  currencyRef      Currency? @relation(fields: [currencyId], references: [id])
   externalNumber   String?   // Внешний номер
   arrivalDate      DateTime? // Дата прибытия
   attachmentS3Keys String[]  @default([]) // Прикреплённые файлы
@@ -5872,25 +5882,27 @@ model Currency {
   numericCode    String?
   isSystem       Boolean       @default(false)
   organizationId String?
-  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  organization       Organization?       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  warehouseMovements WarehouseMovement[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 
   @@index([organizationId])
   @@map("currencies")
 }
 
 model BudgetType {
-  id             String        @id @default(uuid())
+  id             String          @id @default(uuid())
   name           String
-  code           String        @unique
+  code           String          @unique
   color          String?
-  order          Int           @default(0)
-  isSystem       Boolean       @default(false)
+  order          Int             @default(0)
+  isSystem       Boolean         @default(false)
   organizationId String?
-  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  organization   Organization?   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  fundingSources FundingSource[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   @@index([organizationId])
   @@map("budget_types")
@@ -5937,6 +5949,7 @@ model ContractKind {
   isActive       Boolean       @default(true)
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contracts      Contract[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 

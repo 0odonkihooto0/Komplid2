@@ -2,7 +2,7 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
@@ -30,16 +30,34 @@ interface Props {
   parentContracts?: { id: string; number: string; name: string }[];
 }
 
+interface ContractKindOption {
+  id: string;
+  name: string;
+  code: string;
+}
+
 export function CreateContractDialog({ open, onOpenChange, projectId, parentContracts = [] }: Props) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const form = useForm<CreateContractInput>({
     resolver: zodResolver(createContractSchema),
-    defaultValues: { number: '', name: '', type: 'MAIN' },
+    defaultValues: { number: '', name: '', type: 'MAIN', contractKindId: null },
   });
 
   const contractType = form.watch('type');
+  const contractKindId = form.watch('contractKindId');
+
+  const { data: contractKinds = [] } = useQuery<ContractKindOption[]>({
+    queryKey: ['references', 'contractKinds'],
+    queryFn: async () => {
+      const res = await fetch('/api/references/contractKinds?limit=50');
+      const json = await res.json();
+      if (!json.success) return [];
+      return (json.data?.items ?? json.data) as ContractKindOption[];
+    },
+    staleTime: 10 * 60 * 1000,
+  });
 
   const mutation = useMutation({
     mutationFn: async (data: CreateContractInput) => {
@@ -95,6 +113,25 @@ export function CreateContractDialog({ open, onOpenChange, projectId, parentCont
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Вид работ</Label>
+            <Select
+              value={contractKindId ?? 'NONE'}
+              onValueChange={(val) => form.setValue('contractKindId', val === 'NONE' ? null : val)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Выберите вид работ" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NONE">Не указан</SelectItem>
+                {contractKinds.map((k) => (
+                  <SelectItem key={k.id} value={k.id}>
+                    {k.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label>Наименование</Label>

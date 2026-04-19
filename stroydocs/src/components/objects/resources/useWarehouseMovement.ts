@@ -48,6 +48,8 @@ export interface MovementDetail {
   vatType: string | null;
   vatRate: number | null;
   currency: string;
+  currencyId: string | null;
+  currencyRef: { id: string; name: string; shortName: string; shortSymbol: string; code: string } | null;
   project: { name: string } | null;
 }
 

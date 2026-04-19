@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { AlertTriangle, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/shared/StatusBadge';
@@ -21,9 +21,16 @@ export function ContractsList({ objectId }: Props) {
   const [createOpen, setCreateOpen] = useState(false);
 
   const mainContracts = contracts.filter((c) => c.type === 'MAIN');
+  const contractsWithoutKind = contracts.filter((c) => !c.contractKindId).length;
 
   return (
     <div className="space-y-4">
+      {contractsWithoutKind > 0 && !isLoading && (
+        <div className="flex items-center gap-2 rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-yellow-600" />
+          У {contractsWithoutKind} договор{contractsWithoutKind === 1 ? 'а' : 'ов'} не указан вид работ. Укажите для корректной аналитики.
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Договоры</h2>
         <Button onClick={() => setCreateOpen(true)}>

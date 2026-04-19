@@ -4,6 +4,7 @@ export const createContractSchema = z.object({
   number: z.string().min(1, 'Введите номер договора'),
   name: z.string().min(2, 'Введите наименование'),
   type: z.enum(['MAIN', 'SUBCONTRACT']),
+  contractKindId: z.string().uuid().optional().nullable(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   parentId: z.string().optional().nullable(),

@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,7 +12,10 @@ import { formatDate } from '@/utils/format';
 import type { ContractStatus } from '@prisma/client';
 
 interface ContractTypeStat {
+  /** contractKindId (UUID) или '__NONE__' для договоров без вида работ */
   type: string;
+  /** Человекочитаемое название вида работ */
+  kindName: string;
   count: number;
 }
 
@@ -25,6 +28,7 @@ interface ContractItem {
   number: string;
   name: string;
   type: string;
+  contractKind: { name: string } | null;
   status: ContractStatus;
   startDate: string | null;
   projectId: string;
@@ -34,11 +38,6 @@ interface ContractItem {
 interface Props {
   objectIds?: string[];
 }
-
-const CONTRACT_TYPE_LABELS: Record<string, string> = {
-  MAIN: 'Основной',
-  SUBCONTRACT: 'Субдоговор',
-};
 
 type SortField = 'number' | 'startDate' | 'status' | 'name';
 
@@ -161,7 +160,10 @@ export function ContractsWidget({ objectIds = [] }: Props) {
                     ) : (
                       <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />
                     )}
-                    {CONTRACT_TYPE_LABELS[row.type] ?? row.type}
+                    {row.type === '__NONE__' && (
+                      <AlertTriangle className="h-3 w-3 text-yellow-500 shrink-0" aria-label="Вид работ не указан" />
+                    )}
+                    {row.kindName}
                   </td>
                   <td className="py-1.5 text-right font-semibold tabular-nums">{row.count}</td>
                 </tr>
@@ -175,7 +177,7 @@ export function ContractsWidget({ objectIds = [] }: Props) {
           <div className="border-t pt-3 space-y-2">
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs font-medium">
-                {CONTRACT_TYPE_LABELS[expandedType] ?? expandedType}
+                {items.find((r) => r.type === expandedType)?.kindName ?? expandedType}
               </p>
               <Input
                 placeholder="Поиск по номеру или наименованию..."
@@ -246,7 +248,7 @@ export function ContractsWidget({ objectIds = [] }: Props) {
                           {c.name}
                         </td>
                         <td className="py-1.5 pr-3 text-muted-foreground">
-                          {CONTRACT_TYPE_LABELS[c.type] ?? c.type}
+                          {c.contractKind?.name ?? '—'}
                         </td>
                         <td className="py-1.5 text-right tabular-nums">
                           {c._count.childContracts > 0 ? c._count.childContracts : '—'}
