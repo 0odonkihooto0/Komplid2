@@ -57,7 +57,7 @@ export function useChatMessages(objectId: string): UseChatMessagesReturn {
   const loadInitial = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/objects/${objectId}/chat?limit=50`);
+      const res = await fetch(`/api/projects/${objectId}/chat?limit=50`);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error((err as { error?: string }).error ?? `HTTP ${res.status}`);
@@ -79,7 +79,7 @@ export function useChatMessages(objectId: string): UseChatMessagesReturn {
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/objects/${objectId}/chat?limit=50&before=${encodeURIComponent(nextCursor)}`
+        `/api/projects/${objectId}/chat?limit=50&before=${encodeURIComponent(nextCursor)}`
       );
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -114,7 +114,7 @@ export function useChatMessages(objectId: string): UseChatMessagesReturn {
       attachmentId?: string;
     }): Promise<ChatMsg | null> => {
       try {
-        const res = await fetch(`/api/objects/${projectId}/chat`, {
+        const res = await fetch(`/api/projects/${projectId}/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -146,7 +146,7 @@ export function useChatMessages(objectId: string): UseChatMessagesReturn {
   // Удалить сообщение через API
   const deleteMessage = useCallback(
     async (projectId: string, msgId: string) => {
-      const res = await fetch(`/api/objects/${projectId}/chat/${msgId}`, {
+      const res = await fetch(`/api/projects/${projectId}/chat/${msgId}`, {
         method: 'DELETE',
       });
       if (res.ok) {

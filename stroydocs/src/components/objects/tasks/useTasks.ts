@@ -72,8 +72,8 @@ export function useTasks(projectId: string, statusFilter: TaskStatus | null = nu
     queryKey: ['tasks', projectId, statusFilter],
     queryFn: async () => {
       const url = statusFilter
-        ? `/api/objects/${projectId}/tasks?status=${statusFilter}`
-        : `/api/objects/${projectId}/tasks`;
+        ? `/api/projects/${projectId}/tasks?status=${statusFilter}`
+        : `/api/projects/${projectId}/tasks`;
       const res = await fetch(url);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
@@ -88,7 +88,7 @@ export function useTasks(projectId: string, statusFilter: TaskStatus | null = nu
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateTaskData) => {
-      const res = await fetch(`/api/objects/${projectId}/tasks`, {
+      const res = await fetch(`/api/projects/${projectId}/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -108,7 +108,7 @@ export function useTasks(projectId: string, statusFilter: TaskStatus | null = nu
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateTaskData }) => {
-      const res = await fetch(`/api/objects/${projectId}/tasks/${id}`, {
+      const res = await fetch(`/api/projects/${projectId}/tasks/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -127,7 +127,7 @@ export function useTasks(projectId: string, statusFilter: TaskStatus | null = nu
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/objects/${projectId}/tasks/${id}`, {
+      const res = await fetch(`/api/projects/${projectId}/tasks/${id}`, {
         method: 'DELETE',
       });
       const json = await res.json();

@@ -33,7 +33,7 @@ export function useGanttMastering(
     queryKey: ['gantt-mastering', objectId, versionId, year],
     queryFn: async () => {
       const res = await fetch(
-        `/api/objects/${objectId}/gantt-versions/${versionId}/mastering?year=${year}`,
+        `/api/projects/${objectId}/gantt-versions/${versionId}/mastering?year=${year}`,
       );
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? 'Ошибка загрузки плана освоения');

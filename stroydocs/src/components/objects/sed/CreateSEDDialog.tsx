@@ -53,7 +53,7 @@ export function CreateSEDDialog({ open, onOpenChange, objectId }: Props) {
   const { data: participants = [] } = useQuery<ObjectParticipantItem[]>({
     queryKey: ['object-participants', objectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/participants`);
+      const res = await fetch(`/api/projects/${objectId}/participants`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return json.data;
@@ -84,7 +84,7 @@ export function CreateSEDDialog({ open, onOpenChange, objectId }: Props) {
         receiverOrgIds: values.receiverOrgIds,
         tags: values.tagsInput ? values.tagsInput.split(',').map((t) => t.trim()).filter(Boolean) : [],
       };
-      const res = await fetch(`/api/objects/${objectId}/sed`, {
+      const res = await fetch(`/api/projects/${objectId}/sed`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -94,7 +94,7 @@ export function CreateSEDDialog({ open, onOpenChange, objectId }: Props) {
       const created = json.data as { id: string };
 
       if (activate) {
-        await fetch(`/api/objects/${objectId}/sed/${created.id}`, {
+        await fetch(`/api/projects/${objectId}/sed/${created.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: 'ACTIVE' }),

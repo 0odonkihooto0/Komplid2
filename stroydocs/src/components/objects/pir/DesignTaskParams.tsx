@@ -34,7 +34,7 @@ export function DesignTaskParams({ projectId, taskId, params, isEditable }: Prop
   const updateMutation = useMutation({
     mutationFn: async ({ paramId, value }: { paramId: string; value: string | null }) => {
       const res = await fetch(
-        `/api/objects/${projectId}/design-tasks/${taskId}/params/${paramId}`,
+        `/api/projects/${projectId}/design-tasks/${taskId}/params/${paramId}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },

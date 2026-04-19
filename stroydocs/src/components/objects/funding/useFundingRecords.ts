@@ -65,7 +65,7 @@ export function useFundingRecords(projectId: string) {
   const { data: records = [], isLoading } = useQuery<FundingRecord[]>({
     queryKey,
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/funding-records`);
+      const res = await fetch(`/api/projects/${projectId}/funding-records`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return json.data;
@@ -74,7 +74,7 @@ export function useFundingRecords(projectId: string) {
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateFundingRecordData) => {
-      const res = await fetch(`/api/objects/${projectId}/funding-records`, {
+      const res = await fetch(`/api/projects/${projectId}/funding-records`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -94,7 +94,7 @@ export function useFundingRecords(projectId: string) {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateFundingRecordData }) => {
-      const res = await fetch(`/api/objects/${projectId}/funding-records/${id}`, {
+      const res = await fetch(`/api/projects/${projectId}/funding-records/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -114,7 +114,7 @@ export function useFundingRecords(projectId: string) {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/objects/${projectId}/funding-records/${id}`, {
+      const res = await fetch(`/api/projects/${projectId}/funding-records/${id}`, {
         method: 'DELETE',
       });
       const json = await res.json();

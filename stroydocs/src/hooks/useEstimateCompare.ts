@@ -43,11 +43,11 @@ export interface VersionCompareResult {
 
 // ─── URL builders ─────────────────────────────────────────────────────────────
 
-const urlContracts = (pid: string) => `/api/objects/${pid}/contracts`;
+const urlContracts = (pid: string) => `/api/projects/${pid}/contracts`;
 const urlVersions = (pid: string, cid: string) =>
-  `/api/objects/${pid}/contracts/${cid}/estimate-versions`;
+  `/api/projects/${pid}/contracts/${cid}/estimate-versions`;
 const urlCompare = (pid: string, cid: string, v1: string, v2: string, mode: CompareMode) =>
-  `/api/objects/${pid}/contracts/${cid}/estimate-versions/compare?v1=${v1}&v2=${v2}&mode=${mode}`;
+  `/api/projects/${pid}/contracts/${cid}/estimate-versions/compare?v1=${v1}&v2=${v2}&mode=${mode}`;
 
 // ─── Хук ─────────────────────────────────────────────────────────────────────
 

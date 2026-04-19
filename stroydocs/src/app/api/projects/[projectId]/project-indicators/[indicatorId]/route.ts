@@ -26,7 +26,7 @@ async function resolveIndicator(projectId: string, indicatorId: string, organiza
   });
 }
 
-// PATCH /api/objects/[projectId]/project-indicators/[indicatorId]
+// PATCH /api/projects/[projectId]/project-indicators/[indicatorId]
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { projectId: string; indicatorId: string } }
@@ -57,7 +57,7 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/objects/[projectId]/project-indicators/[indicatorId]
+// DELETE /api/projects/[projectId]/project-indicators/[indicatorId]
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: { projectId: string; indicatorId: string } }

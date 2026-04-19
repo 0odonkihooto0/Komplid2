@@ -21,11 +21,11 @@ function getWorkflowBaseUrl(entityType: PIREntityType, objectId: string, entityI
   switch (entityType) {
     case 'DESIGN_TASK_PIR':
     case 'DESIGN_TASK_SURVEY':
-      return `/api/objects/${objectId}/design-tasks/${entityId}/workflow`;
+      return `/api/projects/${objectId}/design-tasks/${entityId}/workflow`;
     case 'DESIGN_DOC':
-      return `/api/objects/${objectId}/design-docs/${entityId}/workflow`;
+      return `/api/projects/${objectId}/design-docs/${entityId}/workflow`;
     case 'PIR_CLOSURE':
-      return `/api/objects/${objectId}/pir-closure/${entityId}/workflow`;
+      return `/api/projects/${objectId}/pir-closure/${entityId}/workflow`;
   }
 }
 

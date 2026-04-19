@@ -53,7 +53,7 @@ export function useContract(projectId: string, contractId: string) {
   const { data: contract, isLoading } = useQuery<ContractDetail>({
     queryKey: ['contract', projectId, contractId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/contracts/${contractId}`);
+      const res = await fetch(`/api/projects/${projectId}/contracts/${contractId}`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return json.data;

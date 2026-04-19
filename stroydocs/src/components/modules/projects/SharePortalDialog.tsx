@@ -32,7 +32,7 @@ export function SharePortalDialog({ open, onOpenChange, projectId }: Props) {
   const { data: tokenData, isLoading } = useQuery<PortalToken | null>({
     queryKey: ['portal-token', projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/portal-token`);
+      const res = await fetch(`/api/projects/${projectId}/portal-token`);
       const json = await res.json();
       return json.success ? json.data : null;
     },
@@ -41,7 +41,7 @@ export function SharePortalDialog({ open, onOpenChange, projectId }: Props) {
 
   const createToken = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/portal-token`, { method: 'POST' });
+      const res = await fetch(`/api/projects/${projectId}/portal-token`, { method: 'POST' });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? 'Ошибка создания ссылки');
       return json.data as PortalToken;
@@ -56,7 +56,7 @@ export function SharePortalDialog({ open, onOpenChange, projectId }: Props) {
 
   const revokeToken = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/portal-token`, { method: 'DELETE' });
+      const res = await fetch(`/api/projects/${projectId}/portal-token`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Ошибка отзыва ссылки');
     },
     onSuccess: () => {

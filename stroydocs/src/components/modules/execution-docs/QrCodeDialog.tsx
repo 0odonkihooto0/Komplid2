@@ -38,7 +38,7 @@ export function QrCodeDialog({
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const baseUrl = `/api/objects/${projectId}/contracts/${contractId}/execution-docs/${docId}`;
+  const baseUrl = `/api/projects/${projectId}/contracts/${contractId}/execution-docs/${docId}`;
 
   // Получение / создание токена QR
   const qrMutation = useMutation({

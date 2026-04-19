@@ -71,7 +71,7 @@ export function CreateWorkflowDialog({ open, onOpenChange, objectId, docId, orgI
 
   const { data: orgParticipants = [] } = useQuery<OrgParticipant[]>({
     queryKey: ['object-participants', objectId],
-    queryFn: async () => { const r = await fetch(`/api/objects/${objectId}/participants`); const j = await r.json(); return j.data ?? []; },
+    queryFn: async () => { const r = await fetch(`/api/projects/${objectId}/participants`); const j = await r.json(); return j.data ?? []; },
     enabled: open,
   });
 

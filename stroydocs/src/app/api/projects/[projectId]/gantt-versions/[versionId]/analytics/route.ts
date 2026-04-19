@@ -16,7 +16,7 @@ const querySchema = z.object({
 });
 
 /**
- * GET /api/objects/[projectId]/gantt-versions/[versionId]/analytics
+ * GET /api/projects/[projectId]/gantt-versions/[versionId]/analytics
  *   ?startDate=2025-01-01&endDate=2025-12-31&reportDate=2025-06-01
  *
  * Возвращает аналитику версии ГПР:

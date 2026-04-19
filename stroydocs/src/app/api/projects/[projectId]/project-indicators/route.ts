@@ -28,7 +28,7 @@ const createSchema = z.object({
   fileKeys: z.array(z.string()).optional(),
 });
 
-// GET /api/objects/[projectId]/project-indicators
+// GET /api/projects/[projectId]/project-indicators
 export async function GET(
   _req: NextRequest,
   { params }: { params: { projectId: string } }
@@ -92,7 +92,7 @@ export async function GET(
   }
 }
 
-// POST /api/objects/[projectId]/project-indicators
+// POST /api/projects/[projectId]/project-indicators
 export async function POST(
   req: NextRequest,
   { params }: { params: { projectId: string } }

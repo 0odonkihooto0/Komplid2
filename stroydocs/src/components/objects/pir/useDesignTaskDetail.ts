@@ -61,7 +61,7 @@ interface ApiResponse<T> {
 export function useDesignTaskDetail(projectId: string, taskId: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const baseUrl = `/api/objects/${projectId}/design-tasks/${taskId}`;
+  const baseUrl = `/api/projects/${projectId}/design-tasks/${taskId}`;
 
   const { data: task, isLoading, isError } = useQuery<DesignTaskDetail>({
     queryKey: ['design-task', taskId],

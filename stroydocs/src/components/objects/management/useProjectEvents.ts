@@ -95,7 +95,7 @@ export function useProjectEvents(projectId: string, filters?: EventFilters) {
     queryKey: ['project-events', projectId, filters],
     queryFn: async () => {
       const res = await fetch(
-        `/api/objects/${projectId}/events${query ? `?${query}` : ''}`,
+        `/api/projects/${projectId}/events${query ? `?${query}` : ''}`,
       );
       const json = await res.json();
       if (!json.success) throw new Error(json.error ?? 'Ошибка загрузки мероприятий');
@@ -119,7 +119,7 @@ export function useEventMutations(projectId: string) {
   // Создать мероприятие
   const createEvent = useMutation({
     mutationFn: async (data: CreateEventInput) => {
-      const res = await fetch(`/api/objects/${projectId}/events`, {
+      const res = await fetch(`/api/projects/${projectId}/events`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -140,7 +140,7 @@ export function useEventMutations(projectId: string) {
   // Обновить мероприятие
   const updateEvent = useMutation({
     mutationFn: async ({ eventId, data }: { eventId: string; data: UpdateEventInput }) => {
-      const res = await fetch(`/api/objects/${projectId}/events/${eventId}`, {
+      const res = await fetch(`/api/projects/${projectId}/events/${eventId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -161,7 +161,7 @@ export function useEventMutations(projectId: string) {
   // Удалить мероприятие
   const deleteEvent = useMutation({
     mutationFn: async (eventId: string) => {
-      const res = await fetch(`/api/objects/${projectId}/events/${eventId}`, {
+      const res = await fetch(`/api/projects/${projectId}/events/${eventId}`, {
         method: 'DELETE',
       });
       const json = await res.json();
@@ -184,7 +184,7 @@ export function useEventMutations(projectId: string) {
       mimeType: file.type || 'application/octet-stream',
     });
     const urlRes = await fetch(
-      `/api/objects/${projectId}/events/${eventId}/protocol?${params}`,
+      `/api/projects/${projectId}/events/${eventId}/protocol?${params}`,
     );
     const urlJson = await urlRes.json();
     if (!urlJson.success) throw new Error(urlJson.error ?? 'Ошибка получения URL');

@@ -54,7 +54,7 @@ export function useCorrespondenceDetail(objectId: string, corrId: string) {
   const { data: correspondence, isLoading } = useQuery<CorrespondenceDetail>({
     queryKey: detailKey,
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/correspondence/${corrId}`);
+      const res = await fetch(`/api/projects/${objectId}/correspondence/${corrId}`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error ?? 'Ошибка загрузки письма');
       return json.data;
@@ -74,7 +74,7 @@ export function useCorrespondenceDetail(objectId: string, corrId: string) {
       correspondence.status === 'SENT' &&
       correspondence.receiverOrg?.id === session.user.organizationId
     ) {
-      fetch(`/api/objects/${objectId}/correspondence/${corrId}`, {
+      fetch(`/api/projects/${objectId}/correspondence/${corrId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'READ' }),
@@ -87,7 +87,7 @@ export function useCorrespondenceDetail(objectId: string, corrId: string) {
 
   const sendMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/correspondence/${corrId}/send`, {
+      const res = await fetch(`/api/projects/${objectId}/correspondence/${corrId}/send`, {
         method: 'POST',
       });
       const json = await res.json();
@@ -105,7 +105,7 @@ export function useCorrespondenceDetail(objectId: string, corrId: string) {
 
   const archiveMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/correspondence/${corrId}/archive`, {
+      const res = await fetch(`/api/projects/${objectId}/correspondence/${corrId}/archive`, {
         method: 'POST',
       });
       const json = await res.json();
@@ -123,7 +123,7 @@ export function useCorrespondenceDetail(objectId: string, corrId: string) {
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/correspondence/${corrId}`, {
+      const res = await fetch(`/api/projects/${objectId}/correspondence/${corrId}`, {
         method: 'DELETE',
       });
       const json = await res.json();

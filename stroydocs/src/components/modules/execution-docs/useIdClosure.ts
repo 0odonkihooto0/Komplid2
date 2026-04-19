@@ -48,7 +48,7 @@ export function useClosurePackages(objectId: string) {
   const { data, isLoading } = useQuery<{ data: ClosurePackage[]; meta?: { total: number } }>({
     queryKey: ['closure-packages', objectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/closure-packages?limit=50`);
+      const res = await fetch(`/api/projects/${objectId}/closure-packages?limit=50`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return json;
@@ -67,7 +67,7 @@ export function useAvailableDocs(objectId: string, enabled: boolean) {
   const { data, isLoading } = useQuery<AvailableDocsResponse>({
     queryKey: ['closure-packages-available', objectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/closure-packages/available-docs`);
+      const res = await fetch(`/api/projects/${objectId}/closure-packages/available-docs`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return json.data;
@@ -98,7 +98,7 @@ export function useCreatePackage(objectId: string) {
       registryIds: string[];
       archiveDocIds: string[];
     }) => {
-      const res = await fetch(`/api/objects/${objectId}/closure-packages`, {
+      const res = await fetch(`/api/projects/${objectId}/closure-packages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -124,7 +124,7 @@ export function useDeletePackage(objectId: string) {
 
   return useMutation({
     mutationFn: async (packageId: string) => {
-      const res = await fetch(`/api/objects/${objectId}/closure-packages/${packageId}`, {
+      const res = await fetch(`/api/projects/${objectId}/closure-packages/${packageId}`, {
         method: 'DELETE',
       });
       const json = await res.json();
@@ -147,7 +147,7 @@ export function useGeneratePackage(objectId: string) {
 
   return useMutation({
     mutationFn: async (packageId: string) => {
-      const res = await fetch(`/api/objects/${objectId}/closure-packages/${packageId}/generate`, {
+      const res = await fetch(`/api/projects/${objectId}/closure-packages/${packageId}/generate`, {
         method: 'POST',
       });
       const json = await res.json();

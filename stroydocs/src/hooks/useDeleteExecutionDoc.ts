@@ -10,7 +10,7 @@ export function useDeleteExecutionDoc(projectId: string, contractId: string) {
   return useMutation({
     mutationFn: async (docId: string) => {
       const res = await fetch(
-        `/api/objects/${projectId}/contracts/${contractId}/execution-docs/${docId}`,
+        `/api/projects/${projectId}/contracts/${contractId}/execution-docs/${docId}`,
         { method: 'DELETE' }
       );
       const json = await res.json();

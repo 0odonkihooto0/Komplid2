@@ -7,7 +7,7 @@ import { successResponse, errorResponse } from '@/utils/api';
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/objects/[projectId]/sed/next-number
+ * GET /api/projects/[projectId]/sed/next-number
  * Возвращает предпросмотр следующего номера СЭД-документа без advisory lock.
  * Используется для предзаполнения поля «Номер» в диалоге создания.
  * Не является атомарным — финальный номер генерируется при POST /sed.

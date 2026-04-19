@@ -65,7 +65,7 @@ export interface FillItemsPayload {
 export function usePIRClosureDetail(projectId: string, actId: string | null) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const baseUrl = `/api/objects/${projectId}/pir-closure/${actId}`;
+  const baseUrl = `/api/projects/${projectId}/pir-closure/${actId}`;
 
   const invalidateDetail = () =>
     queryClient.invalidateQueries({ queryKey: ['pir-closure-act', actId] });

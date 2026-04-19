@@ -75,7 +75,7 @@ export function useDefects(projectId: string, filters: DefectFilters = {}) {
   return useQuery<{ data: DefectItem[]; total: number; page: number; limit: number }>({
     queryKey: ['defects', projectId, filters],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/defects?${params.toString()}`);
+      const res = await fetch(`/api/projects/${projectId}/defects?${params.toString()}`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error ?? 'Ошибка загрузки дефектов');
       return json.data;
@@ -88,7 +88,7 @@ export function useDefect(projectId: string, defectId: string) {
   return useQuery<DefectItem>({
     queryKey: ['defect', projectId, defectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/defects/${defectId}`);
+      const res = await fetch(`/api/projects/${projectId}/defects/${defectId}`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error ?? 'Ошибка загрузки дефекта');
       return json.data;
@@ -101,7 +101,7 @@ export function useCreateDefect(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (data: Partial<DefectItem>) => {
-      const res = await fetch(`/api/objects/${projectId}/defects`, {
+      const res = await fetch(`/api/projects/${projectId}/defects`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -130,7 +130,7 @@ export function useChangeDefectStatus(projectId: string) {
       status: DefectStatus;
       comment?: string;
     }) => {
-      const res = await fetch(`/api/objects/${projectId}/defects/${defectId}/status`, {
+      const res = await fetch(`/api/projects/${projectId}/defects/${defectId}/status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, comment }),
@@ -152,7 +152,7 @@ export function useDeleteDefect(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (defectId: string) => {
-      const res = await fetch(`/api/objects/${projectId}/defects/${defectId}`, {
+      const res = await fetch(`/api/projects/${projectId}/defects/${defectId}`, {
         method: 'DELETE',
       });
       const json = await res.json();
@@ -170,7 +170,7 @@ export function useAcceptDefect(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ defectId, comment }: { defectId: string; comment?: string }) => {
-      const res = await fetch(`/api/objects/${projectId}/defects/${defectId}/accept`, {
+      const res = await fetch(`/api/projects/${projectId}/defects/${defectId}/accept`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ comment }),
@@ -192,7 +192,7 @@ export function useRejectDefect(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ defectId, comment }: { defectId: string; comment: string }) => {
-      const res = await fetch(`/api/objects/${projectId}/defects/${defectId}/reject`, {
+      const res = await fetch(`/api/projects/${projectId}/defects/${defectId}/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ comment }),
@@ -222,7 +222,7 @@ export function useExtendDefectDeadline(projectId: string) {
       deadline: string;
       reason: string;
     }) => {
-      const res = await fetch(`/api/objects/${projectId}/defects/${defectId}/extend-deadline`, {
+      const res = await fetch(`/api/projects/${projectId}/defects/${defectId}/extend-deadline`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deadline, reason }),

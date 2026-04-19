@@ -18,7 +18,7 @@ const querySchema = z.object({
 });
 
 /**
- * GET /api/objects/[projectId]/gantt-versions/[versionId]/mastering/export?year=2025
+ * GET /api/projects/[projectId]/gantt-versions/[versionId]/mastering/export?year=2025
  * Возвращает план освоения версии ГПР в формате xlsx (два листа: суммы и объёмы).
  */
 export async function GET(

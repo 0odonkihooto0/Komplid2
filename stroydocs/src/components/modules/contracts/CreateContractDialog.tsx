@@ -61,7 +61,7 @@ export function CreateContractDialog({ open, onOpenChange, projectId, parentCont
 
   const mutation = useMutation({
     mutationFn: async (data: CreateContractInput) => {
-      const res = await fetch(`/api/objects/${projectId}/contracts`, {
+      const res = await fetch(`/api/projects/${projectId}/contracts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

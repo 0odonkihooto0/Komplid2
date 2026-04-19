@@ -17,7 +17,7 @@ async function getDefectOrThrow(defectId: string, projectId: string, orgId: stri
   });
 }
 
-// GET /api/objects/[projectId]/defects/[defectId]/normative-refs — список ссылок
+// GET /api/projects/[projectId]/defects/[defectId]/normative-refs — список ссылок
 export async function GET(_req: NextRequest, { params }: { params: Params }) {
   try {
     const session = await getSessionOrThrow();
@@ -42,7 +42,7 @@ const createRefSchema = z.object({
   description: z.string().optional(),
 });
 
-// POST /api/objects/[projectId]/defects/[defectId]/normative-refs — добавить ссылку
+// POST /api/projects/[projectId]/defects/[defectId]/normative-refs — добавить ссылку
 export async function POST(req: NextRequest, { params }: { params: Params }) {
   try {
     const session = await getSessionOrThrow();

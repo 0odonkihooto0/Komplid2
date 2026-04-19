@@ -10,7 +10,7 @@ export function useDeleteWorkRecord(projectId: string, contractId: string) {
   return useMutation({
     mutationFn: async (workRecordId: string) => {
       const res = await fetch(
-        `/api/objects/${projectId}/contracts/${contractId}/work-records/${workRecordId}`,
+        `/api/projects/${projectId}/contracts/${contractId}/work-records/${workRecordId}`,
         { method: 'DELETE' }
       );
       const json = await res.json();

@@ -16,7 +16,7 @@ export interface ContractGuarantee {
 }
 
 function base(projectId: string, contractId: string) {
-  return `/api/objects/${projectId}/contracts/${contractId}/guarantees`;
+  return `/api/projects/${projectId}/contracts/${contractId}/guarantees`;
 }
 
 export function useGuarantees(projectId: string, contractId: string) {

@@ -54,7 +54,7 @@ export function DesignDocExpertise({ projectId, docId, expertiseStatus, expertis
   const saveMutation = useMutation({
     mutationFn: async () => {
       const res = await fetch(
-        `/api/objects/${projectId}/design-docs/${docId}/expertise`,
+        `/api/projects/${projectId}/design-docs/${docId}/expertise`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },

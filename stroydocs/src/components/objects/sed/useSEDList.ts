@@ -71,7 +71,7 @@ export function useSEDList(objectId: string, params: UseSEDListParams) {
     if (filters?.dateTo) p.set('dateTo', filters.dateTo);
     p.set('page', String(page));
     p.set('limit', '50');
-    return `/api/objects/${objectId}/sed?${p.toString()}`;
+    return `/api/projects/${objectId}/sed?${p.toString()}`;
   };
 
   const { data, isLoading, error, refetch } = useQuery<{

@@ -36,7 +36,7 @@ export function useEstimateItemEdit({
 }: UseEstimateItemEditParams) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const baseUrl = `/api/objects/${projectId}/contracts/${contractId}/estimate-versions/${versionId}`;
+  const baseUrl = `/api/projects/${projectId}/contracts/${contractId}/estimate-versions/${versionId}`;
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: ['estimate-version', versionId] });

@@ -30,7 +30,7 @@ export function IdRegistryPanel({ projectId, contractId }: Props) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [generatingId, setGeneratingId] = useState<string | null>(null);
-  const baseUrl = `/api/objects/${projectId}/contracts/${contractId}/id-registry`;
+  const baseUrl = `/api/projects/${projectId}/contracts/${contractId}/id-registry`;
 
   const { data: registries = [], isLoading } = useQuery<IdRegistry[]>({
     queryKey: ['id-registry', contractId],

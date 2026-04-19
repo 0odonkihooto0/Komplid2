@@ -97,7 +97,7 @@ export function useDesignDocDetail(projectId: string, docId: string) {
   const { toast } = useToast();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const baseUrl = `/api/objects/${projectId}/design-docs/${docId}`;
+  const baseUrl = `/api/projects/${projectId}/design-docs/${docId}`;
 
   const { data: doc, isLoading, isError } = useQuery<DesignDocDetail>({
     queryKey: ['design-doc', docId],

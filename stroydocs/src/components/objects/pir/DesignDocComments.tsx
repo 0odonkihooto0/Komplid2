@@ -70,7 +70,7 @@ const STATUS_CONFIG = {
 export function DesignDocComments({ projectId, docId, sessionUserId }: Props) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const baseUrl = `/api/objects/${projectId}/design-docs/${docId}/comments`;
+  const baseUrl = `/api/projects/${projectId}/design-docs/${docId}/comments`;
 
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedComment, setSelectedComment] = useState<DesignDocComment | null>(null);

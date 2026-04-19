@@ -20,7 +20,7 @@ export interface GanttDailyPlanItem {
 }
 
 function dailyBase(objectId: string, versionId: string) {
-  return `/api/objects/${objectId}/gantt-versions/${versionId}/daily`;
+  return `/api/projects/${objectId}/gantt-versions/${versionId}/daily`;
 }
 
 // ── Получить суточный план ─────────────────────────────────────────────────────

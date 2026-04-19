@@ -36,7 +36,7 @@ export function ProjectStatisticsTab({ projectId }: Props) {
   const { data, isLoading } = useQuery<ProjectAnalytics>({
     queryKey: ['project-analytics', projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/analytics`);
+      const res = await fetch(`/api/projects/${projectId}/analytics`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return json.data;

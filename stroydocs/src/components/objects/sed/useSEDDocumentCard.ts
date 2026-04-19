@@ -96,7 +96,7 @@ export function useSEDDocumentCard(objectId: string, docId: string) {
   const { data: doc, isLoading } = useQuery<SEDDocumentFull>({
     queryKey: detailKey,
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/sed/${docId}`);
+      const res = await fetch(`/api/projects/${objectId}/sed/${docId}`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error ?? 'Ошибка загрузки документа');
       return json.data;
@@ -116,7 +116,7 @@ export function useSEDDocumentCard(objectId: string, docId: string) {
   // Авто-маркировка isRead при открытии получателем
   useEffect(() => {
     if (!doc || doc.isRead) return;
-    fetch(`/api/objects/${objectId}/sed/mark-read`, {
+    fetch(`/api/projects/${objectId}/sed/mark-read`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ documentIds: [docId], isRead: true }),
@@ -132,7 +132,7 @@ export function useSEDDocumentCard(objectId: string, docId: string) {
 
   const patchMutation = useMutation({
     mutationFn: async (payload: { status: SEDStatus }) => {
-      const res = await fetch(`/api/objects/${objectId}/sed/${docId}`, {
+      const res = await fetch(`/api/projects/${objectId}/sed/${docId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -156,7 +156,7 @@ export function useSEDDocumentCard(objectId: string, docId: string) {
 
   const startWorkflowMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/sed/${docId}/workflow`, {
+      const res = await fetch(`/api/projects/${objectId}/sed/${docId}/workflow`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),

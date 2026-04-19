@@ -83,7 +83,7 @@ export default function PIRAnalyticsPage({
   const { data, isLoading, isError } = useQuery<PIRAnalyticsData>({
     queryKey: ['pir-analytics', params.objectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${params.objectId}/pir-analytics`);
+      const res = await fetch(`/api/projects/${params.objectId}/pir-analytics`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error ?? 'Ошибка загрузки');
       return json.data as PIRAnalyticsData;

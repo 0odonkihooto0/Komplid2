@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 interface Params { projectId: string; defectId: string; refId: string }
 
-// DELETE /api/objects/[projectId]/defects/[defectId]/normative-refs/[refId] — удалить ссылку
+// DELETE /api/projects/[projectId]/defects/[defectId]/normative-refs/[refId] — удалить ссылку
 export async function DELETE(_req: NextRequest, { params }: { params: Params }) {
   try {
     const session = await getSessionOrThrow();

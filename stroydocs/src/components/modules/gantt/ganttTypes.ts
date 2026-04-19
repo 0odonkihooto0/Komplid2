@@ -77,5 +77,5 @@ export interface GanttTasksData {
 }
 
 export function ganttBase(projectId: string, contractId: string) {
-  return `/api/objects/${projectId}/contracts/${contractId}/gantt`;
+  return `/api/projects/${projectId}/contracts/${contractId}/gantt`;
 }

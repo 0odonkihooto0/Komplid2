@@ -7,7 +7,7 @@ import { successResponse, errorResponse } from '@/utils/api';
 export const dynamic = 'force-dynamic';
 
 /**
- * POST /api/objects/[projectId]/gantt-versions/[versionId]/fill-from/[sourceVersionId]
+ * POST /api/projects/[projectId]/gantt-versions/[versionId]/fill-from/[sourceVersionId]
  * Заполнить целевую версию ГПР задачами из исходной (полная перезапись).
  * Удаляет все существующие задачи целевой версии и копирует задачи из источника.
  * Фактические даты и прогресс не переносятся — версия начинается с нуля.

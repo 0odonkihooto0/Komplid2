@@ -45,7 +45,7 @@ export function useEstimateHistory({
   const { data, isLoading } = useQuery<HistoryResponse>({
     queryKey: ['estimate-history', versionId, page],
     queryFn: async () => {
-      const url = `/api/objects/${projectId}/contracts/${contractId}/estimate-versions/${versionId}/history?page=${page}&limit=${limit}`;
+      const url = `/api/projects/${projectId}/contracts/${contractId}/estimate-versions/${versionId}/history?page=${page}&limit=${limit}`;
       const res = await fetch(url);
       return res.json() as Promise<HistoryResponse>;
     },

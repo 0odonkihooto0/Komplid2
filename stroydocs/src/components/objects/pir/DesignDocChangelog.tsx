@@ -40,7 +40,7 @@ export function DesignDocChangelog({ projectId, docId, currentVersion }: Props) 
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const baseUrl = `/api/objects/${projectId}/design-docs/${docId}/changes`;
+  const baseUrl = `/api/projects/${projectId}/design-docs/${docId}/changes`;
 
   const { data: changes, isLoading } = useQuery<ChangeRecord[]>({
     queryKey: ['design-doc-changes', docId],

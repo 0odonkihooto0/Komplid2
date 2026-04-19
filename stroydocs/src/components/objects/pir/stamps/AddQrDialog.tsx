@@ -62,7 +62,7 @@ export function AddQrDialog({
   // Получение/генерация QR-токена (идемпотентно)
   const qrMutation = useMutation({
     mutationFn: async (): Promise<QrData> => {
-      const res = await fetch(`/api/objects/${objectId}/design-docs/${docId}/qr`, { method: 'POST' });
+      const res = await fetch(`/api/projects/${objectId}/design-docs/${docId}/qr`, { method: 'POST' });
       if (!res.ok) throw new Error('Ошибка получения QR-кода');
       const json: ApiResponse<QrData> = await res.json();
       if (!json.success) throw new Error(json.error ?? 'Ошибка');

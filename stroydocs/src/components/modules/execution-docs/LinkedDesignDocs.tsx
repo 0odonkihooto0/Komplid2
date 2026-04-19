@@ -36,7 +36,7 @@ interface Props {
 // Загрузить ПИР-документы, привязанные к данному АОСР
 async function fetchLinkedDocs(projectId: string, execDocId: string): Promise<DesignDocBrief[]> {
   const res = await fetch(
-    `/api/objects/${projectId}/design-docs?linkedTo=${execDocId}&limit=50`,
+    `/api/projects/${projectId}/design-docs?linkedTo=${execDocId}&limit=50`,
     { cache: 'no-store' }
   );
   if (!res.ok) throw new Error('Ошибка загрузки связанных чертежей');
@@ -47,7 +47,7 @@ async function fetchLinkedDocs(projectId: string, execDocId: string): Promise<De
 // Загрузить все ПИР-документы проекта для выбора
 async function fetchAllDesignDocs(projectId: string): Promise<DesignDocBrief[]> {
   const res = await fetch(
-    `/api/objects/${projectId}/design-docs?limit=200`,
+    `/api/projects/${projectId}/design-docs?limit=200`,
     { cache: 'no-store' }
   );
   if (!res.ok) throw new Error('Ошибка загрузки документов ПИР');
@@ -62,7 +62,7 @@ async function linkDesignDoc(
   execDocId: string
 ): Promise<void> {
   const res = await fetch(
-    `/api/objects/${projectId}/design-docs/${designDocId}/link-exec-doc`,
+    `/api/projects/${projectId}/design-docs/${designDocId}/link-exec-doc`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

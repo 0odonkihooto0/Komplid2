@@ -15,7 +15,7 @@ export interface ContractAdvance {
 }
 
 function base(projectId: string, contractId: string) {
-  return `/api/objects/${projectId}/contracts/${contractId}/advances`;
+  return `/api/projects/${projectId}/contracts/${contractId}/advances`;
 }
 
 export function useAdvances(projectId: string, contractId: string) {

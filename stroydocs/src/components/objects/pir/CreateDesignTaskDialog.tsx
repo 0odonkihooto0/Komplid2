@@ -69,7 +69,7 @@ export function CreateDesignTaskDialog({ open, onOpenChange, projectId, taskType
   const { data: participants = [] } = useQuery<ParticipantOrg[]>({
     queryKey: ['participants', projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/participants`);
+      const res = await fetch(`/api/projects/${projectId}/participants`);
       const json = await res.json();
       if (!json.success) return [];
       return json.data;

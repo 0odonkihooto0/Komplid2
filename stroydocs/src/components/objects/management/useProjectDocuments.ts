@@ -71,7 +71,7 @@ export function useFolders(projectId: string) {
   return useQuery<ProjectFolder[]>({
     queryKey: ['project-folders', projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/folders`);
+      const res = await fetch(`/api/projects/${projectId}/folders`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error ?? 'Ошибка загрузки папок');
       return json.data as ProjectFolder[];
@@ -85,7 +85,7 @@ export function useDocuments(projectId: string, folderId: string | null) {
     queryKey: ['project-documents', projectId, folderId],
     queryFn: async () => {
       const res = await fetch(
-        `/api/objects/${projectId}/project-documents?folderId=${folderId}`,
+        `/api/projects/${projectId}/project-documents?folderId=${folderId}`,
       );
       const json = await res.json();
       if (!json.success) throw new Error(json.error ?? 'Ошибка загрузки документов');
@@ -100,7 +100,7 @@ export function useDocumentVersions(projectId: string, documentId: string | null
     queryKey: ['project-document-versions', projectId, documentId],
     queryFn: async () => {
       const res = await fetch(
-        `/api/objects/${projectId}/project-documents/${documentId}/versions`,
+        `/api/projects/${projectId}/project-documents/${documentId}/versions`,
       );
       const json = await res.json();
       if (!json.success) throw new Error(json.error ?? 'Ошибка загрузки версий');
@@ -115,7 +115,7 @@ export function useQrInfo(projectId: string, documentId: string | null) {
     queryKey: ['project-document-qr', projectId, documentId],
     queryFn: async () => {
       const res = await fetch(
-        `/api/objects/${projectId}/project-documents/${documentId}/qr`,
+        `/api/projects/${projectId}/project-documents/${documentId}/qr`,
       );
       const json = await res.json();
       if (!json.success) throw new Error(json.error ?? 'Ошибка загрузки QR');
@@ -138,7 +138,7 @@ export function useFolderMutations(projectId: string) {
 
   const createFolder = useMutation({
     mutationFn: async ({ name, parentId }: { name: string; parentId?: string }) => {
-      const res = await fetch(`/api/objects/${projectId}/folders`, {
+      const res = await fetch(`/api/projects/${projectId}/folders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, parentId }),
@@ -157,7 +157,7 @@ export function useFolderMutations(projectId: string) {
 
   const renameFolder = useMutation({
     mutationFn: async ({ folderId, name }: { folderId: string; name: string }) => {
-      const res = await fetch(`/api/objects/${projectId}/folders/${folderId}`, {
+      const res = await fetch(`/api/projects/${projectId}/folders/${folderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
@@ -173,7 +173,7 @@ export function useFolderMutations(projectId: string) {
 
   const deleteFolder = useMutation({
     mutationFn: async (folderId: string) => {
-      const res = await fetch(`/api/objects/${projectId}/folders/${folderId}`, {
+      const res = await fetch(`/api/projects/${projectId}/folders/${folderId}`, {
         method: 'DELETE',
       });
       const json = await res.json();
@@ -214,7 +214,7 @@ export function useDocumentMutations(projectId: string, folderId: string | null)
       onProgress?: (pct: number) => void;
     }) => {
       // Шаг 1: создать запись в БД и получить presigned URL
-      const res = await fetch(`/api/objects/${projectId}/project-documents`, {
+      const res = await fetch(`/api/projects/${projectId}/project-documents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -254,7 +254,7 @@ export function useDocumentMutations(projectId: string, folderId: string | null)
   const deleteDocument = useMutation({
     mutationFn: async (documentId: string) => {
       const res = await fetch(
-        `/api/objects/${projectId}/project-documents/${documentId}`,
+        `/api/projects/${projectId}/project-documents/${documentId}`,
         { method: 'DELETE' },
       );
       const json = await res.json();
@@ -280,7 +280,7 @@ export function useDocumentMutations(projectId: string, folderId: string | null)
     }) => {
       // Шаг 1: создать новую версию и получить presigned URL
       const res = await fetch(
-        `/api/objects/${projectId}/project-documents/${documentId}/versions`,
+        `/api/projects/${projectId}/project-documents/${documentId}/versions`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

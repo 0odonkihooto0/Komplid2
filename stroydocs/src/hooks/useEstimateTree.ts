@@ -88,7 +88,7 @@ interface UseEstimateTreeParams {
 }
 
 const base = (p: string, c: string, v: string) =>
-  `/api/objects/${p}/contracts/${c}/estimate-versions/${v}`;
+  `/api/projects/${p}/contracts/${c}/estimate-versions/${v}`;
 
 export function useEstimateTree({ projectId, contractId, versionId }: UseEstimateTreeParams) {
   const { toast } = useToast();

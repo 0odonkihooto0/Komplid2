@@ -58,7 +58,7 @@ export function useCreateSEDDocument({ objectId, open, onSuccess }: UseCreateSED
   const { data: participants = [], isLoading: participantsLoading } = useQuery<ObjectParticipant[]>({
     queryKey: ['object-participants', objectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/participants`);
+      const res = await fetch(`/api/projects/${objectId}/participants`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return json.data;
@@ -69,7 +69,7 @@ export function useCreateSEDDocument({ objectId, open, onSuccess }: UseCreateSED
   const { data: nextNumberData } = useQuery<{ number: string }>({
     queryKey: ['sed-next-number', objectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/sed/next-number`);
+      const res = await fetch(`/api/projects/${objectId}/sed/next-number`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return json.data;
@@ -89,7 +89,7 @@ export function useCreateSEDDocument({ objectId, open, onSuccess }: UseCreateSED
   const createMutation = useMutation({
     mutationFn: async ({ payload, activate }: { payload: CreateSEDPayload; activate: boolean }) => {
       // Шаг 1: создание документа
-      const res = await fetch(`/api/objects/${objectId}/sed`, {
+      const res = await fetch(`/api/projects/${objectId}/sed`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -100,7 +100,7 @@ export function useCreateSEDDocument({ objectId, open, onSuccess }: UseCreateSED
 
       // Шаг 2: активация если нужно
       if (activate) {
-        await fetch(`/api/objects/${objectId}/sed/${created.id}`, {
+        await fetch(`/api/projects/${objectId}/sed/${created.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: 'ACTIVE' }),
@@ -109,7 +109,7 @@ export function useCreateSEDDocument({ objectId, open, onSuccess }: UseCreateSED
 
       // Шаг 3: загрузка вложений через presigned URL
       for (const file of stagedFiles) {
-        const attachRes = await fetch(`/api/objects/${objectId}/sed/${created.id}/attachments`, {
+        const attachRes = await fetch(`/api/projects/${objectId}/sed/${created.id}/attachments`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fileName: file.name, mimeType: file.type || 'application/octet-stream', size: file.size }),

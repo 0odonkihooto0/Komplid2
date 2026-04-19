@@ -97,7 +97,7 @@ export function AddCameraDialog({
   // Загрузка файла в S3 через presigned URL и обновление состояния по uid
   const uploadOne = useCallback(async (uid: string, file: File) => {
     try {
-      const res = await fetch(`/api/objects/${objectId}/cameras/upload-url`, {
+      const res = await fetch(`/api/projects/${objectId}/cameras/upload-url`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

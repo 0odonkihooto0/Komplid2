@@ -55,7 +55,7 @@ export function useProjectIndicators(projectId: string) {
   const { data, isLoading } = useQuery<ProjectIndicatorsData>({
     queryKey,
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/project-indicators`);
+      const res = await fetch(`/api/projects/${projectId}/project-indicators`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return json.data;
@@ -64,7 +64,7 @@ export function useProjectIndicators(projectId: string) {
 
   const createMutation = useMutation({
     mutationFn: async (payload: IndicatorFormData) => {
-      const res = await fetch(`/api/objects/${projectId}/project-indicators`, {
+      const res = await fetch(`/api/projects/${projectId}/project-indicators`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -78,7 +78,7 @@ export function useProjectIndicators(projectId: string) {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, payload }: { id: string; payload: Partial<IndicatorFormData> }) => {
-      const res = await fetch(`/api/objects/${projectId}/project-indicators/${id}`, {
+      const res = await fetch(`/api/projects/${projectId}/project-indicators/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -92,7 +92,7 @@ export function useProjectIndicators(projectId: string) {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/objects/${projectId}/project-indicators/${id}`, {
+      const res = await fetch(`/api/projects/${projectId}/project-indicators/${id}`, {
         method: 'DELETE',
       });
       const json = await res.json();

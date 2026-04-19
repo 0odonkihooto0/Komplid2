@@ -50,7 +50,7 @@ export function AddParticipantDialog({ open, onOpenChange, projectId, contractId
   const mutation = useMutation({
     mutationFn: async (data: AddParticipantInput) => {
       const res = await fetch(
-        `/api/objects/${projectId}/contracts/${contractId}/participants`,
+        `/api/projects/${projectId}/contracts/${contractId}/participants`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

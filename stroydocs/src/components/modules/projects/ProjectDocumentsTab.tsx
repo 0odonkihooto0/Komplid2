@@ -47,7 +47,7 @@ function useProjectDocuments(projectId: string) {
   return useQuery<ContractWithDocs[]>({
     queryKey: ['project-documents', projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${projectId}/documents`);
+      const res = await fetch(`/api/projects/${projectId}/documents`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return json.data;

@@ -56,7 +56,7 @@ export interface Ks2AdditionalCost {
 export function useKs2List(projectId: string, contractId: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const baseUrl = `/api/objects/${projectId}/contracts/${contractId}/ks2`;
+  const baseUrl = `/api/projects/${projectId}/contracts/${contractId}/ks2`;
 
   const { data: acts = [], isLoading } = useQuery<Ks2Act[]>({
     queryKey: ['ks2', contractId],
@@ -110,7 +110,7 @@ export function useKs2List(projectId: string, contractId: string) {
 export function useKs2Detail(projectId: string, contractId: string, ks2Id: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const baseUrl = `/api/objects/${projectId}/contracts/${contractId}/ks2/${ks2Id}`;
+  const baseUrl = `/api/projects/${projectId}/contracts/${contractId}/ks2/${ks2Id}`;
 
   const { data: act, isLoading } = useQuery<Ks2Act & { items: Ks2Item[] }>({
     queryKey: ['ks2-detail', ks2Id],
@@ -220,7 +220,7 @@ export function useKs2Detail(projectId: string, contractId: string, ks2Id: strin
 export function useKs2AdditionalCosts(projectId: string, contractId: string, ks2Id: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const baseUrl = `/api/objects/${projectId}/contracts/${contractId}/ks2/${ks2Id}`;
+  const baseUrl = `/api/projects/${projectId}/contracts/${contractId}/ks2/${ks2Id}`;
 
   const { data, isLoading } = useQuery<{ costs: Ks2AdditionalCost[]; totalCount: number }>({
     queryKey: ['ks2-additional-costs', ks2Id],

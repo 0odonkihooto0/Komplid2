@@ -60,7 +60,7 @@ interface CreateDesignTaskPayload {
 export function useDesignTasks(projectId: string, taskType: DesignTaskType = 'DESIGN') {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const baseUrl = `/api/objects/${projectId}/design-tasks`;
+  const baseUrl = `/api/projects/${projectId}/design-tasks`;
 
   const { data, isLoading, isError } = useQuery<DesignTaskListResponse>({
     queryKey: ['design-tasks', projectId, taskType],

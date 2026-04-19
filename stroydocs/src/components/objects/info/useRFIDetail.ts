@@ -45,7 +45,7 @@ export function useRFIDetail(objectId: string, rfiId: string) {
   const { data: rfi, isLoading } = useQuery<RFIDetail>({
     queryKey: detailKey,
     queryFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/rfi/${rfiId}`);
+      const res = await fetch(`/api/projects/${objectId}/rfi/${rfiId}`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error ?? 'Ошибка загрузки вопроса');
       return json.data;
@@ -60,7 +60,7 @@ export function useRFIDetail(objectId: string, rfiId: string) {
 
   const answerMutation = useMutation({
     mutationFn: async (response: string) => {
-      const res = await fetch(`/api/objects/${objectId}/rfi/${rfiId}/answer`, {
+      const res = await fetch(`/api/projects/${objectId}/rfi/${rfiId}/answer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ response }),
@@ -80,7 +80,7 @@ export function useRFIDetail(objectId: string, rfiId: string) {
 
   const closeMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/objects/${objectId}/rfi/${rfiId}/close`, {
+      const res = await fetch(`/api/projects/${objectId}/rfi/${rfiId}/close`, {
         method: 'POST',
       });
       const json = await res.json();
@@ -98,7 +98,7 @@ export function useRFIDetail(objectId: string, rfiId: string) {
 
   const updatePriorityMutation = useMutation({
     mutationFn: async (priority: RFIPriority) => {
-      const res = await fetch(`/api/objects/${objectId}/rfi/${rfiId}`, {
+      const res = await fetch(`/api/projects/${objectId}/rfi/${rfiId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ priority }),

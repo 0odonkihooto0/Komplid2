@@ -63,7 +63,7 @@ export function SelectEstimateDialog({ open, onOpenChange, versions, objectId, c
     queryFn: async () => {
       if (!contractId || !selectedVersionId) return [];
       const res = await fetch(
-        `/api/objects/${objectId}/contracts/${contractId}/estimate-versions/${selectedVersionId}`
+        `/api/projects/${objectId}/contracts/${contractId}/estimate-versions/${selectedVersionId}`
       );
       const json = await res.json() as {
         success: boolean;

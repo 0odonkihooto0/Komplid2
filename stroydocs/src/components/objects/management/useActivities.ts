@@ -54,7 +54,7 @@ export function useActivityCategories(objectId: string, showHidden = false) {
   return useQuery<ActivityCategory[]>({
     queryKey: ['activity-categories', objectId, showHidden],
     queryFn: async () => {
-      const url = `/api/objects/${objectId}/activity-categories${showHidden ? '?showHidden=true' : ''}`;
+      const url = `/api/projects/${objectId}/activity-categories${showHidden ? '?showHidden=true' : ''}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('Ошибка загрузки категорий');
       const json = await res.json();
@@ -67,7 +67,7 @@ export function useCreateActivityCategory(objectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: CreateCategoryInput) => {
-      const res = await fetch(`/api/objects/${objectId}/activity-categories`, {
+      const res = await fetch(`/api/projects/${objectId}/activity-categories`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
@@ -85,7 +85,7 @@ export function useConfigureCategories(objectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (categoryIds: string[]) => {
-      const res = await fetch(`/api/objects/${objectId}/activity-categories/configure`, {
+      const res = await fetch(`/api/projects/${objectId}/activity-categories/configure`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ categoryIds }),
@@ -107,7 +107,7 @@ export function useActivityDocuments(objectId: string, categoryId?: string) {
     queryFn: async () => {
       const params = new URLSearchParams({ limit: '50' });
       if (categoryId) params.set('categoryId', categoryId);
-      const res = await fetch(`/api/objects/${objectId}/activity-documents?${params.toString()}`);
+      const res = await fetch(`/api/projects/${objectId}/activity-documents?${params.toString()}`);
       if (!res.ok) throw new Error('Ошибка загрузки документов');
       const json = await res.json();
       return json.data as ActivityDocument[];
@@ -119,7 +119,7 @@ export function useCreateActivityDocument(objectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: CreateDocumentInput) => {
-      const res = await fetch(`/api/objects/${objectId}/activity-documents`, {
+      const res = await fetch(`/api/projects/${objectId}/activity-documents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
@@ -137,7 +137,7 @@ export function useDeleteActivityDocument(objectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (documentId: string) => {
-      const res = await fetch(`/api/objects/${objectId}/activity-documents/${documentId}`, {
+      const res = await fetch(`/api/projects/${objectId}/activity-documents/${documentId}`, {
         method: 'DELETE',
       });
       if (!res.ok) throw new Error('Ошибка удаления документа');

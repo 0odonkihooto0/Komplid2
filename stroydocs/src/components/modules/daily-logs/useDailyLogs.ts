@@ -18,7 +18,7 @@ export interface DailyLogItem {
 }
 
 function logsBase(projectId: string, contractId: string) {
-  return `/api/objects/${projectId}/contracts/${contractId}/daily-logs`;
+  return `/api/projects/${projectId}/contracts/${contractId}/daily-logs`;
 }
 
 export function useDailyLogs(projectId: string, contractId: string) {

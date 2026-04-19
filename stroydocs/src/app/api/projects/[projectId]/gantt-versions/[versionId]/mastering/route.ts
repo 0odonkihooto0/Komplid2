@@ -18,7 +18,7 @@ const querySchema = z.object({
 });
 
 /**
- * GET /api/objects/[projectId]/gantt-versions/[versionId]/mastering?year=2025
+ * GET /api/projects/[projectId]/gantt-versions/[versionId]/mastering?year=2025
  * Возвращает помесячный план освоения средств по версии ГПР.
  * factAmount = 0 в MVP (будет заполняться из КС-2 в следующих фазах).
  */
