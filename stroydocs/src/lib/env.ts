@@ -16,6 +16,8 @@ const REQUIRED_ENV_VARS = [
   'S3_ACCESS_KEY',
   'S3_SECRET_KEY',
   'REDIS_URL',
+  'CRON_SECRET',
+  'ADMIN_SECRET',
 ] as const;
 
 type RequiredEnvVar = (typeof REQUIRED_ENV_VARS)[number];

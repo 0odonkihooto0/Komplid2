@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { s3 } from '@/lib/s3';
-import { DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { DeleteObjectsCommand } from '@aws-sdk/client-s3';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,18 +49,26 @@ export async function DELETE(_req: NextRequest, { params }: { params: Params }) 
     const document = await findDocument(params.projectId, params.documentId, session.user.organizationId);
     if (!document) return errorResponse('Документ не найден', 404);
 
-    // Удалить основной файл из S3
-    await s3.send(new DeleteObjectCommand({
-      Bucket: process.env.S3_BUCKET!,
-      Key: document.s3Key,
-    })).catch((err: unknown) => logger.warn({ err }, 'Не удалось удалить файл из S3'));
+    // Собрать все S3-ключи: основной файл + все версии
+    const allKeys = [document.s3Key, ...document.versions.map((v) => v.s3Key)];
 
-    // Удалить файлы версий из S3
-    for (const version of document.versions) {
-      await s3.send(new DeleteObjectCommand({
-        Bucket: process.env.S3_BUCKET!,
-        Key: version.s3Key,
-      })).catch((err: unknown) => logger.warn({ err }, 'Не удалось удалить версию из S3'));
+    const CHUNK_SIZE = 1000; // AWS S3 лимит: не более 1000 ключей за запрос
+    for (let i = 0; i < allKeys.length; i += CHUNK_SIZE) {
+      const chunk = allKeys.slice(i, i + CHUNK_SIZE);
+      const result = await s3
+        .send(new DeleteObjectsCommand({
+          Bucket: process.env.S3_BUCKET!,
+          Delete: { Objects: chunk.map((Key) => ({ Key })), Quiet: false },
+        }))
+        .catch((err: unknown) => {
+          logger.warn({ err }, 'Не удалось выполнить пакетное удаление из S3');
+          return null;
+        });
+      if (result?.Errors?.length) {
+        for (const s3Err of result.Errors) {
+          logger.warn({ key: s3Err.Key, code: s3Err.Code, message: s3Err.Message }, 'Ошибка удаления объекта из S3');
+        }
+      }
     }
 
     await db.projectDocument.delete({ where: { id: params.documentId } });
