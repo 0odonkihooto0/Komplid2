@@ -19,6 +19,7 @@ import { ImplementationTimeline } from './ImplementationTimeline';
 import { HistoryDrawer } from './HistoryDrawer';
 import { ObjectMetrics } from './ObjectMetrics';
 import { PassportSideblocks } from './PassportSideblocks';
+import { MilestonesTimeline } from './MilestonesTimeline';
 import type { PassportUpdateData } from './usePassport';
 
 function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
@@ -295,6 +296,9 @@ export function PassportView({ projectId }: PassportViewProps) {
       <div id="coordinates-map">
         <CoordinatesMap projectId={projectId} address={project.address} />
       </div>
+
+      {/* Ключевые вехи */}
+      <MilestonesTimeline projectId={projectId} />
 
       {/* График реализации */}
       <ImplementationTimeline project={project} />
