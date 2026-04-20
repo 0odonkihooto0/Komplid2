@@ -43,22 +43,31 @@ export async function GET(
       return successResponse([]);
     }
 
-    // Загрузить имена целевых версий
+    // Загрузить имена целевых версий и организаций-участников делегирования
     const targetVersionIds = Array.from(
       new Set(delegatedTasks.map((t) => t.delegatedToVersionId!))
     );
     const targetVersions = await db.ganttVersion.findMany({
       where: { id: { in: targetVersionIds } },
-      select: { id: true, name: true },
+      select: {
+        id: true,
+        name: true,
+        delegatedFromOrg: { select: { name: true } },
+        delegatedToOrg: { select: { name: true } },
+      },
     });
-    const versionNameMap = new Map(targetVersions.map((v) => [v.id, v.name]));
+    const versionMap = new Map(targetVersions.map((v) => [v.id, v]));
 
-    // Обогатить задачи именем целевой версии
-    const result = delegatedTasks.map((task) => ({
-      ...task,
-      delegatedToVersionName:
-        versionNameMap.get(task.delegatedToVersionId!) ?? null,
-    }));
+    // Обогатить задачи именем целевой версии и организаций
+    const result = delegatedTasks.map((task) => {
+      const tv = versionMap.get(task.delegatedToVersionId!);
+      return {
+        ...task,
+        delegatedToVersionName: tv?.name ?? null,
+        delegatedFromOrg: tv?.delegatedFromOrg?.name ?? null,
+        delegatedToOrg: tv?.delegatedToOrg?.name ?? null,
+      };
+    });
 
     return successResponse(result);
   } catch (error) {
