@@ -101,11 +101,11 @@ export async function loadCorrectionFromFile(
     }
 
     // Вставляем сопоставленные позиции
-    for (const { parsed, parentChapterName } of matched) {
-      const chapterId = chapterNameMap.get(parentChapterName);
-      if (!chapterId) continue;
-      await tx.estimateItem.create({
-        data: {
+    const matchedData = matched
+      .map(({ parsed, parentChapterName }) => {
+        const chapterId = chapterNameMap.get(parentChapterName);
+        if (!chapterId) return null;
+        return {
           sortOrder: parsed.sortOrder,
           itemType: parsed.itemType,
           name: parsed.rawName,
@@ -114,28 +114,29 @@ export async function loadCorrectionFromFile(
           unitPrice: parsed.price,
           totalPrice: parsed.total,
           chapterId,
-        },
-      });
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+
+    if (matchedData.length > 0) {
+      await tx.estimateItem.createMany({ data: matchedData });
     }
 
     // Новые позиции без соответствия — в первую главу
     if (unmatched.length > 0) {
       const firstChapterId = chapterNameMap.values().next().value;
       if (firstChapterId) {
-        for (const parsed of unmatched) {
-          await tx.estimateItem.create({
-            data: {
-              sortOrder: parsed.sortOrder,
-              itemType: parsed.itemType,
-              name: parsed.rawName,
-              unit: parsed.rawUnit,
-              volume: parsed.volume,
-              unitPrice: parsed.price,
-              totalPrice: parsed.total,
-              chapterId: firstChapterId,
-            },
-          });
-        }
+        const unmatchedData = unmatched.map((parsed) => ({
+          sortOrder: parsed.sortOrder,
+          itemType: parsed.itemType,
+          name: parsed.rawName,
+          unit: parsed.rawUnit,
+          volume: parsed.volume,
+          unitPrice: parsed.price,
+          totalPrice: parsed.total,
+          chapterId: firstChapterId,
+        }));
+        await tx.estimateItem.createMany({ data: unmatchedData });
       }
     }
 
