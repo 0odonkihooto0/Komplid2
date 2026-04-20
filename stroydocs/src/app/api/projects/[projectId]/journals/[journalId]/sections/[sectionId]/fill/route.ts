@@ -130,20 +130,18 @@ export async function POST(_req: NextRequest, { params }: Params) {
         FROM special_journal_entries
         WHERE "journalId" = ${params.journalId}
       `;
-      let nextNum = (result[0]?.max_num ?? 0) + 1;
+      const nextNum = (result[0]?.max_num ?? 0) + 1;
 
-      for (const description of descriptions) {
-        await tx.specialJournalEntry.create({
-          data: {
-            entryNumber: nextNum++,
-            date: now,
-            description,
-            journalId: params.journalId,
-            sectionId: params.sectionId,
-            authorId: session.user.id,
-          },
-        });
-      }
+      await tx.specialJournalEntry.createMany({
+        data: descriptions.map((description, i) => ({
+          entryNumber: nextNum + i,
+          date: now,
+          description,
+          journalId: params.journalId,
+          sectionId: params.sectionId,
+          authorId: session.user.id,
+        })),
+      });
 
       return descriptions.length;
     });

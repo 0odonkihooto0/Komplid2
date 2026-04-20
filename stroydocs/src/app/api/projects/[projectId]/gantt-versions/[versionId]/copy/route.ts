@@ -40,40 +40,41 @@ export async function POST(
         },
       });
 
-      // Копируем задачи. Сначала создаём Map старый id → новый id для перепривязки parentId
-      const idMap = new Map<string, string>();
-
       // Создаём задачи в порядке sortOrder (родители раньше детей)
       const sorted = [...source.tasks].sort((a, b) => a.sortOrder - b.sortOrder);
 
+      // Предварительно генерируем UUID для перепривязки parentId без последовательных запросов
+      const idMap = new Map<string, string>();
       for (const task of sorted) {
-        const created = await tx.ganttTask.create({
-          data: {
-            name: task.name,
-            versionId: newVersion.id,
-            parentId: task.parentId ? (idMap.get(task.parentId) ?? null) : null,
-            sortOrder: task.sortOrder,
-            level: task.level,
-            status: task.status,
-            planStart: task.planStart,
-            planEnd: task.planEnd,
-            factStart: task.factStart,
-            factEnd: task.factEnd,
-            progress: task.progress,
-            isCritical: task.isCritical,
-            isMilestone: task.isMilestone,
-            directiveStart: task.directiveStart,
-            directiveEnd: task.directiveEnd,
-            volume: task.volume,
-            volumeUnit: task.volumeUnit,
-            amount: task.amount,
-            estimateItemId: task.estimateItemId,
-            workItemId: task.workItemId,
-            linkedExecutionDocsCount: 0,
-          },
-        });
-        idMap.set(task.id, created.id);
+        idMap.set(task.id, crypto.randomUUID());
       }
+
+      const tasksData = sorted.map((task) => ({
+        id: idMap.get(task.id)!,
+        name: task.name,
+        versionId: newVersion.id,
+        parentId: task.parentId ? (idMap.get(task.parentId) ?? null) : null,
+        sortOrder: task.sortOrder,
+        level: task.level,
+        status: task.status,
+        planStart: task.planStart,
+        planEnd: task.planEnd,
+        factStart: task.factStart,
+        factEnd: task.factEnd,
+        progress: task.progress,
+        isCritical: task.isCritical,
+        isMilestone: task.isMilestone,
+        directiveStart: task.directiveStart,
+        directiveEnd: task.directiveEnd,
+        volume: task.volume,
+        volumeUnit: task.volumeUnit,
+        amount: task.amount,
+        estimateItemId: task.estimateItemId,
+        workItemId: task.workItemId,
+        linkedExecutionDocsCount: 0,
+      }));
+
+      await tx.ganttTask.createMany({ data: tasksData });
 
       return newVersion;
     });
