@@ -9,6 +9,23 @@
 
 ---
 
+### Добавлено (2026-04-20) — MODULE16 Фаза 6: Mobile-first Shell & Polish ✅
+
+- ✅ `src/components/mobile/MobileShell.tsx` — bottom tab navigation (Журнал / Фото / Дефект / Профиль), safe-area-inset для iPhone X+
+- ✅ `src/app/mobile/layout.tsx` — mobile route layout обёртка
+- ✅ `src/app/mobile/page.tsx` — список объектов строительства (главный экран)
+- ✅ `src/app/mobile/journal/page.tsx` — список журналов объекта
+- ✅ `src/app/mobile/journal/[journalId]/new/page.tsx` — быстрая форма записи ОЖР (Textarea + VoiceInput + CameraCapture)
+- ✅ `src/app/mobile/photo/page.tsx` — съёмка фото с выбором типа сущности
+- ✅ `src/app/mobile/defect/page.tsx` — форма фиксации дефекта (описание + категория + критичность + фото)
+- ✅ `src/app/mobile/profile/page.tsx` — профиль, SyncQueuePanel, кнопка выхода, ссылка на desktop
+- ✅ `.github/workflows/pwa-audit.yml` — Lighthouse CI на pull_request (PWA ≥ 90)
+- ✅ `.lighthouserc.json` — пороги: PWA error ≥ 0.9, perf warn ≥ 0.7, a11y warn ≥ 0.9
+- ✅ `tests/e2e/offline.spec.ts` — 3 Playwright теста: офлайн-мутация + sync, кэш страниц, fallback
+- ✅ `docs/pwa-test-checklist.md` — ручной чеклист (26 пунктов: install, offline, push, camera, GPS, voice)
+
+---
+
 ### Добавлено (2026-04-20) — MODULE16 Фаза 3: Offline-first hooks ✅
 
 - ✅ `src/hooks/use-offline-mutation.ts` — optimistic IDB → fetch API → sync-queue при сбое/офлайн
