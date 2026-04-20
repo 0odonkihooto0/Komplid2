@@ -112,7 +112,7 @@ export async function POST(
             .map((t) =>
               tx.ganttTask.update({
                 where: { id: idMap.get(t.id)! },
-                data: { parentId: idMap.get(t.parentId) },
+                data: { parentId: idMap.get(t.parentId!) },
               }),
             ),
         );

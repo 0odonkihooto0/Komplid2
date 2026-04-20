@@ -708,5 +708,18 @@ logger.info(`[socket] running on port ${PORT}`);
 
 ---
 
+**`.filter()` не сужает тип для TypeScript в последующем `.map()` — TS2345 при рефакторинге sequential loop → Promise.all.**
+Конвертация `for...of` + `if (t.parentId && ...)` в `.filter(t => t.parentId && ...).map(t => ...)` теряет TypeScript-сужение типа.
+В `if`-блоке `t.parentId` сужается до `string` (truthy check). В `.map()` после `.filter()` TypeScript видит `t.parentId: string | null` — оригинальный тип без сужения.
+`Map.get()` принимает `string`, не `string | null` → TS2345 на деплое (`'null' is not assignable to 'string'`).
+Ошибка проявляется только при `next build` (type-check) — локально без `node_modules` молчит.
+Исправлено в `gantt/versions/route.ts` добавлением `!` (non-null assertion): `idMap.get(t.parentId!)`.
+**Правило**: при конвертации `if (nullable && ...)` → `.filter(t => t.nullable && ...).map(t => fn(t.nullable))` —
+**всегда** добавлять `!` к nullable-полю в `.map()`: `t.nullable!`. TypeScript не переносит narrowing из `.filter()` в `.map()`.
+Альтернатива: type predicate в фильтре `(t): t is T & { field: string } => !!t.field && ...` — тогда `.map()` получает суженный тип автоматически, но verbose.
+Быстрая проверка: `grep -rn "\.filter(.*&&.*\.has\|\.filter(.*!== null\|\.filter(.*!= null" src/ | grep "\.map("` — найти chain-паттерны с потенциальными nullable-ключами.
+
+---
+
 > Правило: после каждой исправленной ошибки добавить урок сюда.
 > Команда: "Добавь урок в docs/lessons.md: [описание ошибки]"
