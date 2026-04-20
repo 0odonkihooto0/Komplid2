@@ -4,6 +4,7 @@ import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { createTaskScheduleSchema } from '@/lib/validations/task';
 
+export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   try {
     const session = await getSessionOrThrow();

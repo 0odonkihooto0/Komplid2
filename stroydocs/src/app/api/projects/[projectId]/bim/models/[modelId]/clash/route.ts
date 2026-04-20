@@ -6,6 +6,7 @@ import { successResponse, errorResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
 import { getRunClashQueue } from '@/lib/queues/run-clash.queue';
 
+export const dynamic = 'force-dynamic';
 type RouteParams = { params: { projectId: string; modelId: string } };
 
 /** Проверить принадлежность модели организации, вернуть модель с metadata */

@@ -6,6 +6,7 @@ import { canUserSeeTask } from '@/lib/task-visibility';
 import { createTaskReportSchema } from '@/lib/validations/task';
 import { enqueueNotification } from '@/lib/queue';
 
+export const dynamic = 'force-dynamic';
 type Params = { params: Promise<{ id: string }> };
 
 export async function GET(_req: NextRequest, { params }: Params) {

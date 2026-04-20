@@ -5,6 +5,7 @@ import { successResponse, errorResponse } from '@/utils/api';
 import { canUserSeeTask } from '@/lib/task-visibility';
 import { updateChecklistItemSchema } from '@/lib/validations/task';
 
+export const dynamic = 'force-dynamic';
 type Params = { params: Promise<{ id: string; itemId: string }> };
 
 export async function PATCH(req: NextRequest, { params }: Params) {

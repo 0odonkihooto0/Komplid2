@@ -5,6 +5,7 @@ import { successResponse, errorResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
 import { createAccessSchema } from '@/lib/validations/bim';
 
+export const dynamic = 'force-dynamic';
 /** GET /api/projects/[projectId]/bim/access — список прав доступа к ЦИМ */
 export async function GET(
   _req: NextRequest,

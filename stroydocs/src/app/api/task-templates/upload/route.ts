@@ -3,6 +3,7 @@ import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { generateUploadUrl, buildS3Key } from '@/lib/s3-utils';
 
+export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
     const session = await getSessionOrThrow();

@@ -5,6 +5,7 @@ import { successResponse, errorResponse } from '@/utils/api';
 import { canUserSeeTask } from '@/lib/task-visibility';
 import { createChecklistItemSchema } from '@/lib/validations/task';
 
+export const dynamic = 'force-dynamic';
 type Params = { params: Promise<{ id: string }> };
 
 async function loadTaskForUser(taskId: string, userId: string, orgId: string) {

@@ -5,6 +5,7 @@ import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { canUserSeeTask } from '@/lib/task-visibility';
 
+export const dynamic = 'force-dynamic';
 type Params = { params: Promise<{ id: string }> };
 
 export async function POST(_req: NextRequest, { params }: Params) {

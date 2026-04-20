@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 
+export const dynamic = 'force-dynamic';
 const bodySchema = z.object({
   targetType: z.enum([
     'RECEIPT', 'SHIPMENT', 'TRANSFER', 'WRITEOFF', 'RETURN',

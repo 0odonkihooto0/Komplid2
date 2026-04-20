@@ -5,6 +5,7 @@ import { successResponse, errorResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
 import { createLinkSchema } from '@/lib/validations/bim';
 
+export const dynamic = 'force-dynamic';
 /** GET /api/projects/[projectId]/bim/links
  *  Связи элементов ТИМ с сущностями системы.
  *  Параметры: ?entityType=GanttTask, ?elementId=<uuid>, ?entityId=<uuid>, ?modelId=<uuid>

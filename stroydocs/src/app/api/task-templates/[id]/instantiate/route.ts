@@ -5,6 +5,7 @@ import { successResponse, errorResponse } from '@/utils/api';
 import { instantiateTemplateSchema } from '@/lib/validations/task';
 import { enqueueNotification } from '@/lib/queue';
 
+export const dynamic = 'force-dynamic';
 type Params = { params: Promise<{ id: string }> };
 
 export async function POST(req: NextRequest, { params }: Params) {

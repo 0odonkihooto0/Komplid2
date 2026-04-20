@@ -4,6 +4,7 @@ import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
 /** GET /api/projects/[projectId]/bim/models/[modelId]/element-types
  *  Лёгкий список пар { ifcGuid, ifcType } для окрашивания модели по типу IFC.
  *  Без пагинации: ответ ~30 байт на строку, подходит для моделей до ~50k элементов.

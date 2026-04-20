@@ -5,6 +5,7 @@ import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
 /** POST /api/projects/[projectId]/bim/models/[modelId]/elements/[elementId]/refresh-properties
  *  Вызывает IfcOpenShell-сервис для получения PropertySets элемента по GUID
  *  и сохраняет результат в BimElement.properties.

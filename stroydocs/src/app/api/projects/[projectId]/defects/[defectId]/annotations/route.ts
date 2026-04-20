@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 
+export const dynamic = 'force-dynamic';
 interface Params { projectId: string; defectId: string }
 
 const annotationsSchema = z.object({

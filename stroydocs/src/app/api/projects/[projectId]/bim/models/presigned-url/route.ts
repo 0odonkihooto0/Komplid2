@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger';
 import { presignedUrlSchema } from '@/lib/validations/bim';
 import { generateUploadUrl, buildBimModelKey } from '@/lib/s3-utils';
 
+export const dynamic = 'force-dynamic';
 /** POST /api/projects/[projectId]/bim/models/presigned-url
  *  Возвращает pre-signed URL для прямой загрузки IFC-файла в Timeweb S3 (TTL: 15 мин).
  *  Клиент загружает файл в S3, затем вызывает POST /bim/models с полученным s3Key.

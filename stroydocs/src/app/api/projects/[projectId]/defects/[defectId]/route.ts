@@ -7,6 +7,7 @@ import { successResponse, errorResponse } from '@/utils/api';
 import { invalidateAnalyticsCache } from '@/lib/analytics/cache';
 import { getDefectCategoryRefId } from '@/lib/references/ref-mapper';
 
+export const dynamic = 'force-dynamic';
 interface Params { projectId: string; defectId: string }
 
 const DEFECT_INCLUDE = {

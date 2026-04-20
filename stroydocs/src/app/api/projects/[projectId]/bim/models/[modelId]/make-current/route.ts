@@ -4,6 +4,7 @@ import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
 type RouteParams = { params: { projectId: string; modelId: string } };
 
 /** POST /api/projects/[projectId]/bim/models/[modelId]/make-current

@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger';
 import { createModelSchema } from '@/lib/validations/bim';
 import { BimModelStatus, Prisma } from '@prisma/client';
 
+export const dynamic = 'force-dynamic';
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
 

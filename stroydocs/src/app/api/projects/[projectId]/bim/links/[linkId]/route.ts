@@ -4,6 +4,7 @@ import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
 /** DELETE /api/projects/[projectId]/bim/links/[linkId] — удалить связь */
 export async function DELETE(
   _req: NextRequest,

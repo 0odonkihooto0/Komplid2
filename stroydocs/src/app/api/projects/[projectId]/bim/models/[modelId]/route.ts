@@ -5,6 +5,7 @@ import { successResponse, errorResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
 import { getDownloadUrl } from '@/lib/s3-utils';
 
+export const dynamic = 'force-dynamic';
 type RouteParams = { params: { projectId: string; modelId: string } };
 
 /** Проверить принадлежность модели организации */
