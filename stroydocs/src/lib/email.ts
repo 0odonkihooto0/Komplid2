@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import type { NotificationJob } from './queue';
+import { logger } from './logger';
 
 // SMTP-транспорт (Yandex Mail / любой SMTP-сервер)
 function createTransport() {
@@ -45,7 +46,7 @@ function renderEmailHtml(job: NotificationJob): string {
 // Отправить письмо по данным задачи
 export async function sendNotificationEmail(job: NotificationJob): Promise<void> {
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.warn('[email] SMTP не настроен — письмо не отправлено');
+    logger.warn('[email] SMTP не настроен — письмо не отправлено');
     return;
   }
 

@@ -22,6 +22,8 @@ interface Props {
 
 export function AddTechnicalConditionDialog({ open, onOpenChange, projectId }: Props) {
   const [customType, setCustomType] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const { createMutation } = useTechnicalConditions(projectId);
 
   // Загрузка земельных участков для выбора
@@ -59,13 +61,41 @@ export function AddTechnicalConditionDialog({ open, onOpenChange, projectId }: P
   function handleClose() {
     reset();
     setCustomType(false);
+    setPendingFile(null);
     onOpenChange(false);
   }
 
-  function onSubmit(data: CreateTechnicalConditionInput) {
-    // TODO: реализовать загрузку файла в S3 перед созданием ТУ
-    // Сейчас documentS3Key не заполняется — файл сохраняется только локально
-    createMutation.mutate(data, { onSuccess: handleClose });
+  async function onSubmit(data: CreateTechnicalConditionInput) {
+    let s3Key: string | null = null;
+
+    if (pendingFile) {
+      setIsUploading(true);
+      try {
+        const urlRes = await fetch(`/api/projects/${projectId}/technical-conditions/presigned-url`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: pendingFile.name,
+            mimeType: pendingFile.type || 'application/octet-stream',
+          }),
+        });
+        const urlJson = await urlRes.json();
+        if (!urlJson.success) throw new Error(urlJson.error);
+
+        await fetch(urlJson.data.presignedUrl, {
+          method: 'PUT',
+          body: pendingFile,
+          headers: { 'Content-Type': pendingFile.type || 'application/octet-stream' },
+        });
+        s3Key = urlJson.data.s3Key;
+      } catch {
+        setIsUploading(false);
+        return;
+      }
+      setIsUploading(false);
+    }
+
+    createMutation.mutate({ ...data, documentS3Key: s3Key }, { onSuccess: handleClose });
   }
 
   return (
@@ -149,9 +179,8 @@ export function AddTechnicalConditionDialog({ open, onOpenChange, projectId }: P
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
-                  // TODO: загрузить файл в S3 и получить s3Key
+                  setPendingFile(file);
                   setValue('documentFileName', file.name);
-                  setValue('documentS3Key', null);
                 }
               }}
             />
@@ -159,8 +188,8 @@ export function AddTechnicalConditionDialog({ open, onOpenChange, projectId }: P
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>Отмена</Button>
-            <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? 'Сохранение...' : 'Добавить'}
+            <Button type="submit" disabled={isUploading || createMutation.isPending}>
+              {isUploading ? 'Загрузка...' : createMutation.isPending ? 'Сохранение...' : 'Добавить'}
             </Button>
           </DialogFooter>
         </form>

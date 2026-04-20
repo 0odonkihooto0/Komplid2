@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import type { Canvas } from 'fabric';
 import { ArrowRight, Square, Type, Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePhotoAnnotations } from './usePhotoAnnotations';
@@ -16,8 +17,7 @@ interface Props {
 
 export function PhotoAnnotationEditor({ photoId, imageUrl, initialAnnotations, onClose }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const fabricCanvasRef = useRef<any>(null);
+  const fabricCanvasRef = useRef<Canvas | null>(null);
   const [activeTool, setActiveTool] = useState<ToolType>('arrow');
   const [isReady, setIsReady] = useState(false);
   const { saveAnnotations, isSaving } = usePhotoAnnotations();
