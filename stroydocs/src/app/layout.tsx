@@ -9,6 +9,7 @@ import { InstallPromptIos } from '@/components/pwa/InstallPromptIos';
 import { NetworkListener } from '@/components/pwa/NetworkListener';
 import { OfflineBanner } from '@/components/pwa/OfflineBanner';
 import { BackOnlineToast } from '@/components/pwa/BackOnlineToast';
+import { SyncTrigger } from '@/components/pwa/SyncTrigger';
 
 const inter = Inter({
   subsets: ['latin', 'cyrillic'],
@@ -84,6 +85,7 @@ export default function RootLayout({
             {children}
             <Toaster />
             <NetworkListener />
+            <SyncTrigger />
             <OfflineBanner />
             <BackOnlineToast />
             <InstallPromptAndroid />
