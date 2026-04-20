@@ -59,6 +59,7 @@ const config: Config = {
         ink: 'var(--ink)',
         'ink-soft': 'var(--ink-soft)',
         'ink-muted': 'var(--ink-muted)',
+        'border-token': 'var(--border-token)',
         'border-strong': 'var(--border-strong)',
         'accent-bg': 'var(--accent-bg)',
         'accent-ink': 'var(--accent-ink)',
