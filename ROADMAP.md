@@ -9,12 +9,13 @@
 
 ---
 
-### Добавлено (2026-04-20) — MODULE16 Фаза 2: Инициализация IndexedDB
+### Добавлено (2026-04-20) — MODULE16 Фаза 2: IndexedDB + Sync Queue ✅
 
-- ✅ Установлен пакет `idb`; создана схема `stroydocs-offline` v1 (4 object stores: sync-queue, offline-journal-entries, offline-photos, cache-snapshots)
-- ✅ `src/lib/idb/db.ts` — singleton `getDB()`, DBSchema, типы SyncQueueItem / OfflineJournalEntry / OfflinePhoto / CacheSnapshot
-- ✅ `src/lib/idb/quota.ts` — `getStorageEstimate()`, `requestPersistentStorage()`
-- ✅ `NetworkListener.tsx` — вызов `requestPersistentStorage()` при монтировании
+- ✅ `idb` установлен; `src/lib/idb/db.ts` — схема `stroydocs-offline` v1 (4 stores: sync-queue, offline-journal-entries, offline-photos, cache-snapshots)
+- ✅ `src/lib/idb/quota.ts` — `getStorageEstimate()`, `requestPersistentStorage()` (вызов в NetworkListener)
+- ✅ `src/lib/idb/repos/` — 4 репозитория: sync-queue-repo, journal-entries-repo, photos-repo, cache-snapshots-repo
+- ✅ `src/lib/idb/sync-manager.ts` — процессор очереди: upload фото → API queue, exponential backoff, 4xx-фильтрация, post-process journal entries
+- ✅ `src/components/pwa/SyncTrigger.tsx` — автотриггер при `online` + при загрузке; подключён в layout.tsx
 
 ---
 
