@@ -1,9 +1,14 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/shared/Providers';
 import { Toaster } from '@/components/shared/Toaster';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
+import { InstallPromptAndroid } from '@/components/pwa/InstallPromptAndroid';
+import { InstallPromptIos } from '@/components/pwa/InstallPromptIos';
+import { NetworkListener } from '@/components/pwa/NetworkListener';
+import { OfflineBanner } from '@/components/pwa/OfflineBanner';
+import { BackOnlineToast } from '@/components/pwa/BackOnlineToast';
 
 const inter = Inter({
   subsets: ['latin', 'cyrillic'],
@@ -20,6 +25,27 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'StroyDocs',
   description: 'B2B SaaS-платформа для автоматизации исполнительной документации в строительстве',
+  applicationName: 'StroyDocs',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'StroyDocs',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#2563EB',
+  viewportFit: 'cover',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 // Инлайн-скрипт работает синхронно до первой отрисовки — защищает от FOUC
@@ -57,6 +83,11 @@ export default function RootLayout({
           <ErrorBoundary>
             {children}
             <Toaster />
+            <NetworkListener />
+            <OfflineBanner />
+            <BackOnlineToast />
+            <InstallPromptAndroid />
+            <InstallPromptIos />
           </ErrorBoundary>
         </Providers>
       </body>
