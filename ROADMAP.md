@@ -1383,9 +1383,10 @@
   - ✅ Шаг 1.3: Web App Manifest + иконки-заглушки (`src/app/manifest.ts`, `public/icons/`)
   - ✅ Шаг 1.4: InstallPrompt (Android `beforeinstallprompt` + iOS Safari инструкция)
   - ✅ Шаг 1.5: Zustand network store + OfflineBanner + heartbeat `/api/ping`
-- ⬜ Офлайн-режим: замечания, фото, записи журнала без интернета
+- ✅ Фаза 2–3 — IndexedDB + Offline-first hooks: `idb` слой, stores (journal-drafts, photos-queue, sync-queue), `useOfflineQuery`/`useOfflineMutation`, BackgroundSync очередь
+- ✅ Фаза 4 — Push-уведомления (VAPID, self-hosted, ФЗ-152): `web-push`, модель `PushSubscription`, API `/api/push/subscribe|unsubscribe`, `src/lib/push/` (send-push, client, notification-adapter), SW обработчики push/notificationclick/pushsubscriptionchange, страница `/settings/notifications`, интеграция с BullMQ notification.worker
+- ⬜ Офлайн-режим: замечания, фото, записи журнала без интернета (Фаза 5)
 - ⬜ Синхронизация при восстановлении (conflict resolution)
-- ⬜ Push-уведомления (FCM / APNs)
 - ⬜ Геозоны (geofencing) — подтверждение присутствия ИТР при подписании
 - ⬜ 360° фотодокументация
 - ⬜ Быстрый доступ: АОСР, дефект, фото — в 2–3 тапа

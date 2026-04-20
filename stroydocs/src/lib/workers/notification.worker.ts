@@ -5,6 +5,7 @@
  */
 import { Worker } from 'bullmq';
 import { sendNotificationEmail } from '../email';
+import { sendPushForNotificationJob } from '../push/notification-adapter';
 import type { NotificationJob } from '../queue';
 
 // Парсим REDIS_URL в plain-объект опций для BullMQ.
@@ -28,6 +29,8 @@ const worker = new Worker<NotificationJob>(
     console.log(`[notification-worker] Обрабатываю задачу ${job.id}: ${job.data.type}`);
     await sendNotificationEmail(job.data);
     console.log(`[notification-worker] Email отправлен: ${job.data.email}`);
+    // Push параллельно email — fire-and-forget, не блокируем job
+    sendPushForNotificationJob(job.data).catch(() => {});
   },
   { connection: getRedisOptions(), concurrency: 5 }
 );

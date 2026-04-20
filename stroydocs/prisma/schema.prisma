@@ -400,6 +400,9 @@ model User {
   // Модуль 19 — Справочники
   referenceAudits ReferenceAudit[] @relation("ReferenceAuditUser")
 
+  // Модуль 16 — PWA Push-уведомления
+  pushSubscriptions PushSubscription[]
+
   @@index([organizationId])
   @@map("users")
 }
@@ -6052,4 +6055,23 @@ model ProblemIssueTypeRef {
 
   @@index([organizationId])
   @@map("problem_issue_types_ref")
+}
+
+/// Подписки на Web Push уведомления (Модуль 16 — PWA)
+model PushSubscription {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  endpoint    String   @unique
+  p256dhKey   String
+  authKey     String
+
+  userAgent   String?
+
+  createdAt   DateTime @default(now())
+  lastUsedAt  DateTime @default(now())
+
+  @@index([userId])
+  @@map("push_subscriptions")
 }
