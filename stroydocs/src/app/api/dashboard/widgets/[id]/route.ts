@@ -21,7 +21,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Params }) {
       position:  z.number().int().min(0).optional(),
       colSpan:   z.number().int().min(1).max(3).optional(),
       isVisible: z.boolean().optional(),
-      config:    z.any().optional(),
+      config:    z.record(z.unknown()).optional(),
     });
 
     const body: unknown = await req.json();
