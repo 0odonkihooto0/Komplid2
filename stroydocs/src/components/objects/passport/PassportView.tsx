@@ -17,6 +17,7 @@ import { PassportEditDialog } from './PassportEditDialog';
 import { CoordinatesMap } from './CoordinatesMap';
 import { ImplementationTimeline } from './ImplementationTimeline';
 import { HistoryDrawer } from './HistoryDrawer';
+import { ObjectMetrics } from './ObjectMetrics';
 import type { PassportUpdateData } from './usePassport';
 
 function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
@@ -119,7 +120,6 @@ export function PassportView({ projectId }: PassportViewProps) {
       ? `${project.latitude}, ${project.longitude}`
       : null;
   const stageText = PROJECT_STATUS_LABELS[project.status] ?? project.status;
-  const smrPercent = widgetsData?.smr?.completionPercent ?? null;
 
   return (
     <div className="space-y-6">
@@ -173,12 +173,7 @@ export function PassportView({ projectId }: PassportViewProps) {
             </div>
           </div>
         </div>
-        <CardContent className="grid grid-cols-2 gap-4 p-5 sm:grid-cols-4">
-          <HeroFact label="Стадия"       value={stageText} tone="accent" />
-          <HeroFact label="Площадь"      value={project.area != null ? `${project.area} м²` : '—'} />
-          <HeroFact label="Ввод (план)"  value={project.plannedEndDate ? formatDate(project.plannedEndDate) : '—'} />
-          <HeroFact label="Готовность СМР" value={smrPercent != null ? `${smrPercent}%` : '—'} tone={smrPercent != null && smrPercent > 0 ? 'ok' : 'neutral'} />
-        </CardContent>
+        <ObjectMetrics stage={project.stage} gprProgress={project.gprProgress} />
       </Card>
 
       {/* Название объекта + кнопки (под hero) */}
@@ -340,27 +335,3 @@ export function PassportView({ projectId }: PassportViewProps) {
   );
 }
 
-function HeroFact({
-  label,
-  value,
-  tone = 'neutral',
-}: {
-  label: string;
-  value: string;
-  tone?: 'neutral' | 'accent' | 'ok';
-}) {
-  const valueColor =
-    tone === 'accent'
-      ? 'text-[var(--accent-bg)]'
-      : tone === 'ok'
-        ? 'text-[var(--ok)]'
-        : 'text-[var(--ink)]';
-  return (
-    <div>
-      <div className="font-mono text-xs2 uppercase tracking-[0.14em] text-[var(--ink-muted)]">
-        {label}
-      </div>
-      <div className={`mt-1 text-lg font-semibold ${valueColor}`}>{value}</div>
-    </div>
-  );
-}
