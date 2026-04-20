@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Komplid — Уведомления</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --font-ui:'Inter',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  --r-1:4px;--r-2:6px;--r-3:8px;--r-4:12px;
+}
+html[data-theme="light"]{
+  --bg:oklch(0.985 0.002 85);--bg-elev:oklch(1 0 0);--bg-inset:oklch(0.965 0.003 85);
+  --bg-hover:oklch(0.955 0.004 85);--bg-active:oklch(0.93 0.006 85);
+  --ink:oklch(0.22 0.008 255);--ink-soft:oklch(0.45 0.008 255);--ink-mute:oklch(0.58 0.007 255);
+  --border:oklch(0.91 0.004 255);--border-strong:oklch(0.82 0.006 255);
+  --shadow-1:0 1px 2px rgba(17,24,39,0.04),0 1px 3px rgba(17,24,39,0.03);
+  --shadow-2:0 4px 12px rgba(17,24,39,0.06),0 1px 2px rgba(17,24,39,0.04);
+  --side-bg:oklch(0.22 0.008 255);--side-ink:oklch(0.88 0.006 255);
+  --side-mute:oklch(0.62 0.008 255);--side-hover:oklch(0.28 0.01 255);--side-border:oklch(0.3 0.009 255);
+  --ok:oklch(0.65 0.14 155);--warn:oklch(0.72 0.15 72);--err:oklch(0.62 0.18 27);--info:oklch(0.62 0.12 250);
+}
+html[data-theme="dark"]{
+  --bg:oklch(0.17 0.008 255);--bg-elev:oklch(0.21 0.008 255);--bg-inset:oklch(0.195 0.008 255);
+  --bg-hover:oklch(0.245 0.009 255);--bg-active:oklch(0.28 0.01 255);
+  --ink:oklch(0.95 0.004 255);--ink-soft:oklch(0.75 0.007 255);--ink-mute:oklch(0.58 0.008 255);
+  --border:oklch(0.28 0.008 255);--border-strong:oklch(0.36 0.009 255);
+  --shadow-1:0 1px 2px rgba(0,0,0,0.4),0 1px 3px rgba(0,0,0,0.25);
+  --shadow-2:0 6px 20px rgba(0,0,0,0.35),0 2px 4px rgba(0,0,0,0.25);
+  --side-bg:oklch(0.14 0.009 255);--side-ink:oklch(0.92 0.006 255);
+  --side-mute:oklch(0.6 0.008 255);--side-hover:oklch(0.2 0.01 255);--side-border:oklch(0.24 0.008 255);
+  --ok:oklch(0.72 0.14 155);--warn:oklch(0.78 0.15 72);--err:oklch(0.7 0.17 27);--info:oklch(0.72 0.12 250);
+}
+html[data-palette="steel"] {--accent:oklch(0.72 0.16 62);--accent-ink:#1a0f00;--accent-soft:oklch(0.72 0.16 62/0.14);--accent-strong:oklch(0.62 0.18 55);}
+html[data-palette="cobalt"]{--accent:oklch(0.58 0.18 258);--accent-ink:#fff;--accent-soft:oklch(0.58 0.18 258/0.14);--accent-strong:oklch(0.5 0.2 258);}
+html[data-palette="lime"]  {--accent:oklch(0.76 0.18 128);--accent-ink:#0e1806;--accent-soft:oklch(0.76 0.18 128/0.14);--accent-strong:oklch(0.66 0.2 128);}
+
+*{box-sizing:border-box;}html,body{margin:0;padding:0;}
+body{font-family:var(--font-ui);font-size:13px;line-height:1.45;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;}
+
+/* ===== APP SHELL ===== */
+.app{display:grid;grid-template-columns:224px 1fr;height:100vh;overflow:hidden;}
+
+/* ===== SIDEBAR ===== */
+.sidebar{background:var(--side-bg);color:var(--side-ink);border-right:1px solid var(--side-border);display:flex;flex-direction:column;min-height:0;}
+.sidebar__head{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-bottom:1px solid var(--side-border);}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;letter-spacing:-0.01em;color:var(--side-ink);}
+.brand__mark{width:22px;height:22px;border-radius:5px;background:var(--accent);display:grid;place-items:center;color:var(--accent-ink);font-family:var(--font-mono);font-size:13px;font-weight:700;}
+.icon-btn{width:26px;height:26px;border-radius:5px;display:grid;place-items:center;background:transparent;border:0;cursor:pointer;color:var(--side-mute);}
+.icon-btn:hover{background:var(--side-hover);color:var(--side-ink);}
+.side-section{padding:12px 8px 4px;}
+.side-label{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.14em;color:var(--side-mute);padding:0 8px 6px;}
+.side-nav{display:flex;flex-direction:column;gap:1px;}
+.side-link{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;color:var(--side-ink);font-size:13px;text-decoration:none;cursor:pointer;}
+.side-link:hover{background:var(--side-hover);}
+.side-link.active{background:var(--side-hover);box-shadow:inset 2px 0 0 var(--accent);}
+.side-link .ic{width:14px;height:14px;color:var(--side-mute);}
+.side-link.active .ic{color:var(--accent);}
+.side-link .cnt{margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--side-mute);background:var(--side-hover);padding:1px 5px;border-radius:3px;}
+.side-link.active .cnt{background:var(--accent-soft);color:var(--accent);}
+.sidebar__foot{margin-top:auto;padding:10px 12px;border-top:1px solid var(--side-border);display:flex;align-items:center;gap:8px;}
+.avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-size:11px;font-weight:600;}
+.user-meta{font-size:12px;line-height:1.2;min-width:0;}
+.user-meta b{font-weight:500;display:block;color:var(--side-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;}
+.user-meta span{color:var(--side-mute);font-size:11px;}
+
+/* ===== CONTENT ===== */
+.content{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg);}
+.topbar{height:48px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--bg-elev);flex-shrink:0;}
+.crumbs{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-mute);}
+.crumbs a{color:var(--ink-soft);}
+.crumbs b{color:var(--ink);font-weight:500;}
+.crumbs .sep{color:var(--ink-mute);}
+.search{margin-left:auto;display:flex;align-items:center;gap:6px;padding:4px 8px 4px 6px;background:var(--bg-inset);border:1px solid var(--border);border-radius:var(--r-2);width:260px;font-size:12px;color:var(--ink-mute);}
+.search kbd{margin-left:auto;font-family:var(--font-mono);font-size:10px;padding:1px 4px;border:1px solid var(--border-strong);border-radius:3px;color:var(--ink-mute);background:var(--bg-elev);}
+.topbar-btn{width:28px;height:28px;border-radius:5px;display:grid;place-items:center;border:1px solid var(--border);background:var(--bg-elev);color:var(--ink-soft);cursor:pointer;position:relative;}
+.topbar-btn:hover{background:var(--bg-hover);}
+.topbar-btn .dot{position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--bg-elev);}
+.btn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:var(--r-2);font-size:12.5px;font-weight:500;border:1px solid var(--border);background:var(--bg-elev);color:var(--ink);cursor:pointer;font-family:inherit;}
+.btn:hover{background:var(--bg-hover);}
+.btn--ghost{background:transparent;border-color:transparent;}
+.btn--ghost:hover{background:var(--bg-hover);}
+.btn--danger{color:var(--err);border-color:color-mix(in oklch,var(--err) 25%,transparent);}
+.btn--danger:hover{background:color-mix(in oklch,var(--err) 8%,transparent);}
+.btn .ic{width:13px;height:13px;}
+.scroll{flex:1;min-height:0;overflow:auto;}
+
+/* ===== NOTIFICATION PAGE ===== */
+.npage{display:grid;grid-template-columns:1fr 300px;height:100%;min-height:0;}
+
+/* LEFT: feed */
+.feed{display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--border);}
+
+/* Tab bar */
+.tabbar{display:flex;align-items:center;padding:0 16px;border-bottom:1px solid var(--border);background:var(--bg-elev);flex-shrink:0;gap:0;}
+.tabbar__tab{position:relative;display:flex;align-items:center;gap:7px;padding:13px 14px;font-size:13px;font-weight:500;color:var(--ink-mute);cursor:pointer;white-space:nowrap;}
+.tabbar__tab:hover{color:var(--ink-soft);}
+.tabbar__tab.active{color:var(--ink);}
+.tabbar__tab.active::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--accent);}
+.tabbar__tab .badge{font-family:var(--font-mono);font-size:10px;padding:2px 6px;border-radius:999px;background:var(--bg-inset);border:1px solid var(--border);color:var(--ink-mute);}
+.tabbar__tab.active .badge{background:var(--accent);color:var(--accent-ink);border-color:transparent;}
+.tabbar__right{margin-left:auto;display:flex;gap:6px;}
+
+/* Filter bar */
+.filterbar{display:flex;align-items:center;gap:6px;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--bg);overflow-x:auto;flex-shrink:0;scrollbar-width:none;}
+.filterbar::-webkit-scrollbar{display:none;}
+.filter-chip{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:500;border:1px solid var(--border);background:var(--bg-elev);color:var(--ink-soft);cursor:pointer;white-space:nowrap;}
+.filter-chip:hover{border-color:var(--border-strong);color:var(--ink);}
+.filter-chip.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-strong);}
+.filter-chip .dot{width:6px;height:6px;border-radius:50%;}
+
+/* Inbox items */
+.inbox-list{display:flex;flex-direction:column;}
+.inbox-item{display:grid;grid-template-columns:36px 1fr auto;gap:0 12px;padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer;position:relative;transition:background 0.1s;}
+.inbox-item:hover{background:var(--bg-hover);}
+.inbox-item.unread{background:color-mix(in oklch,var(--accent) 4%,var(--bg-elev));}
+.inbox-item.unread::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);}
+.inbox-item__icon{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;border:1px solid var(--border);background:var(--bg-inset);grid-row:span 2;}
+.inbox-item__icon svg{width:16px;height:16px;}
+.inbox-item__head{display:flex;align-items:baseline;gap:8px;min-width:0;}
+.inbox-item__title{font-size:13px;font-weight:500;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.inbox-item__time{font-family:var(--font-mono);font-size:10px;color:var(--ink-mute);white-space:nowrap;letter-spacing:0.06em;}
+.inbox-item__meta{font-size:12px;color:var(--ink-mute);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.inbox-item__actions{display:flex;gap:4px;align-items:flex-start;grid-row:span 2;}
+
+/* Chips */
+.chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;padding:2px 6px 2px 5px;border-radius:3px;background:var(--bg-inset);color:var(--ink-soft);border:1px solid var(--border);white-space:nowrap;}
+.chip::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+.chip--ok{color:var(--ok);background:color-mix(in oklch,var(--ok) 12%,transparent);border-color:color-mix(in oklch,var(--ok) 22%,transparent);}
+.chip--warn{color:var(--warn);background:color-mix(in oklch,var(--warn) 12%,transparent);border-color:color-mix(in oklch,var(--warn) 22%,transparent);}
+.chip--err{color:var(--err);background:color-mix(in oklch,var(--err) 12%,transparent);border-color:color-mix(in oklch,var(--err) 22%,transparent);}
+.chip--info{color:var(--info);background:color-mix(in oklch,var(--info) 12%,transparent);border-color:color-mix(in oklch,var(--info) 22%,transparent);}
+.chip--accent{color:var(--accent-strong);background:var(--accent-soft);border-color:transparent;}
+
+/* Unread dot */
+.unread-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;align-self:center;}
+
+/* Notification items (activity) */
+.notif-item{display:grid;grid-template-columns:32px 1fr auto;gap:0 10px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s;align-items:start;}
+.notif-item:hover{background:var(--bg-hover);}
+.notif-item.unread{background:color-mix(in oklch,var(--accent) 4%,var(--bg-elev));}
+.notif-item.unread::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);}
+.notif-item{position:relative;}
+.notif-avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:600;font-family:var(--font-mono);background:var(--bg-inset);border:1px solid var(--border);color:var(--ink-soft);}
+.notif-avatar--sys{border-radius:8px;}
+.notif-body b{font-weight:500;}
+.notif-body .txt{font-size:12.5px;color:var(--ink);line-height:1.4;}
+.notif-body .sub{font-size:11.5px;color:var(--ink-mute);margin-top:2px;}
+.notif-time{font-family:var(--font-mono);font-size:10px;color:var(--ink-mute);white-space:nowrap;letter-spacing:0.06em;text-align:right;}
+
+/* Empty state */
+.empty{padding:64px 24px;text-align:center;}
+.empty__icon{width:48px;height:48px;border-radius:12px;background:var(--bg-inset);border:1px solid var(--border);display:grid;place-items:center;color:var(--ink-mute);margin:0 auto 16px;}
+.empty__title{font-size:15px;font-weight:600;margin:0 0 8px;}
+.empty__sub{font-size:13px;color:var(--ink-mute);margin:0;}
+
+/* ===== RIGHT PANEL ===== */
+.panel{background:var(--bg-elev);display:flex;flex-direction:column;overflow:hidden;}
+.panel__head{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.panel__title{font-size:13px;font-weight:600;letter-spacing:-0.005em;}
+.panel__label{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.14em;color:var(--ink-mute);}
+.panel__right{margin-left:auto;}
+.panel__body{padding:0;overflow:auto;flex:1;}
+.panel__section{padding:14px 16px 8px;border-bottom:1px solid var(--border);}
+.panel__section:last-child{border-bottom:0;}
+.panel__sec-title{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:var(--ink-mute);margin-bottom:8px;}
+
+/* Stats row */
+.stat-row{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--border);font-size:12.5px;}
+.stat-row:last-child{border-bottom:0;}
+.stat-row b{font-family:var(--font-mono);font-size:13px;font-variant-numeric:tabular-nums;color:var(--ink);}
+
+/* Route step */
+.route{display:flex;flex-direction:column;gap:0;}
+.route-step{display:grid;grid-template-columns:14px 1fr;gap:0 10px;padding:8px 0;position:relative;}
+.route-step::before{content:'';position:absolute;left:7px;top:22px;bottom:-8px;width:1px;background:var(--border);}
+.route-step:last-child::before{display:none;}
+.route-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border-strong);background:var(--bg-elev);margin-top:2px;position:relative;z-index:1;}
+.route-dot--done{background:var(--ok);border-color:var(--ok);}
+.route-dot--cur{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+.route-dot--wait{background:var(--bg-elev);border-color:var(--border-strong);}
+.route-label{font-size:12.5px;color:var(--ink);}
+.route-sub{font-size:11px;color:var(--ink-mute);margin-top:1px;}
+
+/* Deadline bar */
+.deadline{display:flex;align-items:center;gap:8px;padding:8px 0;font-size:12px;}
+.deadline .date{font-family:var(--font-mono);font-size:11px;color:var(--ink-mute);width:52px;flex-shrink:0;}
+.deadline .desc{flex:1;color:var(--ink);}
+
+/* Action buttons */
+.action-btns{display:flex;flex-direction:column;gap:6px;padding:14px 16px;}
+.action-btn{height:34px;border-radius:var(--r-3);font-size:13px;font-weight:500;border:1px solid var(--border);background:var(--bg-elev);color:var(--ink);cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;transition:background 0.1s;}
+.action-btn:hover{background:var(--bg-hover);}
+.action-btn--primary{background:var(--bg-inset);border-color:var(--border-strong);}
+.action-btn--accept{background:var(--ok);color:#fff;border-color:var(--ok);}
+.action-btn--accept:hover{background:oklch(0.58 0.14 155);}
+.action-btn--reject{color:var(--err);border-color:color-mix(in oklch,var(--err) 25%,transparent);}
+.action-btn--reject:hover{background:color-mix(in oklch,var(--err) 8%,transparent);}
+
+/* Tweaks */
+.tweaks{position:fixed;bottom:16px;right:16px;background:var(--bg-elev);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-2);width:260px;z-index:50;font-family:var(--font-ui);overflow:hidden;}
+.tweaks__head{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);}
+.tweaks__title{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.16em;color:var(--ink-mute);}
+.tweaks__body{padding:12px;display:flex;flex-direction:column;gap:12px;}
+.tweaks__row label{display:block;font-size:11px;color:var(--ink-mute);margin-bottom:6px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.12em;}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--bg-inset);padding:2px;border-radius:6px;gap:2px;}
+.seg--3{grid-template-columns:1fr 1fr 1fr;}
+.seg > button{font-family:inherit;border:0;background:transparent;cursor:pointer;font-size:12px;font-weight:500;padding:5px 8px;border-radius:4px;color:var(--ink-soft);display:inline-flex;align-items:center;justify-content:center;gap:5px;}
+.seg > button[aria-pressed="true"]{background:var(--bg-elev);color:var(--ink);box-shadow:var(--shadow-1);}
+.swatch{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,0.08);}
+</style>
+</head>
+<body>
+
+<div class="app" data-screen-label="Уведомления">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" aria-label="Навигация">
+    <div class="sidebar__head">
+      <div class="brand"><span class="brand__mark">K</span><span>Komplid</span></div>
+      <button class="icon-btn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+    </div>
+    <div class="side-section">
+      <div class="side-label">Главное</div>
+      <nav class="side-nav">
+        <a class="side-link"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Дашборд</a>
+        <a class="side-link"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4v10l-9 4-9-4V7z"/></svg>Объекты<span class="cnt">47</span></a>
+        <a class="side-link"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h12l4 4v12H4z"/></svg>Документы<span class="cnt">1.2k</span></a>
+        <a class="side-link"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/></svg>Задачи<span class="cnt">23</span></a>
+        <a class="side-link"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Аналитика</a>
+        <a class="side-link active"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Уведомления<span class="cnt">8</span></a>
+      </nav>
+    </div>
+    <div class="side-section">
+      <div class="side-label">Организация</div>
+      <nav class="side-nav">
+        <a class="side-link"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>Участники</a>
+        <a class="side-link"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v6"/><path d="M12 17v6"/><path d="M4.22 4.22l4.24 4.24"/><path d="M15.54 15.54l4.24 4.24"/><path d="M1 12h6"/><path d="M17 12h6"/></svg>Настройки</a>
+      </nav>
+    </div>
+    <div class="sidebar__foot">
+      <div class="avatar">АП</div>
+      <div class="user-meta"><b>Александр Петров</b><span>Прораб · СУ-4</span></div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <section class="content">
+    <header class="topbar">
+      <div class="crumbs"><b>Уведомления</b></div>
+      <div class="search">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+        Поиск по уведомлениям…<kbd>⌘K</kbd>
+      </div>
+      <button class="topbar-btn" id="themeBtn" aria-label="Тема">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </header>
+
+    <div class="scroll">
+      <div class="npage" style="height:100%">
+
+        <!-- FEED (left) -->
+        <div class="feed">
+
+          <!-- Tab bar -->
+          <div class="tabbar">
+            <button class="tabbar__tab active" id="tabInbox" onclick="switchTab('inbox')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 8h16"/><path d="M8 12h8"/></svg>
+              Входящие <span class="badge" id="inboxBadge">8</span>
+            </button>
+            <button class="tabbar__tab" id="tabNotif" onclick="switchTab('notif')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              Лента <span class="badge" id="notifBadge">3</span>
+            </button>
+            <div class="tabbar__right">
+              <button class="btn btn--ghost" onclick="markAllRead()" style="font-size:11.5px">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                Все прочитаны
+              </button>
+              <button class="btn btn--ghost" style="font-size:11.5px">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+                Настройки
+              </button>
+            </div>
+          </div>
+
+          <!-- Filters -->
+          <div class="filterbar" id="filterbar">
+            <button class="filter-chip active" onclick="setFilter('all',this)">Все</button>
+            <button class="filter-chip" onclick="setFilter('ИД',this)"><span class="dot" style="background:var(--info)"></span>ИД</button>
+            <button class="filter-chip" onclick="setFilter('СЭД',this)"><span class="dot" style="background:var(--ok)"></span>СЭД</button>
+            <button class="filter-chip" onclick="setFilter('ПИР',this)"><span class="dot" style="background:var(--accent)"></span>ПИР</button>
+            <button class="filter-chip" onclick="setFilter('Переписка',this)"><span class="dot" style="background:var(--warn)"></span>Переписка</button>
+            <button class="filter-chip" onclick="setFilter('Журналы',this)"><span class="dot" style="background:var(--ink-mute)"></span>Журналы</button>
+            <button class="filter-chip" onclick="setFilter('СК',this)"><span class="dot" style="background:var(--err)"></span>СК</button>
+          </div>
+
+          <!-- List -->
+          <div style="flex:1;overflow:auto;" id="feedList">
+            <!-- populated by JS -->
+          </div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="panel" id="rightPanel">
+          <!-- default: nothing selected -->
+          <div class="panel__head"><span class="panel__label">Детали</span><span class="panel__title" id="panelTitle" style="color:var(--ink-mute);font-weight:400">Выберите документ</span></div>
+          <div class="panel__body" id="panelBody">
+            <div class="empty">
+              <div class="empty__icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 8h16"/><path d="M8 12h8"/></svg></div>
+              <p class="empty__title">Ничего не выбрано</p>
+              <p class="empty__sub">Нажмите на документ слева, чтобы увидеть маршрут согласования и действия.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- TWEAKS PANEL -->
+<aside class="tweaks" id="tweaksPanel" hidden>
+  <header class="tweaks__head">
+    <span class="tweaks__title">Tweaks</span>
+    <button class="icon-btn" id="tweaksClose" style="margin-left:auto;color:var(--ink-mute)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </header>
+  <div class="tweaks__body">
+    <div class="tweaks__row"><label>Тема</label>
+      <div class="seg" data-seg="theme">
+        <button data-value="light" aria-pressed="true">☀ Светлая</button>
+        <button data-value="dark">☾ Тёмная</button>
+      </div>
+    </div>
+    <div class="tweaks__row"><label>Акцент</label>
+      <div class="seg seg--3" data-seg="palette">
+        <button data-value="steel" aria-pressed="true"><span class="swatch" style="background:oklch(0.72 0.16 62)"></span>Steel</button>
+        <button data-value="cobalt"><span class="swatch" style="background:oklch(0.58 0.18 258)"></span>Cobalt</button>
+        <button data-value="lime"><span class="swatch" style="background:oklch(0.76 0.18 128)"></span>Lime</button>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<script>
+const DEFAULTS = /*EDITMODE-BEGIN*/{"theme":"light","palette":"steel"}/*EDITMODE-END*/;
+const root = document.documentElement;
+function applyTheme(k,v){
+  if(k==='theme') root.setAttribute('data-theme',v);
+  if(k==='palette') root.setAttribute('data-palette',v);
+  document.querySelectorAll(`.seg[data-seg="${k}"] button`).forEach(b=>b.setAttribute('aria-pressed',b.dataset.value===v?'true':'false'));
+}
+const saved = JSON.parse(localStorage.getItem('komplid_tweaks')||'null')||DEFAULTS;
+Object.entries(saved).forEach(([k,v])=>applyTheme(k,v));
+function setValue(k,v){saved[k]=v;localStorage.setItem('komplid_tweaks',JSON.stringify(saved));applyTheme(k,v);try{window.parent.postMessage({type:'__edit_mode_set_keys',edits:{[k]:v}},'*')}catch(e){}}
+document.querySelectorAll('.seg').forEach(s=>{const k=s.dataset.seg;s.addEventListener('click',e=>{const b=e.target.closest('button[data-value]');if(b)setValue(k,b.dataset.value);});});
+document.getElementById('themeBtn').addEventListener('click',()=>{setValue('theme',root.getAttribute('data-theme')==='light'?'dark':'light');});
+const tweaks=document.getElementById('tweaksPanel');
+document.getElementById('tweaksClose').addEventListener('click',()=>tweaks.hidden=true);
+window.addEventListener('message',e=>{const d=e.data||{};if(d.type==='__activate_edit_mode')tweaks.hidden=false;if(d.type==='__deactivate_edit_mode')tweaks.hidden=true;});
+try{window.parent.postMessage({type:'__edit_mode_available'},'*')}catch(e){}
+
+// ==================== DATA ====================
+const INBOX = [
+  {id:'s1', unread:true, category:'ИД', typeLabel:'АОСР', icon:'id',
+   title:'АОСР-0412 · Монолит 9 этаж, сектор А',
+   meta:'ЖК «Северная долина» к.14 · ООО «МонолитСпецстрой»',
+   time:'Сегодня, 13:48',
+   route:[{label:'Подрядчик',sub:'Иванов М. · подписал',state:'done'},{label:'Технадзор',sub:'Волков И. · подписал',state:'done'},{label:'Авт. надзор',sub:'Кузнецов С. · ожидает подписи',state:'cur'},{label:'Заказчик',sub:'Строй‑Инвест',state:'wait'}],
+   deadline:'Срок: 22 апр 2026',
+   stats:[{k:'Тип документа',v:'АОСР'},{k:'Объект',v:'OBJ-0427'},{k:'Договор',v:'DP-2026-041'},{k:'Статус',v:'На авт. надзоре'}],
+   urgent:false},
+  {id:'s2', unread:true, category:'СЭД', typeLabel:'Письмо', icon:'sed',
+   title:'Исх. №СН-047 · Запрос на продление срока сдачи',
+   meta:'ЖК «Северная долина» к.14 · Заказчик → Ген. подрядчик',
+   time:'Сегодня, 11:22',
+   route:[{label:'ГП · Петров А.',sub:'создал документ',state:'done'},{label:'Руководитель',sub:'Иванов М. · ожидает',state:'cur'},{label:'Заказчик',sub:'ООО «Строй‑Инвест»',state:'wait'}],
+   deadline:'Срок ответа: 25 апр 2026',
+   stats:[{k:'Тип',v:'Письмо'},{k:'Категория',v:'СЭД'},{k:'Объект',v:'OBJ-0427'},{k:'Приоритет',v:'Высокий'}],
+   urgent:true},
+  {id:'s3', unread:true, category:'ПИР', typeLabel:'Задание на проектирование', icon:'pir',
+   title:'ЗП-003 · Задание на проектирование, раздел ОВиК',
+   meta:'ЖК «Северная долина» к.14 · ПИ «Архитектон‑М»',
+   time:'Вчера, 17:05',
+   route:[{label:'Прораб · Петров А.',sub:'на проверке',state:'cur'},{label:'ГИП · Волкова Е.',sub:'следующий шаг',state:'wait'}],
+   deadline:'Срок: 28 апр 2026',
+   stats:[{k:'Тип',v:'Задание на ПИР'},{k:'Раздел',v:'ОВиК'},{k:'Объект',v:'OBJ-0427'},{k:'Статус',v:'На проверке'}],
+   urgent:false},
+  {id:'s4', unread:false, category:'ИД', typeLabel:'ОЖР', icon:'id',
+   title:'ОЖР раздел 5.2 · Кровельные работы',
+   meta:'ЖК «Северная долина» к.14 · ООО «КровляМастер»',
+   time:'Вчера, 09:14',
+   route:[{label:'Подрядчик',sub:'заполнил',state:'done'},{label:'Прораб',sub:'подписал',state:'done'},{label:'Технадзор',sub:'ожидает',state:'cur'}],
+   deadline:'Срок: 30 апр 2026',
+   stats:[{k:'Тип',v:'ОЖР'},{k:'Объект',v:'OBJ-0427'},{k:'Договор',v:'DP-2026-017'},{k:'Статус',v:'На технадзоре'}],
+   urgent:false},
+  {id:'s5', unread:false, category:'Переписка', typeLabel:'Переписка', icon:'corr',
+   title:'ОЗР-0031 · Запрос разъяснений по узлу У-14А',
+   meta:'ЖК «Северная долина» к.14 · Прораб → Проектировщик',
+   time:'18 апр, 14:00',
+   route:[{label:'Петров А.',sub:'создал запрос',state:'done'},{label:'Архитектон‑М',sub:'ожидает ответа',state:'cur'}],
+   deadline:'Ответ до: 22 апр 2026',
+   stats:[{k:'Тип',v:'RFI / ОЗР'},{k:'Объект',v:'OBJ-0427'},{k:'Статус',v:'Ожидание ответа'},{k:'Дней осталось',v:'2'}],
+   urgent:false},
+  {id:'s6', unread:false, category:'Журналы', typeLabel:'Журнал входного контроля', icon:'journal',
+   title:'ЖВК-044 · Входной контроль · Арматура А500С d16',
+   meta:'ЖК «Северная долина» к.14 · Партия 42 т · ТТН №00834',
+   time:'17 апр, 08:55',
+   route:[{label:'Кладовщик',sub:'зафиксировал поступление',state:'done'},{label:'Лаборатория',sub:'СтройТест · ожидает испытаний',state:'cur'},{label:'Прораб',sub:'утверждение',state:'wait'}],
+   deadline:'Испытания: 25 апр 2026',
+   stats:[{k:'Тип',v:'ЖВК'},{k:'Материал',v:'Арматура А500С'},{k:'Партия',v:'42 т'},{k:'Статус',v:'В лаборатории'}],
+   urgent:false},
+  {id:'s7', unread:false, category:'СК', typeLabel:'Предписание', icon:'sk',
+   title:'Предписание СК-0019 · Нарушение ПБ, 7 этаж',
+   meta:'ЖК «Северная долина» к.14 · Инспектор И. Волков',
+   time:'17 апр, 06:00',
+   route:[{label:'Инспектор СК',sub:'Волков И. · выдал предписание',state:'done'},{label:'Прораб',sub:'Петров А. · устранение',state:'cur'},{label:'Повторная проверка',sub:'30 апр 2026',state:'wait'}],
+   deadline:'Устранить до: 30 апр 2026 · просрочено 2 дн',
+   stats:[{k:'Тип',v:'Предписание'},{k:'Категория',v:'СК'},{k:'Объект',v:'OBJ-0427'},{k:'Статус',v:'Просрочено'}],
+   urgent:true},
+  {id:'s8', unread:false, category:'ПИР', typeLabel:'Акт сдачи-приёмки ПИР', icon:'pir',
+   title:'Акт ПИР № 002 · Изыскательские работы, этап 2',
+   meta:'ЖК «Северная долина» к.14 · Геофизическая партия',
+   time:'16 апр, 15:30',
+   route:[{label:'Проектировщик',sub:'подписал',state:'done'},{label:'Заказчик ПИР',sub:'ожидает приёмки',state:'cur'}],
+   deadline:'Срок приёмки: 24 апр 2026',
+   stats:[{k:'Тип',v:'Акт ПИР'},{k:'Этап',v:'Изыскания, этап 2'},{k:'Объект',v:'OBJ-0427'},{k:'Статус',v:'На приёмке'}],
+   urgent:false},
+];
+
+const NOTIFICATIONS = [
+  {id:'n1', unread:true, avatarTxt:'МИ', avatarColor:'var(--info)',
+   txt:'<b>Михаил Иванов</b> добавил комментарий к АОСР-0411',
+   sub:'«Уточните протокол входного контроля по п. 4.8»',
+   time:'Сегодня, 14:22', icon:'comment'},
+  {id:'n2', unread:true, avatarTxt:'ИВ', avatarColor:'var(--warn)',
+   txt:'<b>СК‑инспектор И. Волков</b> создал предписание СК‑0020',
+   sub:'Нарушение ОТ, сектор 4.1 · объект OBJ-0427',
+   time:'Сегодня, 13:00', icon:'warn'},
+  {id:'n3', unread:true, avatarTxt:'sys', avatarColor:'var(--bg-inset)', sys:true,
+   txt:'<b>Система</b> пересчитала ГПР · версия 15',
+   sub:'Смещение +3 дня по этапу «Фасад» · 247 задач',
+   time:'Сегодня, 09:30', icon:'system'},
+  {id:'n4', unread:false, avatarTxt:'ЕВ', avatarColor:'var(--ok)',
+   txt:'<b>Елена Волкова</b> загрузила рабочую документацию АР-6',
+   sub:'14 чертежей · версия 04 · на согласовании',
+   time:'Вчера, 17:05', icon:'file'},
+  {id:'n5', unread:false, avatarTxt:'АС', avatarColor:'var(--err)',
+   txt:'<b>А. Сидоров</b> вернул АОСР-0409 с замечаниями',
+   sub:'2 замечания к п. 3.2, требуется исправление',
+   time:'Вчера, 15:44', icon:'reject'},
+  {id:'n6', unread:false, avatarTxt:'sys', avatarColor:'var(--bg-inset)', sys:true,
+   txt:'<b>Система</b> автоматически заполнила КС‑2 №27',
+   sub:'Данные подтянуты из АОСР и ГПР · сумма 38 млн ₽',
+   time:'18 апр, 10:15', icon:'system'},
+  {id:'n7', unread:false, avatarTxt:'МИ', avatarColor:'var(--info)',
+   txt:'<b>Михаил Иванов</b> назначил задачу',
+   sub:'Проверить исполнительную документацию по свайному полю',
+   time:'17 апр, 16:30', icon:'task'},
+];
+
+const ICONS = {
+  id:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>`,
+  sed:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16v16H4z"/><path d="M4 8h16"/></svg>`,
+  pir:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12l9-9 9 9"/><path d="M3 12l9 9 9-9"/></svg>`,
+  corr:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+  journal:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h12a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3V4z"/></svg>`,
+  sk:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z"/></svg>`,
+};
+const CATEGORY_COLORS = {ИД:'var(--info)',СЭД:'var(--ok)',ПИР:'var(--accent)',Переписка:'var(--warn)',Журналы:'var(--ink-mute)',СК:'var(--err)'};
+
+let currentTab = 'inbox';
+let currentFilter = 'all';
+let selectedId = null;
+const readSet = new Set();
+
+function chipClass(cat){
+  const m={ИД:'chip--info',СЭД:'chip--ok',ПИР:'chip--accent',Переписка:'chip--warn',СК:'chip--err'};
+  return m[cat]||'';
+}
+
+function renderInbox(){
+  const list = INBOX.filter(i=>currentFilter==='all'||i.category===currentFilter);
+  const el = document.getElementById('feedList');
+  if(!list.length){el.innerHTML=`<div class="empty"><div class="empty__icon">${ICONS.id}</div><p class="empty__title">Нет документов</p><p class="empty__sub">По выбранному фильтру ничего не найдено.</p></div>`;return;}
+  el.innerHTML = list.map(item=>{
+    const isUnread = item.unread && !readSet.has(item.id);
+    return `<div class="inbox-item ${isUnread?'unread':''} ${selectedId===item.id?'':''}"
+      style="${selectedId===item.id?'background:var(--bg-active)':''}"
+      onclick="selectItem('${item.id}')" data-id="${item.id}">
+      <div class="inbox-item__icon" style="color:${CATEGORY_COLORS[item.category]||'var(--ink-mute)'}">
+        ${ICONS[item.icon]||ICONS.id}
+      </div>
+      <div>
+        <div class="inbox-item__head">
+          <span class="chip ${chipClass(item.category)}" style="margin-right:6px">${item.category}</span>
+          <span class="inbox-item__title">${item.typeLabel}</span>
+          ${item.urgent?'<span class="chip chip--err">срочно</span>':''}
+        </div>
+        <div class="inbox-item__title" style="margin-top:3px;font-weight:400">${item.title}</div>
+        <div class="inbox-item__meta">${item.meta}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <span class="inbox-item__time">${item.time}</span>
+        ${isUnread?'<span class="unread-dot"></span>':''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderNotifs(){
+  const el = document.getElementById('feedList');
+  el.innerHTML = NOTIFICATIONS.map(n=>{
+    const isUnread = n.unread && !readSet.has(n.id);
+    return `<div class="notif-item ${isUnread?'unread':''}" onclick="markRead('${n.id}')" data-id="${n.id}">
+      <div class="notif-avatar ${n.sys?'notif-avatar--sys':''}" style="background:${n.avatarColor};${n.sys?'color:var(--ink-mute)':'color:#fff'}">${n.sys?`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>`:n.avatarTxt}</div>
+      <div class="notif-body">
+        <div class="txt">${n.txt}</div>
+        <div class="sub">${n.sub}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <span class="notif-time">${n.time}</span>
+        ${isUnread?'<span class="unread-dot"></span>':''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderPanel(item){
+  if(!item){return;}
+  const routeHtml = item.route.map((s,i)=>`
+    <div class="route-step">
+      <div class="route-dot route-dot--${s.state}"></div>
+      <div>
+        <div class="route-label">${s.label}</div>
+        <div class="route-sub">${s.sub}</div>
+      </div>
+    </div>`).join('');
+
+  const statsHtml = item.stats.map(s=>`<div class="stat-row"><span>${s.k}</span><b>${s.v}</b></div>`).join('');
+
+  document.getElementById('panelTitle').textContent = item.typeLabel;
+  document.getElementById('panelTitle').style.color = '';
+  document.getElementById('panelTitle').style.fontWeight = '';
+
+  const isOverdue = item.deadline && item.deadline.toLowerCase().includes('просроч');
+
+  document.getElementById('panelBody').innerHTML = `
+    <div class="panel__section">
+      <div class="panel__sec-title">Документ</div>
+      <div style="font-size:13px;font-weight:500;color:var(--ink);line-height:1.4;margin-bottom:4px">${item.title}</div>
+      <div style="font-size:12px;color:var(--ink-mute);margin-bottom:10px">${item.meta}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <span class="chip ${chipClass(item.category)}">${item.category}</span>
+        ${item.urgent?'<span class="chip chip--err">срочно</span>':''}
+        ${isOverdue?'<span class="chip chip--err">просрочено</span>':''}
+      </div>
+    </div>
+    <div class="panel__section">
+      <div class="panel__sec-title">Реквизиты</div>
+      ${statsHtml}
+    </div>
+    <div class="panel__section">
+      <div class="panel__sec-title">Маршрут согласования</div>
+      <div class="route">${routeHtml}</div>
+    </div>
+    <div class="panel__section">
+      <div class="panel__sec-title">Срок</div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;${isOverdue?'color:var(--err)':'color:var(--ink)'}">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 2v4"/><path d="M16 2v4"/></svg>
+        ${item.deadline}
+      </div>
+    </div>
+    <div class="action-btns">
+      <button class="action-btn action-btn--accept" onclick="doAction('accept','${item.id}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5L20 7"/></svg>
+        Подписать / согласовать
+      </button>
+      <button class="action-btn" onclick="doAction('comment','${item.id}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Написать комментарий
+      </button>
+      <button class="action-btn action-btn--reject" onclick="doAction('reject','${item.id}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+        Вернуть с замечаниями
+      </button>
+      <button class="action-btn action-btn--primary" onclick="doAction('open','${item.id}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Открыть документ
+      </button>
+    </div>`;
+}
+
+function selectItem(id){
+  selectedId = id;
+  markRead(id);
+  const item = INBOX.find(i=>i.id===id);
+  renderPanel(item);
+  document.querySelectorAll('.inbox-item').forEach(el=>{
+    el.style.background = el.dataset.id===id?'var(--bg-active)':'';
+  });
+}
+
+function markRead(id){
+  readSet.add(id);
+  const el = document.querySelector(`[data-id="${id}"]`);
+  if(el){el.classList.remove('unread');el.querySelector('.unread-dot')?.remove();}
+  updateBadges();
+}
+
+function updateBadges(){
+  const ui = INBOX.filter(i=>i.unread&&!readSet.has(i.id)).length;
+  const un = NOTIFICATIONS.filter(n=>n.unread&&!readSet.has(n.id)).length;
+  document.getElementById('inboxBadge').textContent = ui||'';
+  document.getElementById('notifBadge').textContent = un||'';
+  document.querySelector('.side-link.active .cnt').textContent = (ui+un)||'';
+}
+
+function markAllRead(){
+  const src = currentTab==='inbox'?INBOX:NOTIFICATIONS;
+  src.forEach(i=>readSet.add(i.id));
+  currentTab==='inbox'?renderInbox():renderNotifs();
+  updateBadges();
+}
+
+function switchTab(tab){
+  currentTab = tab;
+  document.getElementById('tabInbox').classList.toggle('active',tab==='inbox');
+  document.getElementById('tabNotif').classList.toggle('active',tab==='notif');
+  currentFilter='all';
+  document.querySelectorAll('.filter-chip').forEach((c,i)=>c.classList.toggle('active',i===0));
+  selectedId=null;
+  document.getElementById('panelTitle').textContent='Выберите документ';
+  document.getElementById('panelTitle').style.color='var(--ink-mute)';
+  document.getElementById('panelTitle').style.fontWeight='400';
+  document.getElementById('panelBody').innerHTML=`<div class="empty"><div class="empty__icon">${ICONS.id}</div><p class="empty__title">Ничего не выбрано</p><p class="empty__sub">Нажмите на элемент слева.</p></div>`;
+  // Show/hide filters
+  document.getElementById('filterbar').style.display = tab==='inbox'?'flex':'none';
+  tab==='inbox'?renderInbox():renderNotifs();
+}
+
+function setFilter(cat, btn){
+  currentFilter = cat;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  renderInbox();
+}
+
+function doAction(action, id){
+  const labels={accept:'✓ Согласовано',comment:'Комментарий сохранён',reject:'Возвращено с замечаниями',open:'Открываем документ…'};
+  const item = INBOX.find(i=>i.id===id);
+  if(!item) return;
+  const btn = document.querySelector(`.action-btn--${action==='accept'?'accept':action==='reject'?'reject':'primary'}`);
+  const orig = btn?.textContent;
+  if(btn){btn.textContent=labels[action];btn.disabled=true;setTimeout(()=>{btn.textContent=orig;btn.disabled=false;},2000);}
+}
+
+// INIT
+renderInbox();
+</script>
+</body>
+</html>
