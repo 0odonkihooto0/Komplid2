@@ -85,7 +85,7 @@ export async function PATCH(
       id: updated.id,
       number: updated.number,
       status: updated.status,
-      workName: updated.workRecord?.workItem.name ?? '',
+      workName: updated.workRecord?.workItem?.name ?? '',
       materials: overrides.materials ?? dbMaterials,
       certificates: overrides.certificates ?? dbCertificates,
       schemaRef: overrides.schemaRef ?? '',

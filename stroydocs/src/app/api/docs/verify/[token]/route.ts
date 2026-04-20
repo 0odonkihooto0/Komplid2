@@ -54,8 +54,8 @@ export async function GET(
         updatedAt: projDoc.updatedAt,
         uploadedBy: `${projDoc.uploadedBy?.firstName ?? ''} ${projDoc.uploadedBy?.lastName ?? ''}`.trim() || undefined,
         folder: projDoc.folder?.name,
-        project: projDoc.folder?.project.name,
-        projectAddress: projDoc.folder?.project.address,
+        project: projDoc.folder?.project?.name,
+        projectAddress: projDoc.folder?.project?.address,
       });
     }
 

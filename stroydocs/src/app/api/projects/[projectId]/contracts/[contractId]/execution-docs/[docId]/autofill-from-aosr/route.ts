@@ -68,7 +68,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
     // Формируем записи разделов 3 и 5 из АОСР
     const records = aosrDocs.map((aosr) => ({
       date: aosr.createdAt.toLocaleDateString('ru-RU'),
-      workName: aosr.workRecord?.workItem.name || aosr.title,
+      workName: aosr.workRecord?.workItem?.name || aosr.title,
       location: aosr.workRecord?.location || '—',
       normative: aosr.workRecord?.normative || '—',
       status: aosr.status === 'SIGNED' ? 'Подписан' : 'В работе',
