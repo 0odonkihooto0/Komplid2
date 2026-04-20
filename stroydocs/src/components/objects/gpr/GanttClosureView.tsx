@@ -61,9 +61,12 @@ export function GanttClosureView({ objectId, versionId }: Props) {
                 <TableCell style={{ paddingLeft: `${indent + 8}px` }} className="max-w-48 truncate">
                   {task.name}
                 </TableCell>
-                <TableCell className="text-right">—</TableCell>
-                {/* TODO: factVolume требует Prisma-миграции GanttTask */}
-                <TableCell className="text-right">—</TableCell>
+                <TableCell className="text-right">
+                  {task.volume != null ? `${task.volume}${task.volumeUnit ? ' ' + task.volumeUnit : ''}` : '—'}
+                </TableCell>
+                <TableCell className="text-right">
+                  {task.factVolume != null ? `${task.factVolume}${task.volumeUnit ? ' ' + task.volumeUnit : ''}` : '—'}
+                </TableCell>
                 <TableCell className="text-right text-muted-foreground text-[10px]">скоро</TableCell>
                 <TableCell className="text-right">—</TableCell>
                 <TableCell>

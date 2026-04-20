@@ -23,6 +23,7 @@ const updateTaskSchema = z.object({
   // Расширенные поля задачи ГПР
   volume: z.number().nullable().optional(),
   volumeUnit: z.string().max(20).nullable().optional(),
+  factVolume: z.number().nullable().optional(),
   amount: z.number().nullable().optional(),
   amountVat: z.number().nullable().optional(),
   weight: z.number().min(0).optional(),

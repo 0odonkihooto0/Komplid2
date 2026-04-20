@@ -43,6 +43,7 @@ export interface GanttTaskItem {
   // Расширенные поля задачи ГПР
   volume: number | null;
   volumeUnit: string | null;
+  factVolume: number | null;
   amount: number | null;
   amountVat: number | null;
   weight: number;

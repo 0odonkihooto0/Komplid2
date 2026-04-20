@@ -12,6 +12,7 @@ const fundingSchema = z.object({
   budgetTypeId: z.string().uuid().optional().nullable(),
   name: z.string().min(1).max(200),
   amount: z.number().positive(),
+  actualAmount: z.number().nonnegative().nullable().optional(),
   period: z.string().max(50).optional(),
   notes: z.string().max(500).optional(),
 });

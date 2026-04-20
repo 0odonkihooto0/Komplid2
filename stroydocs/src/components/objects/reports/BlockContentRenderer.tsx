@@ -3,6 +3,7 @@
 import { Fragment } from 'react';
 import type { ReactNode } from 'react';
 import type { ReportBlockType } from '@prisma/client';
+import DOMPurify from 'isomorphic-dompurify';
 
 // ─── Типы контента по типам блоков ───────────────────────────────────────────
 
@@ -257,7 +258,7 @@ export function BlockContentRenderer({ type, content }: Props) {
       return (
         <div
           className="prose prose-sm max-w-none text-sm"
-          dangerouslySetInnerHTML={{ __html: html }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
         />
       );
     }
