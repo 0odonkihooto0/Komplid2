@@ -13,6 +13,7 @@ import { Server, type Socket } from 'socket.io';
 import { jwtVerify } from 'jose';
 import { PrismaClient } from '@prisma/client';
 import { buildDatabaseUrl, SOCKET_CONNECTION_LIMIT } from '@/lib/database-url';
+import { logger } from '../lib/logger';
 
 const db = new PrismaClient({
   datasources: { db: { url: buildDatabaseUrl(SOCKET_CONNECTION_LIMIT) } },
@@ -109,7 +110,7 @@ io.on('connection', (socket: Socket) => {
 
       io.to(`project:${projectId}`).emit('message:new', payload);
     } catch (err) {
-      console.error('[socket] message:send error', err);
+      logger.error({ err }, '[socket] message:send error');
       socket.emit('message:error', { error: 'Ошибка отправки сообщения' });
     }
   });
@@ -132,5 +133,5 @@ io.on('connection', (socket: Socket) => {
 
 const PORT = parseInt(process.env.SOCKET_PORT ?? '3001', 10);
 httpServer.listen(PORT, () => {
-  console.log(`[socket] Socket.io server running on port ${PORT}`);
+  logger.info(`[socket] Socket.io server running on port ${PORT}`);
 });

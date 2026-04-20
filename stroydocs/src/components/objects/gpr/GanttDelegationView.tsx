@@ -64,7 +64,6 @@ export function GanttDelegationView({ objectId, versionId }: Props) {
               <TableRow className="text-xs">
                 <TableHead className="min-w-48">Наименование</TableHead>
                 <TableHead className="w-40">Делегировано (версия)</TableHead>
-                {/* TODO: delegatedFromOrg не возвращается API /delegated-tasks */}
                 <TableHead className="w-32">Делегировано от</TableHead>
                 <TableHead className="w-32">Делегировано кому</TableHead>
               </TableRow>
