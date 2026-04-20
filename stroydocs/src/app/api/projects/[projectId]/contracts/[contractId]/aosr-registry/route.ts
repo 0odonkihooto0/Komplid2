@@ -86,7 +86,7 @@ export async function GET(
         id: doc.id,
         number: doc.number,
         status: doc.status,
-        workName: doc.workRecord?.workItem.name ?? '',
+        workName: doc.workRecord?.workItem?.name ?? '',
         materials: overrides.materials ?? dbMaterials,
         certificates: overrides.certificates ?? dbCertificates,
         schemaRef: overrides.schemaRef ?? '',

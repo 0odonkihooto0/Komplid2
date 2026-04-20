@@ -38,7 +38,7 @@ export interface EstimateListItem {
 /** Извлечь название организации по роли из участников контракта */
 function getParticipantName(item: EstimateListItem, role: string): string {
   const p = item.contract.participants.find((pp) => pp.role === role);
-  return p?.organization.name ?? '—';
+  return p?.organization?.name ?? '—';
 }
 
 export function getCustomer(item: EstimateListItem): string {

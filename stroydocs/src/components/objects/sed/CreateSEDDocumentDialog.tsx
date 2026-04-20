@@ -109,7 +109,7 @@ export function CreateSEDDocumentDialog({ open, onOpenChange, objectId }: Props)
   }, [nextNumber, form]);
 
   const senderOrgName =
-    participants.find((p) => p.organization.id === session?.user?.organizationId)?.organization.name ?? '';
+    participants.find((p) => p.organization?.id === session?.user?.organizationId)?.organization?.name ?? '';
 
   const formatFileSize = (bytes: number) =>
     bytes < 1024 * 1024
