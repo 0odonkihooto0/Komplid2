@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { NotificationsDropdown } from './NotificationsDropdown';
+import { SyncQueuePanel } from '@/components/pwa/SyncQueuePanel';
 import { TasksQuickPanel } from './TasksQuickPanel';
 import { SearchTrigger } from './SearchTrigger';
 import { ThemeToggle } from './ThemeToggle';
@@ -35,6 +36,7 @@ export function Header() {
         <ThemeToggle />
         <SearchTrigger />
         <TasksQuickPanel />
+        <SyncQueuePanel />
         <NotificationsDropdown />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
