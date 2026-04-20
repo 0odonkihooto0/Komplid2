@@ -16,13 +16,13 @@ const bulkUpdateSchema = z.object({
       planEnd: z.string().datetime().optional(),
       progress: z.number().min(0).max(100).optional(),
       sortOrder: z.number().int().optional(),
-    }),
+    })
   ),
 });
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { projectId: string; versionId: string } },
+  { params }: { params: { projectId: string; versionId: string } }
 ) {
   try {
     const session = await getSessionOrThrow();
@@ -44,11 +44,11 @@ export async function POST(
     const { updates } = parsed.data;
     if (updates.length === 0) return successResponse({ updated: 0 });
 
-    // Массовое обновление задач в одной транзакции
-    await db.$transaction(async (tx) => {
-      for (const u of updates) {
+    // Массовое обновление задач в одной транзакции параллельно для предотвращения N+1
+    await db.$transaction(
+      updates.map((u) => {
         const { id, planStart, planEnd, progress, sortOrder } = u;
-        await tx.ganttTask.update({
+        return db.ganttTask.update({
           where: { id },
           data: {
             ...(planStart !== undefined && { planStart: new Date(planStart) }),
@@ -57,8 +57,8 @@ export async function POST(
             ...(sortOrder !== undefined && { sortOrder }),
           },
         });
-      }
-    });
+      })
+    );
 
     // Пересчитываем критический путь после массового обновления
     const [allTasks, allDeps] = await Promise.all([
@@ -72,8 +72,8 @@ export async function POST(
         db.ganttTask.update({
           where: { id: t.id },
           data: { isCritical: criticalIds.has(t.id) },
-        }),
-      ),
+        })
+      )
     );
 
     return successResponse({ updated: updates.length });

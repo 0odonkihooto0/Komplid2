@@ -1,0 +1,3 @@
+## 2026-04-20 - Prisma N+1 in Transactions
+**Learning:** Running sequential `await tx.model.update()` inside a `for...of` loop wrapped in `db.$transaction` creates an N+1 performance bottleneck. Although the operations execute within a single database transaction, the application waits for each query to complete sequentially over the network before sending the next one.
+**Action:** Always map the operations to an array of Prisma Promise objects (e.g., `updates.map(u => db.model.update(...))`) and pass the array directly to `db.$transaction([...])`. This batches all queries to run concurrently, significantly speeding up bulk operations.
