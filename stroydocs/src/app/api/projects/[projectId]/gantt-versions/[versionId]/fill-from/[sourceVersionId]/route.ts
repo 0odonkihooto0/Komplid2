@@ -52,42 +52,48 @@ export async function POST(
       // Маппинг старых id задач → новых для восстановления иерархии parentId
       const idMap = new Map<string, string>();
 
-      for (const t of sourceTasks) {
-        const newTask = await tx.ganttTask.create({
-          data: {
-            name: t.name,
-            sortOrder: t.sortOrder,
-            level: t.level,
-            status: 'NOT_STARTED',
-            planStart: t.planStart,
-            planEnd: t.planEnd,
-            // Фактические даты и прогресс не копируются — версия начинается с нуля
-            progress: 0,
-            isCritical: false,
-            isMilestone: t.isMilestone,
-            volume: t.volume,
-            volumeUnit: t.volumeUnit,
-            amount: t.amount,
-            directiveStart: t.directiveStart,
-            directiveEnd: t.directiveEnd,
-            estimateItemId: t.estimateItemId,
-            linkedExecutionDocsCount: 0,
-            versionId: params.versionId,
-            // contractId намеренно не передаём — объектные задачи без контракта
-          },
-        });
-        idMap.set(t.id, newTask.id);
-      }
+      const newTasksData = sourceTasks.map((t) => {
+        const newId = crypto.randomUUID();
+        idMap.set(t.id, newId);
+        return {
+          id: newId,
+          name: t.name,
+          sortOrder: t.sortOrder,
+          level: t.level,
+          status: 'NOT_STARTED',
+          planStart: t.planStart,
+          planEnd: t.planEnd,
+          // Фактические даты и прогресс не копируются — версия начинается с нуля
+          progress: 0,
+          isCritical: false,
+          isMilestone: t.isMilestone,
+          volume: t.volume,
+          volumeUnit: t.volumeUnit,
+          amount: t.amount,
+          directiveStart: t.directiveStart,
+          directiveEnd: t.directiveEnd,
+          estimateItemId: t.estimateItemId,
+          linkedExecutionDocsCount: 0,
+          versionId: params.versionId,
+          // contractId намеренно не передаём — объектные задачи без контракта
+        };
+      });
+
+      await tx.ganttTask.createMany({
+        data: newTasksData,
+      });
 
       // Восстанавливаем иерархию задач через маппинг oldId → newId
-      for (const t of sourceTasks) {
-        if (t.parentId && idMap.has(t.parentId)) {
-          await tx.ganttTask.update({
-            where: { id: idMap.get(t.id)! },
-            data: { parentId: idMap.get(t.parentId) },
-          });
-        }
-      }
+      await Promise.all(
+        sourceTasks
+          .filter((t) => t.parentId && idMap.has(t.parentId))
+          .map((t) =>
+            tx.ganttTask.update({
+              where: { id: idMap.get(t.id)! },
+              data: { parentId: idMap.get(t.parentId) },
+            }),
+          ),
+      );
 
       return idMap.size;
     });

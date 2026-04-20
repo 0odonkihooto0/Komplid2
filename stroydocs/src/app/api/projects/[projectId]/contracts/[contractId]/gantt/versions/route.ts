@@ -86,24 +86,28 @@ export async function POST(
 
         // Создаём маппинг старых id → новых для восстановления иерархии
         const idMap = new Map<string, string>();
-        for (const t of sourceTasks) {
-          const created = await tx.ganttTask.create({
-            data: {
-              name: t.name,
-              sortOrder: t.sortOrder,
-              level: t.level,
-              status: t.status,
-              planStart: t.planStart,
-              planEnd: t.planEnd,
-              progress: 0,
-              isCritical: false,
-              versionId: newVersion.id,
-              workItemId: t.workItemId,
-              contractId: params.contractId,
-            },
-          });
-          idMap.set(t.id, created.id);
-        }
+        const newTasksData = sourceTasks.map((t) => {
+          const newId = crypto.randomUUID();
+          idMap.set(t.id, newId);
+          return {
+            id: newId,
+            name: t.name,
+            sortOrder: t.sortOrder,
+            level: t.level,
+            status: t.status,
+            planStart: t.planStart,
+            planEnd: t.planEnd,
+            progress: 0,
+            isCritical: false,
+            versionId: newVersion.id,
+            workItemId: t.workItemId,
+            contractId: params.contractId,
+          };
+        });
+
+        await tx.ganttTask.createMany({
+          data: newTasksData,
+        });
 
         // Обновляем parentId через маппинг (параллельно — idMap уже построен)
         await Promise.all(
