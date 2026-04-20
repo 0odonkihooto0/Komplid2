@@ -84,7 +84,7 @@ IFC_SERVICE_URL=http://localhost:8001  ← в Next.js .env
 
 ## Realtime / Мобайл
 - **Чат**: Socket.io — ОТДЕЛЬНЫЙ процесс на порту 3001 (не в Next.js API Route!)
-- **PWA**: next-pwa (Workbox) — офлайн-кэш статики + 10 последних документов
+- **PWA**: Serwist (форк Workbox) — офлайн-кэш статики + 10 последних документов
 
 ## DevOps
 - **Контейнеры**: Docker + Docker Compose (локальная разработка)
