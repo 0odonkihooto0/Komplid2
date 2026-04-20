@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     // Аутентификация по Bearer-токену (аналог inspection-reminder)
     const authHeader = req.headers.get('authorization') ?? '';
     const token = authHeader.replace('Bearer ', '').trim();
-    const secret = process.env.CRON_SECRET || process.env.NEXTAUTH_SECRET;
+    const secret = process.env.CRON_SECRET;
 
     if (!secret || token !== secret) {
       return errorResponse('Unauthorized', 401);

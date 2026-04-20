@@ -13,13 +13,13 @@ export const dynamic = 'force-dynamic';
  * Одноразовый эндпоинт: применяет CORS-политику к S3-бакету.
  * Нужно вызвать один раз после деплоя на новом окружении.
  *
- * Authorization: Bearer <NEXTAUTH_SECRET>  ИЛИ  сессия с ролью ADMIN
+ * Authorization: Bearer <ADMIN_SECRET>  ИЛИ  сессия с ролью ADMIN
  */
 export async function POST(req: NextRequest) {
   // Двойная проверка: Bearer-секрет (для CI/скриптов) ИЛИ сессия администратора
   const authHeader = req.headers.get('authorization') ?? '';
   const token = authHeader.replace('Bearer ', '').trim();
-  const secret = process.env.ADMIN_SECRET || process.env.NEXTAUTH_SECRET;
+  const secret = process.env.ADMIN_SECRET;
 
   if (!secret || token !== secret) {
     // Если секрет не подошёл — проверяем сессию с ролью ADMIN

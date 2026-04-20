@@ -32,8 +32,7 @@ export function GanttList({ projectId, contractId, versionId }: Props) {
   const [createOpen, setCreateOpen] = useState(false);
   const { data, isLoading } = useGanttTasks(projectId, contractId, versionId);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const columns = useMemo<ColumnDef<GanttTaskItem, any>[]>(
+  const columns = useMemo<ColumnDef<GanttTaskItem, unknown>[]>(
     () => [
       col.accessor('name', {
         header: 'Наименование',
