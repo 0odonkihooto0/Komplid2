@@ -156,7 +156,7 @@ export async function recalcSummaryTasks(
     }
   }
 
-  for (const { id, data } of updates) {
-    await tx.ganttTask.update({ where: { id }, data });
-  }
+  await Promise.all(
+    updates.map((u) => tx.ganttTask.update({ where: { id: u.id }, data: u.data }))
+  );
 }
