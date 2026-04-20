@@ -205,21 +205,6 @@ export function PassportView({ projectId }: PassportViewProps) {
         </CardContent>
       </Card>
 
-      {/* Виджеты ПИР / СМР */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {widgetsLoading ? (
-          <>
-            <Skeleton className="h-44 w-full rounded-panel" />
-            <Skeleton className="h-44 w-full rounded-panel" />
-          </>
-        ) : widgetsData ? (
-          <>
-            <PirWidget data={widgetsData.pir} />
-            <SmrWidget data={widgetsData.smr} />
-          </>
-        ) : null}
-      </div>
-
       {/* Двухколоночный grid */}
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Левая колонка — 2/3 */}
@@ -313,6 +298,21 @@ export function PassportView({ projectId }: PassportViewProps) {
             </CardContent>
           </Card>
         </div>
+      </div>
+
+      {/* Виджеты ПИР / СМР */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {widgetsLoading ? (
+          <>
+            <Skeleton className="h-44 w-full rounded-panel" />
+            <Skeleton className="h-44 w-full rounded-panel" />
+          </>
+        ) : widgetsData ? (
+          <>
+            <PirWidget data={widgetsData.pir} />
+            <SmrWidget data={widgetsData.smr} />
+          </>
+        ) : null}
       </div>
 
       {/* Карта и координаты */}
