@@ -16,6 +16,7 @@ import { NotificationsDropdown } from './NotificationsDropdown';
 import { TasksQuickPanel } from './TasksQuickPanel';
 import { SearchTrigger } from './SearchTrigger';
 import { ThemeToggle } from './ThemeToggle';
+import { Breadcrumb } from './Breadcrumb';
 
 export function Header() {
   const { data: session } = useSession();
@@ -25,8 +26,9 @@ export function Header() {
 
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-6">
-      {/* Свободное пространство слева — оставлено под хлебные крошки при дальнейшем развитии */}
-      <div className="flex-1" />
+      <div className="flex-1 min-w-0">
+        <Breadcrumb />
+      </div>
       <div className="flex flex-1 justify-center">
         <SearchTrigger />
       </div>
