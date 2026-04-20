@@ -10,6 +10,7 @@ import { Bold, Italic, Underline, Send } from 'lucide-react';
 import { useWorkflowCard } from './useWorkflowCard';
 import { RedirectDialog } from './RedirectDialog';
 import type { SEDDocumentFull } from './useSEDDocumentCard';
+import DOMPurify from 'isomorphic-dompurify';
 
 const WORKFLOW_TYPE_LABELS: Record<string, string> = {
   DELEGATION: 'Делегирование',
@@ -152,7 +153,7 @@ export function WorkflowCard({ objectId, docId, workflowId, doc }: WorkflowCardP
                   <span className="text-xs font-medium">{msg.author.lastName} {msg.author.firstName}</span>
                   <span className="text-xs text-muted-foreground">{new Date(msg.createdAt).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
-                <p className="text-sm" dangerouslySetInnerHTML={{ __html: msg.text }} />
+                <p className="text-sm" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(msg.text) }} />
               </div>
             ))}
             {!workflow.messages.length && <p className="text-sm text-muted-foreground">Сообщений пока нет</p>}
