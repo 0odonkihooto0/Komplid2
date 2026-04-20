@@ -18,6 +18,7 @@ import { CoordinatesMap } from './CoordinatesMap';
 import { ImplementationTimeline } from './ImplementationTimeline';
 import { HistoryDrawer } from './HistoryDrawer';
 import { ObjectMetrics } from './ObjectMetrics';
+import { PassportSideblocks } from './PassportSideblocks';
 import type { PassportUpdateData } from './usePassport';
 
 function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
@@ -204,93 +205,74 @@ export function PassportView({ projectId }: PassportViewProps) {
         {/* Левая колонка — 2/3 */}
         <div className="space-y-4 lg:col-span-2">
           <Card className="rounded-panel">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Общие сведения</CardTitle>
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ink-muted)]">ДОКУМЕНТАЦИЯ</p>
+                <CardTitle className="text-base">Паспорт объекта</CardTitle>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setEditOpen(true)}>
+                <Pencil className="mr-1.5 h-4 w-4" />
+                Редактировать
+              </Button>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4 pt-0">
-              <InfoRow label="Тип строительства" value={project.constructionType} />
-              <InfoRow label="Регион" value={project.region} />
-              <InfoRow label="Кадастровый номер" value={project.cadastralNumber} />
-              <InfoRow label="Площадь" value={project.area != null ? `${project.area} м²` : null} />
-              <InfoRow label="Этажность" value={project.floors} />
-              <InfoRow label="Класс ответственности" value={project.responsibilityClass} />
-              <InfoRow label="Стройка" value={project.stroyka} />
-              <InfoRow label="Координаты (ш, д)" value={coords} />
-              <InfoRow label="Описание" value={project.description} />
-            </CardContent>
-          </Card>
+            <CardContent className="pt-0">
+              <div className="grid grid-cols-2 gap-x-6">
+                <InfoRow label="Регион" value={project.region} />
+                <InfoRow label="Кадастровый номер" value={project.cadastralNumber} />
+                <InfoRow label="Стройка" value={project.stroyka} />
+                <InfoRow label="Координаты (ш, д)" value={coords} />
+                <InfoRow label="Заказчик" value={project.customer} />
+                <InfoRow label="Генподрядчик" value={project.generalContractor} />
+                <InfoRow label="Проектная организация" value={project.designOrg} />
+                <InfoRow label="ГИП" value={project.chiefEngineer} />
+              </div>
 
-          <Card className="rounded-panel">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Разрешение на строительство</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 pt-0">
-              <InfoRow label="Номер разрешения" value={project.permitNumber} />
-              <InfoRow
-                label="Дата выдачи"
-                value={project.permitDate ? formatDate(project.permitDate) : null}
-              />
-              <InfoRow label="Орган выдачи" value={project.permitAuthority} />
+              <div className="mt-4 border-t pt-4">
+                <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ink-muted)]">РАЗРЕШЕНИЕ НА СТРОИТЕЛЬСТВО</p>
+                <div className="grid grid-cols-2 gap-x-6">
+                  <InfoRow label="Номер разрешения" value={project.permitNumber} />
+                  <InfoRow label="Орган выдачи" value={project.permitAuthority} />
+                  <InfoRow label="Дата выдачи" value={project.permitDate ? formatDate(project.permitDate) : null} />
+                </div>
+              </div>
+
+              <div className="mt-4 border-t pt-4">
+                <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ink-muted)]">СРОКИ</p>
+                <div className="grid grid-cols-2 gap-x-6">
+                  <InfoRow label="Начало (план)" value={project.plannedStartDate ? formatDate(project.plannedStartDate) : null} />
+                  <InfoRow label="Окончание (план)" value={project.plannedEndDate ? formatDate(project.plannedEndDate) : null} />
+                  <InfoRow label="Начало (факт)" value={project.actualStartDate ? formatDate(project.actualStartDate) : null} />
+                  <InfoRow label="Окончание (факт)" value={project.actualEndDate ? formatDate(project.actualEndDate) : null} />
+                </div>
+                {project.plannedStartDate && project.plannedEndDate && (
+                  <div className="mt-2">
+                    <TimelineProgress startDate={project.plannedStartDate} endDate={project.plannedEndDate} />
+                  </div>
+                )}
+                {project.fillDatesFromGpr && (
+                  <p className="mt-2 text-xs text-[var(--ink-muted)]">Даты заполняются из актуальной версии ГПР</p>
+                )}
+              </div>
+
+              {project.description && (
+                <div className="mt-4 border-t pt-4">
+                  <InfoRow label="Описание" value={project.description} />
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
         {/* Правая колонка — 1/3 */}
         <div className="space-y-4">
-          <Card className="rounded-panel">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Сроки строительства</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 pt-0">
-              <InfoRow
-                label="Начало (план)"
-                value={project.plannedStartDate ? formatDate(project.plannedStartDate) : null}
-              />
-              <InfoRow
-                label="Окончание (план)"
-                value={project.plannedEndDate ? formatDate(project.plannedEndDate) : null}
-              />
-              {project.plannedStartDate && project.plannedEndDate && (
-                <TimelineProgress
-                  startDate={project.plannedStartDate}
-                  endDate={project.plannedEndDate}
-                />
-              )}
-              <InfoRow
-                label="Начало (факт)"
-                value={project.actualStartDate ? formatDate(project.actualStartDate) : null}
-              />
-              <InfoRow
-                label="Окончание (факт)"
-                value={project.actualEndDate ? formatDate(project.actualEndDate) : null}
-              />
-              {project.fillDatesFromGpr && (
-                <p className="text-xs text-[var(--ink-muted)]">
-                  Даты заполняются из актуальной версии ГПР
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-panel">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Проектная документация</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 pt-0">
-              <InfoRow label="Проектная организация" value={project.designOrg} />
-              <InfoRow label="ГИП" value={project.chiefEngineer} />
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-panel">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Участники</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 pt-0">
-              <InfoRow label="Заказчик" value={project.customer} />
-              <InfoRow label="Генподрядчик" value={project.generalContractor} />
-            </CardContent>
-          </Card>
+          <PassportSideblocks
+            projectId={projectId}
+            objectId={projectId}
+            area={project.area}
+            floors={project.floors}
+            constructionType={project.constructionType}
+            responsibilityClass={project.responsibilityClass}
+          />
         </div>
       </div>
 
