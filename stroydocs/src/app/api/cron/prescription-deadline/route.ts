@@ -58,20 +58,22 @@ export async function GET(req: NextRequest) {
 
     let sentCount = 0;
 
+    // Идемпотентность: один запрос вместо N для проверки уже отправленных уведомлений
+    const prescriptionIds = prescriptions.map((p) => p.id);
+    const alreadySentNotifications = await db.notification.findMany({
+      where: {
+        type: 'prescription_deadline',
+        entityId: { in: prescriptionIds },
+        createdAt: { gte: startOfToday },
+      },
+      select: { entityId: true },
+    });
+    const sentIds = new Set(alreadySentNotifications.map((n) => n.entityId).filter(Boolean) as string[]);
+
     for (const prescription of prescriptions) {
       if (!prescription.responsible || !prescription.deadline) continue;
 
-      // Идемпотентность: не отправлять повторно в тот же день
-      const alreadySent = await db.notification.findFirst({
-        where: {
-          type: 'prescription_deadline',
-          entityId: prescription.id,
-          createdAt: { gte: startOfToday },
-        },
-        select: { id: true },
-      });
-
-      if (alreadySent) continue;
+      if (sentIds.has(prescription.id)) continue;
 
       const daysLeft = Math.ceil(
         (prescription.deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)

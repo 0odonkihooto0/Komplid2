@@ -479,6 +479,205 @@ async function generateFinancePayments(
   totalRow.getCell(4).numFmt = '#,##0.00';
 }
 
+/** sk-engineers-report — Активность инженеров строительного контроля */
+async function generateSkEngineersReport(
+  workbook: ExcelJS.Workbook,
+  projectId: string,
+  filters: ThematicFilters
+): Promise<void> {
+  const sheet = workbook.addWorksheet('Инженеры СК');
+
+  sheet.columns = [
+    { key: 'num',           width: 6  },
+    { key: 'name',          width: 34 },
+    { key: 'inspections',   width: 14 },
+    { key: 'completed',     width: 14 },
+    { key: 'defects',       width: 14 },
+    { key: 'prescriptions', width: 14 },
+  ];
+
+  addSheetTitle(sheet, 'Работа инженеров строительного контроля', 6, filters);
+
+  const headerRow = sheet.addRow(['№', 'Инженер СК', 'Проверок', 'Завершено', 'Дефектов', 'Предписаний']);
+  applyHeaderStyle(headerRow);
+
+  const dateFilter =
+    filters.dateFrom || filters.dateTo
+      ? {
+          ...(filters.dateFrom ? { gte: new Date(filters.dateFrom) } : {}),
+          ...(filters.dateTo   ? { lte: new Date(filters.dateTo)   } : {}),
+        }
+      : undefined;
+
+  const inspections = await db.inspection.findMany({
+    where: {
+      projectId,
+      ...(dateFilter ? { createdAt: dateFilter } : {}),
+    },
+    take: 500,
+    select: {
+      status: true,
+      inspector: { select: { firstName: true, lastName: true } },
+      _count: { select: { defects: true, prescriptions: true } },
+    },
+  });
+
+  // Группировка по ФИО инспектора
+  const byInspector = new Map<string, { name: string; total: number; completed: number; defects: number; prescriptions: number }>();
+  for (const ins of inspections) {
+    const name = `${ins.inspector.lastName} ${ins.inspector.firstName}`;
+    const entry = byInspector.get(name) ?? { name, total: 0, completed: 0, defects: 0, prescriptions: 0 };
+    entry.total++;
+    if (ins.status === 'COMPLETED') entry.completed++;
+    entry.defects += ins._count.defects;
+    entry.prescriptions += ins._count.prescriptions;
+    byInspector.set(name, entry);
+  }
+
+  Array.from(byInspector.values()).forEach((eng, i) => {
+    sheet.addRow([i + 1, eng.name, eng.total, eng.completed, eng.defects, eng.prescriptions]);
+  });
+
+  const summaryRow = sheet.addRow([`Итого инженеров: ${byInspector.size} | Проверок: ${inspections.length}`]);
+  summaryRow.getCell(1).font = { bold: true };
+  sheet.mergeCells(`A${summaryRow.number}:F${summaryRow.number}`);
+}
+
+/** sk-signatures-report — Подписания исполнительных документов */
+async function generateSkSignaturesReport(
+  workbook: ExcelJS.Workbook,
+  projectId: string,
+  filters: ThematicFilters
+): Promise<void> {
+  const sheet = workbook.addWorksheet('Подписи ИД');
+
+  sheet.columns = [
+    { key: 'num',      width: 6  },
+    { key: 'docNum',   width: 18 },
+    { key: 'docType',  width: 22 },
+    { key: 'signer',   width: 34 },
+    { key: 'signedAt', width: 14 },
+    { key: 'sigType',  width: 14 },
+  ];
+
+  addSheetTitle(sheet, 'Подписания документов (исполнительная документация)', 6, filters);
+
+  const headerRow = sheet.addRow(['№', 'Номер документа', 'Тип документа', 'Подписант', 'Дата подписи', 'Тип подписи']);
+  applyHeaderStyle(headerRow);
+
+  const dateFilter =
+    filters.dateFrom || filters.dateTo
+      ? {
+          ...(filters.dateFrom ? { gte: new Date(filters.dateFrom) } : {}),
+          ...(filters.dateTo   ? { lte: new Date(filters.dateTo)   } : {}),
+        }
+      : undefined;
+
+  const signatures = await db.signature.findMany({
+    where: {
+      executionDoc: {
+        contract: {
+          projectId,
+          ...(filters.contractId ? { id: filters.contractId } : {}),
+        },
+      },
+      ...(dateFilter ? { signedAt: dateFilter } : {}),
+    },
+    orderBy: { signedAt: 'desc' },
+    take: 500,
+    select: {
+      signedAt: true,
+      signatureType: true,
+      user: { select: { firstName: true, lastName: true } },
+      executionDoc: { select: { number: true, type: true } },
+    },
+  });
+
+  Array.from(signatures.entries()).forEach(([i, s]) => {
+    sheet.addRow([
+      i + 1,
+      s.executionDoc.number,
+      s.executionDoc.type,
+      `${s.user.lastName} ${s.user.firstName}`,
+      fmtDate(s.signedAt),
+      s.signatureType,
+    ]);
+  });
+
+  const summaryRow = sheet.addRow([`Итого подписей: ${signatures.length}`]);
+  summaryRow.getCell(1).font = { bold: true };
+  sheet.mergeCells(`A${summaryRow.number}:F${summaryRow.number}`);
+}
+
+/** funding-report — Исполнение финансирования по источникам */
+async function generateFundingReport(
+  workbook: ExcelJS.Workbook,
+  projectId: string,
+  filters: ThematicFilters
+): Promise<void> {
+  const sheet = workbook.addWorksheet('Финансирование');
+
+  sheet.columns = [
+    { key: 'num',      width: 6  },
+    { key: 'year',     width: 8  },
+    { key: 'type',     width: 16 },
+    { key: 'total',    width: 18 },
+    { key: 'federal',  width: 18 },
+    { key: 'regional', width: 18 },
+    { key: 'local',    width: 18 },
+    { key: 'own',      width: 18 },
+    { key: 'extra',    width: 18 },
+  ];
+
+  addSheetTitle(sheet, 'Исполнение финансирования', 9, filters);
+
+  const headerRow = sheet.addRow(['№', 'Год', 'Тип', 'Итого, ₽', 'Федеральный, ₽', 'Региональный, ₽', 'Местный, ₽', 'Собственные, ₽', 'Внебюджетные, ₽']);
+  applyHeaderStyle(headerRow);
+
+  const records = await db.fundingRecord.findMany({
+    where: { projectId },
+    orderBy: [{ year: 'asc' }, { recordType: 'asc' }],
+    take: 200,
+  });
+
+  const typeLabel = (t: string) => (t === 'ALLOCATED' ? 'Выделено' : 'Освоено');
+
+  Array.from(records.entries()).forEach(([i, r]) => {
+    const row = sheet.addRow([
+      i + 1,
+      r.year,
+      typeLabel(r.recordType),
+      r.totalAmount,
+      r.federalBudget,
+      r.regionalBudget,
+      r.localBudget,
+      r.ownFunds,
+      r.extraBudget,
+    ]);
+    for (let col = 4; col <= 9; col++) {
+      row.getCell(col).numFmt = '#,##0.00';
+    }
+  });
+
+  sheet.addRow([]);
+  const totalAllocated = records
+    .filter((r) => r.recordType === 'ALLOCATED')
+    .reduce((s, r) => s + r.totalAmount, 0);
+  const totalDelivered = records
+    .filter((r) => r.recordType === 'DELIVERED')
+    .reduce((s, r) => s + r.totalAmount, 0);
+
+  const allocRow = sheet.addRow(['', '', 'Выделено итого:', totalAllocated, '', '', '', '', '']);
+  allocRow.getCell(3).font = { bold: true };
+  allocRow.getCell(4).font = { bold: true };
+  allocRow.getCell(4).numFmt = '#,##0.00';
+
+  const delivRow = sheet.addRow(['', '', 'Освоено итого:', totalDelivered, '', '', '', '', '']);
+  delivRow.getCell(3).font = { bold: true };
+  delivRow.getCell(4).font = { bold: true };
+  delivRow.getCell(4).numFmt = '#,##0.00';
+}
+
 // ─── Публичный API ───────────────────────────────────────────────────────────
 
 /**
@@ -519,15 +718,13 @@ export async function generateThematicXlsx(
       await generateSkPrescriptions(workbook, projectId, filters);
       break;
 
-    // Отчёты о работе инженеров и подписаниях — данные пока не реализованы в генераторе
     case 'sk-engineers-report':
-    case 'sk-signatures-report': {
-      // TODO: реализовать отдельные генераторы для инженеров и подписаний
-      const placeholderSheet = workbook.addWorksheet('Данные');
-      addSheetTitle(placeholderSheet, `Отчёт "${slug}"`, 1, filters);
-      placeholderSheet.addRow(['Данные для данного отчёта доступны через API /data']);
+      await generateSkEngineersReport(workbook, projectId, filters);
       break;
-    }
+
+    case 'sk-signatures-report':
+      await generateSkSignaturesReport(workbook, projectId, filters);
+      break;
 
     case 'work-volumes':
       await generateSmrWorkVolumes(workbook, projectId, filters);
@@ -545,13 +742,9 @@ export async function generateThematicXlsx(
       await generateFinancePayments(workbook, projectId, filters);
       break;
 
-    case 'funding-report': {
-      // TODO: реализовать генератор для источников финансирования
-      const fundingSheet = workbook.addWorksheet('Финансирование');
-      addSheetTitle(fundingSheet, 'Исполнение финансирования', 1, filters);
-      fundingSheet.addRow(['Данные для данного отчёта доступны через API /data']);
+    case 'funding-report':
+      await generateFundingReport(workbook, projectId, filters);
       break;
-    }
 
     default: {
       // Неизвестный slug — возвращаем пустую книгу с сообщением
