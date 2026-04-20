@@ -32,7 +32,7 @@ export function GanttList({ projectId, contractId, versionId }: Props) {
   const [createOpen, setCreateOpen] = useState(false);
   const { data, isLoading } = useGanttTasks(projectId, contractId, versionId);
 
-  const columns = useMemo<ColumnDef<GanttTaskItem, unknown>[]>(
+  const columns = useMemo(
     () => [
       col.accessor('name', {
         header: 'Наименование',
@@ -104,7 +104,7 @@ export function GanttList({ projectId, contractId, versionId }: Props) {
           ) : null;
         },
       }),
-    ],
+    ] as ColumnDef<GanttTaskItem, unknown>[],
     [],
   );
 
