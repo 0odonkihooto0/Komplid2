@@ -44,10 +44,9 @@ export async function POST(
     const { updates } = parsed.data;
     if (updates.length === 0) return successResponse({ updated: 0 });
 
-    await db.$transaction(async (tx) => {
-      for (const u of updates) {
-        const { id, planStart, planEnd, progress, sortOrder } = u;
-        await tx.ganttTask.update({
+    await db.$transaction(
+      updates.map(({ id, planStart, planEnd, progress, sortOrder }) =>
+        db.ganttTask.update({
           where: { id },
           data: {
             ...(planStart !== undefined && { planStart: new Date(planStart) }),
@@ -55,9 +54,9 @@ export async function POST(
             ...(progress !== undefined && { progress }),
             ...(sortOrder !== undefined && { sortOrder }),
           },
-        });
-      }
-    });
+        }),
+      ),
+    );
 
     // Пересчитать критический путь
     const [allTasks, allDeps] = await Promise.all([

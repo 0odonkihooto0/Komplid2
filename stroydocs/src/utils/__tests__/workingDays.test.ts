@@ -20,6 +20,21 @@ describe('workingDaysBetween', () => {
     expect(workingDaysBetween(new Date('2024-01-12'), new Date('2024-01-15'))).toBe(1));
   it('считает 10 рабочих дней за 2 полные недели', () =>
     expect(workingDaysBetween(new Date('2024-01-08'), new Date('2024-01-22'))).toBe(10));
+
+  it('игнорирует время — пн 09:00 → пт 17:00 = 5 рабочих дней', () =>
+    expect(workingDaysBetween(new Date('2024-01-08T09:00:00'), new Date('2024-01-13T17:00:00'))).toBe(5));
+
+  it('начало в субботу — (сб → пн) = 0 рабочих дней', () =>
+    expect(workingDaysBetween(new Date('2024-01-13'), new Date('2024-01-15'))).toBe(0));
+
+  it('конец в воскресенье — (ср → вс) = 3 рабочих дня', () =>
+    expect(workingDaysBetween(new Date('2024-01-10'), new Date('2024-01-14'))).toBe(3));
+
+  it('переход через високосный год (28 фев → 1 мар 2024) = 2 дня', () =>
+    expect(workingDaysBetween(new Date('2024-02-28'), new Date('2024-03-01'))).toBe(2));
+
+  it('переход через новый год (29 дек 2023 → 2 янв 2024) = 2 рабочих дня', () =>
+    expect(workingDaysBetween(new Date('2023-12-29'), new Date('2024-01-02'))).toBe(2));
 });
 
 describe('addWorkingDays', () => {

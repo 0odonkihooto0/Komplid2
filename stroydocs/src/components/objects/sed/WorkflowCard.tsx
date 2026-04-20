@@ -1,5 +1,6 @@
 'use client';
 
+import DOMPurify from 'isomorphic-dompurify';
 import { useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -152,7 +153,7 @@ export function WorkflowCard({ objectId, docId, workflowId, doc }: WorkflowCardP
                   <span className="text-xs font-medium">{msg.author.lastName} {msg.author.firstName}</span>
                   <span className="text-xs text-muted-foreground">{new Date(msg.createdAt).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
-                <p className="text-sm" dangerouslySetInnerHTML={{ __html: msg.text }} />
+                <p className="text-sm" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(msg.text) }} />
               </div>
             ))}
             {!workflow.messages.length && <p className="text-sm text-muted-foreground">Сообщений пока нет</p>}
