@@ -1385,11 +1385,17 @@
   - ✅ Шаг 1.5: Zustand network store + OfflineBanner + heartbeat `/api/ping`
 - ✅ Фаза 2–3 — IndexedDB + Offline-first hooks: `idb` слой, stores (journal-drafts, photos-queue, sync-queue), `useOfflineQuery`/`useOfflineMutation`, BackgroundSync очередь
 - ✅ Фаза 4 — Push-уведомления (VAPID, self-hosted, ФЗ-152): `web-push`, модель `PushSubscription`, API `/api/push/subscribe|unsubscribe`, `src/lib/push/` (send-push, client, notification-adapter), SW обработчики push/notificationclick/pushsubscriptionchange, страница `/settings/notifications`, интеграция с BullMQ notification.worker
-- ⬜ Офлайн-режим: замечания, фото, записи журнала без интернета (Фаза 5)
+- ✅ Фаза 5 — Камера, GPS, геозоны (2026-04-20):
+  - ✅ `CameraCapture` — съёмка фото с GPS, сжатие, сохранение в IDB offline-first
+  - ✅ `lib/geofencing/distance.ts` — haversine + checkGeofence (радиус 300 м)
+  - ✅ `SignWithGps` — UI проверки геозоны перед подписанием АОСР
+  - ✅ Signature модель — GPS поля (`gpsLat`, `gpsLng`, `gpsAccuracy`, `signedAtLocation`)
+  - ✅ Sign API route — принимает GPS, вычисляет геозону, создаёт Signature с типом SIMPLE
+  - ✅ `VoiceInput` — Web Speech API голосовой ввод (ru-RU)
+  - ✅ `api/voice/transcribe` + `lib/voice/yandex-speechkit.ts` — транскрипция через Yandex SpeechKit
+- ⬜ Фаза 6 — Mobile-first shell и полировка (MobileShell, быстрые формы, Lighthouse CI)
 - ⬜ Синхронизация при восстановлении (conflict resolution)
-- ⬜ Геозоны (geofencing) — подтверждение присутствия ИТР при подписании
 - ⬜ 360° фотодокументация
-- ⬜ Быстрый доступ: АОСР, дефект, фото — в 2–3 тапа
 
 ---
 

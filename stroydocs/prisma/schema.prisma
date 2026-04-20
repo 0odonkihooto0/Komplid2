@@ -946,6 +946,7 @@ enum ExecutionDocStatus {
 enum SignatureType {
   DETACHED // Открепленная
   EMBEDDED // Встроенная
+  SIMPLE   // Простая ЭП (без КриптоПро — нажатие кнопки с GPS)
 }
 
 /// Статус замечания
@@ -1421,6 +1422,11 @@ model Signature {
 
   executionDocId String
   executionDoc   ExecutionDoc @relation(fields: [executionDocId], references: [id], onDelete: Cascade)
+
+  gpsLat           Float? // GPS широта при подписании
+  gpsLng           Float? // GPS долгота при подписании
+  gpsAccuracy      Float? // Точность GPS в метрах
+  signedAtLocation Json?  // { objectId, distance, isWithinGeofence }
 
   @@unique([executionDocId, userId])
   @@index([userId])
