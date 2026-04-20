@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/shared/Providers';
@@ -20,6 +20,27 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'StroyDocs',
   description: 'B2B SaaS-платформа для автоматизации исполнительной документации в строительстве',
+  applicationName: 'StroyDocs',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'StroyDocs',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#2563EB',
+  viewportFit: 'cover',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 // Инлайн-скрипт работает синхронно до первой отрисовки — защищает от FOUC

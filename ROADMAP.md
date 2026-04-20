@@ -1361,7 +1361,7 @@
 - ✅ Фаза 1 — Service Worker и Manifest:
   - ✅ Шаг 1.1: Миграция с next-pwa на Serwist
   - ✅ Шаг 1.2: SW кэш-стратегии + offline fallback (`/~offline`)
-  - ⬜ Шаг 1.3: Web App Manifest + иконки
+  - ✅ Шаг 1.3: Web App Manifest + иконки-заглушки (`src/app/manifest.ts`, `public/icons/`)
   - ⬜ Шаг 1.4: InstallPrompt (Android + iOS Safari)
   - ⬜ Шаг 1.5: Zustand network store + OfflineBanner
 - ⬜ Офлайн-режим: замечания, фото, записи журнала без интернета
