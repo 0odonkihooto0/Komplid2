@@ -20,6 +20,18 @@ describe('workingDaysBetween', () => {
     expect(workingDaysBetween(new Date('2024-01-12'), new Date('2024-01-15'))).toBe(1));
   it('считает 10 рабочих дней за 2 полные недели', () =>
     expect(workingDaysBetween(new Date('2024-01-08'), new Date('2024-01-22'))).toBe(10));
+  it('игнорирует время при подсчете', () =>
+    expect(workingDaysBetween(new Date('2024-01-08T23:59:59'), new Date('2024-01-10T00:00:01'))).toBe(2));
+  it('корректно считает, если from выпадает на выходной', () =>
+    expect(workingDaysBetween(new Date('2024-01-06'), new Date('2024-01-10'))).toBe(2));
+  it('корректно считает, если to выпадает на выходной', () =>
+    expect(workingDaysBetween(new Date('2024-01-10'), new Date('2024-01-14'))).toBe(3));
+  it('возвращает 0, если весь период выпадает на одни выходные', () =>
+    expect(workingDaysBetween(new Date('2024-01-06'), new Date('2024-01-07'))).toBe(0));
+  it('работает корректно на високосный год (переход через 29 февраля)', () =>
+    expect(workingDaysBetween(new Date('2024-02-28'), new Date('2024-03-01'))).toBe(2));
+  it('работает корректно при переходе через год', () =>
+    expect(workingDaysBetween(new Date('2023-12-29'), new Date('2024-01-02'))).toBe(2));
 });
 
 describe('addWorkingDays', () => {
