@@ -49,13 +49,21 @@ export async function POST(
     let updated = 0;
     let skipped = 0;
 
-    // Обходим строки, пропуская первую (заголовок)
-    const rows = sheet.getRows(2, sheet.rowCount - 1) ?? [];
-    for (const row of rows) {
-      // Читаем значения ячеек по индексу (1-based в ExcelJS)
-      const cadastralNumber = String(row.getCell(1).value ?? '').trim();
+    interface ParsedRow {
+      cadastralNumber: string;
+      address: string | null;
+      area: number | null;
+      landCategory: string | null;
+      permittedUse: string | null;
+      cadastralValue: number | null;
+    }
 
-      // Пропускаем строки без кадастрового номера (обязательное поле)
+    // Первый проход: парсим строки без DB-запросов
+    const rows = sheet.getRows(2, sheet.rowCount - 1) ?? [];
+    const parsedRows: ParsedRow[] = [];
+
+    for (const row of rows) {
+      const cadastralNumber = String(row.getCell(1).value ?? '').trim();
       if (!cadastralNumber) {
         skipped++;
         continue;
@@ -87,34 +95,42 @@ export async function POST(
           ? Number(cadastralValueRaw)
           : null;
 
-      // Поиск существующего участка с таким кадастровым номером в проекте
-      const existing = await db.landPlot.findFirst({
-        where: { projectId: params.projectId, cadastralNumber },
-        select: { id: true },
-      });
+      parsedRows.push({ cadastralNumber, address, area, landCategory, permittedUse, cadastralValue });
+    }
 
-      if (existing) {
+    // Один запрос вместо N: находим все уже существующие участки
+    const allCadastralNumbers = parsedRows.map((r) => r.cadastralNumber);
+    const existingPlots = await db.landPlot.findMany({
+      where: { projectId: params.projectId, cadastralNumber: { in: allCadastralNumbers } },
+      select: { id: true, cadastralNumber: true },
+    });
+    const existingMap = new Map(existingPlots.map((p) => [p.cadastralNumber, p.id]));
+
+    // Второй проход: создаём/обновляем по результатам batch-lookup
+    for (const row of parsedRows) {
+      const existingId = existingMap.get(row.cadastralNumber);
+      if (existingId) {
         // Обновляем только поля из шаблона, не затрагивая остальные данные
         await db.landPlot.update({
-          where: { id: existing.id },
+          where: { id: existingId },
           data: {
-            address: address ?? undefined,
-            area: area ?? undefined,
-            landCategory: landCategory ?? undefined,
-            permittedUse: permittedUse ?? undefined,
-            cadastralValue: cadastralValue ?? undefined,
+            address: row.address ?? undefined,
+            area: row.area ?? undefined,
+            landCategory: row.landCategory ?? undefined,
+            permittedUse: row.permittedUse ?? undefined,
+            cadastralValue: row.cadastralValue ?? undefined,
           },
         });
         updated++;
       } else {
         await db.landPlot.create({
           data: {
-            cadastralNumber,
-            address,
-            area,
-            landCategory,
-            permittedUse,
-            cadastralValue,
+            cadastralNumber: row.cadastralNumber,
+            address: row.address,
+            area: row.area,
+            landCategory: row.landCategory,
+            permittedUse: row.permittedUse,
+            cadastralValue: row.cadastralValue,
             projectId: params.projectId,
           },
         });

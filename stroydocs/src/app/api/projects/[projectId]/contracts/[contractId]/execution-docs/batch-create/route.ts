@@ -81,29 +81,39 @@ export async function POST(req: NextRequest, { params }: Params) {
       appointmentOrder: undefined,
     }));
 
+    // Один запрос вместо N: находим все уже существующие АОСР для выбранных записей
+    const existingDocs = await db.executionDoc.findMany({
+      where: { workRecordId: { in: workRecords.map((r) => r.id) }, type: 'AOSR' },
+      select: { id: true, workRecordId: true },
+    });
+    const existingMap = new Map(
+      existingDocs.map((d) => [d.workRecordId, d.id])
+    );
+
+    // Один запрос вместо N: базовый счётчик для нумерации АОСР
+    const baseAosrCount = await db.executionDoc.count({
+      where: { contractId: params.contractId, type: 'AOSR' },
+    });
+    let aosrLocalIndex = 0;
+
     const results: Array<{ workRecordId: string; docId: string; success: boolean; error?: string }> = [];
 
     for (const record of workRecords) {
       try {
-        // Проверить, нет ли уже АОСР для этой записи
-        const existing = await db.executionDoc.findFirst({
-          where: { workRecordId: record.id, type: 'AOSR' },
-        });
-        if (existing) {
+        const existingId = existingMap.get(record.id);
+        if (existingId) {
           results.push({
             workRecordId: record.id,
-            docId: existing.id,
+            docId: existingId,
             success: false,
             error: 'АОСР уже существует',
           });
           continue;
         }
 
-        // Генерация номера
-        const count = await db.executionDoc.count({
-          where: { contractId: params.contractId, type: 'AOSR' },
-        });
-        const number = `AOSR-${String(count + 1).padStart(3, '0')}`;
+        // Генерация номера на основе предвычисленного baseAosrCount
+        aosrLocalIndex++;
+        const number = `AOSR-${String(baseAosrCount + aosrLocalIndex).padStart(3, '0')}`;
         const title = `АОСР — ${record.workItem.name}`;
 
         // Создать документ
