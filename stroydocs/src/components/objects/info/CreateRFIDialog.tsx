@@ -80,6 +80,7 @@ export function CreateRFIDialog({ open, onOpenChange, objectId }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rfi', objectId] });
+      queryClient.invalidateQueries({ queryKey: ['counts', 'object', objectId] });
       toast({ title: 'Запрос создан' });
       close();
     },

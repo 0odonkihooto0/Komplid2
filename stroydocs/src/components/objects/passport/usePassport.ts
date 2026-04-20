@@ -36,6 +36,9 @@ export interface PassportProject {
   actualStartDate: string | null;
   actualEndDate: string | null;
   fillDatesFromGpr: boolean;
+  // Метрики ГПР — добавлены в Phase F
+  stage: { id: string; name: string; order: number; total: number } | null;
+  gprProgress: number | null;
 }
 
 export interface PassportUpdateData {

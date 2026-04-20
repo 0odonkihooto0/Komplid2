@@ -74,6 +74,7 @@ export function CreateContractDialog({ open, onOpenChange, projectId, parentCont
       queryClient.invalidateQueries({ queryKey: ['contracts', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['counts', 'object', projectId] });
       toast({ title: 'Договор создан' });
       form.reset();
       onOpenChange(false);

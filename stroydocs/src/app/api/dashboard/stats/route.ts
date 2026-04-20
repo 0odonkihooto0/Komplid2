@@ -15,6 +15,8 @@ export async function GET() {
       projectsCount, contractsCount, employeesCount, pendingInvitations,
       workItemsCount, materialsCount, workRecordsCount, photosCount,
       recentContracts,
+      executionDocCount, designDocCount, sedDocCount, correspondenceCount,
+      tasksTotal,
     ] = await Promise.all([
       db.buildingObject.count({ where: { organizationId: orgId } }),
       db.contract.count({ where: { buildingObject: { organizationId: orgId } } }),
@@ -37,12 +39,22 @@ export async function GET() {
           buildingObject: { select: { id: true, name: true } },
         },
       }),
+      // documentsTotal — ИД + ПД + СЭД + Переписка
+      db.executionDoc.count({ where: { contract: { buildingObject: { organizationId: orgId } } } }),
+      db.designDocument.count({ where: { buildingObject: { organizationId: orgId } } }),
+      db.sEDDocument.count({ where: { buildingObject: { organizationId: orgId } } }),
+      db.correspondence.count({ where: { buildingObject: { organizationId: orgId } } }),
+      db.task.count({ where: { project: { organizationId: orgId } } }),
     ]);
+
+    const documentsTotal = executionDocCount + designDocCount + sedDocCount + correspondenceCount;
 
     return successResponse({
       projectsCount, contractsCount, employeesCount, pendingInvitations,
       workItemsCount, materialsCount, workRecordsCount, photosCount,
       recentContracts,
+      documentsTotal,
+      tasksTotal,
     });
   } catch (error) {
     if (error instanceof NextResponse) return error;

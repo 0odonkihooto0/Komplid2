@@ -124,6 +124,7 @@ export function useCreateSEDDocument({ objectId, open, onSuccess }: UseCreateSED
     },
     onSuccess: (_data, { activate }) => {
       queryClient.invalidateQueries({ queryKey: ['sed', objectId] });
+      queryClient.invalidateQueries({ queryKey: ['counts', 'object', objectId] });
       toast({ title: activate ? 'Документ создан и активирован' : 'Черновик сохранён' });
       setStagedFiles([]);
       onSuccess();

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import {
   FileText,
@@ -20,28 +21,39 @@ import {
   Layers,
   Box,
 } from 'lucide-react';
+import { CountBadge } from '@/components/shared/CountBadge';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { useObjectCounts } from '@/hooks/useObjectCounts';
+import type { ObjectCounts } from '@/hooks/useObjectCounts';
+import { PROJECT_STATUS_LABELS } from '@/utils/constants';
+
+interface ObjectSummary {
+  object: { id: string; name: string; status: string };
+}
+
+type SidebarKey = keyof ObjectCounts['sidebar'];
 
 interface ModuleItem {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   soon?: true;
+  countKey?: SidebarKey;
 }
 
 const MODULES: ModuleItem[] = [
-  { label: 'Информация',     href: 'info',       icon: Info },
-  { label: 'СЭД',                  href: 'sed',                        icon: Mail },
-  { label: 'Управление проектом', href: 'project-management/contracts', icon: Briefcase },
-  { label: 'ПИР',           href: 'pir/design-task',      icon: Layers },
-  { label: 'ТИМ',           href: 'tim',                  icon: Box },
-  // Будущие модули — доступны после реализации соответствующих шагов
-  { label: 'ГПР',            href: 'gpr/structure', icon: Calendar },
-  { label: 'Ресурсы',        href: 'resources',  icon: Package },
-  { label: 'Журналы',        href: 'journals',   icon: BookOpen },
-  { label: 'ИД',             href: 'id',         icon: FileText },
-  { label: 'Стройконтроль',  href: 'sk/inspections', icon: Shield },
-  { label: 'Сметы',          href: 'estimates', icon: Scale },
-  { label: 'Отчёты',         href: 'reports',    icon: BarChart2 },
+  { label: 'Информация',          href: 'info',                        icon: Info },
+  { label: 'СЭД',                 href: 'sed',                         icon: Mail,     countKey: 'sed' },
+  { label: 'Управление проектом', href: 'project-management/contracts', icon: Briefcase, countKey: 'management' },
+  { label: 'ПИР',                 href: 'pir/design-task',             icon: Layers,   countKey: 'pir' },
+  { label: 'ТИМ',                 href: 'tim',                         icon: Box },
+  { label: 'ГПР',                 href: 'gpr/structure',               icon: Calendar, countKey: 'gpr' },
+  { label: 'Ресурсы',             href: 'resources',                   icon: Package,  countKey: 'resources' },
+  { label: 'Журналы',             href: 'journals',                    icon: BookOpen, countKey: 'journals' },
+  { label: 'ИД',                  href: 'id',                          icon: FileText, countKey: 'id' },
+  { label: 'Стройконтроль',       href: 'sk/inspections',              icon: Shield,   countKey: 'stroykontrol' },
+  { label: 'Сметы',               href: 'estimates',                   icon: Scale },
+  { label: 'Отчёты',              href: 'reports',                     icon: BarChart2 },
 ];
 
 interface Props {
@@ -51,12 +63,28 @@ interface Props {
 export function ObjectModuleSidebar({ objectId }: Props) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { data: counts } = useObjectCounts(objectId);
+  const { data: summary } = useQuery<ObjectSummary>({
+    queryKey: ['object-summary', objectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${objectId}/summary`);
+      const json = await res.json() as { success: boolean; data: ObjectSummary; error?: string };
+      if (!json.success) throw new Error(json.error ?? 'Ошибка');
+      return json.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const obj = summary?.object;
+  const codeLabel = obj ? obj.id.slice(0, 8).toUpperCase() : null;
+  const statusLabel = obj ? (PROJECT_STATUS_LABELS[obj.status as keyof typeof PROJECT_STATUS_LABELS] ?? obj.status) : null;
 
   const navItems = (
     <nav className="space-y-1 px-2">
-      {MODULES.map(({ label, href, icon: Icon, soon }) => {
+      {MODULES.map(({ label, href, icon: Icon, soon, countKey }) => {
         const fullHref = `/objects/${objectId}/${href}`;
         const isActive = pathname.startsWith(fullHref);
+        const count = countKey ? counts?.sidebar[countKey] : undefined;
 
         return (
           <Link
@@ -74,10 +102,12 @@ export function ObjectModuleSidebar({ objectId }: Props) {
           >
             <Icon className="h-4 w-4 shrink-0" />
             <span>{label}</span>
-            {soon && (
+            {soon ? (
               <span className="ml-auto rounded bg-muted px-1 text-[10px] text-muted-foreground">
                 скоро
               </span>
+            ) : (
+              <CountBadge count={count as number | null | undefined} />
             )}
           </Link>
         );
@@ -115,6 +145,20 @@ export function ObjectModuleSidebar({ objectId }: Props) {
       >
         {/* Отступ для кнопки гамбургера на мобильных */}
         <div className="mb-2 h-10 md:hidden" />
+
+        {/* Шапка объекта */}
+        {obj && (
+          <div className="px-3 pb-3 mb-2 border-b">
+            <p className="text-[10px] font-mono uppercase text-muted-foreground tracking-widest">
+              ОБЪЕКТ · {codeLabel}
+            </p>
+            <p className="text-sm font-medium line-clamp-2 mt-0.5">{obj.name}</p>
+            {statusLabel && (
+              <StatusBadge status={obj.status} label={statusLabel} className="mt-1" />
+            )}
+          </div>
+        )}
+
         {navItems}
       </aside>
     </>

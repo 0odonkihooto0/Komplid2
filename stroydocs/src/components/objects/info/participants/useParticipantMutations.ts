@@ -31,6 +31,7 @@ export function useParticipantMutations(projectId: string) {
     },
     onSuccess: () => {
       invalidate();
+      queryClient.invalidateQueries({ queryKey: ['counts', 'object', projectId] });
       toast({ title: 'Участник добавлен' });
     },
     onError: (err: Error) => {
@@ -92,6 +93,7 @@ export function useParticipantMutations(projectId: string) {
     },
     onSuccess: () => {
       invalidate();
+      queryClient.invalidateQueries({ queryKey: ['counts', 'object', projectId] });
       toast({ title: 'Участник удалён' });
     },
     onError: (err: Error) => {

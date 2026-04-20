@@ -28,9 +28,10 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   contractId: string;
+  projectId: string;
 }
 
-export function CreateExecutionDocDialog({ open, onOpenChange, contractId }: Props) {
+export function CreateExecutionDocDialog({ open, onOpenChange, contractId, projectId }: Props) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const createMutation = useMutation({
@@ -46,6 +47,8 @@ export function CreateExecutionDocDialog({ open, onOpenChange, contractId }: Pro
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['execution-docs', contractId] });
+      queryClient.invalidateQueries({ queryKey: ['counts', 'object', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       toast({ title: 'Документ создан' });
     },
     onError: (error: Error) => {

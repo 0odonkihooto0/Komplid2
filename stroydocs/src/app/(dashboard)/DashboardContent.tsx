@@ -32,6 +32,8 @@ interface DashboardStats {
   employeesCount: number;
   pendingInvitations: number;
   recentContracts: RecentContract[];
+  documentsTotal: number;
+  tasksTotal: number;
 }
 
 export function DashboardContent() {
@@ -53,9 +55,10 @@ export function DashboardContent() {
       const json = await res.json();
       return json.success
         ? json.data
-        : { projectsCount: 0, contractsCount: 0, employeesCount: 0, pendingInvitations: 0, recentContracts: [] };
+        : { projectsCount: 0, contractsCount: 0, employeesCount: 0, pendingInvitations: 0, recentContracts: [], documentsTotal: 0, tasksTotal: 0 };
     },
-    staleTime: 60_000,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
   });
 
   // Загружаем список объектов для панели фильтров

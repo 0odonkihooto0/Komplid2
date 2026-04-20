@@ -105,6 +105,7 @@ export function CreateDocDropdown({ contractId, projectId, onCreated }: Props) {
           if (!v) onCreated?.();
         }}
         contractId={contractId}
+        projectId={projectId}
       />
 
       {/* Диалог создания КС-2 */}

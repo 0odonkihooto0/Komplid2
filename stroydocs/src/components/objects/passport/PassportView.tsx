@@ -1,13 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Download, History, Pencil, MapPin } from 'lucide-react';
+import { Download, History, Pencil, MapPin, Map } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Chip } from '@/components/ui/chip';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { StatusBadge } from '@/components/shared/StatusBadge';
 import { formatDate } from '@/utils/format';
 import { PROJECT_STATUS_LABELS } from '@/utils/constants';
 import { toast } from '@/hooks/useToast';
@@ -19,6 +17,9 @@ import { PassportEditDialog } from './PassportEditDialog';
 import { CoordinatesMap } from './CoordinatesMap';
 import { ImplementationTimeline } from './ImplementationTimeline';
 import { HistoryDrawer } from './HistoryDrawer';
+import { ObjectMetrics } from './ObjectMetrics';
+import { PassportSideblocks } from './PassportSideblocks';
+import { MilestonesTimeline } from './MilestonesTimeline';
 import type { PassportUpdateData } from './usePassport';
 
 function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
@@ -120,9 +121,7 @@ export function PassportView({ projectId }: PassportViewProps) {
     project.latitude != null && project.longitude != null
       ? `${project.latitude}, ${project.longitude}`
       : null;
-
   const stageText = PROJECT_STATUS_LABELS[project.status] ?? project.status;
-  const smrPercent = widgetsData?.smr?.completionPercent ?? null;
 
   return (
     <div className="space-y-6">
@@ -155,55 +154,128 @@ export function PassportView({ projectId }: PassportViewProps) {
         </div>
       </div>
 
-      {/* Hero-карточка объекта */}
+      {/* Hero-карточка объекта (светлый beige/cream градиент) */}
       <Card className="overflow-hidden rounded-panel">
         <div
-          className="relative h-40 border-b"
-          style={{
-            background:
-              'radial-gradient(120% 100% at 100% 0%, color-mix(in oklch, var(--accent-bg) 35%, transparent) 0%, transparent 60%), radial-gradient(120% 100% at 0% 100%, color-mix(in oklch, var(--info) 30%, transparent) 0%, transparent 60%), var(--sidebar-bg)',
-          }}
+          className="relative h-40"
+          style={{ background: 'linear-gradient(135deg, #FAF6F0 0%, #F0EBE3 100%)' }}
         >
-          <div className="flex h-full flex-col justify-between p-5 text-[var(--sidebar-ink)]">
-            <div className="flex items-center gap-2">
-              <Chip variant="accent">ОБЪЕКТ · {project.id.slice(0, 8).toUpperCase()}</Chip>
-              <StatusBadge status={project.status} label={stageText} />
-              {coords && (
-                <span className="ml-auto flex items-center gap-1 font-mono text-xs opacity-80">
+          <div className="flex h-full flex-col justify-between p-5">
+            <div />
+            <div className="flex items-end justify-between">
+              {project.latitude != null && project.longitude != null ? (
+                <span className="flex items-center gap-1 font-mono text-[11px] text-[var(--ink-muted)]">
                   <MapPin className="h-3 w-3" />
-                  {coords}
+                  ЛАТ {project.latitude.toFixed(4)} · ЛОН {project.longitude.toFixed(4)}
                 </span>
-              )}
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold leading-tight">{project.name}</h2>
-              {project.address && (
-                <p className="mt-1 text-xs opacity-80">{project.address}</p>
-              )}
+              ) : <span />}
+              <span className="font-mono text-[11px] text-[var(--ink-muted)]">
+                {project.id.slice(0, 8).toUpperCase()} · {stageText.toUpperCase()}
+              </span>
             </div>
           </div>
         </div>
-        <CardContent className="grid grid-cols-2 gap-4 p-5 sm:grid-cols-4">
-          <HeroFact
-            label="Стадия"
-            value={stageText}
-            tone="accent"
-          />
-          <HeroFact
-            label="Площадь"
-            value={project.area != null ? `${project.area} м²` : '—'}
-          />
-          <HeroFact
-            label="Ввод (план)"
-            value={project.plannedEndDate ? formatDate(project.plannedEndDate) : '—'}
-          />
-          <HeroFact
-            label="Готовность СМР"
-            value={smrPercent != null ? `${smrPercent}%` : '—'}
-            tone={smrPercent != null && smrPercent > 0 ? 'ok' : 'neutral'}
-          />
-        </CardContent>
+        <ObjectMetrics stage={project.stage} gprProgress={project.gprProgress} />
       </Card>
+
+      {/* Название объекта + кнопки (под hero) */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold leading-tight">{project.name}</h2>
+          {project.address && (
+            <p className="mt-1 text-sm text-[var(--ink-muted)]">{project.address}</p>
+          )}
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <Button variant="ghost" size="sm" onClick={() => {
+            const el = document.getElementById('coordinates-map');
+            el?.scrollIntoView({ behavior: 'smooth' });
+          }}>
+            <Map className="mr-1.5 h-4 w-4" />
+            На карту
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+            <Pencil className="mr-1.5 h-4 w-4" />
+            Открыть паспорт
+          </Button>
+        </div>
+      </div>
+
+      {/* Двухколоночный grid */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* Левая колонка — 2/3 */}
+        <div className="space-y-4 lg:col-span-2">
+          <Card className="rounded-panel">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ink-muted)]">ДОКУМЕНТАЦИЯ</p>
+                <CardTitle className="text-base">Паспорт объекта</CardTitle>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setEditOpen(true)}>
+                <Pencil className="mr-1.5 h-4 w-4" />
+                Редактировать
+              </Button>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="grid grid-cols-2 gap-x-6">
+                <InfoRow label="Регион" value={project.region} />
+                <InfoRow label="Кадастровый номер" value={project.cadastralNumber} />
+                <InfoRow label="Стройка" value={project.stroyka} />
+                <InfoRow label="Координаты (ш, д)" value={coords} />
+                <InfoRow label="Заказчик" value={project.customer} />
+                <InfoRow label="Генподрядчик" value={project.generalContractor} />
+                <InfoRow label="Проектная организация" value={project.designOrg} />
+                <InfoRow label="ГИП" value={project.chiefEngineer} />
+              </div>
+
+              <div className="mt-4 border-t pt-4">
+                <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ink-muted)]">РАЗРЕШЕНИЕ НА СТРОИТЕЛЬСТВО</p>
+                <div className="grid grid-cols-2 gap-x-6">
+                  <InfoRow label="Номер разрешения" value={project.permitNumber} />
+                  <InfoRow label="Орган выдачи" value={project.permitAuthority} />
+                  <InfoRow label="Дата выдачи" value={project.permitDate ? formatDate(project.permitDate) : null} />
+                </div>
+              </div>
+
+              <div className="mt-4 border-t pt-4">
+                <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ink-muted)]">СРОКИ</p>
+                <div className="grid grid-cols-2 gap-x-6">
+                  <InfoRow label="Начало (план)" value={project.plannedStartDate ? formatDate(project.plannedStartDate) : null} />
+                  <InfoRow label="Окончание (план)" value={project.plannedEndDate ? formatDate(project.plannedEndDate) : null} />
+                  <InfoRow label="Начало (факт)" value={project.actualStartDate ? formatDate(project.actualStartDate) : null} />
+                  <InfoRow label="Окончание (факт)" value={project.actualEndDate ? formatDate(project.actualEndDate) : null} />
+                </div>
+                {project.plannedStartDate && project.plannedEndDate && (
+                  <div className="mt-2">
+                    <TimelineProgress startDate={project.plannedStartDate} endDate={project.plannedEndDate} />
+                  </div>
+                )}
+                {project.fillDatesFromGpr && (
+                  <p className="mt-2 text-xs text-[var(--ink-muted)]">Даты заполняются из актуальной версии ГПР</p>
+                )}
+              </div>
+
+              {project.description && (
+                <div className="mt-4 border-t pt-4">
+                  <InfoRow label="Описание" value={project.description} />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Правая колонка — 1/3 */}
+        <div className="space-y-4">
+          <PassportSideblocks
+            projectId={projectId}
+            objectId={projectId}
+            area={project.area}
+            floors={project.floors}
+            constructionType={project.constructionType}
+            responsibilityClass={project.responsibilityClass}
+          />
+        </div>
+      </div>
 
       {/* Виджеты ПИР / СМР */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -220,103 +292,13 @@ export function PassportView({ projectId }: PassportViewProps) {
         ) : null}
       </div>
 
-      {/* Двухколоночный grid */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* Левая колонка — 2/3 */}
-        <div className="space-y-4 lg:col-span-2">
-          <Card className="rounded-panel">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Общие сведения</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4 pt-0">
-              <InfoRow label="Тип строительства" value={project.constructionType} />
-              <InfoRow label="Регион" value={project.region} />
-              <InfoRow label="Кадастровый номер" value={project.cadastralNumber} />
-              <InfoRow label="Площадь" value={project.area != null ? `${project.area} м²` : null} />
-              <InfoRow label="Этажность" value={project.floors} />
-              <InfoRow label="Класс ответственности" value={project.responsibilityClass} />
-              <InfoRow label="Стройка" value={project.stroyka} />
-              <InfoRow label="Координаты (ш, д)" value={coords} />
-              <InfoRow label="Описание" value={project.description} />
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-panel">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Разрешение на строительство</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 pt-0">
-              <InfoRow label="Номер разрешения" value={project.permitNumber} />
-              <InfoRow
-                label="Дата выдачи"
-                value={project.permitDate ? formatDate(project.permitDate) : null}
-              />
-              <InfoRow label="Орган выдачи" value={project.permitAuthority} />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Правая колонка — 1/3 */}
-        <div className="space-y-4">
-          <Card className="rounded-panel">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Сроки строительства</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 pt-0">
-              <InfoRow
-                label="Начало (план)"
-                value={project.plannedStartDate ? formatDate(project.plannedStartDate) : null}
-              />
-              <InfoRow
-                label="Окончание (план)"
-                value={project.plannedEndDate ? formatDate(project.plannedEndDate) : null}
-              />
-              {project.plannedStartDate && project.plannedEndDate && (
-                <TimelineProgress
-                  startDate={project.plannedStartDate}
-                  endDate={project.plannedEndDate}
-                />
-              )}
-              <InfoRow
-                label="Начало (факт)"
-                value={project.actualStartDate ? formatDate(project.actualStartDate) : null}
-              />
-              <InfoRow
-                label="Окончание (факт)"
-                value={project.actualEndDate ? formatDate(project.actualEndDate) : null}
-              />
-              {project.fillDatesFromGpr && (
-                <p className="text-xs text-[var(--ink-muted)]">
-                  Даты заполняются из актуальной версии ГПР
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-panel">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Проектная документация</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 pt-0">
-              <InfoRow label="Проектная организация" value={project.designOrg} />
-              <InfoRow label="ГИП" value={project.chiefEngineer} />
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-panel">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Участники</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 pt-0">
-              <InfoRow label="Заказчик" value={project.customer} />
-              <InfoRow label="Генподрядчик" value={project.generalContractor} />
-            </CardContent>
-          </Card>
-        </div>
+      {/* Карта и координаты */}
+      <div id="coordinates-map">
+        <CoordinatesMap projectId={projectId} address={project.address} />
       </div>
 
-      {/* Карта и координаты */}
-      <CoordinatesMap projectId={projectId} address={project.address} />
+      {/* Ключевые вехи */}
+      <MilestonesTimeline projectId={projectId} />
 
       {/* График реализации */}
       <ImplementationTimeline project={project} />
@@ -339,27 +321,3 @@ export function PassportView({ projectId }: PassportViewProps) {
   );
 }
 
-function HeroFact({
-  label,
-  value,
-  tone = 'neutral',
-}: {
-  label: string;
-  value: string;
-  tone?: 'neutral' | 'accent' | 'ok';
-}) {
-  const valueColor =
-    tone === 'accent'
-      ? 'text-[var(--accent-bg)]'
-      : tone === 'ok'
-        ? 'text-[var(--ok)]'
-        : 'text-[var(--ink)]';
-  return (
-    <div>
-      <div className="font-mono text-xs2 uppercase tracking-[0.14em] text-[var(--ink-muted)]">
-        {label}
-      </div>
-      <div className={`mt-1 text-lg font-semibold ${valueColor}`}>{value}</div>
-    </div>
-  );
-}

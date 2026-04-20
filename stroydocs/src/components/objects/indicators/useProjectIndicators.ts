@@ -73,7 +73,10 @@ export function useProjectIndicators(projectId: string) {
       if (!json.success) throw new Error(json.error);
       return json.data;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: ['counts', 'object', projectId] });
+    },
   });
 
   const updateMutation = useMutation({
@@ -98,7 +101,10 @@ export function useProjectIndicators(projectId: string) {
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: ['counts', 'object', projectId] });
+    },
   });
 
   return {

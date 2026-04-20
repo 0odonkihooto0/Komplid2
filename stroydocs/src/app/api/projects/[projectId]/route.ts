@@ -14,21 +14,33 @@ export async function GET(
   try {
     const session = await getSessionOrThrow();
 
-    const project = await db.buildingObject.findFirst({
-      where: {
-        id: params.projectId,
-        organizationId: session.user.organizationId,
-      },
-      include: {
-        _count: { select: { contracts: true } },
-      },
-    });
+    const [project, currentStage, totalStages, gprProgressResult] = await Promise.all([
+      db.buildingObject.findFirst({
+        where: { id: params.projectId, organizationId: session.user.organizationId },
+        include: { _count: { select: { contracts: true } } },
+      }),
+      db.ganttStage.findFirst({
+        where: { projectId: params.projectId, isCurrent: true },
+        select: { id: true, name: true, order: true },
+      }),
+      db.ganttStage.count({ where: { projectId: params.projectId } }),
+      db.ganttTask.aggregate({
+        where: { isMilestone: false, version: { projectId: params.projectId, isActive: true } },
+        _avg: { progress: true },
+      }),
+    ]);
 
     if (!project) {
       return errorResponse('Проект не найден', 404);
     }
 
-    return successResponse(project);
+    const gprProgress = gprProgressResult._avg.progress;
+
+    return successResponse({
+      ...project,
+      stage: currentStage ? { ...currentStage, total: totalStages } : null,
+      gprProgress: gprProgress != null ? Math.round(gprProgress * 10) / 10 : null,
+    });
   } catch (error) {
     if (error instanceof NextResponse) return error;
     logger.error({ err: error }, 'Ошибка получения проекта');

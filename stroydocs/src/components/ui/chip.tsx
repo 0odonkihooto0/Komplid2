@@ -12,7 +12,7 @@ const chipVariants = cva(
   {
     variants: {
       variant: {
-        neutral: 'bg-[var(--bg-inset)] text-[var(--ink-soft)] border border-[var(--border-token)]',
+        neutral: 'bg-bg-inset text-ink-soft border border-border-token',
         accent: 'bg-[color-mix(in_oklch,var(--accent-bg)_18%,transparent)] text-[var(--accent-bg)]',
         ok: 'bg-[color-mix(in_oklch,var(--ok)_18%,transparent)] text-[var(--ok)]',
         warn: 'bg-[color-mix(in_oklch,var(--warn)_20%,transparent)] text-[var(--warn)]',

@@ -93,6 +93,7 @@ export function useDesignTasks(projectId: string, taskType: DesignTaskType = 'DE
     onSuccess: () => {
       toast({ title: 'Задание создано' });
       invalidate();
+      queryClient.invalidateQueries({ queryKey: ['counts', 'object', projectId] });
     },
     onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
   });
@@ -108,6 +109,7 @@ export function useDesignTasks(projectId: string, taskType: DesignTaskType = 'DE
     onSuccess: () => {
       toast({ title: 'Задание удалено' });
       invalidate();
+      queryClient.invalidateQueries({ queryKey: ['counts', 'object', projectId] });
     },
     onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
   });

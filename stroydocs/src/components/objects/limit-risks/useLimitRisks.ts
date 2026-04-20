@@ -67,6 +67,7 @@ export function useLimitRisks(projectId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: ['counts', 'object', projectId] });
       toast({ title: 'Добавлено', description: 'Риск неосвоения лимита добавлен' });
     },
     onError: (error: Error) => {
@@ -104,6 +105,7 @@ export function useLimitRisks(projectId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: ['counts', 'object', projectId] });
       toast({ title: 'Удалено', description: 'Риск неосвоения лимита удалён' });
     },
     onError: (error: Error) => {
