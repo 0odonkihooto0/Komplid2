@@ -158,7 +158,7 @@ export function PassportView({ projectId }: PassportViewProps) {
       <Card className="overflow-hidden rounded-panel">
         <div
           className="relative h-40"
-          style={{ background: 'linear-gradient(135deg, #F5F0E8 0%, #EDE8DC 100%)' }}
+          style={{ background: 'linear-gradient(135deg, #FAF6F0 0%, #F0EBE3 100%)' }}
         >
           <div className="flex h-full flex-col justify-between p-5">
             <div />
