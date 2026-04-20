@@ -33,6 +33,14 @@ describe('addWorkingDays', () => {
     expect(ymd(addWorkingDays(new Date('2024-01-12'), 3))).toBe('2024-01-17'));
   it('начало в субботу + 1 → понедельник', () =>
     expect(ymd(addWorkingDays(new Date('2024-01-13'), 1))).toBe('2024-01-15'));
+  it('возвращает ту же дату при отрицательном n', () =>
+    expect(ymd(addWorkingDays(new Date('2024-01-08'), -1))).toBe('2024-01-08'));
+  it('корректно переходит через границу месяца (январь -> февраль)', () =>
+    expect(ymd(addWorkingDays(new Date('2024-01-31'), 1))).toBe('2024-02-01'));
+  it('корректно переходит через границу года', () =>
+    expect(ymd(addWorkingDays(new Date('2023-12-29'), 1))).toBe('2024-01-01'));
+  it('корректно обрабатывает високосный год (29 февраля)', () =>
+    expect(ymd(addWorkingDays(new Date('2024-02-28'), 2))).toBe('2024-03-01'));
   it('не мутирует исходную дату', () => {
     const orig = new Date('2024-01-08');
     const iso = orig.toISOString();
