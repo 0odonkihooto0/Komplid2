@@ -670,6 +670,31 @@ P2037 (Too many connections) — НЕ ретраить, нужен PgBouncer.
 `IdReadinessWidget` использовал ключ `['dashboard-objects-summary-mini']` и `MapWidget`/`ObjectsBaseWidget` — `['dashboard-objects-summary', objectIds]`. Все трое вызывали `/api/dashboard/objects-summary` без фильтра objectIds. Итог: 2 HTTP-запроса к одному URL вместо 1. Исправлено: `IdReadinessWidget` переведён на `['dashboard-objects-summary', [] as string[]]` — при пустом фильтре ключ совпадает с MapWidget/ObjectsBaseWidget → TanStack Query дедуплицирует до 1 запроса.
 **Правило**: перед добавлением нового виджета с `useQuery` — проверить `grep -r "queryKey.*имя-endpoint" src/components/` и убедиться что нет дубликатов. Виджеты к одному endpoint с одинаковыми параметрами должны использовать один ключ. Исключение: если параметры реально разные (например, year в SmrOsvoenoWidget) — отдельный ключ правомерен.
 
+**TODO-комментарий в компоненте как маркер пропущенных полей API — трассировать к `select`/`include` роута.**
+`GanttDelegationView.tsx` рендерил `task.delegatedFromOrg ?? '—'` и `task.delegatedToOrg ?? '—'`, всегда показывая прочерки. Рядом был комментарий `{/* TODO: delegatedFromOrg не возвращается API /delegated-tasks */}`. API роут не включал соответствующие relation-поля: у целевой `GanttVersion` есть `delegatedFromOrg` и `delegatedToOrg` через `@relation`, но `select` содержал только `{ id, name }`.
+Исправление: добавить в `select` целевых версий:
+```typescript
+delegatedFromOrg: { select: { name: true } },
+delegatedToOrg: { select: { name: true } },
+```
+и добавить эти строки в маппинг ответа: `delegatedFromOrg: tv?.delegatedFromOrg?.name ?? null`.
+**Правило**: TODO-комментарий вида `{/* TODO: field X не возвращается API /endpoint */}` — это технический долг с конкретным адресом. При обнаружении: открыть указанный роут, найти его `select`/`include`, добавить пропущенную relation с нужными полями, удалить TODO. Быстрый поиск таких долгов: `grep -r "не возвращается API" src/components/`.
+
+**`console.*` в standalone-процессах (socket.ts, воркеры) — использовать pino logger, relative import.**
+`src/server/socket.ts` использовал `console.error` и `console.log` вместо pino logger. Остальной проект (API роуты, воркеры) уже использует `logger` из `src/lib/logger.ts`. Несогласованность: логи socket-процесса имели другой формат и не попадали в структурированный вывод.
+Проблема с импортом: standalone-процессы (`server.js`, `socket.ts`) не могут использовать алиас `@/lib/logger` — tsconfig paths не работают в CJS-окружении без дополнительной конфигурации. Правильный импорт — **относительный**: `import { logger } from '../lib/logger'`.
+Замена:
+```typescript
+// Неправильно:
+console.error('[socket] message:send error', err);
+console.log(`[socket] running on port ${PORT}`);
+
+// Правильно:
+logger.error({ err }, '[socket] message:send error');
+logger.info(`[socket] running on port ${PORT}`);
+```
+**Правило**: при создании нового standalone-процесса или воркера — сразу добавлять `import { logger } from '../lib/logger'` (relative path) и не использовать `console.*`. Поиск нарушений: `grep -r "console\." src/server/ src/lib/workers/`.
+
 ---
 
 > Правило: после каждой исправленной ошибки добавить урок сюда.
