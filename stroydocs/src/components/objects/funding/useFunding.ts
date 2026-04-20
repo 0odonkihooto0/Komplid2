@@ -26,6 +26,7 @@ export interface FundingSource {
   budgetType: BudgetTypeOption | null;
   name: string;
   amount: number;
+  actualAmount: number | null;
   period: string | null;
   notes: string | null;
   createdAt: string;

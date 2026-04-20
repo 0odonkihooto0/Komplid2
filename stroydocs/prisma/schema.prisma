@@ -1920,6 +1920,7 @@ model GanttTask {
   volume                   Float? // Объём работ
   volumeUnit               String? // Единица измерения объёма
   amount                   Float? // Стоимость (из сметы)
+  factVolume               Float? // Фактический объём выполненных работ
   isMilestone              Boolean       @default(false) // Веха (нулевая продолжительность)
   calendarType             String? // STANDARD / CUSTOM — тип производственного календаря
   linkedExecutionDocsCount Int           @default(0) // Количество связанных актов ИД
@@ -2340,9 +2341,10 @@ model FundingSource {
   budgetTypeId String?
   budgetType   BudgetType? @relation(fields: [budgetTypeId], references: [id])
 
-  name   String // Название источника
-  amount Float // Сумма (руб.)
-  period String? // Период (например "2024 Q1")
+  name         String  // Название источника
+  amount       Float   // Плановая сумма (руб.)
+  actualAmount Float?  // Фактически освоенная сумма (руб.)
+  period       String? // Период (например "2024 Q1")
   notes  String?
 
   projectId String

@@ -501,6 +501,7 @@ async function getFundingReport(
       name: true,
       type: true,
       amount: true,
+      actualAmount: true,
       period: true,
       project: { select: { name: true } },
     },
@@ -515,11 +516,12 @@ async function getFundingReport(
     return {
       objectName: fs.project.name,
       sourceName: fs.name,
-      // TODO: поле actual (фактическое освоение) отсутствует в модели FundingSource
-      // Требуется добавить поле actualAmount в схему Prisma для полноценного отчёта
       planned: fs.amount,
-      actual: null,
-      utilization: null,
+      actual: fs.actualAmount ?? null,
+      utilization:
+        fs.amount > 0 && fs.actualAmount != null
+          ? Math.round((fs.actualAmount / fs.amount) * 100)
+          : null,
       year,
       quarter,
     };

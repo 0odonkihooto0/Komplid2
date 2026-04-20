@@ -114,12 +114,10 @@ export async function POST(
       }
 
       // Пометить исходные задачи (только выбранные, не дочерние) как делегированные
-      for (const taskId of taskIds) {
-        await tx.ganttTask.update({
-          where: { id: taskId },
-          data: { delegatedToVersionId: targetVersionId },
-        });
-      }
+      await tx.ganttTask.updateMany({
+        where: { id: { in: taskIds } },
+        data: { delegatedToVersionId: targetVersionId },
+      });
 
       // Пересчитать суммарные задачи обеих версий
       await recalcSummaryTasks(tx, params.versionId);

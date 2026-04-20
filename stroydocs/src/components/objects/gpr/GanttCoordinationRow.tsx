@@ -310,14 +310,18 @@ export function GanttCoordinationRow({
       <TableCell>{dateCell('planStart')}</TableCell>
       <TableCell>{dateCell('planEnd')}</TableCell>
       <TableCell className="text-right">{calcDays(task.planStart, task.planEnd)}</TableCell>
-      {/* Плановый объём — TODO: factVolume требует Prisma-миграции */}
-      <TableCell className="text-right">—</TableCell>
+      {/* Плановый объём */}
+      <TableCell className="text-right">
+        {task.volume != null ? `${task.volume}${task.volumeUnit ? ' ' + task.volumeUnit : ''}` : '—'}
+      </TableCell>
       {/* Фактические даты */}
       <TableCell>{dateCell('factStart')}</TableCell>
       <TableCell>{dateCell('factEnd')}</TableCell>
       <TableCell className="text-right">{calcDays(task.factStart, task.factEnd)}</TableCell>
-      {/* Фактический объём — TODO: factVolume требует Prisma-миграции */}
-      <TableCell className="text-right">—</TableCell>
+      {/* Фактический объём */}
+      <TableCell className="text-right">
+        {task.factVolume != null ? `${task.factVolume}${task.volumeUnit ? ' ' + task.volumeUnit : ''}` : '—'}
+      </TableCell>
     </TableRow>
   );
 }
