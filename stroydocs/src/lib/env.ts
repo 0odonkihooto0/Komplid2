@@ -16,9 +16,11 @@ const REQUIRED_ENV_VARS = [
   'S3_ACCESS_KEY',
   'S3_SECRET_KEY',
   'REDIS_URL',
-  'CRON_SECRET',
-  'ADMIN_SECRET',
 ] as const;
+
+// CRON_SECRET и ADMIN_SECRET — опциональные Bearer-секреты для cron/admin эндпоинтов.
+// Если не заданы: cron возвращает 401, admin падает на сессионную проверку — это безопасно.
+// Не добавлять в REQUIRED_ENV_VARS: они не инфраструктурные и могут отсутствовать на старте.
 
 type RequiredEnvVar = (typeof REQUIRED_ENV_VARS)[number];
 

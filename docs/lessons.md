@@ -352,8 +352,19 @@ Radix UI `@radix-ui/react-select` v2.2.6+ добавил валидацию: `va
 `admin/setup-s3/route.ts` — fallback убран.
 **Правило**: каждый тип Bearer-аутентификации использует **собственную** переменную окружения.
 `NEXTAUTH_SECRET` — только для NextAuth. `CRON_SECRET` — только для cron. `ADMIN_SECRET` — только для admin.
-Все три обязательны (`src/lib/env.ts` → `REQUIRED_ENV_VARS`) и задокументированы в `.env.example`.
+`CRON_SECRET` и `ADMIN_SECRET` — **опциональные** (не в `REQUIRED_ENV_VARS`): без них сервер стартует,
+cron возвращает 401, admin падает на сессионную проверку — это безопасно.
+Задокументированы в `.env.example`.
 Поиск нарушений: `grep -r "NEXTAUTH_SECRET" src/app/api/ | grep -v "auth"`.
+
+**Добавление опционального секрета в `REQUIRED_ENV_VARS` — краш сервера на деплоях без него.**
+`CRON_SECRET`/`ADMIN_SECRET` были добавлены в обязательные переменные — при деплое без них
+сервер падал при старте с `[env] Отсутствуют...`, NextAuth получал 500 вместо JSON →
+`CLIENT_FETCH_ERROR` во всём приложении.
+Различие: **инфраструктурные** (`DATABASE_URL`, `NEXTAUTH_SECRET`, S3, Redis) — сервер не может
+работать без них → `REQUIRED_ENV_VARS`. **Операционные Bearer-секреты** (`CRON_SECRET`,
+`ADMIN_SECRET`) — их отсутствие безопасно (401/сессионная auth), добавлять в required не нужно.
+Правило: в `REQUIRED_ENV_VARS` только то, без чего невозможно обработать ни один запрос.
 
 **API роут без проверки organizationId = утечка данных между тенантами.**
 Каждый новый роут обязан фильтровать по `organizationId` из сессии.
