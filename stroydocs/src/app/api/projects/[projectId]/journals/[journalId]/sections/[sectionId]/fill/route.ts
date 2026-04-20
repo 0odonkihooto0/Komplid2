@@ -132,18 +132,18 @@ export async function POST(_req: NextRequest, { params }: Params) {
       `;
       let nextNum = (result[0]?.max_num ?? 0) + 1;
 
-      for (const description of descriptions) {
-        await tx.specialJournalEntry.create({
-          data: {
-            entryNumber: nextNum++,
-            date: now,
-            description,
-            journalId: params.journalId,
-            sectionId: params.sectionId,
-            authorId: session.user.id,
-          },
-        });
-      }
+      const dataToInsert = descriptions.map((description) => ({
+        entryNumber: nextNum++,
+        date: now,
+        description,
+        journalId: params.journalId,
+        sectionId: params.sectionId,
+        authorId: session.user.id,
+      }));
+
+      await tx.specialJournalEntry.createMany({
+        data: dataToInsert,
+      });
 
       return descriptions.length;
     });
