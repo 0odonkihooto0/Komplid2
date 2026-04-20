@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { NotificationsDropdown } from './NotificationsDropdown';
+import { TasksQuickPanel } from './TasksQuickPanel';
 import { SearchTrigger } from './SearchTrigger';
 import { ThemeToggle } from './ThemeToggle';
 import { AccentSwitcher } from './AccentSwitcher';
@@ -33,6 +34,7 @@ export function Header() {
         <AccentSwitcher />
         <ThemeToggle />
         <SearchTrigger />
+        <TasksQuickPanel />
         <NotificationsDropdown />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

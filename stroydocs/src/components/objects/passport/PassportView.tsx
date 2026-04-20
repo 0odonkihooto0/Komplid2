@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Download, History, Pencil, MapPin } from 'lucide-react';
+import { Download, History, Pencil, MapPin, Map } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -177,6 +177,29 @@ export function PassportView({ projectId }: PassportViewProps) {
         </div>
         <ObjectMetrics stage={project.stage} gprProgress={project.gprProgress} />
       </Card>
+
+      {/* Название объекта + кнопки (под hero) */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold leading-tight">{project.name}</h2>
+          {project.address && (
+            <p className="mt-1 text-sm text-[var(--ink-muted)]">{project.address}</p>
+          )}
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <Button variant="ghost" size="sm" onClick={() => {
+            const el = document.getElementById('coordinates-map');
+            el?.scrollIntoView({ behavior: 'smooth' });
+          }}>
+            <Map className="mr-1.5 h-4 w-4" />
+            На карту
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+            <Pencil className="mr-1.5 h-4 w-4" />
+            Открыть паспорт
+          </Button>
+        </div>
+      </div>
 
       {/* Двухколоночный grid */}
       <div className="grid gap-4 lg:grid-cols-3">
