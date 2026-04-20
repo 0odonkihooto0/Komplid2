@@ -106,14 +106,16 @@ export async function POST(
         }
 
         // Обновляем parentId через маппинг
-        for (const t of sourceTasks) {
-          if (t.parentId && idMap.has(t.parentId)) {
-            await tx.ganttTask.update({
-              where: { id: idMap.get(t.id)! },
-              data: { parentId: idMap.get(t.parentId) },
-            });
-          }
-        }
+        await Promise.all(
+          sourceTasks
+            .filter((t) => t.parentId && idMap.has(t.parentId))
+            .map((t) =>
+              tx.ganttTask.update({
+                where: { id: idMap.get(t.id)! },
+                data: { parentId: idMap.get(t.parentId) },
+              })
+            )
+        );
       }
 
       return newVersion;
