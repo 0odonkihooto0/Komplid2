@@ -4,6 +4,8 @@ import './globals.css';
 import { Providers } from '@/components/shared/Providers';
 import { Toaster } from '@/components/shared/Toaster';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
+import { InstallPromptAndroid } from '@/components/pwa/InstallPromptAndroid';
+import { InstallPromptIos } from '@/components/pwa/InstallPromptIos';
 
 const inter = Inter({
   subsets: ['latin', 'cyrillic'],
@@ -78,6 +80,8 @@ export default function RootLayout({
           <ErrorBoundary>
             {children}
             <Toaster />
+            <InstallPromptAndroid />
+            <InstallPromptIos />
           </ErrorBoundary>
         </Providers>
       </body>
