@@ -21,6 +21,12 @@ vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
+// Мокаем rate limiter
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: vi.fn().mockReturnValue(true),
+  getClientIp: vi.fn().mockReturnValue('127.0.0.1'),
+}));
+
 import { db } from '@/lib/db';
 
 const mockedDb = vi.mocked(db);

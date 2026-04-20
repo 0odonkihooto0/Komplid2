@@ -85,70 +85,92 @@ export async function POST(
         where: { contractId: params.contractId },
       });
 
-      const createdWorkItems = [];
       let itemIndex = 0;
 
-      for (const item of selectedWorkItems) {
+      // Подготавливаем данные для батч-создания WorkItems
+      const workItemsData = selectedWorkItems.map((item) => {
         itemIndex++;
         const cipher = `СМТ-${String(existingCount + itemIndex).padStart(3, '0')}`;
+        return {
+          id: crypto.randomUUID(),
+          projectCipher: cipher,
+          name: item.rawName,
+          unit: item.rawUnit ?? undefined,
+          volume: item.volume ?? undefined,
+          normatives: item.normativeRefs?.length ? item.normativeRefs.join(', ') : undefined,
+          ksiNodeId: applyKsi && item.suggestedKsiNodeId ? item.suggestedKsiNodeId : undefined,
+          contractId: params.contractId,
+          _originalItemId: item.id, // Временное поле для связи
+        };
+      });
 
-        const workItem = await tx.workItem.create({
-          data: {
-            projectCipher: cipher,
-            name: item.rawName,
-            unit: item.rawUnit ?? undefined,
-            volume: item.volume ?? undefined,
-            normatives: item.normativeRefs?.length ? item.normativeRefs.join(', ') : undefined,
-            // КСИ привязывается только если пользователь включил соответствующую опцию
-            ksiNodeId: applyKsi && item.suggestedKsiNodeId ? item.suggestedKsiNodeId : undefined,
-            contractId: params.contractId,
-          },
+      if (workItemsData.length > 0) {
+        await tx.workItem.createMany({
+          // Исключаем временное поле при вставке
+          data: workItemsData.map(({ _originalItemId, ...rest }) => rest),
         });
+      }
 
-        // Обновляем позицию: status = CONFIRMED, workItemId
-        await tx.estimateImportItem.update({
-          where: { id: item.id },
-          data: {
-            status: 'CONFIRMED',
-            workItemId: workItem.id,
-          },
-        });
+      const materialsDataToCreate: any[] = [];
+      const itemUpdatesPromises: Promise<any>[] = [];
 
-        // Создаём Material для каждого дочернего материала этой работы
-        const childMaterials = allMaterialItems.filter((m) => m.parentItemId === item.id);
-        for (const mat of childMaterials) {
-          await tx.material.create({
+      for (const workItemData of workItemsData) {
+        const originalItemId = workItemData._originalItemId;
+        const workItemId = workItemData.id;
+
+        // Обновляем позицию работы: status = CONFIRMED, workItemId
+        itemUpdatesPromises.push(
+          tx.estimateImportItem.update({
+            where: { id: originalItemId },
             data: {
-              name: mat.rawName,
-              unit: mapRawUnitToEnum(mat.rawUnit),
-              quantityReceived: mat.volume ?? 0,
-              contractId: params.contractId,
-              workItemId: workItem.id,
+              status: 'CONFIRMED',
+              workItemId: workItemId,
             },
+          })
+        );
+
+        // Собираем материалы для этой работы
+        const childMaterials = allMaterialItems.filter((m) => m.parentItemId === originalItemId);
+        for (const mat of childMaterials) {
+          materialsDataToCreate.push({
+            name: mat.rawName,
+            unit: mapRawUnitToEnum(mat.rawUnit),
+            quantityReceived: mat.volume ?? 0,
+            contractId: params.contractId,
+            workItemId: workItemId,
           });
 
           // Помечаем материал как подтверждённый
-          await tx.estimateImportItem.update({
-            where: { id: mat.id },
-            data: { status: 'CONFIRMED' },
-          });
+          itemUpdatesPromises.push(
+            tx.estimateImportItem.update({
+              where: { id: mat.id },
+              data: { status: 'CONFIRMED' },
+            })
+          );
         }
 
         // Если у работы нет дочерних материалов — создаём материал из названия работы
         if (childMaterials.length === 0) {
-          await tx.material.create({
-            data: {
-              name: item.rawName,
-              unit: mapRawUnitToEnum(item.rawUnit),
-              quantityReceived: item.volume ?? 0,
-              contractId: params.contractId,
-              workItemId: workItem.id,
-            },
+          // Ищем оригинальную работу для получения единиц измерения/объема
+          const item = selectedWorkItems.find((i) => i.id === originalItemId);
+          materialsDataToCreate.push({
+            name: workItemData.name,
+            unit: mapRawUnitToEnum(item?.rawUnit ?? null),
+            quantityReceived: workItemData.volume ?? 0,
+            contractId: params.contractId,
+            workItemId: workItemId,
           });
         }
-
-        createdWorkItems.push(workItem);
       }
+
+      if (materialsDataToCreate.length > 0) {
+        await tx.material.createMany({
+          data: materialsDataToCreate,
+        });
+      }
+
+      // Выполняем все обновления позиций параллельно
+      await Promise.all(itemUpdatesPromises);
 
       // Обновляем статус импорта
       await tx.estimateImport.update({
@@ -159,7 +181,7 @@ export async function POST(
         },
       });
 
-      return createdWorkItems;
+      return workItemsData;
     });
 
     // Конвертируем импорт в версию сметы (отдельно от WorkItem транзакции).
