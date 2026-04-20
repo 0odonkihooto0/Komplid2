@@ -1363,7 +1363,7 @@
   - ✅ Шаг 1.2: SW кэш-стратегии + offline fallback (`/~offline`)
   - ✅ Шаг 1.3: Web App Manifest + иконки-заглушки (`src/app/manifest.ts`, `public/icons/`)
   - ✅ Шаг 1.4: InstallPrompt (Android `beforeinstallprompt` + iOS Safari инструкция)
-  - ⬜ Шаг 1.5: Zustand network store + OfflineBanner
+  - ✅ Шаг 1.5: Zustand network store + OfflineBanner + heartbeat `/api/ping`
 - ⬜ Офлайн-режим: замечания, фото, записи журнала без интернета
 - ⬜ Синхронизация при восстановлении (conflict resolution)
 - ⬜ Push-уведомления (FCM / APNs)

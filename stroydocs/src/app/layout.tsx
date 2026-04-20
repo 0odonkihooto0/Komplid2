@@ -6,6 +6,9 @@ import { Toaster } from '@/components/shared/Toaster';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { InstallPromptAndroid } from '@/components/pwa/InstallPromptAndroid';
 import { InstallPromptIos } from '@/components/pwa/InstallPromptIos';
+import { NetworkListener } from '@/components/pwa/NetworkListener';
+import { OfflineBanner } from '@/components/pwa/OfflineBanner';
+import { BackOnlineToast } from '@/components/pwa/BackOnlineToast';
 
 const inter = Inter({
   subsets: ['latin', 'cyrillic'],
@@ -80,6 +83,9 @@ export default function RootLayout({
           <ErrorBoundary>
             {children}
             <Toaster />
+            <NetworkListener />
+            <OfflineBanner />
+            <BackOnlineToast />
             <InstallPromptAndroid />
             <InstallPromptIos />
           </ErrorBoundary>
