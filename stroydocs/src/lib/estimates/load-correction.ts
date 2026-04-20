@@ -100,21 +100,22 @@ export async function loadCorrectionFromFile(
       chapterNameMap.set(parentChapter.name, ch.id);
     }
 
+    // Собираем позиции для bulk insert
+    const itemsToCreate = [];
+
     // Вставляем сопоставленные позиции
     for (const { parsed, parentChapterName } of matched) {
       const chapterId = chapterNameMap.get(parentChapterName);
       if (!chapterId) continue;
-      await tx.estimateItem.create({
-        data: {
-          sortOrder: parsed.sortOrder,
-          itemType: parsed.itemType,
-          name: parsed.rawName,
-          unit: parsed.rawUnit,
-          volume: parsed.volume,
-          unitPrice: parsed.price,
-          totalPrice: parsed.total,
-          chapterId,
-        },
+      itemsToCreate.push({
+        sortOrder: parsed.sortOrder,
+        itemType: parsed.itemType,
+        name: parsed.rawName,
+        unit: parsed.rawUnit,
+        volume: parsed.volume,
+        unitPrice: parsed.price,
+        totalPrice: parsed.total,
+        chapterId,
       });
     }
 
@@ -123,20 +124,24 @@ export async function loadCorrectionFromFile(
       const firstChapterId = chapterNameMap.values().next().value;
       if (firstChapterId) {
         for (const parsed of unmatched) {
-          await tx.estimateItem.create({
-            data: {
-              sortOrder: parsed.sortOrder,
-              itemType: parsed.itemType,
-              name: parsed.rawName,
-              unit: parsed.rawUnit,
-              volume: parsed.volume,
-              unitPrice: parsed.price,
-              totalPrice: parsed.total,
-              chapterId: firstChapterId,
-            },
+          itemsToCreate.push({
+            sortOrder: parsed.sortOrder,
+            itemType: parsed.itemType,
+            name: parsed.rawName,
+            unit: parsed.rawUnit,
+            volume: parsed.volume,
+            unitPrice: parsed.price,
+            totalPrice: parsed.total,
+            chapterId: firstChapterId,
           });
         }
       }
+    }
+
+    if (itemsToCreate.length > 0) {
+      await tx.estimateItem.createMany({
+        data: itemsToCreate,
+      });
     }
 
     return version;
