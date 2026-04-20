@@ -1358,7 +1358,7 @@
 
 > **Ориентир:** 4–6 недель
 
-- 🔄 Базовая PWA (next-pwa, кэш статики) — частично настроена
+- ✅ Фаза 1: Serwist SW + offline fallback + кэш-стратегии
 - ⬜ Офлайн-режим: замечания, фото, записи журнала без интернета
 - ⬜ Синхронизация при восстановлении (conflict resolution)
 - ⬜ Push-уведомления (FCM / APNs)
@@ -1500,7 +1500,7 @@
 | Чат | Socket.io self-hosted (серверы РФ ✅) |
 | AI | YandexGPT (основной) + Gemini (fallback) |
 | Поиск | PostgreSQL tsvector → pgvector (AI-поиск в Фазе 8) |
-| Офлайн | next-pwa + IndexedDB (Фаза 6) |
+| Офлайн | Serwist + IndexedDB (Фаза 6) |
 | Аналитика | Recharts, TanStack Table v8 |
 
 ---

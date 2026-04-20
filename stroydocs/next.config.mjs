@@ -1,4 +1,17 @@
 import { execSync } from 'child_process';
+import { randomUUID } from 'crypto';
+import withSerwistInit from '@serwist/next';
+
+const revision = randomUUID();
+
+const withSerwist = withSerwistInit({
+  additionalPrecacheEntries: [{ url: '/~offline', revision }],
+  swSrc: 'src/sw/index.ts',
+  swDest: 'public/sw.js',
+  disable: process.env.NODE_ENV === 'development',
+  cacheOnNavigation: true,
+  reloadOnOnline: true,
+});
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -74,4 +87,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSerwist(nextConfig);
