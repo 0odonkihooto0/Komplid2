@@ -9,6 +9,15 @@
 
 ---
 
+### Добавлено (2026-04-20) — MODULE16 Фаза 3: Offline-first hooks ✅
+
+- ✅ `src/hooks/use-offline-mutation.ts` — optimistic IDB → fetch API → sync-queue при сбое/офлайн
+- ✅ `src/hooks/use-offline-query.ts` — stale-while-revalidate через cacheSnapshotsRepo с TTL
+- ✅ `src/hooks/use-create-journal-entry.ts` — пример хука ОЖР (clientId через crypto.randomUUID, markSynced при ответе сервера)
+- ✅ `src/components/pwa/SyncQueuePanel.tsx` — Popover-виджет в Header: Badge с кол-вом, список pending/failed, кнопки «Повторить» и «Сбросить ошибки»
+
+---
+
 ### Добавлено (2026-04-20) — MODULE16 Фаза 2: IndexedDB + Sync Queue ✅
 
 - ✅ `idb` установлен; `src/lib/idb/db.ts` — схема `stroydocs-offline` v1 (4 stores: sync-queue, offline-journal-entries, offline-photos, cache-snapshots)
