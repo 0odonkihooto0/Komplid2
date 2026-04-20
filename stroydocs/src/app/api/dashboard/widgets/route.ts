@@ -92,7 +92,7 @@ const createWidgetSchema = z.object({
   position:  z.number().int().min(0).default(0),
   colSpan:   z.number().int().min(1).max(3).default(1),
   isVisible: z.boolean().default(true),
-  config:    z.any().optional(),
+  config:    z.record(z.string(), z.unknown()).optional(),
 });
 
 export async function POST(req: NextRequest) {

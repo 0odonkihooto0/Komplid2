@@ -1,4 +1,5 @@
 import { Queue } from 'bullmq';
+import { logger } from './logger';
 
 // Тип задачи уведомления
 export interface NotificationJob {
@@ -52,6 +53,6 @@ export async function enqueueNotification(job: NotificationJob): Promise<void> {
     await queue.add('send-email', job);
   } catch (err) {
     // Очередь недоступна — логируем, не ломаем основной поток
-    console.error('[queue] Не удалось добавить задачу уведомления:', err);
+    logger.error({ err }, '[queue] Не удалось добавить задачу уведомления');
   }
 }

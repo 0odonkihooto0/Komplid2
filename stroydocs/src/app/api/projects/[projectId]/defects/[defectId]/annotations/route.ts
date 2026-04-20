@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 interface Params { projectId: string; defectId: string }
 
 const annotationsSchema = z.object({
-  annotations: z.any(), // Fabric.js JSON
+  annotations: z.record(z.string(), z.unknown()),
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: Params }) {
