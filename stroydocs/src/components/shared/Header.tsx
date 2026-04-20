@@ -13,9 +13,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { NotificationsDropdown } from './NotificationsDropdown';
-import { TasksQuickPanel } from './TasksQuickPanel';
 import { SearchTrigger } from './SearchTrigger';
 import { ThemeToggle } from './ThemeToggle';
+import { AccentSwitcher } from './AccentSwitcher';
 import { Breadcrumb } from './Breadcrumb';
 
 export function Header() {
@@ -29,12 +29,10 @@ export function Header() {
       <div className="flex-1 min-w-0">
         <Breadcrumb />
       </div>
-      <div className="flex flex-1 justify-center">
-        <SearchTrigger />
-      </div>
       <div className="flex flex-1 items-center justify-end gap-1">
+        <AccentSwitcher />
         <ThemeToggle />
-        <TasksQuickPanel />
+        <SearchTrigger />
         <NotificationsDropdown />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
