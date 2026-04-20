@@ -9,6 +9,15 @@
 
 ---
 
+### Добавлено (2026-04-20) — MODULE16 Фаза 2: Инициализация IndexedDB
+
+- ✅ Установлен пакет `idb`; создана схема `stroydocs-offline` v1 (4 object stores: sync-queue, offline-journal-entries, offline-photos, cache-snapshots)
+- ✅ `src/lib/idb/db.ts` — singleton `getDB()`, DBSchema, типы SyncQueueItem / OfflineJournalEntry / OfflinePhoto / CacheSnapshot
+- ✅ `src/lib/idb/quota.ts` — `getStorageEstimate()`, `requestPersistentStorage()`
+- ✅ `NetworkListener.tsx` — вызов `requestPersistentStorage()` при монтировании
+
+---
+
 ### Добавлено (2026-04-19) — Консолидация UI объектов
 
 - ✅ Папка `src/app/(dashboard)/projects/` удалена полностью; все UI-страницы живут на канонических URL `/objects/[objectId]/*`

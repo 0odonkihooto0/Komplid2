@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useNetworkStore } from '@/stores/network-store';
+import { requestPersistentStorage } from '@/lib/idb/quota';
 
 const HEARTBEAT_INTERVAL_MS = 30_000;
 const HEARTBEAT_TIMEOUT_MS = 5_000;
@@ -43,6 +44,10 @@ export function NetworkListener() {
     const intervalId = setInterval(ping, HEARTBEAT_INTERVAL_MS);
     return () => clearInterval(intervalId);
   }, [setOnline]);
+
+  useEffect(() => {
+    requestPersistentStorage().catch(() => {});
+  }, []);
 
   return null;
 }
