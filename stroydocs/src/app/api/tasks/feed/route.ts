@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { buildTaskVisibilityWhere } from '@/lib/task-visibility';
+
+export const dynamic = 'force-dynamic';
 interface FeedItem {
   type: 'task_created' | 'report_added';
   id: string;

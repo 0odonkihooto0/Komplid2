@@ -5,6 +5,7 @@ import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { DefectCategory } from '@prisma/client';
 
+export const dynamic = 'force-dynamic';
 // GET /api/sk/defect-templates — системные + шаблоны своей организации
 export async function GET(req: NextRequest) {
   const session = await getSessionOrThrow();

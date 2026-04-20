@@ -5,6 +5,7 @@ import { successResponse, errorResponse } from '@/utils/api';
 import { getDownloadUrl } from '@/lib/s3-utils';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
 const IFC_SERVICE = process.env.IFC_SERVICE_URL ?? 'http://localhost:8001';
 const MAX_ISSUES = 200;
 

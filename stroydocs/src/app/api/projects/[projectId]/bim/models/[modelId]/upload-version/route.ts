@@ -5,6 +5,7 @@ import { successResponse, errorResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
 import { uploadVersionSchema } from '@/lib/validations/bim';
 
+export const dynamic = 'force-dynamic';
 /** POST /api/projects/[projectId]/bim/models/[modelId]/upload-version
  *  Добавить новую версию модели.
  *  Клиент предварительно загружает файл в S3 через presigned-url, затем вызывает этот роут.

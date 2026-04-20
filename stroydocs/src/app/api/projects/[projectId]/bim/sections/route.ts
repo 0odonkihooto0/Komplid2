@@ -5,6 +5,7 @@ import { successResponse, errorResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
 import { createSectionSchema } from '@/lib/validations/bim';
 
+export const dynamic = 'force-dynamic';
 /** Проверить принадлежность объекта организации и вернуть его */
 async function getProject(projectId: string, organizationId: string) {
   return db.buildingObject.findFirst({

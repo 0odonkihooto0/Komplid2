@@ -6,6 +6,7 @@ import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { invalidateAnalyticsCache } from '@/lib/analytics/cache';
 
+export const dynamic = 'force-dynamic';
 interface Params { projectId: string; defectId: string }
 
 const changeStatusSchema = z.object({

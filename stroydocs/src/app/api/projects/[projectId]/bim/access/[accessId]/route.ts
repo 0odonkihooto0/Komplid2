@@ -4,6 +4,7 @@ import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
 /** DELETE /api/projects/[projectId]/bim/access/[accessId] — удалить права доступа */
 export async function DELETE(
   _req: NextRequest,

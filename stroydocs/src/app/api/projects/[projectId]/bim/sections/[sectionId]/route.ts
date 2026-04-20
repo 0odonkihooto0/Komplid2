@@ -5,6 +5,7 @@ import { successResponse, errorResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
 import { updateSectionSchema } from '@/lib/validations/bim';
 
+export const dynamic = 'force-dynamic';
 type RouteParams = { params: { projectId: string; sectionId: string } };
 
 /** Проверить принадлежность раздела организации через объект строительства */

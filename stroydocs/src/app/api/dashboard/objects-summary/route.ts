@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { errorResponse } from '@/utils/api';
 
+export const dynamic = 'force-dynamic';
 // GET /api/dashboard/objects-summary
 // Возвращает список строительных объектов организации с % готовности ИД
 // Поддерживает фильтрацию по objectIds (через запятую)

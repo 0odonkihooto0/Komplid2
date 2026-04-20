@@ -7,6 +7,7 @@ import { updateTaskSchema } from '@/lib/validations/task';
 import { enqueueNotification } from '@/lib/queue';
 import { TaskStatus } from '@prisma/client';
 
+export const dynamic = 'force-dynamic';
 type Params = { params: Promise<{ id: string }> };
 
 const TERMINAL_STATUSES: TaskStatus[] = ['DONE', 'IRRELEVANT', 'CANCELLED'];

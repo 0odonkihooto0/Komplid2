@@ -6,6 +6,7 @@ import { successResponse, errorResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
 import type { IfcDiffResult, IfcDiffElement, IfcDiffChangedElement } from '@/types/bim-diff';
 
+export const dynamic = 'force-dynamic';
 /** Схема тела запроса: две версии одной модели */
 const diffSchema = z.object({
   versionIdOld: z.string().uuid('Некорректный идентификатор старой версии'),

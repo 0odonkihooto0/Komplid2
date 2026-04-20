@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 
+export const dynamic = 'force-dynamic';
 interface Params { id: string }
 
 export async function PATCH(req: NextRequest, { params }: { params: Params }) {

@@ -4,6 +4,7 @@ import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
 /** GET /api/projects/[projectId]/bim/models/[modelId]/elements/[elementId]
  *  Полные данные элемента ТИМ-модели: IFC PropertySets и список связей.
  */

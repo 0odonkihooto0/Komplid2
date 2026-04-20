@@ -6,6 +6,7 @@ import { successResponse, errorResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
 import { getConvertIfcQueue } from '@/lib/queues/convert-ifc.queue';
 
+export const dynamic = 'force-dynamic';
 type RouteParams = { params: { projectId: string; modelId: string } };
 
 /**

@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 
+export const dynamic = 'force-dynamic';
 // DELETE /api/sk/defect-templates/[id] — удалить шаблон своей организации
 export async function DELETE(
   _req: NextRequest,

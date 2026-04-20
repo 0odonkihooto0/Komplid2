@@ -6,6 +6,7 @@ import { uploadFile } from '@/lib/s3-utils';
 import { logger } from '@/lib/logger';
 import type { DefectStatus } from '@prisma/client';
 
+export const dynamic = 'force-dynamic';
 const IFC_SERVICE = process.env.IFC_SERVICE_URL ?? 'http://localhost:8001';
 
 /** Типизированный ответ IFC-сервиса */
