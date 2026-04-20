@@ -54,4 +54,16 @@ describe('addWorkingDays', () => {
     addWorkingDays(orig, 5);
     expect(orig.toISOString()).toBe(iso);
   });
+
+  it('отрицательный n — возвращает исходную дату (цикл added < n не выполняется)', () =>
+    expect(ymd(addWorkingDays(new Date('2024-01-08'), -1))).toBe('2024-01-08'));
+
+  it('переход через границу месяца: пт 31 янв 2025 + 1 = пн 3 фев 2025', () =>
+    expect(ymd(addWorkingDays(new Date('2025-01-31'), 1))).toBe('2025-02-03'));
+
+  it('переход через границу года: пт 29 дек 2023 + 1 = вт 2 янв 2024', () =>
+    expect(ymd(addWorkingDays(new Date('2023-12-29'), 1))).toBe('2024-01-02'));
+
+  it('високосный год: ср 28 фев 2024 + 2 = пт 1 мар 2024', () =>
+    expect(ymd(addWorkingDays(new Date('2024-02-28'), 2))).toBe('2024-03-01'));
 });

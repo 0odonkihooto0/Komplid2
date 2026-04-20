@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { getClientIp } from '../rate-limit';
+import { describe, it, expect, vi } from 'vitest';
+import { getClientIp, checkRateLimit } from '../rate-limit';
 
 function makeReq(headers: Record<string, string | null>, ip?: string) {
   return {
@@ -32,5 +32,33 @@ describe('getClientIp', () => {
   it('возвращает "unknown" если нет ни заголовков, ни req.ip', () => {
     const req = makeReq({ 'x-forwarded-for': null, 'x-real-ip': null });
     expect(getClientIp(req)).toBe('unknown');
+  });
+
+  it('пустой x-forwarded-for → fallback на x-real-ip', () => {
+    const req = makeReq({ 'x-forwarded-for': '', 'x-real-ip': '5.5.5.5' });
+    expect(getClientIp(req)).toBe('5.5.5.5');
+  });
+});
+
+describe('checkRateLimit', () => {
+  it('возвращает true для запросов в пределах лимита', () => {
+    expect(checkRateLimit('test-key-1', 3, 60000)).toBe(true);
+    expect(checkRateLimit('test-key-1', 3, 60000)).toBe(true);
+    expect(checkRateLimit('test-key-1', 3, 60000)).toBe(true);
+  });
+
+  it('возвращает false при превышении лимита', () => {
+    expect(checkRateLimit('test-key-2', 3, 60000)).toBe(true);
+    expect(checkRateLimit('test-key-2', 3, 60000)).toBe(true);
+    expect(checkRateLimit('test-key-2', 3, 60000)).toBe(true);
+    expect(checkRateLimit('test-key-2', 3, 60000)).toBe(false);
+  });
+
+  it('сбрасывает лимит после истечения окна', () => {
+    vi.useFakeTimers();
+    expect(checkRateLimit('test-key-3', 3, 60000)).toBe(true);
+    vi.advanceTimersByTime(60001);
+    expect(checkRateLimit('test-key-3', 3, 60000)).toBe(true);
+    vi.useRealTimers();
   });
 });
