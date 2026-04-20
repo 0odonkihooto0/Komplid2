@@ -35,6 +35,8 @@ const preRenderThemeScript = `
     var accent = localStorage.getItem('komplid-accent');
     if (accent === 'cobalt' || accent === 'lime') {
       document.documentElement.setAttribute('data-accent', accent);
+    } else if (accent === 'steel') {
+      document.documentElement.removeAttribute('data-accent');
     }
   } catch (e) {}
 })();
