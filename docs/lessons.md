@@ -342,6 +342,19 @@ Radix UI `@radix-ui/react-select` v2.2.6+ добавил валидацию: `va
 
 ## Безопасность
 
+**`NEXTAUTH_SECRET` как fallback для `CRON_SECRET`/`ADMIN_SECRET` — смешение разных ключей.**
+Паттерн `const secret = process.env.CRON_SECRET || process.env.NEXTAUTH_SECRET` кажется удобным
+на старте (не нужно добавлять новую переменную), но создаёт уязвимость: `NEXTAUTH_SECRET`
+предназначен для подписи JWT-сессий, и если он утечёт — злоумышленник получает доступ
+и к cron-эндпоинтам, и к admin-эндпоинтам. Обратное тоже верно: смена `NEXTAUTH_SECRET`
+(при ротации) неожиданно ломает cron.
+Зафиксировано в: `cron/inspection-reminder/route.ts`, `cron/prescription-deadline/route.ts`,
+`admin/setup-s3/route.ts` — fallback убран.
+**Правило**: каждый тип Bearer-аутентификации использует **собственную** переменную окружения.
+`NEXTAUTH_SECRET` — только для NextAuth. `CRON_SECRET` — только для cron. `ADMIN_SECRET` — только для admin.
+Все три обязательны (`src/lib/env.ts` → `REQUIRED_ENV_VARS`) и задокументированы в `.env.example`.
+Поиск нарушений: `grep -r "NEXTAUTH_SECRET" src/app/api/ | grep -v "auth"`.
+
 **API роут без проверки organizationId = утечка данных между тенантами.**
 Каждый новый роут обязан фильтровать по `organizationId` из сессии.
 Никогда findFirst/findUnique только по `id` — всегда добавлять `organizationId`.
