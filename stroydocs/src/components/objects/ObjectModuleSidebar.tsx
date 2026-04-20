@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import {
   FileText,
@@ -21,8 +22,14 @@ import {
   Box,
 } from 'lucide-react';
 import { CountBadge } from '@/components/shared/CountBadge';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { useObjectCounts } from '@/hooks/useObjectCounts';
 import type { ObjectCounts } from '@/hooks/useObjectCounts';
+import { PROJECT_STATUS_LABELS } from '@/utils/constants';
+
+interface ObjectSummary {
+  object: { id: string; name: string; status: string };
+}
 
 type SidebarKey = keyof ObjectCounts['sidebar'];
 
@@ -57,6 +64,20 @@ export function ObjectModuleSidebar({ objectId }: Props) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { data: counts } = useObjectCounts(objectId);
+  const { data: summary } = useQuery<ObjectSummary>({
+    queryKey: ['object-summary', objectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${objectId}/summary`);
+      const json = await res.json() as { success: boolean; data: ObjectSummary; error?: string };
+      if (!json.success) throw new Error(json.error ?? 'Ошибка');
+      return json.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const obj = summary?.object;
+  const codeLabel = obj ? obj.id.slice(0, 8).toUpperCase() : null;
+  const statusLabel = obj ? (PROJECT_STATUS_LABELS[obj.status as keyof typeof PROJECT_STATUS_LABELS] ?? obj.status) : null;
 
   const navItems = (
     <nav className="space-y-1 px-2">
@@ -124,6 +145,20 @@ export function ObjectModuleSidebar({ objectId }: Props) {
       >
         {/* Отступ для кнопки гамбургера на мобильных */}
         <div className="mb-2 h-10 md:hidden" />
+
+        {/* Шапка объекта */}
+        {obj && (
+          <div className="px-3 pb-3 mb-2 border-b">
+            <p className="text-[10px] font-mono uppercase text-muted-foreground tracking-widest">
+              ОБЪЕКТ · {codeLabel}
+            </p>
+            <p className="text-sm font-medium line-clamp-2 mt-0.5">{obj.name}</p>
+            {statusLabel && (
+              <StatusBadge status={obj.status} label={statusLabel} className="mt-1" />
+            )}
+          </div>
+        )}
+
         {navItems}
       </aside>
     </>
