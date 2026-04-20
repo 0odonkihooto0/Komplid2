@@ -197,8 +197,8 @@ export async function POST(
       stroiteli3:       formatParticipantFull(subcontractor ?? contractor),
 
       // Работы и материалы
-      rabota:     workRecord?.workItem.name ?? '—',
-      project:    workRecord?.workItem.projectCipher ?? '—',
+      rabota:     workRecord?.workItem?.name ?? '—',
+      project:    workRecord?.workItem?.projectCipher ?? '—',
       material:   materialsList,
       shema:      '—',
       ispitaniya: '—',

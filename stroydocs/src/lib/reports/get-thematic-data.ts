@@ -160,7 +160,7 @@ async function getDefectsByObject(
 
   // Группировка по объекту (в данном контексте — всегда один объект)
   const now = new Date();
-  const objectName = defects[0]?.buildingObject.name ?? '';
+  const objectName = defects[0]?.buildingObject?.name ?? '';
   const totalDefects = defects.length;
   const openDefects = defects.filter(
     (d) => d.status === 'OPEN' || d.status === 'IN_PROGRESS'
