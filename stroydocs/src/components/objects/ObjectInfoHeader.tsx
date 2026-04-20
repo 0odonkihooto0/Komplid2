@@ -26,8 +26,8 @@ export function ObjectInfoHeader({ objectId }: Props) {
     staleTime: 5 * 60 * 1000,
   });
 
-  const objectName = summary?.object.name ?? '…';
-  const objectAddress = summary?.object.address;
+  const objectName = summary?.object?.name ?? '…';
+  const objectAddress = summary?.object?.address;
 
   return (
     <div className="mb-4 rounded-lg border bg-background px-4 py-3 shadow-sm">
