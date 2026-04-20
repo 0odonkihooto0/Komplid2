@@ -46,18 +46,20 @@ export async function POST(
 
     // Массовое обновление задач в одной транзакции
     await db.$transaction(async (tx) => {
-      for (const u of updates) {
-        const { id, planStart, planEnd, progress, sortOrder } = u;
-        await tx.ganttTask.update({
-          where: { id },
-          data: {
-            ...(planStart !== undefined && { planStart: new Date(planStart) }),
-            ...(planEnd !== undefined && { planEnd: new Date(planEnd) }),
-            ...(progress !== undefined && { progress }),
-            ...(sortOrder !== undefined && { sortOrder }),
-          },
-        });
-      }
+      await Promise.all(
+        updates.map(async (u) => {
+          const { id, planStart, planEnd, progress, sortOrder } = u;
+          return tx.ganttTask.update({
+            where: { id },
+            data: {
+              ...(planStart !== undefined && { planStart: new Date(planStart) }),
+              ...(planEnd !== undefined && { planEnd: new Date(planEnd) }),
+              ...(progress !== undefined && { progress }),
+              ...(sortOrder !== undefined && { sortOrder }),
+            },
+          });
+        })
+      );
     });
 
     // Пересчитываем критический путь после массового обновления
