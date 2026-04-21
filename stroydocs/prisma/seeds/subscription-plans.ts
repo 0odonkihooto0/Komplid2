@@ -1,6 +1,6 @@
-import type { PrismaClient, Prisma } from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
 
-export const PHASE_1_PLANS = [
+const PLANS = [
   // ============ FREE ============
   {
     code: 'free',
@@ -12,6 +12,11 @@ export const PHASE_1_PLANS = [
     features: ['view_only', 'comments', 'profile'],
     limits: { maxObjects: 0, maxStorageGB: 0.5, maxGuests: 0 },
     displayOrder: 0,
+    trialDays: 0,
+    isPopular: false,
+    isVisible: true,
+    isLegacy: false,
+    isActive: true,
   },
 
   // ============ СМЕТЧИК-СТУДИО ============
@@ -33,6 +38,11 @@ export const PHASE_1_PLANS = [
     ],
     limits: { maxActiveEstimates: 5, maxStorageGB: 1, maxGuests: 3, maxObjects: 2 },
     displayOrder: 10,
+    trialDays: 0,
+    isPopular: false,
+    isVisible: true,
+    isLegacy: false,
+    isActive: true,
   },
   {
     code: 'smetchik_studio_pro',
@@ -57,6 +67,11 @@ export const PHASE_1_PLANS = [
     ],
     limits: { maxActiveEstimates: -1, maxStorageGB: 10, maxGuests: 10, maxObjects: 5 },
     displayOrder: 11,
+    trialDays: 14,
+    isPopular: true,
+    isVisible: true,
+    isLegacy: false,
+    isActive: true,
   },
 
   // ============ ИД-МАСТЕР ============
@@ -78,6 +93,11 @@ export const PHASE_1_PLANS = [
     ],
     limits: { maxDocumentsPerMonth: 50, maxStorageGB: 5, maxGuests: 3, maxObjects: 1 },
     displayOrder: 20,
+    trialDays: 0,
+    isPopular: false,
+    isVisible: true,
+    isLegacy: false,
+    isActive: true,
   },
   {
     code: 'id_master_pro',
@@ -104,6 +124,11 @@ export const PHASE_1_PLANS = [
     ],
     limits: { maxDocumentsPerMonth: -1, maxStorageGB: 25, maxGuests: 10, maxObjects: 5 },
     displayOrder: 21,
+    trialDays: 14,
+    isPopular: true,
+    isVisible: true,
+    isLegacy: false,
+    isActive: true,
   },
 
   // ============ ПРОРАБ-ЖУРНАЛ ============
@@ -118,6 +143,11 @@ export const PHASE_1_PLANS = [
     features: ['journals_basic', 'mobile_pwa', 'photos_gps', 'defects_lite'],
     limits: { maxObjects: 1, maxStorageGB: 5, maxPhotosPerMonth: 500, maxGuests: 2 },
     displayOrder: 30,
+    trialDays: 0,
+    isPopular: false,
+    isVisible: true,
+    isLegacy: false,
+    isActive: true,
   },
   {
     code: 'foreman_journal_pro',
@@ -142,20 +172,27 @@ export const PHASE_1_PLANS = [
     ],
     limits: { maxObjects: 5, maxStorageGB: 25, maxPhotosPerMonth: -1, maxGuests: 10 },
     displayOrder: 31,
+    trialDays: 14,
+    isPopular: true,
+    isVisible: true,
+    isLegacy: false,
+    isActive: true,
   },
-] as const;
+];
 
 export async function seedSubscriptionPlans(prisma: PrismaClient) {
-  for (const plan of PHASE_1_PLANS) {
+  for (const plan of PLANS) {
+    const { features, limits, ...rest } = plan;
     const data = {
-      ...plan,
-      features: [...plan.features],
-    } as unknown as Prisma.SubscriptionPlanCreateInput;
+      ...rest,
+      features: features as unknown as Parameters<typeof prisma.subscriptionPlan.create>[0]['data']['features'],
+      limits: limits as unknown as Parameters<typeof prisma.subscriptionPlan.create>[0]['data']['limits'],
+    };
     await prisma.subscriptionPlan.upsert({
       where: { code: plan.code },
       create: data,
-      update: data as Prisma.SubscriptionPlanUpdateInput,
+      update: data,
     });
   }
-  console.log(`Seeded ${PHASE_1_PLANS.length} subscription plans`);
+  console.log(`Seeded ${PLANS.length} subscription plans`);
 }
