@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { CameraCapture } from '@/components/mobile/CameraCapture';
@@ -9,7 +9,7 @@ import { useCreateJournalEntry } from '@/hooks/use-create-journal-entry';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 
-export default function NewJournalEntryPage() {
+function NewJournalEntryContent() {
   const { journalId } = useParams<{ journalId: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -72,5 +72,13 @@ export default function NewJournalEntryPage() {
         {createMutation.isPending ? 'Сохранение...' : 'Сохранить запись'}
       </Button>
     </div>
+  );
+}
+
+export default function NewJournalEntryPage() {
+  return (
+    <Suspense>
+      <NewJournalEntryContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { CameraCapture } from '@/components/mobile/CameraCapture';
@@ -16,7 +16,7 @@ const SEVERITIES = [
   { value: 'CRITICAL', label: 'Критическая' },
 ];
 
-export default function MobileDefectPage() {
+function MobileDefectContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const objectId = searchParams.get('objectId') ?? '';
@@ -111,5 +111,13 @@ export default function MobileDefectPage() {
         {isPending ? 'Сохранение...' : 'Зафиксировать дефект'}
       </Button>
     </div>
+  );
+}
+
+export default function MobileDefectPage() {
+  return (
+    <Suspense>
+      <MobileDefectContent />
+    </Suspense>
   );
 }
