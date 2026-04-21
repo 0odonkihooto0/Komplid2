@@ -46,10 +46,11 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
 
     const { projectId, filters } = parsed.data;
 
-    // Проверка принадлежности объекта строительства к организации пользователя (multi-tenancy)
-    const buildingObject = await db.buildingObject.findFirst({
-      where: { id: projectId, organizationId: session.user.organizationId },
-    });
+    // Проверка принадлежности объекта строительства (multi-tenancy + workspace)
+    const objWhere = session.user.activeWorkspaceId
+      ? { id: projectId, OR: [{ workspaceId: session.user.activeWorkspaceId }, { organizationId: session.user.organizationId }] }
+      : { id: projectId, organizationId: session.user.organizationId };
+    const buildingObject = await db.buildingObject.findFirst({ where: objWhere });
     if (!buildingObject) return errorResponse('Объект не найден', 404);
 
     const rows = await getThematicData(slug, projectId, filters ?? {});

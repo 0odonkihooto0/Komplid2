@@ -27,8 +27,13 @@ export async function GET(req: NextRequest) {
     const parsedLimit = parseInt(searchParams.get('limit') || '');
     const limit = Number.isNaN(parsedLimit) ? 50 : Math.max(1, Math.min(100, parsedLimit));
 
+    // Backward compatible: workspaceId (новый) || organizationId (старый fallback)
+    const workspaceFilter = session.user.activeWorkspaceId
+      ? { OR: [{ workspaceId: session.user.activeWorkspaceId }, { organizationId: session.user.organizationId }] }
+      : { organizationId: session.user.organizationId };
+
     const where = {
-      organizationId: session.user.organizationId,
+      ...workspaceFilter,
       ...(search && {
         OR: [
           { name: { contains: search, mode: 'insensitive' as const } },
@@ -100,6 +105,7 @@ export async function POST(req: NextRequest) {
         data: {
           ...parsed.data,
           organizationId: session.user.organizationId,
+          ...(session.user.activeWorkspaceId && { workspaceId: session.user.activeWorkspaceId }),
         },
       });
 

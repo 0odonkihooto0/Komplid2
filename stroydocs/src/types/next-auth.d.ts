@@ -11,6 +11,7 @@ declare module 'next-auth' {
       lastName: string;
       role: UserRole;
       organizationId: string;
+      activeWorkspaceId: string | null;
     };
   }
 
@@ -21,6 +22,7 @@ declare module 'next-auth' {
     lastName: string;
     role: UserRole;
     organizationId: string;
+    activeWorkspaceId: string | null;
   }
 }
 
@@ -31,5 +33,6 @@ declare module 'next-auth/jwt' {
     organizationId: string;
     firstName: string;
     lastName: string;
+    activeWorkspaceId: string | null | undefined;
   }
 }

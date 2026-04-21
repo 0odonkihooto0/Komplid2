@@ -44,6 +44,7 @@ export const authOptions: NextAuthOptions = {
           lastName: user.lastName,
           role: user.role,
           organizationId: user.organizationId,
+          activeWorkspaceId: user.activeWorkspaceId ?? null,
         };
       },
     }),
@@ -56,6 +57,7 @@ export const authOptions: NextAuthOptions = {
         token.organizationId = user.organizationId;
         token.firstName = user.firstName;
         token.lastName = user.lastName;
+        token.activeWorkspaceId = user.activeWorkspaceId;
       }
       return token;
     },
@@ -67,6 +69,7 @@ export const authOptions: NextAuthOptions = {
         lastName: token.lastName,
         role: token.role,
         organizationId: token.organizationId,
+        activeWorkspaceId: token.activeWorkspaceId ?? null,
       };
       return session;
     },

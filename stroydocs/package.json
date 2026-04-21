@@ -12,7 +12,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "build:workers": "tsc -p tsconfig.worker.json",
-    "worker:ifc": "ts-node --compiler-options {\"module\":\"CommonJS\"} src/lib/workers/parse-ifc.worker.ts"
+    "worker:ifc": "ts-node --compiler-options {\"module\":\"CommonJS\"} src/lib/workers/parse-ifc.worker.ts",
+    "backfill:ws": "ts-node --compiler-options {\"module\":\"CommonJS\"} scripts/backfill-workspace-ids.ts",
+    "validate:ws": "ts-node --compiler-options {\"module\":\"CommonJS\"} scripts/validate-workspace-backfill.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1008.0",

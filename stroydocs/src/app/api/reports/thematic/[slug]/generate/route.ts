@@ -44,11 +44,11 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
 
     const { projectId, filters } = parsed.data;
 
-    // Проверяем что проект принадлежит организации пользователя
-    const project = await db.buildingObject.findFirst({
-      where: { id: projectId, organizationId: orgId },
-      select: { id: true },
-    });
+    // Проверяем что проект принадлежит воркспейсу/организации (multi-tenancy + workspace)
+    const projectWhere = session.user.activeWorkspaceId
+      ? { id: projectId, OR: [{ workspaceId: session.user.activeWorkspaceId }, { organizationId: orgId }] }
+      : { id: projectId, organizationId: orgId };
+    const project = await db.buildingObject.findFirst({ where: projectWhere, select: { id: true } });
     if (!project) return errorResponse('Проект не найден', 404);
 
     // Генерируем Excel

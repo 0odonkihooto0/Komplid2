@@ -69,6 +69,20 @@ export async function POST(req: NextRequest) {
         data: { status: 'ACCEPTED' },
       });
 
+      // Добавить пользователя в воркспейс организации
+      const orgWorkspace = await tx.workspace.findFirst({
+        where: { organizationId: invitation.organizationId },
+      });
+      if (orgWorkspace) {
+        await tx.workspaceMember.create({
+          data: { workspaceId: orgWorkspace.id, userId: newUser.id, role: 'MEMBER' },
+        });
+        await tx.user.update({
+          where: { id: newUser.id },
+          data: { activeWorkspaceId: orgWorkspace.id },
+        });
+      }
+
       return newUser;
     });
 
