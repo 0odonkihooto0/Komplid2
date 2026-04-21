@@ -77,6 +77,7 @@ export function JournalCardHeader({
           objectId={objectId}
           journalId={journalId}
           journalNumber={j.number}
+          journalTitle={j.title || JOURNAL_TYPE_LABELS[j.type]}
         />
         <Button
           variant="outline"

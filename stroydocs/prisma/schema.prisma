@@ -4585,10 +4585,16 @@ model SpecialJournal {
   approvalRoute ApprovalRoute?        @relation("JournalApproval")
   remarks       JournalEntryRemark[]  @relation("JournalRemarks")
 
+  // Публичный шаринг журнала (Прораб → ПТО)
+  publicShareToken     String?   @unique
+  publicShareExpiresAt DateTime?
+  publicShareViewCount Int       @default(0)
+
   @@index([projectId])
   @@index([projectId, type])
   @@index([contractId])
   @@index([status])
+  @@index([publicShareToken])
   @@map("special_journals")
 }
 
