@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import type { BillingPeriod, Prisma } from '@prisma/client';
+import { processReferralReward } from '@/lib/referrals/process-referral-payment';
 
 // IP-allowlist ЮKassa (https://yookassa.ru/developers/using-api/webhooks)
 const YOOKASSA_IPS = [
@@ -126,6 +127,13 @@ export async function POST(req: NextRequest) {
           where: { id: payment.workspaceId },
           data: { activeSubscriptionId: subId },
         });
+
+        // Реферальные бонусы (Фаза 5)
+        if (payment.referralId) {
+          // Передаём свежую копию payment с обновлённым статусом
+          const freshPayment = { ...payment, status: 'SUCCEEDED' as const, paidAt: new Date() };
+          await processReferralReward(tx, freshPayment);
+        }
       });
 
       logger.info({ paymentId: payment.id }, 'Webhook: подписка активирована');

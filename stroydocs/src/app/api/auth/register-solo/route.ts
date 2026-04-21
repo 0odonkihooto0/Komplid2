@@ -7,6 +7,7 @@ import { soloRegisterSchema } from '@/lib/validations/auth';
 import { successResponse, errorResponse } from '@/utils/api';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { createPersonalWorkspace } from '@/lib/workspaces/create-workspace';
+import { checkReferralFraud } from '@/lib/referrals/anti-fraud';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,10 +58,43 @@ export async function POST(req: NextRequest) {
       return { user, workspaceId: workspace.id };
     });
 
-    // Логируем ref_code cookie для будущей реферальной интеграции (Фаза 5)
+    // Фаза 5: реферальная интеграция — связать нового пользователя с referral
     const refCode = req.cookies.get('ref_code')?.value;
-    if (refCode) {
-      logger.info({ userId: result.user.id, refCode }, 'Solo registration via referral code');
+    const refReferralId = req.cookies.get('ref_referral_id')?.value;
+    if (refCode && refReferralId) {
+      try {
+        const codeRecord = await db.referralCode.findUnique({ where: { code: refCode } });
+        if (codeRecord && codeRecord.userId !== result.user.id) {
+          const referrer = await db.user.findUnique({
+            where: { id: codeRecord.userId },
+            select: { email: true },
+          });
+          const fraudCheck = await checkReferralFraud({
+            referrerId: codeRecord.userId,
+            referredEmail: email,
+            referrerEmail: referrer?.email ?? '',
+            signupIp: getClientIp(req),
+          });
+
+          await db.referral.update({
+            where: { id: refReferralId },
+            data: {
+              referredUserId: result.user.id,
+              signupAt: new Date(),
+              signupIp: getClientIp(req),
+              suspicious: fraudCheck.suspicious,
+              fraudReasons: fraudCheck.reasons,
+            },
+          });
+          await db.referralCode.update({
+            where: { id: codeRecord.id },
+            data: { signupCount: { increment: 1 } },
+          });
+        }
+      } catch (refErr) {
+        // Не блокируем регистрацию при ошибке реферального трекинга
+        logger.warn({ err: refErr }, 'Ошибка реферального трекинга при регистрации');
+      }
     }
 
     return successResponse({
