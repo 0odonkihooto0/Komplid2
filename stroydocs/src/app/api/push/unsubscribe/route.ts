@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { db } from '@/lib/db';
+export const dynamic = 'force-dynamic';
+
 
 const schema = z.object({
   endpoint: z.string().url(),

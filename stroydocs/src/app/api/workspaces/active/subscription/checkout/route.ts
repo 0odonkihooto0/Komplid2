@@ -4,6 +4,8 @@ import { db } from '@/lib/db';
 import { getActiveWorkspaceOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { createPayment } from '@/lib/payments/create-payment';
+export const dynamic = 'force-dynamic';
+
 
 const checkoutSchema = z.object({
   planCode: z.string().min(1),

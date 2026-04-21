@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { secureCompare } from '@/lib/auth-utils';
 import { scanRecentReferrals } from '@/lib/referrals/anti-fraud';
+export const dynamic = 'force-dynamic';
+
 
 export async function POST(req: NextRequest) {
   const secret = process.env.CRON_SECRET;

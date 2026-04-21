@@ -1,5 +1,7 @@
 import { db } from '@/lib/db';
 import { successResponse } from '@/utils/api';
+export const dynamic = 'force-dynamic';
+
 
 // GET /api/subscription-plans — публичный, для лендинга и страницы тарифов
 export async function GET() {

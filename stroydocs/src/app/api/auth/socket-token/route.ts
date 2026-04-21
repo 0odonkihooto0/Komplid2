@@ -2,6 +2,8 @@ import { getServerSession } from 'next-auth';
 import { SignJWT } from 'jose';
 import { authOptions } from '@/lib/auth';
 import { successResponse, errorResponse } from '@/utils/api';
+export const dynamic = 'force-dynamic';
+
 
 /**
  * GET /api/auth/socket-token
