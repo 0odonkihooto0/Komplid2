@@ -152,6 +152,134 @@ enum WorkspaceRole {
   GUEST
 }
 
+// === Модуль 15 Фаза 2 — Подписки ===
+
+enum PlanType {
+  FREE
+  SOLO_BASIC
+  SOLO_PRO
+  TEAM
+  CORPORATE
+}
+
+enum ProfessionalRole {
+  SMETCHIK
+  PTO
+  FOREMAN
+  SK_INSPECTOR
+  SUPPLIER
+  PROJECT_MANAGER
+  ACCOUNTANT
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+  INCOMPLETE
+}
+
+enum BillingPeriod {
+  MONTHLY
+  YEARLY
+}
+
+enum PaymentSource {
+  APP
+  TILDA
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+/// Каталог тарифных планов — системная сущность
+model SubscriptionPlan {
+  id          String           @id @default(uuid())
+  code        String           @unique
+  name        String
+  description String?
+  planType    PlanType
+  targetRole  ProfessionalRole?
+  requiresPersonalWorkspace Boolean @default(false)
+  priceMonthlyRub Int
+  priceYearlyRub  Int
+  features    String[]
+  limits      Json
+  isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  displayOrder Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subscriptions Subscription[]
+
+  @@map("subscription_plans")
+}
+
+/// Подписка — экземпляр плана, привязанный к workspace
+model Subscription {
+  id            String             @id @default(uuid())
+  workspaceId   String
+  planId        String
+  status        SubscriptionStatus
+  billingPeriod BillingPeriod
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean        @default(false)
+  canceledAt         DateTime?
+  trialEnd           DateTime?
+  yookassaSubscriptionId String?    @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  workspace Workspace        @relation("WorkspaceAllSubscriptions", fields: [workspaceId], references: [id], onDelete: Cascade)
+  plan      SubscriptionPlan @relation(fields: [planId], references: [id])
+  activeFor Workspace?       @relation("WorkspaceActiveSubscription")
+  payments  Payment[]
+
+  @@index([workspaceId])
+  @@index([status])
+  @@index([currentPeriodEnd])
+  @@map("subscriptions")
+}
+
+/// Платёж — результат транзакции ЮKassa
+model Payment {
+  id            String        @id @default(uuid())
+  subscriptionId String?
+  workspaceId   String
+  userId        String
+  source        PaymentSource
+  status        PaymentStatus
+  amountRub     Int
+  currency      String        @default("RUB")
+  yookassaPaymentId      String? @unique
+  yookassaIdempotencyKey String?
+  referralCreditApplied  Int     @default(0)
+  referralDiscountApplied Int    @default(0)
+  referralId    String?
+  paidAt        DateTime?
+  failedAt      DateTime?
+  refundedAt    DateTime?
+  failureReason String?
+  createdAt     DateTime      @default(now())
+
+  workspace    Workspace     @relation(fields: [workspaceId], references: [id])
+  user         User          @relation("PaymentInitiator", fields: [userId], references: [id])
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  @@index([workspaceId])
+  @@index([status])
+  @@index([yookassaPaymentId])
+  @@map("payments")
+}
+
 // === Модели Фазы 1 ===
 
 /// Организация (компания-участник строительства)
@@ -263,13 +391,17 @@ model Workspace {
   slug           String        @unique
   organizationId String?       @unique
   ownerId        String
+  activeSubscriptionId String? @unique
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
-  organization    Organization?     @relation(fields: [organizationId], references: [id])
-  owner           User              @relation("WorkspaceOwner", fields: [ownerId], references: [id])
-  members         WorkspaceMember[]
-  buildingObjects BuildingObject[]
+  organization       Organization?     @relation(fields: [organizationId], references: [id])
+  owner              User              @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  members            WorkspaceMember[]
+  buildingObjects    BuildingObject[]
+  activeSubscription Subscription?     @relation("WorkspaceActiveSubscription", fields: [activeSubscriptionId], references: [id], onDelete: SetNull)
+  subscriptions      Subscription[]    @relation("WorkspaceAllSubscriptions")
+  payments           Payment[]
 
   @@map("workspaces")
 }
@@ -306,10 +438,12 @@ model User {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  // Модуль 15 — Воркспейс
+  // Модуль 15 — Воркспейс и подписки
   activeWorkspaceId    String?
+  professionalRole     ProfessionalRole?
   ownedWorkspaces      Workspace[]       @relation("WorkspaceOwner")
   workspaceMemberships WorkspaceMember[]
+  paymentsInitiated    Payment[]         @relation("PaymentInitiator")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -10,6 +10,7 @@ import { seedThematicReports } from './seeds/thematic-reports';
 import { seedReportTemplates } from './seeds/report-templates';
 import { seedDefectTemplates } from './seeds/defect-templates';
 import { seedReferenceBooks } from './seeds/reference-books';
+import { seedSubscriptionPlans } from './seeds/subscription-plans';
 
 const prisma = new PrismaClient();
 
@@ -284,6 +285,9 @@ async function main() {
     });
   }
   console.log('✅ Системные типы задач: созданы');
+
+  // === Тарифные планы (Модуль 15 Фаза 2) ===
+  await seedSubscriptionPlans(prisma);
 
   console.log('Seed завершён:', { org: org.name, admin: admin.email });
 }
