@@ -807,5 +807,36 @@ grep -rL "force-dynamic\|force-static\|revalidate" src/app/api/ --include="route
 
 ---
 
+**N+1 уведомлений в cron/роутах — `db.notification.create()` в цикле → `createMany()` + отдельный queue loop.**
+Паттерн `for (const item of items) { await db.notification.create({...}); await enqueueNotification({...}); }` создаёт N последовательных round-trip к БД. В cron-джобах с малым объёмом незаметно, в user-triggered роутах (task-templates/instantiate, tasks/reports) — ощутимо при 10–50 участниках проекта.
+Зафиксировано в: `cron/prescription-deadline/route.ts`, `cron/inspection-reminder/route.ts`, `task-templates/[id]/instantiate/route.ts`, `tasks/[id]/reports/route.ts`.
+**Правило**: при рассылке уведомлений нескольким получателям всегда использовать паттерн «collect → batch»:
+```typescript
+const toCreate: NotificationData[] = [];
+const toEnqueue: QueuePayload[] = [];
+for (const recipient of recipients) {
+  toCreate.push({ userId: recipient.id, type, title, body, ... });
+  toEnqueue.push({ userId: recipient.id, email: recipient.email, ... });
+}
+await db.notification.createMany({ data: toCreate });
+for (const item of toEnqueue) await enqueueNotification(item);
+```
+Для cron-джобов с idempotency-флагом — дополнительно `updateMany` вместо per-item `update`:
+```typescript
+await db.specialJournalEntry.updateMany({ where: { id: { in: notifiedIds } }, data: { inspectionNotificationSent: true } });
+```
+Поиск нарушений: `grep -rn "notification\.create(" src/app/api/ | grep -v "createMany"`.
+
+**Wildcard CORS в Python-сервисах и S3-бакете — подменить на configurable whitelist.**
+Два независимых места с `allow_origins=["*"]` / `AllowedOrigins: ['*']`:
+1. `services/ifc-service/main.py` — FastAPI CORSMiddleware: любой сайт может делать кросс-доменные запросы к IFC-сервису из браузера пользователя.
+2. `stroydocs/src/app/api/admin/setup-s3/route.ts` — S3 bucket CORS policy: wildcard разрешает DELETE/PUT к бакету с любого origin.
+**Правило**:
+- Python-сервисы: читать `CORS_ALLOWED_ORIGINS` из env (comma-separated), default — только localhost. Для прод задавать через docker-compose: `CORS_ALLOWED_ORIGINS=${APP_URL:-http://localhost:3000}`.
+- S3 CORS: `AllowedOrigins: [process.env.APP_URL ?? 'https://app.stroydocs.ru']` — браузерные запросы только с домена приложения.
+Исправлено: IFC-сервис читает `CORS_ALLOWED_ORIGINS`; setup-s3 использует `APP_URL`.
+
+---
+
 > Правило: после каждой исправленной ошибки добавить урок сюда.
 > Команда: "Добавь урок в docs/lessons.md: [описание ошибки]"

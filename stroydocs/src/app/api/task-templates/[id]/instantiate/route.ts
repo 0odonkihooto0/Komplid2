@@ -72,29 +72,30 @@ export async function POST(req: NextRequest, { params }: Params) {
       where: { id: { in: usersToNotify } },
       select: { id: true, email: true },
     });
-    for (const user of users) {
-      await db.notification.create({
-        data: {
-          type: 'task_assigned',
-          title: 'Вам назначена задача',
-          body: `«${task.title}»`,
-          userId: user.id,
-          entityType: 'Task',
-          entityId: task.id,
-          entityName: task.title,
-        },
-      }).catch(() => {});
-      await enqueueNotification({
-        userId: user.id,
-        email: user.email,
-        type: 'task_assigned',
-        title: 'Вам назначена задача',
-        body: `«${task.title}»`,
-        entityType: 'Task',
-        entityId: task.id,
-        entityName: task.title,
-      });
-    }
+
+    // Собираем данные для пакетного создания уведомлений
+    const notifications = users.map((user) => ({
+      type: 'task_assigned',
+      title: 'Вам назначена задача',
+      body: `«${task.title}»`,
+      userId: user.id,
+      entityType: 'Task',
+      entityId: task.id,
+      entityName: task.title,
+    }));
+    const queueItems = users.map((user) => ({
+      userId: user.id,
+      email: user.email,
+      type: 'task_assigned',
+      title: 'Вам назначена задача',
+      body: `«${task.title}»`,
+      entityType: 'Task',
+      entityId: task.id,
+      entityName: task.title,
+    }));
+
+    await db.notification.createMany({ data: notifications });
+    for (const item of queueItems) await enqueueNotification(item);
 
     return successResponse(task);
   } catch (err) {

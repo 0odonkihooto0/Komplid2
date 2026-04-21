@@ -9,5 +9,11 @@ Thumbs.db
 # node_modules на случай случайного npm install в корне
 node_modules/
 
+# Python bytecode (services/ifc-service и другие Python-сервисы)
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
 # Локальный docker-compose
 stroydocs/docker-compose.local.yml

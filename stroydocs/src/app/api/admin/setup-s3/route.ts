@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
               // Разрешаем загрузку файлов через pre-signed URL из браузера
               AllowedHeaders: ['*'],
               AllowedMethods: ['PUT', 'GET', 'HEAD', 'POST', 'DELETE'],
-              AllowedOrigins: ['*'],
+              AllowedOrigins: [process.env.APP_URL ?? 'https://app.stroydocs.ru'],
               ExposeHeaders: ['ETag'],
               MaxAgeSeconds: 3000,
             },
