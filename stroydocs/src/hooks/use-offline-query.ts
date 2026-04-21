@@ -4,14 +4,14 @@ import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { cacheSnapshotsRepo } from '@/lib/idb/repos/cache-snapshots-repo';
 import { useNetworkStore } from '@/stores/network-store';
 
-interface OfflineQueryConfig<TData> {
+interface OfflineQueryConfig {
   key: string;
   url: string;
   ttlMs?: number;
 }
 
 export function useOfflineQuery<TData = unknown>(
-  config: OfflineQueryConfig<TData>,
+  config: OfflineQueryConfig,
   options?: Omit<UseQueryOptions<TData, Error>, 'queryKey' | 'queryFn'>
 ) {
   const { key, url, ttlMs = 5 * 60 * 1000 } = config;

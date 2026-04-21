@@ -45,6 +45,7 @@ export const authOptions: NextAuthOptions = {
           role: user.role,
           organizationId: user.organizationId,
           activeWorkspaceId: user.activeWorkspaceId ?? null,
+          professionalRole: user.professionalRole ?? null,
         };
       },
     }),
@@ -58,6 +59,7 @@ export const authOptions: NextAuthOptions = {
         token.firstName = user.firstName;
         token.lastName = user.lastName;
         token.activeWorkspaceId = user.activeWorkspaceId;
+        token.professionalRole = user.professionalRole;
       }
       return token;
     },
@@ -70,6 +72,7 @@ export const authOptions: NextAuthOptions = {
         role: token.role,
         organizationId: token.organizationId,
         activeWorkspaceId: token.activeWorkspaceId ?? null,
+        professionalRole: token.professionalRole ?? null,
       };
       return session;
     },

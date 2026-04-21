@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, X } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { TaskDetail } from './useTaskDetail';
@@ -13,7 +12,6 @@ import type { TaskRoleType } from './useGlobalTasks';
 interface Employee { id: string; firstName: string; lastName: string; position: string | null }
 
 const PRIORITY_LABELS = { LOW: 'Низкий', MEDIUM: 'Средний', HIGH: 'Высокий', CRITICAL: 'Критичный' };
-const ROLE_LABELS: Record<TaskRoleType, string> = { AUTHOR: 'Автор', EXECUTOR: 'Исполнитель', CONTROLLER: 'Контролёр', OBSERVER: 'Наблюдатель' };
 
 function UserChip({
   user, role, currentUserRole, taskAuthorId, onRemove,
@@ -46,7 +44,7 @@ function UserChip({
 }
 
 function AddUserPopover({
-  role, taskId, existingIds, onAdd,
+  role, taskId: _taskId, existingIds, onAdd,
 }: {
   role: TaskRoleType;
   taskId: string;
@@ -136,7 +134,6 @@ export function TaskDetailSidebar({ task, currentUserRole, onUpdate }: Props) {
   }
 
   function renderSection(label: string, roles: typeof authorRoles, role: TaskRoleType, canAdd: boolean) {
-    const existingIds = roles.map((r) => r.user.id);
     return (
       <div>
         <div className="mb-1 flex items-center justify-between">

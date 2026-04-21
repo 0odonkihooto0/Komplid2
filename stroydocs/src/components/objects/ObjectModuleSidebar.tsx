@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import {
@@ -20,15 +21,21 @@ import {
   Briefcase,
   Layers,
   Box,
+  LayoutGrid,
 } from 'lucide-react';
 import { CountBadge } from '@/components/shared/CountBadge';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { useObjectCounts } from '@/hooks/useObjectCounts';
 import type { ObjectCounts } from '@/hooks/useObjectCounts';
 import { PROJECT_STATUS_LABELS } from '@/utils/constants';
+import { isModuleVisibleForRole } from '@/lib/ui/role-modules';
 
 interface ObjectSummary {
   object: { id: string; name: string; status: string };
+}
+
+interface WorkspaceInfo {
+  workspace: { type: string };
 }
 
 type SidebarKey = keyof ObjectCounts['sidebar'];
@@ -62,7 +69,15 @@ interface Props {
 
 export function ObjectModuleSidebar({ objectId }: Props) {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showAll, setShowAll] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('showAllModules') === 'true';
+    }
+    return false;
+  });
+
   const { data: counts } = useObjectCounts(objectId);
   const { data: summary } = useQuery<ObjectSummary>({
     queryKey: ['object-summary', objectId],
@@ -75,13 +90,39 @@ export function ObjectModuleSidebar({ objectId }: Props) {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: wsInfo } = useQuery<WorkspaceInfo>({
+    queryKey: ['active-workspace-info'],
+    queryFn: async () => {
+      const r = await fetch('/api/workspaces/active/subscription');
+      const json = await r.json();
+      return json.success ? json.data : null;
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!session?.user?.activeWorkspaceId,
+  });
+
+  const workspaceType = wsInfo?.workspace?.type ?? null;
+  const professionalRole = session?.user?.professionalRole ?? null;
+
+  const toggleShowAll = () => {
+    const next = !showAll;
+    setShowAll(next);
+    localStorage.setItem('showAllModules', next ? 'true' : 'false');
+  };
+
   const obj = summary?.object;
   const codeLabel = obj ? obj.id.slice(0, 8).toUpperCase() : null;
   const statusLabel = obj ? (PROJECT_STATUS_LABELS[obj.status as keyof typeof PROJECT_STATUS_LABELS] ?? obj.status) : null;
 
+  const visibleModules = showAll
+    ? MODULES
+    : MODULES.filter(m => isModuleVisibleForRole(m.href, professionalRole, workspaceType));
+
+  const isFiltered = workspaceType === 'PERSONAL' && !!professionalRole && !showAll;
+
   const navItems = (
     <nav className="space-y-1 px-2">
-      {MODULES.map(({ label, href, icon: Icon, soon, countKey }) => {
+      {visibleModules.map(({ label, href, icon: Icon, soon, countKey }) => {
         const fullHref = `/objects/${objectId}/${href}`;
         const isActive = pathname.startsWith(fullHref);
         const count = countKey ? counts?.sidebar[countKey] : undefined;
@@ -112,6 +153,27 @@ export function ObjectModuleSidebar({ objectId }: Props) {
           </Link>
         );
       })}
+
+      {isFiltered && (
+        <button
+          type="button"
+          onClick={toggleShowAll}
+          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        >
+          <LayoutGrid className="h-3.5 w-3.5 shrink-0" />
+          Показать все модули
+        </button>
+      )}
+      {showAll && workspaceType === 'PERSONAL' && (
+        <button
+          type="button"
+          onClick={toggleShowAll}
+          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        >
+          <LayoutGrid className="h-3.5 w-3.5 shrink-0" />
+          Скрыть лишние модули
+        </button>
+      )}
     </nav>
   );
 

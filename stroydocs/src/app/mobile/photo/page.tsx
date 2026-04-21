@@ -20,7 +20,7 @@ export default function MobilePhotoPage() {
   const [entityType, setEntityType] = useState<EntityType>('WORK_RECORD');
   const [capturedCount, setCapturedCount] = useState(0);
 
-  const handleCaptured = (clientId: string) => {
+  const handleCaptured = (_clientId: string) => {
     setCapturedCount((n) => n + 1);
   };
 

@@ -9,6 +9,29 @@
 
 ---
 
+### Добавлено (2026-04-21) — MODULE15 Фаза 4: Сметчик-Студио MVP ✅
+
+- ✅ `prisma/schema.prisma` + migration — 5 полей публичного шаринга `EstimateVersion` (`publicShareToken`, `publicShareMode`, `publicShareExpiresAt`, `publicShareViewCount`, `publicCompareWithVersionId`)
+- ✅ `src/lib/auth.ts` + `src/types/next-auth.d.ts` — `professionalRole` в JWT/сессии
+- ✅ `src/middleware.ts` — `/onboarding/:path*` добавлен в matcher
+- ✅ `src/app/api/auth/register-solo/route.ts` + `src/app/(auth)/register/solo/page.tsx` — одиночная регистрация без организации с созданием PERSONAL workspace
+- ✅ `src/lib/validations/auth.ts` — `soloRegisterSchema`
+- ✅ `src/app/(dashboard)/layout.tsx` — redirect новых solo-пользователей на `/onboarding/role`
+- ✅ `src/app/api/users/me/onboarding/route.ts` — PATCH `professionalRole`
+- ✅ `src/app/api/users/me/onboarding/trial/route.ts` — POST старт 14-дневного триала
+- ✅ `src/app/(dashboard)/onboarding/role/page.tsx` + `src/app/(dashboard)/onboarding/plan/page.tsx` — онбординг-визард (роль → тариф)
+- ✅ `src/components/onboarding/RoleSelector.tsx` — 7 карточек ролей
+- ✅ `src/lib/ui/role-modules.ts` — маппинг `ProfessionalRole → видимые модули`
+- ✅ `src/components/objects/ObjectModuleSidebar.tsx` — фильтрация модулей по роли (PERSONAL workspace) + toggle «Показать все»
+- ✅ `src/app/api/estimate-versions/[versionId]/share/route.ts` — POST/DELETE публичной ссылки сметы (feature-gate `ESTIMATES_PUBLIC_LINK`)
+- ✅ `src/app/api/public/estimate/[token]/route.ts` — публичное чтение сметы без авторизации (rate-limit 60/мин)
+- ✅ `src/app/shared/estimate/[token]/page.tsx` — публичная страница просмотра сметы + CTA «Попробовать»
+- ✅ `src/components/estimates/ShareEstimateDialog.tsx` — диалог создания/отзыва публичной ссылки
+- ✅ `src/lib/subscriptions/lifecycle.ts` — 4 функции lifecycle: `processExpiredTrials`, `processExpiredSubscriptions`, `processExpiredGracePeriods`, `processCanceledExpired`
+- ✅ `src/app/api/cron/subscription-lifecycle/route.ts` — cron-эндпоинт (Bearer `CRON_SECRET`), вызывает все 4 lifecycle-функции
+
+---
+
 ### Добавлено (2026-04-21) — MODULE15 Фаза 3: ЮKassa + Биллинг ✅
 
 - ✅ `package.json` — добавлен `@a2seven/yoo-checkout`

@@ -3801,6 +3801,13 @@ model EstimateVersion {
   categoryId String?
   category   EstimateCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
+  // Публичный шаринг
+  publicShareToken              String?   @unique
+  publicShareMode               String?   // "VIEW" | "COMPARE"
+  publicCompareWithVersionId    String?
+  publicShareExpiresAt          DateTime?
+  publicShareViewCount          Int       @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -3814,6 +3821,7 @@ model EstimateVersion {
   @@index([contractId])
   @@index([parentVersionId])
   @@index([categoryId])
+  @@index([publicShareToken])
   @@map("estimate_versions")
 }
 
