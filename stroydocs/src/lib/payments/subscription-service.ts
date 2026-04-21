@@ -1,9 +1,10 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import { createPayment as createYooPayment } from './yookassa/payments';
+import { createPayment as createYooPayment, chargeRecurring } from './yookassa/payments';
 import { buildSubscriptionReceipt } from './yookassa/receipts';
 import { validateAndApplyPromoCode } from './promo-service';
 import { calculateProration } from './proration';
+import { applySuccessfulDunningPayment } from './dunning-service';
 import { processReferralReward } from '@/lib/referrals/process-referral-payment';
 import type { CancellationReasonCode, BillingPeriod, Prisma } from '@prisma/client';
 
@@ -206,14 +207,13 @@ interface UpgradeSubscriptionParams {
   returnUrl: string;
 }
 
-interface UpgradeSubscriptionResult {
-  confirmationToken: string;
-  paymentId: string;
-  amountRub: number;
-}
+type UpgradeSubscriptionResult =
+  | { path: 'charged'; paymentId: string; amountRub: number }
+  | { path: 'checkout'; confirmationToken: string; paymentId: string; amountRub: number };
 
 /**
  * Создаёт платёж для апгрейда тарифа с prorаtion-доплатой за остаток периода.
+ * Если есть сохранённая карта — списывает мгновенно, иначе создаёт checkout.
  */
 export async function upgradeSubscription(params: UpgradeSubscriptionParams): Promise<UpgradeSubscriptionResult> {
   const { workspaceId, userId, newPlanCode, billingPeriod, returnUrl } = params;
@@ -233,12 +233,82 @@ export async function upgradeSubscription(params: UpgradeSubscriptionParams): Pr
   });
 
   const amountRub = Math.max(proratedAmountRub, 0);
-
-  const user = await db.user.findUnique({ where: { id: userId }, select: { email: true, phone: true } });
-  if (!user) throw new Error('Пользователь не найден');
-
   const idempotenceKey = crypto.randomUUID();
   const description = `Апгрейд на ${newPlan.name}`;
+
+  // Ищем активную сохранённую карту
+  const savedCard = sub.defaultPaymentMethodId
+    ? await db.paymentMethod.findFirst({
+        where: { id: sub.defaultPaymentMethodId, isActive: true },
+      })
+    : await db.paymentMethod.findFirst({
+        where: { workspaceId, isDefault: true, isActive: true },
+      });
+
+  // Запланировать смену плана (применится в handleSuccessfulPayment или мгновенно)
+  await db.subscription.update({
+    where: { id: sub.id },
+    data: { pendingPlanId: newPlan.id, pendingPlanChangeAt: new Date() },
+  });
+
+  if (savedCard && amountRub > 0) {
+    // Путь с сохранённой картой — мгновенное списание
+    const payment = await db.payment.create({
+      data: {
+        workspaceId,
+        userId,
+        subscriptionId: sub.id,
+        source: 'APP',
+        status: 'PENDING',
+        amountRub,
+        originalAmountRub: amountRub,
+        type: 'PLAN_UPGRADE',
+        billingPeriod,
+        description,
+        provider: 'YOOKASSA',
+        providerIdempotenceKey: idempotenceKey,
+        paymentMethodId: savedCard.id,
+        metadata: { newPlanCode, oldPlanCode: sub.plan.code, paymentType: 'PLAN_UPGRADE' } as unknown as Prisma.InputJsonValue,
+      },
+    });
+
+    const ykPayment = await chargeRecurring({
+      paymentMethodId: savedCard.providerMethodId,
+      amount: { value: (amountRub / 100).toFixed(2), currency: 'RUB' },
+      description,
+      metadata: { paymentDbId: payment.id, subscriptionId: sub.id, paymentType: 'PLAN_UPGRADE' },
+      idempotenceKey,
+    });
+
+    await db.payment.update({
+      where: { id: payment.id },
+      data: { providerPaymentId: ykPayment.id },
+    });
+
+    if (ykPayment.status === 'succeeded') {
+      // Применяем апгрейд немедленно
+      await applySuccessfulDunningPayment(sub.id, payment.id, billingPeriod);
+      await db.subscription.update({
+        where: { id: sub.id },
+        data: { planId: newPlan.id, pendingPlanId: null, pendingPlanChangeAt: null },
+      });
+      await db.subscriptionEvent.create({
+        data: {
+          subscriptionId: sub.id,
+          type: 'UPGRADED',
+          actorType: 'WEBHOOK',
+          payload: { paymentId: payment.id, newPlanCode, amountRub } as unknown as Prisma.InputJsonValue,
+        },
+      });
+    }
+    // Если status === 'pending' — webhook обработает через handleSuccessfulPayment
+
+    return { path: 'charged', paymentId: payment.id, amountRub };
+  }
+
+  // Путь без карты — YooKassa checkout
+  const user = await db.user.findUnique({ where: { id: userId }, select: { email: true, phone: true } });
+  if (!user) throw new Error('Пользователь не найден');
 
   const receipt = buildSubscriptionReceipt({
     email: user.email,
@@ -288,17 +358,12 @@ export async function upgradeSubscription(params: UpgradeSubscriptionParams): Pr
       savePaymentMethod: true,
       yookassaPaymentId: yooPayment.id,
       yookassaIdempotencyKey: idempotenceKey,
-      metadata: { newPlanCode, oldPlanCode: sub.plan.code } as unknown as Prisma.InputJsonValue,
+      metadata: { newPlanCode, oldPlanCode: sub.plan.code, paymentType: 'PLAN_UPGRADE' } as unknown as Prisma.InputJsonValue,
     },
   });
 
-  // Запланировать смену плана (применится в handleSuccessfulPayment)
-  await db.subscription.update({
-    where: { id: sub.id },
-    data: { pendingPlanId: newPlan.id },
-  });
-
   return {
+    path: 'checkout',
     confirmationToken: confirmation.confirmation_token,
     paymentId: payment.id,
     amountRub,
@@ -326,7 +391,7 @@ export async function scheduleDowngrade(params: {
 
   await db.subscription.update({
     where: { id: sub.id },
-    data: { pendingPlanId: newPlan.id },
+    data: { pendingPlanId: newPlan.id, pendingPlanChangeAt: sub.currentPeriodEnd },
   });
 
   await db.subscriptionEvent.create({

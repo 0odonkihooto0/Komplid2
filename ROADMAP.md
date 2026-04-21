@@ -9,6 +9,24 @@
 
 ---
 
+### Добавлено (2026-04-21) — Plan Change Flow + Dunning Service ✅
+
+- ✅ `src/lib/payments/proration.ts` — расширен: `unusedCreditRub` + `newPlanCostRub` для превью апгрейда
+- ✅ `src/lib/payments/dunning-service.ts` — `startDunning`, `attemptDunningCharge`, `scheduleNextDunningAttempt`, `transitionToGrace`, `transitionToExpired`, `applySuccessfulDunningPayment` (расписание 0/1/3/5/7 дней, 5 попыток)
+- ✅ `src/lib/subscriptions/lifecycle.ts` — `processDunningAttempts`, `applyPendingPlanChanges`; `processExpiredGracePeriods` расширен для `GRACE` статуса
+- ✅ `src/lib/payments/subscription-service.ts` — `upgradeSubscription` поддерживает saved card path (`chargeRecurring`); `scheduleDowngrade` устанавливает `pendingPlanChangeAt`
+- ✅ `src/app/api/cron/subscription-lifecycle/route.ts` — добавлены `processDunningAttempts` + `applyPendingPlanChanges`
+- ✅ `src/app/api/subscriptions/[id]/preview-change/route.ts` — proration preview + нарушения лимитов
+- ✅ `src/app/api/subscriptions/[id]/upgrade/route.ts` — with/without saved card
+- ✅ `src/app/api/subscriptions/[id]/downgrade/route.ts` — schedule at period end
+- ✅ `src/lib/workers/subscription-lifecycle.worker.ts` — BullMQ cron каждый час (Europe/Moscow)
+- ✅ `src/app/(dashboard)/settings/billing/change-plan/page.tsx` + `PlanSelector.tsx` — страница выбора тарифа
+- ✅ `src/components/subscriptions/ChangePlanPreviewModal.tsx` — превью апгрейда с расчётом доплаты
+- ✅ `src/components/subscriptions/DowngradeWarningModal.tsx` — предупреждение о превышении лимитов при понижении
+- ✅ `src/app/(dashboard)/settings/subscription/page.tsx` — кнопка «Изменить тариф»
+
+---
+
 ### Добавлено (2026-04-21) — SUBSCRIPTION_SYSTEM.md Пункт 1: Prisma-схема финальная ✅
 
 - ✅ `prisma/schema.prisma` — 8 новых моделей: `PaymentMethod`, `SubscriptionEvent`, `Receipt`, `Invoice`, `PromoCode`, `PromoCodeRule`, `PromoCodeRedemption`, `DunningAttempt`; 15 новых enum (`PlanCategory`, `ProfiRole`, `CancellationReasonCode`, `PaymentType`, `PaymentProvider`, `PaymentMethodType`, `SubscriptionEventType`, `ActorType`, `ReceiptType`, `ReceiptProvider`, `ReceiptStatus`, `InvoiceStatus`, `DiscountType`, `DunningResult`, `UserDunningAction`); расширены `SubscriptionStatus`, `PaymentStatus`, `PaymentSource`; добавлены поля в `SubscriptionPlan`, `Subscription`, `Payment`
