@@ -14,9 +14,13 @@ export async function GET(
   try {
     const session = await getSessionOrThrow();
 
+    const objectWhere = session.user.activeWorkspaceId
+      ? { id: params.projectId, OR: [{ workspaceId: session.user.activeWorkspaceId }, { organizationId: session.user.organizationId }] }
+      : { id: params.projectId, organizationId: session.user.organizationId };
+
     const [project, currentStage, totalStages, gprProgressResult] = await Promise.all([
       db.buildingObject.findFirst({
-        where: { id: params.projectId, organizationId: session.user.organizationId },
+        where: objectWhere,
         include: { _count: { select: { contracts: true } } },
       }),
       db.ganttStage.findFirst({
@@ -61,9 +65,12 @@ export async function PUT(
       return errorResponse('Ошибка валидации', 400, parsed.error.issues);
     }
 
-    // Проверка что проект принадлежит организации
+    // Проверка что проект принадлежит воркспейсу/организации
+    const putWhere = session.user.activeWorkspaceId
+      ? { id: params.projectId, OR: [{ workspaceId: session.user.activeWorkspaceId }, { organizationId: session.user.organizationId }] }
+      : { id: params.projectId, organizationId: session.user.organizationId };
     const existing = await db.buildingObject.findFirst({
-      where: { id: params.projectId, organizationId: session.user.organizationId },
+      where: putWhere,
       include: { _count: { select: { contracts: true } } },
     });
     if (!existing) {

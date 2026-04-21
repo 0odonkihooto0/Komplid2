@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { registerSchema } from '@/lib/validations/auth';
 import { successResponse, errorResponse } from '@/utils/api';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { createCompanyWorkspace } from '@/lib/workspaces/create-workspace';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,6 +59,8 @@ export async function POST(req: NextRequest) {
           organizationId: organization.id,
         },
       });
+
+      await createCompanyWorkspace(tx, user.id, organization.id, organization.name);
 
       return { organization, user };
     });

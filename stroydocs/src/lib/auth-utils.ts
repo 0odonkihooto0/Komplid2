@@ -31,3 +31,15 @@ export async function getOrganizationId() {
   const session = await getSessionOrThrow();
   return session.user.organizationId;
 }
+
+/**
+ * Получить activeWorkspaceId из сессии (Модуль 15)
+ */
+export async function getActiveWorkspaceOrThrow() {
+  const session = await getSessionOrThrow();
+  const workspaceId = session.user.activeWorkspaceId;
+  if (!workspaceId) {
+    throw errorResponse('Воркспейс не найден', 403);
+  }
+  return { session, workspaceId };
+}
