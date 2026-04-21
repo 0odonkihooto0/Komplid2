@@ -72,7 +72,7 @@ export async function processReferralReward(tx: PrismaTx, payment: Payment): Pro
       userId: referral.referrerId,
       type: 'REFERRAL_REWARD',
       title: `Вам начислено ${Math.floor(reward.referrerCreditRub / 100)} ₽`,
-      message: `Ваш реферал оформил подписку. Бонус зачислен на ваш Личный workspace.`,
+      body: `Ваш реферал оформил подписку. Бонус зачислен на ваш Личный workspace.`,
     },
   });
 }
