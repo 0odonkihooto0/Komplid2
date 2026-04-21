@@ -721,5 +721,14 @@ logger.info(`[socket] running on port ${PORT}`);
 
 ---
 
+**`label` в `screenshots` манифеста PWA — поле не входит в тип `MetadataRoute.Manifest` Next.js.**
+Свойство `label` на объектах в массиве `screenshots` предусмотрено более новой версией спецификации Web App Manifest, но тип `MetadataRoute.Manifest` в установленной версии Next.js его не содержит: `{ src: string; type?: string; sizes?: string }`.
+Результат: `Type error: Object literal may only specify known properties, and 'label' does not exist in type ...` на `next build` (type-check фаза).
+Ошибка видна только на деплое — локально без `node_modules` TypeScript молчит.
+Обнаружено в `src/app/manifest.ts` (3 screenshot-объекта с `label`).
+**Правило**: не добавлять `label` в объекты `screenshots` манифеста пока тип Next.js его не поддерживает. Если поле критично — использовать двойной каст всего массива: `screenshots: [...] as unknown as MetadataRoute.Manifest['screenshots']`. При обновлении Next.js проверить добавление `label` обратно.
+
+---
+
 > Правило: после каждой исправленной ошибки добавить урок сюда.
 > Команда: "Добавь урок в docs/lessons.md: [описание ошибки]"

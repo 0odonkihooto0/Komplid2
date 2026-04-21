@@ -63,19 +63,16 @@ export default function manifest(): MetadataRoute.Manifest {
         src: '/screenshots/mobile-journal.png',
         sizes: '540x1170',
         type: 'image/png',
-        label: 'Журнал работ',
       },
       {
         src: '/screenshots/mobile-photo.png',
         sizes: '540x1170',
         type: 'image/png',
-        label: 'Фото с GPS',
       },
       {
         src: '/screenshots/desktop-dashboard.png',
         sizes: '1920x1080',
         type: 'image/png',
-        label: 'Дашборд',
       },
     ],
   };
