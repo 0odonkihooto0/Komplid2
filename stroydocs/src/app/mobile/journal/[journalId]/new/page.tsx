@@ -5,9 +5,13 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { CameraCapture } from '@/components/mobile/CameraCapture';
 import { VoiceInput } from '@/components/mobile/VoiceInput';
+import { VoiceRecorder } from '@/components/mobile/VoiceRecorder';
 import { useCreateJournalEntry } from '@/hooks/use-create-journal-entry';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { PaywallBanner } from '@/components/subscriptions/PaywallBanner';
+import { useFeature } from '@/hooks/use-feature';
+import { FEATURES } from '@/lib/subscriptions/features';
 
 function NewJournalEntryContent() {
   const { journalId } = useParams<{ journalId: string }>();
@@ -19,6 +23,8 @@ function NewJournalEntryContent() {
   const [photoCount, setPhotoCount] = useState(0);
 
   const createMutation = useCreateJournalEntry();
+  const { hasAccess: hasMobilePwa, isLoading } = useFeature(FEATURES.MOBILE_PWA);
+  const { hasAccess: hasVoiceInput } = useFeature(FEATURES.VOICE_INPUT);
 
   const handleSave = async () => {
     await createMutation.mutateAsync({
@@ -30,6 +36,22 @@ function NewJournalEntryContent() {
     });
     router.push(`/mobile/journal?objectId=${objectId}`);
   };
+
+  if (isLoading) return null;
+
+  if (!hasMobilePwa) {
+    return (
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => router.back()}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-lg font-semibold">Новая запись</h1>
+        </div>
+        <PaywallBanner feature={FEATURES.MOBILE_PWA} />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 space-y-4">
@@ -49,7 +71,11 @@ function NewJournalEntryContent() {
           className="pr-14 text-base"
         />
         <div className="absolute bottom-2 right-2">
-          <VoiceInput onTranscript={(t) => setDescription((d) => (d ? d + ' ' + t : t))} />
+          {hasVoiceInput ? (
+            <VoiceRecorder onTranscript={(t) => setDescription((d) => (d ? d + ' ' + t : t))} />
+          ) : (
+            <VoiceInput onTranscript={(t) => setDescription((d) => (d ? d + ' ' + t : t))} />
+          )}
         </div>
       </div>
 

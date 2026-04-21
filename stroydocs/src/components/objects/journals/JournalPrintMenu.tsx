@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/useToast';
+import { ShareToPTODialog } from './ShareToPTODialog';
 
 type PrintFormat = 'pdf' | 'doc' | 'xls';
 
@@ -17,6 +18,7 @@ interface Props {
   objectId: string;
   journalId: string;
   journalNumber: string;
+  journalTitle?: string;
   disabled?: boolean;
 }
 
@@ -32,7 +34,7 @@ const FORMAT_EXT: Record<PrintFormat, string> = {
   xls: 'xlsx',
 };
 
-export function JournalPrintMenu({ objectId, journalId, journalNumber, disabled }: Props) {
+export function JournalPrintMenu({ objectId, journalId, journalNumber, journalTitle, disabled }: Props) {
   const { toast } = useToast();
   const [loadingFormat, setLoadingFormat] = useState<PrintFormat | null>(null);
 
@@ -69,41 +71,48 @@ export function JournalPrintMenu({ objectId, journalId, journalNumber, disabled 
   const isLoading = loadingFormat !== null;
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={disabled || isLoading}
-          aria-label="Печать журнала"
-        >
-          {isLoading ? (
-            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-          ) : (
-            <Printer className="mr-1 h-4 w-4" />
-          )}
-          Печать
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {(['pdf', 'doc', 'xls'] as PrintFormat[]).map((fmt) => (
-          <DropdownMenuItem
-            key={fmt}
-            onClick={() => handlePrint(fmt)}
-            disabled={isLoading}
-            className="gap-2"
+    <div className="flex gap-2">
+      <ShareToPTODialog
+        projectId={objectId}
+        journalId={journalId}
+        journalTitle={journalTitle ?? journalNumber}
+      />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={disabled || isLoading}
+            aria-label="Печать журнала"
           >
-            {loadingFormat === fmt ? (
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            ) : fmt === 'xls' ? (
-              <FileSpreadsheet className="h-4 w-4 text-green-600" />
+            {isLoading ? (
+              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
             ) : (
-              <FileText className="h-4 w-4 text-muted-foreground" />
+              <Printer className="mr-1 h-4 w-4" />
             )}
-            {FORMAT_LABELS[fmt]}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+            Печать
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {(['pdf', 'doc', 'xls'] as PrintFormat[]).map((fmt) => (
+            <DropdownMenuItem
+              key={fmt}
+              onClick={() => handlePrint(fmt)}
+              disabled={isLoading}
+              className="gap-2"
+            >
+              {loadingFormat === fmt ? (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              ) : fmt === 'xls' ? (
+                <FileSpreadsheet className="h-4 w-4 text-green-600" />
+              ) : (
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              )}
+              {FORMAT_LABELS[fmt]}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

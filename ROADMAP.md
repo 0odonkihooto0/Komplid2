@@ -9,6 +9,20 @@
 
 ---
 
+### Добавлено (2026-04-21) — MODULE15 Фаза 7: Прораб-Журнал + PWA ✅
+
+- ✅ `src/components/mobile/VoiceRecorder.tsx` — MediaRecorder + Yandex SpeechKit (Pro only)
+- ✅ Feature-gate в мобильных страницах (MOBILE_PWA, VOICE_INPUT, DEFECTS_LITE)
+- ✅ `src/app/~offline/page.tsx` — страница офлайн для PWA
+- ✅ `prisma/schema.prisma` + migration — поля publicShareToken/ExpiresAt/ViewCount в SpecialJournal
+- ✅ `src/app/api/projects/[projectId]/journals/[journalId]/share/route.ts` — POST/DELETE шаринг ОЖР
+- ✅ `src/app/api/public/journal/[token]/route.ts` — публичное чтение ОЖР без авторизации
+- ✅ `src/app/shared/journal/[token]/page.tsx` — публичная страница ОЖР с CTA для ПТО и Прораба
+- ✅ `src/components/objects/journals/ShareToPTODialog.tsx` — диалог шаринга с кнопками WhatsApp/Telegram/Email
+- ✅ Кнопка «Отправить в ПТО» в JournalPrintMenu
+
+---
+
 ### Добавлено (2026-04-21) — MODULE15 Фаза 6: ИД-Мастер ✅
 
 - ✅ `prisma/schema.prisma` — `ExecutionDoc`: поля `publicShareToken`, `publicShareExpiresAt`, `publicShareViewCount`; `DocumentTemplate`: поле `workType`
