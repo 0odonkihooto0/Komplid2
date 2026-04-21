@@ -1,4 +1,4 @@
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient, Prisma } from '@prisma/client';
 
 export const PHASE_1_PLANS = [
   // ============ FREE ============
@@ -145,19 +145,16 @@ export const PHASE_1_PLANS = [
   },
 ] as const;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyRecord = Record<string, any>;
-
 export async function seedSubscriptionPlans(prisma: PrismaClient) {
   for (const plan of PHASE_1_PLANS) {
-    const data: AnyRecord = {
+    const data = {
       ...plan,
       features: [...plan.features],
-    };
+    } as unknown as Prisma.SubscriptionPlanCreateInput;
     await prisma.subscriptionPlan.upsert({
       where: { code: plan.code },
-      create: data as AnyRecord,
-      update: data as AnyRecord,
+      create: data,
+      update: data as Prisma.SubscriptionPlanUpdateInput,
     });
   }
   console.log(`Seeded ${PHASE_1_PLANS.length} subscription plans`);

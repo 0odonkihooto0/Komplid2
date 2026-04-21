@@ -17,7 +17,7 @@
     "validate:ws": "ts-node --compiler-options {\"module\":\"CommonJS\"} scripts/validate-workspace-backfill.ts"
   },
   "dependencies": {
-    "@a2seven/yoo-checkout": "^3.0.0",
+    "@a2seven/yoo-checkout": "^1.1.4",
     "@aws-sdk/client-s3": "^3.1008.0",
     "@aws-sdk/s3-request-presigner": "^3.1009.0",
     "@dnd-kit/core": "^6.3.1",

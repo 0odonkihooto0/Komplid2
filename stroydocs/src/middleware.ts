@@ -13,5 +13,6 @@ export const config = {
     '/objects/:path*',
     '/organizations/:path*',
     '/documents/:path*',
+    '/onboarding/:path*',
   ],
 };

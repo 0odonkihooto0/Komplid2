@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { MoreHorizontal, ChevronDown, Printer, Link, X } from 'lucide-react';
+import { MoreHorizontal, Printer, Link, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {

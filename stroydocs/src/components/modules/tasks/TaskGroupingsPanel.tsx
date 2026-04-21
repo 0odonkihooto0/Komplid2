@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { type TaskCounts, DEFAULT_TASK_COUNTS } from './useGlobalTasks';
+import type { TaskCounts } from './useGlobalTasks';
 import { type TaskGroupItem } from './useTaskGroups';
 import { CreateTaskGroupDialog } from './CreateTaskGroupDialog';
 import { CreateTaskLabelDialog } from './CreateTaskLabelDialog';
