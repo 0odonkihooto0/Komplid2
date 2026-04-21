@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { BookOpen, ChevronRight, ArrowLeft } from 'lucide-react';
@@ -20,7 +21,7 @@ interface ApiResponse {
   data: Journal[];
 }
 
-export default function MobileJournalPage() {
+function MobileJournalContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const objectId = searchParams.get('objectId') ?? '';
@@ -78,5 +79,13 @@ export default function MobileJournalPage() {
         </button>
       ))}
     </div>
+  );
+}
+
+export default function MobileJournalPage() {
+  return (
+    <Suspense>
+      <MobileJournalContent />
+    </Suspense>
   );
 }

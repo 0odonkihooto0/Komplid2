@@ -765,5 +765,24 @@ const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
 
 ---
 
+**`useSearchParams()` без Suspense — ошибка преренdera при `next build` на статических страницах.**
+Next.js App Router требует, чтобы любой компонент, использующий `useSearchParams()`, находился внутри `<Suspense>` boundary. При статической генерации страниц (`Generating static pages`) Next.js пытается отрендерить страницу на сервере — и падает с `useSearchParams() should be wrapped in a suspense boundary at page "/mobile/..."`.
+Обнаружено в 3 файлах: `src/app/mobile/defect/page.tsx`, `src/app/mobile/journal/page.tsx`, `src/app/mobile/journal/[journalId]/new/page.tsx`.
+Ошибка видна только при `next build` — в dev-режиме (`next dev`) страница работает без ошибок.
+**Правило**: любая `page.tsx` с `'use client'` и `useSearchParams()` ОБЯЗАНА оборачивать содержимое в `<Suspense>`. Паттерн — вынести содержимое в `*Content`-компонент, экспортировать page как:
+```typescript
+export default function Page() {
+  return (
+    <Suspense>
+      <PageContent />
+    </Suspense>
+  );
+}
+```
+`fallback` для Suspense необязателен — без него Next.js использует ближайший родительский Suspense или пустой фолбэк.
+Поиск нарушений: `grep -rn "useSearchParams" src/app/ | grep -v "Suspense"` — не гарантирован (Suspense может быть в другом файле), но выявляет кандидатов для ревью.
+
+---
+
 > Правило: после каждой исправленной ошибки добавить урок сюда.
 > Команда: "Добавь урок в docs/lessons.md: [описание ошибки]"
