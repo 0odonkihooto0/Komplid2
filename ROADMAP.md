@@ -95,6 +95,17 @@
 
 ---
 
+### Добавлено (2026-04-21) — Subscription Service + ФЗ-54 чеки (SUBSCRIPTION_SYSTEM.md §3) ✅
+
+- ✅ `src/lib/payments/proration.ts` — calculateProration (пропорциональная доплата при апгрейде)
+- ✅ `src/lib/payments/promo-service.ts` — validateAndApplyPromoCode (все типы скидок + лимиты)
+- ✅ `src/lib/payments/subscription-service.ts` — startSubscription, upgradeSubscription, scheduleDowngrade, cancelSubscription, reactivateSubscription, handleSuccessfulPayment, handleCancelledPayment, handleSuccessfulRefund
+- ✅ `checkout/route.ts` — переведён на subscription-service (промокоды + кредиты workspace)
+- ✅ `webhooks/yookassa/route.ts` — делегирует обработку событий subscription-service
+- ✅ `.env.example` — YOOKASSA_RECEIPTS_ENABLED, YOOKASSA_VAT_CODE
+
+---
+
 ### Добавлено (2026-04-21) — ЮKassa клиент v2 (SUBSCRIPTION_SYSTEM.md §2) ✅
 
 - ✅ `src/lib/payments/yookassa/client.ts` — кастомный fetch-клиент: Basic auth, retry 3×, exponential backoff, timeout

@@ -1,16 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { db } from '@/lib/db';
-import { getActiveWorkspaceOrThrow } from '@/lib/auth-utils';
-import { successResponse, errorResponse } from '@/utils/api';
-import { createPayment } from '@/lib/payments/create-payment';
 export const dynamic = 'force-dynamic';
 
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { getActiveWorkspaceOrThrow } from '@/lib/auth-utils';
+import { successResponse, errorResponse } from '@/utils/api';
+import { startSubscription } from '@/lib/payments/subscription-service';
 
 const checkoutSchema = z.object({
   planCode: z.string().min(1),
   billingPeriod: z.enum(['MONTHLY', 'YEARLY']),
-  referralCode: z.string().optional(),
+  promoCode: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -22,54 +21,38 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return errorResponse(parsed.error.issues[0].message, 400);
     }
-    const { planCode, billingPeriod } = parsed.data;
-
-    // Загрузить план по коду
-    const plan = await db.subscriptionPlan.findUnique({
-      where: { code: planCode, isActive: true },
-    });
-    if (!plan) return errorResponse('Тариф не найден', 404);
-
-    // Вычислить сумму в зависимости от периода
-    const amountRub = billingPeriod === 'MONTHLY'
-      ? plan.priceMonthlyRub
-      : plan.priceYearlyRub;
-
-    if (amountRub <= 0) {
-      return errorResponse('Бесплатный план не требует оплаты', 400);
-    }
+    const { planCode, billingPeriod, promoCode } = parsed.data;
 
     const returnUrl = `${process.env.APP_URL}/settings/subscription?success=1`;
-    const description = `${plan.name} — ${billingPeriod === 'MONTHLY' ? 'месяц' : 'год'}`;
 
-    // Реферальные коды — Фаза 5, пока заглушка
-    const referralDiscountApplied = 0;
-    const referralId: string | undefined = undefined;
-
-    const finalAmount = amountRub - referralDiscountApplied;
-
-    const result = await createPayment({
+    const result = await startSubscription({
       workspaceId,
-      planId: plan.id,
-      billingPeriod,
-      amountRub: finalAmount,
       userId: session.user.id,
+      planCode,
+      billingPeriod,
       returnUrl,
-      description,
-      referralDiscountApplied,
-      referralId,
+      promoCode,
     });
 
     return successResponse({
       confirmationToken: result.confirmationToken,
       paymentId: result.paymentId,
-      amountRub: finalAmount,
-      originalAmountRub: amountRub,
+      amountRub: result.amountRub,
+      originalAmountRub: result.originalAmountRub,
+      discountRub: result.discountRub,
     });
   } catch (error) {
     if (error instanceof NextResponse) return error;
-    if (error instanceof Error && error.message.includes('ЮKassa не настроена')) {
-      return errorResponse('Оплата временно недоступна', 503);
+    if (error instanceof Error) {
+      if (error.message.includes('ЮKassa не настроена')) {
+        return errorResponse('Оплата временно недоступна', 503);
+      }
+      if (error.message.includes('Бесплатный план')) {
+        return errorResponse(error.message, 400);
+      }
+      if (error.message.includes('Тариф не найден')) {
+        return errorResponse(error.message, 404);
+      }
     }
     return errorResponse('Ошибка при создании платежа', 500);
   }
