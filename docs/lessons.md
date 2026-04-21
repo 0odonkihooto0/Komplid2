@@ -740,5 +740,30 @@ logger.info(`[socket] running on port ${PORT}`);
 
 ---
 
+**`SpeechRecognition` как глобальный тип недоступен при `"types": ["@serwist/next/typings"]` + `"webworker"` в `lib` — `Cannot find name 'SpeechRecognition'`.**
+Конфигурация `tsconfig.json` с `"types": ["@serwist/next/typings"]` и `"lib": [..., "webworker"]` не резолвит глобальный Web Speech API тип `SpeechRecognition`, несмотря на наличие `"dom"` в `lib`. Локально без `node_modules` ошибка молчит, на деплое (type-check фаза `next build`) — `Type error: Cannot find name 'SpeechRecognition'`.
+Обнаружено в `src/components/mobile/VoiceInput.tsx`.
+**Правило**: Web Speech API (`SpeechRecognition`, `webkitSpeechRecognition`) и другие нестандартные/экспериментальные Browser API **никогда не использовать как глобальные типы** в проекте с Serwist/PWA. Вместо этого объявлять локальные интерфейсы точно по используемым полям и выносить доступ к `window` через `as unknown as WindowWithSpeech`:
+```typescript
+interface SpeechRecognitionLike {
+  lang: string; continuous: boolean; interimResults: boolean;
+  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+  onerror: (() => void) | null; onend: (() => void) | null;
+  start(): void; stop(): void;
+}
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
+interface WindowWithSpeech {
+  SpeechRecognition?: SpeechRecognitionConstructor;
+  webkitSpeechRecognition?: SpeechRecognitionConstructor;
+}
+// Использование:
+const win = window as unknown as WindowWithSpeech;
+const SR = win.SpeechRecognition || win.webkitSpeechRecognition;
+const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+```
+Поиск нарушений: `grep -rn "SpeechRecognition\b" src/` — убедиться что глобальное имя не используется нигде как тип без `as unknown as`.
+
+---
+
 > Правило: после каждой исправленной ошибки добавить урок сюда.
 > Команда: "Добавь урок в docs/lessons.md: [описание ошибки]"
