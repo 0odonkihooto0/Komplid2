@@ -1355,6 +1355,17 @@
 
 > **Ориентир:** 3–4 недели
 
+### Фаза 1 — Workspace Abstraction ✅ (2026-04-21)
+- ✅ Prisma: модели `Workspace`, `WorkspaceMember`, enums `WorkspaceType`/`WorkspaceRole`
+- ✅ User: поля `activeWorkspaceId`, `ownedWorkspaces`, `workspaceMemberships`
+- ✅ Organization: relation `workspace`; BuildingObject: `workspaceId` + индекс
+- ✅ `src/lib/workspaces/create-workspace.ts` — `createCompanyWorkspace` / `createPersonalWorkspace`
+- ✅ B2B регистрация и приглашения автоматически создают воркспейс и членство
+- ✅ JWT/сессия включает `activeWorkspaceId`
+- ✅ `getActiveWorkspaceOrThrow()` в `auth-utils.ts`
+- ✅ API-роуты `projects` и `reports` переведены на backward-compatible OR-фильтр
+- ✅ Скрипты `backfill-workspace-ids.ts` + `validate-workspace-backfill.ts`
+
 ### Система подписок
 - ⬜ 4 уровня: Freemium → Профессионал → Команда → Корпоративный
 - ⬜ Middleware checkSubscriptionLimits
