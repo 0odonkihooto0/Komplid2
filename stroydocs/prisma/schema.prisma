@@ -273,6 +273,7 @@ model Payment {
   workspace    Workspace     @relation(fields: [workspaceId], references: [id])
   user         User          @relation("PaymentInitiator", fields: [userId], references: [id])
   subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+  referral     Referral?     @relation(fields: [referralId], references: [id])
 
   @@index([workspaceId])
   @@index([status])
@@ -402,6 +403,7 @@ model Workspace {
   activeSubscription Subscription?     @relation("WorkspaceActiveSubscription", fields: [activeSubscriptionId], references: [id], onDelete: SetNull)
   subscriptions      Subscription[]    @relation("WorkspaceAllSubscriptions")
   payments           Payment[]
+  credit             WorkspaceCredit?
 
   @@map("workspaces")
 }
@@ -593,6 +595,11 @@ model User {
 
   // Модуль 16 — PWA Push-уведомления
   pushSubscriptions PushSubscription[]
+
+  // Модуль 15 — Реферальная программа
+  referralCode         ReferralCode?
+  referralsAsReferrer  Referral[] @relation("ReferralReferrer")
+  referralsAsReferred  Referral[] @relation("ReferralReferred")
 
   @@index([organizationId])
   @@map("users")
@@ -6265,6 +6272,128 @@ model ProblemIssueTypeRef {
 
   @@index([organizationId])
   @@map("problem_issue_types_ref")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Модуль 15 — Фаза 5: Реферальная программа 2.0
+// ─────────────────────────────────────────────────────────────────────────
+
+enum RewardType {
+  CREDIT    // кредит на аккаунт
+  CASHBACK  // денежная выплата (Фаза 2)
+}
+
+enum RewardStatus {
+  PENDING   // ожидает первой оплаты приглашённого
+  GRANTED   // выдана как credit
+  PAID      // выплачена деньгами
+  CANCELED  // отменена (фрод / возврат)
+}
+
+enum LedgerEntryType {
+  REFERRAL_BONUS     // + начисление
+  PAYMENT_DEDUCTION  // - при оплате
+  MANUAL_ADJUSTMENT  // + или - админом
+  REFUND             // + возврат
+}
+
+/// Реферальный код пользователя (один на пользователя)
+model ReferralCode {
+  id          String @id @default(uuid())
+  code        String @unique
+  userId      String @unique
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  clickCount  Int    @default(0)
+  signupCount Int    @default(0)
+  paidCount   Int    @default(0)
+
+  createdAt   DateTime  @default(now())
+  referrals   Referral[]
+
+  @@map("referral_codes")
+}
+
+/// Связь реферера и приглашённого
+model Referral {
+  id     String @id @default(uuid())
+
+  codeId     String
+  code       ReferralCode @relation(fields: [codeId], references: [id])
+
+  referrerId String
+  referrer   User   @relation("ReferralReferrer", fields: [referrerId], references: [id])
+
+  referredUserId String?
+  referredUser   User?   @relation("ReferralReferred", fields: [referredUserId], references: [id])
+
+  referrerRole ProfessionalRole?
+  referredRole ProfessionalRole?
+  isCrossRole  Boolean @default(false)
+
+  signupAt              DateTime?
+  firstPaidAt           DateTime?
+  firstPaymentAmountRub Int?
+  firstPaymentId        String?
+
+  rewardType      RewardType?
+  rewardAmountRub Int         @default(0)
+  rewardStatus    RewardStatus @default(PENDING)
+  rewardGrantedAt DateTime?
+
+  discountAmountRub Int     @default(0)
+  discountApplied   Boolean @default(false)
+
+  clickIp       String?
+  clickUserAgent String?
+  signupIp      String?
+
+  // Anti-fraud метаданные
+  suspicious    Boolean  @default(false)
+  fraudReasons  String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  payments Payment[]
+
+  @@index([referrerId])
+  @@index([referredUserId])
+  @@index([rewardStatus])
+  @@map("referrals")
+}
+
+/// Кредитный баланс workspace (реферальные бонусы)
+model WorkspaceCredit {
+  id          String    @id @default(uuid())
+  workspaceId String    @unique
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  balanceRub  Int    @default(0)
+  updatedAt   DateTime @updatedAt
+
+  ledger CreditLedgerEntry[]
+
+  @@map("workspace_credits")
+}
+
+/// Журнал операций с кредитным балансом
+model CreditLedgerEntry {
+  id       String          @id @default(uuid())
+  creditId String
+  credit   WorkspaceCredit @relation(fields: [creditId], references: [id], onDelete: Cascade)
+
+  amountRub   Int
+  type        LedgerEntryType
+  description String
+
+  referralId String?
+  paymentId  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([creditId])
+  @@map("credit_ledger_entries")
 }
 
 /// Подписки на Web Push уведомления (Модуль 16 — PWA)

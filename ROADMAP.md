@@ -9,6 +9,31 @@
 
 ---
 
+### Добавлено (2026-04-21) — MODULE15 Фаза 5: Реферальная программа 2.0 ✅
+
+- ✅ `prisma/schema.prisma` — 3 новых enum (`RewardType`, `RewardStatus`, `LedgerEntryType`) + 4 модели (`ReferralCode`, `Referral`, `WorkspaceCredit`, `CreditLedgerEntry`); связи в `User`, `Workspace`, `Payment`
+- ✅ `prisma/migrations/20260421030000_add_referrals_v2/` — идемпотентная SQL-миграция
+- ✅ `src/lib/referrals/generate-code.ts` — `ensureReferralCode(userId)` без nanoid-зависимости
+- ✅ `src/lib/referrals/calculate-reward.ts` — `calculateReferralReward` (50/30% same-role, 90/40% cross-role)
+- ✅ `src/lib/referrals/process-referral-payment.ts` — начисление кредита рефереру + ledger запись + уведомление
+- ✅ `src/lib/referrals/anti-fraud.ts` — `checkReferralFraud` (IP, домен, /24, лимит 10/мес) + `scanRecentReferrals`
+- ✅ `src/app/api/referrals/me/route.ts` — GET статистика + POST создать код
+- ✅ `src/app/api/referrals/me/list/route.ts` — GET список моих рефералов
+- ✅ `src/app/api/referrals/leaderboard/route.ts` — GET публичный топ партнёров
+- ✅ `src/app/api/admin/referrals/route.ts` — GET подозрительные + POST confirm/cancel
+- ✅ `src/app/api/cron/referral-fraud-scan/route.ts` — cron-сканирование (Bearer CRON_SECRET)
+- ✅ `src/app/ref/[code]/page.tsx` — страница приземления: трекинг клика, cookie, CTA регистрации
+- ✅ `src/app/(dashboard)/referrals/page.tsx` + `leaderboard/page.tsx` — UI реферальной программы
+- ✅ `src/app/(dashboard)/admin/referrals/page.tsx` — admin модерация подозрительных рефералов
+- ✅ `src/components/referrals/MyReferralCard.tsx` — карточка кода + статистика + шаринг
+- ✅ `src/components/referrals/CrossRoleExplainer.tsx` — образовательный блок кросс-ролевых бонусов
+- ✅ `src/components/referrals/ReferralsList.tsx` — таблица приглашений
+- ✅ `src/components/referrals/LeaderboardTable.tsx` — рейтинг партнёров
+- ✅ Интеграция в `src/app/api/auth/register-solo/route.ts` — привязка нового юзера к Referral при регистрации
+- ✅ Интеграция в `src/app/api/webhooks/yookassa/route.ts` — вызов `processReferralReward` при payment.succeeded
+
+---
+
 ### Добавлено (2026-04-21) — MODULE15 Фаза 4: Сметчик-Студио MVP ✅
 
 - ✅ `prisma/schema.prisma` + migration — 5 полей публичного шаринга `EstimateVersion` (`publicShareToken`, `publicShareMode`, `publicShareExpiresAt`, `publicShareViewCount`, `publicCompareWithVersionId`)
