@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "postinstall": "prisma generate",
-    "start": "prisma migrate deploy && node server.js",
+    "start": "node -e \"if(process.env.DATABASE_URL){require('child_process').execSync('npx prisma migrate deploy',{stdio:'inherit'})}\" && node server.js",
     "socket": "ts-node --compiler-options {\"module\":\"CommonJS\"} src/server/socket.ts",
     "lint": "next lint",
     "test": "vitest run",
