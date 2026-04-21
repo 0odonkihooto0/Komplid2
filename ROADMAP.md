@@ -95,6 +95,33 @@
 
 ---
 
+### Добавлено (2026-04-21) — Subscription Service + ФЗ-54 чеки (SUBSCRIPTION_SYSTEM.md §3) ✅
+
+- ✅ `src/lib/payments/proration.ts` — calculateProration (пропорциональная доплата при апгрейде)
+- ✅ `src/lib/payments/promo-service.ts` — validateAndApplyPromoCode (все типы скидок + лимиты)
+- ✅ `src/lib/payments/subscription-service.ts` — startSubscription, upgradeSubscription, scheduleDowngrade, cancelSubscription, reactivateSubscription, handleSuccessfulPayment, handleCancelledPayment, handleSuccessfulRefund
+- ✅ `checkout/route.ts` — переведён на subscription-service (промокоды + кредиты workspace)
+- ✅ `webhooks/yookassa/route.ts` — делегирует обработку событий subscription-service
+- ✅ `.env.example` — YOOKASSA_RECEIPTS_ENABLED, YOOKASSA_VAT_CODE
+
+---
+
+### Добавлено (2026-04-21) — ЮKassa клиент v2 (SUBSCRIPTION_SYSTEM.md §2) ✅
+
+- ✅ `src/lib/payments/yookassa/client.ts` — кастомный fetch-клиент: Basic auth, retry 3×, exponential backoff, timeout
+- ✅ `src/lib/payments/yookassa/types.ts` — полные TypeScript-типы ответов ЮKassa
+- ✅ `src/lib/payments/yookassa/errors.ts` — YookassaError / ValidationError / NetworkError
+- ✅ `src/lib/payments/yookassa/payments.ts` — createPayment, chargeRecurring, getPayment, capturePayment, cancelPayment
+- ✅ `src/lib/payments/yookassa/refunds.ts` — createRefund
+- ✅ `src/lib/payments/yookassa/receipts.ts` — buildSubscriptionReceipt с VatCode/PaymentMode enum, ENV YOOKASSA_VAT_CODE
+- ✅ `src/lib/payments/yookassa/payment-methods.ts` — getPaymentMethod, deactivatePaymentMethod (DB-only)
+- ✅ `src/lib/payments/yookassa/webhooks.ts` — isYookassaIp через ip-cidr (реальный CIDR, не string-prefix)
+- ✅ `src/lib/payments/yookassa/legacy-client.ts` — копия старого клиента для будущей миграции
+- ✅ `src/app/api/webhooks/yookassa/route.ts` — dual-field OR-lookup, +payment.waiting_for_capture, фикс CANCELLED vs FAILED
+- ✅ `package.json` — добавлен ip-cidr
+
+---
+
 ### Добавлено (2026-04-21) — MODULE15 Фаза 3: ЮKassa + Биллинг ✅
 
 - ✅ `package.json` — добавлен `@a2seven/yoo-checkout`

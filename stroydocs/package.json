@@ -63,6 +63,7 @@
     "handlebars": "^4.7.8",
     "idb": "^8.0.3",
     "ioredis": "^5.10.0",
+    "ip-cidr": "^4.0.2",
     "isomorphic-dompurify": "^3.5.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.577.0",
