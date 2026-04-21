@@ -9,6 +9,14 @@
 
 ---
 
+### Добавлено (2026-04-21) — SUBSCRIPTION_SYSTEM.md Пункт 1: Prisma-схема финальная ✅
+
+- ✅ `prisma/schema.prisma` — 8 новых моделей: `PaymentMethod`, `SubscriptionEvent`, `Receipt`, `Invoice`, `PromoCode`, `PromoCodeRule`, `PromoCodeRedemption`, `DunningAttempt`; 15 новых enum (`PlanCategory`, `ProfiRole`, `CancellationReasonCode`, `PaymentType`, `PaymentProvider`, `PaymentMethodType`, `SubscriptionEventType`, `ActorType`, `ReceiptType`, `ReceiptProvider`, `ReceiptStatus`, `InvoiceStatus`, `DiscountType`, `DunningResult`, `UserDunningAction`); расширены `SubscriptionStatus`, `PaymentStatus`, `PaymentSource`; добавлены поля в `SubscriptionPlan`, `Subscription`, `Payment`
+- ✅ `prisma/migrations/20260421070000_extend_subscription_system/migration.sql` — идемпотентная миграция (ADD COLUMN IF NOT EXISTS, DO $$ BEGIN...END $$)
+- ✅ `prisma/seeds/subscription-plans.ts` — обновлён: `trialDays=14` для Pro-тарифов, `isPopular=true`, features как Json
+
+---
+
 ### Добавлено (2026-04-21) — MODULE15 Фаза 7: Прораб-Журнал + PWA ✅
 
 - ✅ `src/components/mobile/VoiceRecorder.tsx` — MediaRecorder + Yandex SpeechKit (Pro only)

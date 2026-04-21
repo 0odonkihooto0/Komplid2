@@ -152,7 +152,7 @@ enum WorkspaceRole {
   GUEST
 }
 
-// === Модуль 15 Фаза 2 — Подписки ===
+// === Модуль 15 Фаза 2 — Подписки (базовые) ===
 
 enum PlanType {
   FREE
@@ -173,12 +173,16 @@ enum ProfessionalRole {
 }
 
 enum SubscriptionStatus {
-  TRIAL
-  ACTIVE
-  PAST_DUE
-  CANCELED
-  EXPIRED
-  INCOMPLETE
+  TRIAL      // устаревшее, сохранено для совместимости
+  TRIALING   // активный триал, ещё не платил
+  ACTIVE     // платящий, автопродление включено
+  PAST_DUE   // платёж не прошёл, идёт dunning
+  GRACE      // grace period (7 дней readonly после окончания)
+  CANCELED   // устаревшее написание, сохранено для совместимости
+  CANCELLED  // отменён пользователем, но ещё действует до effectiveEndDate
+  EXPIRED    // полностью закончился, доступа нет
+  INCOMPLETE // устаревшее, сохранено для совместимости
+  PAUSED     // временная пауза
 }
 
 enum BillingPeriod {
@@ -187,38 +191,218 @@ enum BillingPeriod {
 }
 
 enum PaymentSource {
-  APP
-  TILDA
+  APP        // в личном кабинете
+  TILDA      // с komplid.ru редирект
+  MARKETING  // маркетинговый источник
+  API        // через API (партнёры)
+  ADMIN      // административный платёж
+  WEBHOOK    // инициирован webhook-ом (рекуррент)
 }
 
 enum PaymentStatus {
-  PENDING
-  SUCCEEDED
-  FAILED
-  REFUNDED
+  PENDING               // создан, ждёт действия пользователя
+  WAITING_FOR_CAPTURE   // двухстадийный: захват вручную
+  AUTHORIZED            // деньги заморожены, ждёт capture
+  SUCCEEDED             // успешно проведён
+  FAILED                // ошибка платежа
+  CANCELLED             // отменён пользователем или таймаут
+  REFUNDED              // возвращен полностью
+  PARTIALLY_REFUNDED    // возвращена часть
+}
+
+// === Модуль 15 Фаза 8 — Расширенная система подписок ===
+
+enum PlanCategory {
+  FREEMIUM   // бесплатный, нужен для воронки
+  B2C        // Профи-пакеты (Смета/ПТО/Прораб)
+  B2B        // Team для компаний
+  ENTERPRISE // Corporate по запросу
+}
+
+enum ProfiRole {
+  SMETCHIK   // Сметчик-Студио
+  PTO        // ИД-Мастер
+  PRORAB     // Прораб-Журнал
+}
+
+enum CancellationReasonCode {
+  TOO_EXPENSIVE
+  MISSING_FEATURES
+  COMPETITOR
+  NOT_USING
+  TECHNICAL_ISSUES
+  TEMPORARY
+  OTHER
+}
+
+enum PaymentType {
+  PLAN_PAYMENT    // первичная оплата тарифа
+  PLAN_RENEWAL    // автопродление
+  PLAN_UPGRADE    // апгрейд с proration
+  PLAN_PRORATION  // только proration-доплата
+  CREDIT_TOPUP    // пополнение кредитного счёта
+  REFUND          // возврат (отрицательная сумма)
+  MANUAL          // ручной платёж админа
+}
+
+enum PaymentProvider {
+  YOOKASSA
+  TINKOFF  // на будущее
+  SBERBANK // на будущее
+  MANUAL   // ручной админский платёж
+}
+
+enum PaymentMethodType {
+  BANK_CARD   // банковская карта
+  SBP         // Система быстрых платежей
+  YOOMONEY    // ЮMoney кошелёк
+  SBERPAY     // SberPay
+  TPAY        // T-Pay (Тинькофф)
+  YANDEX_PAY  // Yandex Pay
+  INVOICE     // безналичный счёт (B2B)
+}
+
+enum SubscriptionEventType {
+  CREATED
+  TRIAL_STARTED
+  TRIAL_ENDED
+  TRIAL_CONVERTED
+  RENEWED
+  RENEWAL_FAILED
+  UPGRADED
+  DOWNGRADED
+  PLAN_CHANGE_SCHEDULED
+  CANCELLED
+  REACTIVATED
+  EXPIRED
+  GRACE_STARTED
+  GRACE_EXPIRED
+  PAUSED
+  RESUMED
+  PAYMENT_METHOD_CHANGED
+  DUNNING_START
+  DUNNING_RESOLVED
+  DUNNING_FAILED
+  PROMO_APPLIED
+  MANUAL_EXTENSION
+}
+
+enum ActorType {
+  USER
+  SYSTEM  // cron, автопродление, dunning
+  ADMIN   // ручное действие админа
+  WEBHOOK // callback от ЮKassa
+  API     // внешний API
+}
+
+enum ReceiptType {
+  PAYMENT      // приход денег (основной при оплате)
+  PREPAYMENT   // предоплата (аванс)
+  FULL_PAYMENT // полный расчёт
+  REFUND       // возврат
+  CREDIT       // кредит
+}
+
+enum ReceiptProvider {
+  YOOKASSA     // встроенное решение ЮKassa
+  EVOTOR_CLOUD // облачная касса Эвотор
+  ATOL_ONLINE  // АТОЛ Онлайн
+  NONE         // для Enterprise со счёт-фактурами
+}
+
+enum ReceiptStatus {
+  PENDING    // создан, ждёт отправки в ОФД
+  SUBMITTED  // отправлен в ОФД
+  REGISTERED // успешно зарегистрирован
+  FAILED     // ошибка
+  RETRY      // будет повтор
+}
+
+enum InvoiceStatus {
+  DRAFT          // черновик
+  ISSUED         // выставлен, ждёт оплаты
+  PAID           // оплачен
+  PARTIALLY_PAID // оплачен частично
+  OVERDUE        // просрочен
+  CANCELLED      // отменён
+}
+
+enum DiscountType {
+  PERCENT      // 30 = 30%
+  FIXED_AMOUNT // в копейках
+  TRIAL_DAYS   // продление триала
+  FREE_MONTHS  // бесплатные месяцы
+}
+
+enum DunningResult {
+  SUCCESS          // платёж прошёл
+  FAILED           // платёж не прошёл
+  CARD_EXPIRED     // карта истекла
+  USER_CANCELLED   // пользователь отменил подписку
+  USER_UPDATED_CARD // пользователь обновил карту
+}
+
+enum UserDunningAction {
+  UPDATED_PAYMENT_METHOD
+  CANCELLED_SUBSCRIPTION
+  IGNORED
 }
 
 /// Каталог тарифных планов — системная сущность
 model SubscriptionPlan {
   id          String           @id @default(uuid())
+  // Старые поля (сохранены для обратной совместимости)
   code        String           @unique
+  planType    PlanType
+  requiresPersonalWorkspace Boolean @default(false)
+  priceMonthlyRub Int          @default(0)
+  priceYearlyRub  Int          @default(0)
+  limits      Json             @default("{}")
+  isFeatured  Boolean          @default(false)
+  // Основные поля
   name        String
   description String?
-  planType    PlanType
+  // Новая категоризация
+  category    PlanCategory?
   targetRole  ProfessionalRole?
-  requiresPersonalWorkspace Boolean @default(false)
-  priceMonthlyRub Int
-  priceYearlyRub  Int
-  features    String[]
-  limits      Json
-  isActive    Boolean  @default(true)
-  isFeatured  Boolean  @default(false)
-  displayOrder Int     @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  profiRole   ProfiRole?
+  // Биллинг (новые поля)
+  billingPeriod   BillingPeriod?
+  priceRub        Int?
+  oldPriceRub     Int?
+  currency        String          @default("RUB")
+  // Лимиты (все опциональные — null = без лимита)
+  maxObjects           Int?
+  maxUsers             Int?
+  maxGuests            Int?
+  maxStorageGb         Int?
+  maxEstimatesPerMonth Int?
+  maxAosrPerMonth      Int?
+  maxActiveObjects     Int?
+  maxJournalEntriesPerMonth Int?
+  maxPublicLinksActive Int?
+  // Feature flags (JSON массив строковых ключей)
+  features    Json             @default("[]")
+  // Trial
+  trialDays   Int              @default(0)
+  trialFeatures Json?
+  // Отображение
+  displayOrder Int             @default(0)
+  isActive    Boolean          @default(true)
+  isPopular   Boolean          @default(false)
+  isVisible   Boolean          @default(true)
+  isLegacy    Boolean          @default(false)
+  // Мета
+  metadata    Json?
 
-  subscriptions Subscription[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
+  subscriptions  Subscription[]
+  promoCodeRules PromoCodeRule[]
+  invoices       Invoice[]        @relation("InvoicePlan")
+
+  @@index([category, profiRole])
   @@map("subscription_plans")
 }
 
@@ -231,21 +415,42 @@ model Subscription {
   billingPeriod BillingPeriod
   currentPeriodStart DateTime
   currentPeriodEnd   DateTime
+  // Устаревшие поля (сохранены для совместимости)
   cancelAtPeriodEnd  Boolean        @default(false)
   canceledAt         DateTime?
   trialEnd           DateTime?
   yookassaSubscriptionId String?    @unique
+  // Новые поля (Фаза 8)
+  startedAt          DateTime?      // фактическая дата начала подписки
+  trialStart         DateTime?      // начало триала
+  cancelReason       CancellationReasonCode?
+  cancelFeedback     String?
+  effectiveEndDate   DateTime?      // когда фактически закончится
+  pendingPlanId      String?        // план для смены на следующий период
+  pendingPlanChangeAt DateTime?
+  autoRenew          Boolean        @default(true)
+  defaultPaymentMethodId String?
+  graceUntil         DateTime?      // конец grace period (7 дней readonly)
+  dunningAttempts    Int            @default(0)
+  nextDunningAt      DateTime?
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  workspace Workspace        @relation("WorkspaceAllSubscriptions", fields: [workspaceId], references: [id], onDelete: Cascade)
-  plan      SubscriptionPlan @relation(fields: [planId], references: [id])
-  activeFor Workspace?       @relation("WorkspaceActiveSubscription")
-  payments  Payment[]
+  workspace             Workspace        @relation("WorkspaceAllSubscriptions", fields: [workspaceId], references: [id], onDelete: Cascade)
+  plan                  SubscriptionPlan @relation(fields: [planId], references: [id])
+  activeFor             Workspace?       @relation("WorkspaceActiveSubscription")
+  defaultPaymentMethod  PaymentMethod?   @relation("SubscriptionDefaultMethod", fields: [defaultPaymentMethodId], references: [id])
+  payments              Payment[]
+  events                SubscriptionEvent[]
+  invoices              Invoice[]
+  receipts              Receipt[]
+  dunningAttemptsList   DunningAttempt[] @relation("SubscriptionDunning")
 
-  @@index([workspaceId])
-  @@index([status])
-  @@index([currentPeriodEnd])
+  @@index([workspaceId, status])
+  @@index([status, currentPeriodEnd])
+  @@index([status, graceUntil])
+  @@index([status, nextDunningAt])
   @@map("subscriptions")
 }
 
@@ -255,29 +460,71 @@ model Payment {
   subscriptionId String?
   workspaceId   String
   userId        String
-  source        PaymentSource
+  source        PaymentSource @default(APP)
   status        PaymentStatus
   amountRub     Int
   currency      String        @default("RUB")
+  // Устаревшие поля ЮKassa (сохранены для совместимости)
   yookassaPaymentId      String? @unique
   yookassaIdempotencyKey String?
+  // Реферальная программа
   referralCreditApplied  Int     @default(0)
   referralDiscountApplied Int    @default(0)
   referralId    String?
+  // Даты
   paidAt        DateTime?
   failedAt      DateTime?
   refundedAt    DateTime?
   failureReason String?
+  // Новые поля (Фаза 8)
+  type                  PaymentType?
+  billingPeriod         BillingPeriod?
+  description           String?
+  metadata              Json?
+  provider              PaymentProvider     @default(YOOKASSA)
+  providerPaymentId     String?             // payment.id из провайдера
+  providerIdempotenceKey String?            // Idempotence-Key
+  providerMetadata      Json?
+  requiresCapture       Boolean             @default(false)
+  capturedAt            DateTime?
+  confirmationUrl       String?             // URL для оплаты (редирект)
+  // Способ оплаты
+  paymentMethodId       String?
+  savePaymentMethod     Boolean             @default(false)
+  paymentMethodSnapshot Json?
+  // Промокоды и скидки
+  promoCodeId           String?
+  discountRub           Int?
+  originalAmountRub     Int?
+  // Возврат (расширенные поля)
+  refundedAmountRub     Int?
+  refundReason          String?
+  // Документы
+  invoiceId             String?
+  receiptId             String?
+  // Источник запроса
+  ipAddress             String?
+  userAgent             String?
+
   createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
-  workspace    Workspace     @relation(fields: [workspaceId], references: [id])
-  user         User          @relation("PaymentInitiator", fields: [userId], references: [id])
-  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
-  referral     Referral?     @relation(fields: [referralId], references: [id])
+  workspace       Workspace       @relation(fields: [workspaceId], references: [id])
+  user            User            @relation("PaymentInitiator", fields: [userId], references: [id])
+  subscription    Subscription?   @relation(fields: [subscriptionId], references: [id])
+  referral        Referral?       @relation(fields: [referralId], references: [id])
+  paymentMethod   PaymentMethod?  @relation(fields: [paymentMethodId], references: [id])
+  promoCode       PromoCode?      @relation(fields: [promoCodeId], references: [id])
+  invoice         Invoice?        @relation(fields: [invoiceId], references: [id])
+  receipt         Receipt?        @relation(fields: [receiptId], references: [id])
+  dunningAttempt       DunningAttempt?       @relation("DunningPayment")
+  promoCodeRedemptions PromoCodeRedemption[] @relation("PaymentPromoRedemption")
 
-  @@index([workspaceId])
-  @@index([status])
+  @@index([workspaceId, createdAt(sort: Desc)])
+  @@index([subscriptionId])
+  @@index([status, createdAt])
   @@index([yookassaPaymentId])
+  @@index([providerPaymentId])
   @@map("payments")
 }
 
@@ -380,6 +627,8 @@ model Organization {
 
   // Модуль 15 — Воркспейс
   workspace Workspace?
+  // Фаза 8 — Счета для юрлиц
+  invoices  Invoice[]  @relation("InvoiceOrganization")
 
   @@map("organizations")
 }
@@ -400,10 +649,15 @@ model Workspace {
   owner              User              @relation("WorkspaceOwner", fields: [ownerId], references: [id])
   members            WorkspaceMember[]
   buildingObjects    BuildingObject[]
-  activeSubscription Subscription?     @relation("WorkspaceActiveSubscription", fields: [activeSubscriptionId], references: [id], onDelete: SetNull)
-  subscriptions      Subscription[]    @relation("WorkspaceAllSubscriptions")
-  payments           Payment[]
-  credit             WorkspaceCredit?
+  activeSubscription   Subscription?      @relation("WorkspaceActiveSubscription", fields: [activeSubscriptionId], references: [id], onDelete: SetNull)
+  subscriptions        Subscription[]     @relation("WorkspaceAllSubscriptions")
+  payments             Payment[]
+  credit               WorkspaceCredit?
+  // Новые relations (Фаза 8)
+  paymentMethods       PaymentMethod[]
+  invoices             Invoice[]
+  receipts             Receipt[]
+  promoCodeRedemptions PromoCodeRedemption[]
 
   @@map("workspaces")
 }
@@ -600,6 +854,11 @@ model User {
   referralCode         ReferralCode?
   referralsAsReferrer  Referral[] @relation("ReferralReferrer")
   referralsAsReferred  Referral[] @relation("ReferralReferred")
+
+  // Модуль 15 Фаза 8 — Биллинг
+  subscriptionEvents    SubscriptionEvent[]   @relation("SubscriptionEventActor")
+  promoCodesCreated     PromoCode[]           @relation("PromoCodeCreator")
+  promoCodeRedemptions  PromoCodeRedemption[] @relation("PromoCodeRedeemer")
 
   @@index([organizationId])
   @@map("users")
@@ -6426,4 +6685,254 @@ model PushSubscription {
 
   @@index([userId])
   @@map("push_subscriptions")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Модуль 15 — Фаза 8: Расширенная система подписок и биллинга
+// ─────────────────────────────────────────────────────────────────────────
+
+/// Сохранённый токен ЮKassa для рекуррентных списаний
+model PaymentMethod {
+  id              String          @id @default(uuid())
+
+  workspaceId     String
+  workspace       Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  provider        PaymentProvider @default(YOOKASSA)
+  providerMethodId String                                // payment_method.id из ЮKassa
+  type            PaymentMethodType
+
+  // Краткая информация для UI
+  cardBrand       String?
+  cardLast4       String?
+  cardExpiryMonth Int?
+  cardExpiryYear  Int?
+  accountTitle    String?
+
+  // Статус
+  isActive           Boolean     @default(true)
+  deactivatedAt      DateTime?
+  deactivationReason String?
+
+  // Использование
+  isDefault              Boolean   @default(false)
+  lastUsedAt             DateTime?
+  successfulChargesCount Int       @default(0)
+  failedChargesCount     Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions Subscription[] @relation("SubscriptionDefaultMethod")
+  payments      Payment[]
+
+  @@unique([workspaceId, providerMethodId])
+  @@index([workspaceId, isActive])
+  @@map("payment_methods")
+}
+
+/// История всех изменений подписки — для аналитики и поддержки
+model SubscriptionEvent {
+  id             String             @id @default(uuid())
+  subscriptionId String
+  subscription   Subscription       @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  type    SubscriptionEventType
+  payload Json
+
+  actorType   ActorType
+  actorUserId String?
+  actorUser   User?     @relation("SubscriptionEventActor", fields: [actorUserId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([subscriptionId, createdAt(sort: Desc)])
+  @@index([type, createdAt])
+  @@map("subscription_events")
+}
+
+/// Чек по 54-ФЗ
+model Receipt {
+  id             String        @id @default(uuid())
+
+  workspaceId    String
+  workspace      Workspace     @relation(fields: [workspaceId], references: [id])
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  type          ReceiptType
+  customerEmail String
+  customerPhone String?
+  customerInn   String?
+
+  // Позиции чека: [{ name, quantity, price, vat, paymentSubject, paymentMode }]
+  items    Json
+
+  totalRub Int
+  vatRub   Int @default(0)
+
+  provider         ReceiptProvider @default(YOOKASSA)
+  providerReceiptId String?        @unique
+  ofdUrl           String?
+  ofdPdfUrl        String?
+
+  status          ReceiptStatus
+  statusChangedAt DateTime      @default(now())
+  errorMessage    String?
+
+  // Фискальные признаки
+  fiscalDocumentNumber    String?
+  fiscalDocumentAttribute String?
+  fiscalDriveNumber       String?
+  registeredAt            DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  payments Payment[]
+
+  @@index([workspaceId, createdAt(sort: Desc)])
+  @@index([subscriptionId])
+  @@index([status])
+  @@map("receipts")
+}
+
+/// Счёт на оплату для юрлиц (B2B Enterprise-flow)
+model Invoice {
+  id     String @id @default(uuid())
+  number String @unique // "КП-2026-00123"
+
+  workspaceId    String
+  workspace      Workspace    @relation(fields: [workspaceId], references: [id])
+  organizationId String
+  organization   Organization @relation("InvoiceOrganization", fields: [organizationId], references: [id])
+
+  planId    String
+  plan      SubscriptionPlan @relation("InvoicePlan", fields: [planId], references: [id])
+  billingPeriod BillingPeriod
+  periodStart DateTime
+  periodEnd   DateTime
+
+  seatsCount  Int @default(1)
+
+  subtotalRub Int
+  vatRub      Int    @default(0)
+  totalRub    Int
+  currency    String @default("RUB")
+
+  pdfUrl        String?
+  contractPdfUrl String?
+  actPdfUrl     String?
+
+  status          InvoiceStatus
+  statusChangedAt DateTime      @default(now())
+
+  issuedAt    DateTime  @default(now())
+  dueAt       DateTime
+  paidAt      DateTime?
+  cancelledAt DateTime?
+
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  payments Payment[]
+
+  @@index([workspaceId, issuedAt(sort: Desc)])
+  @@index([status, dueAt])
+  @@map("invoices")
+}
+
+/// Скидочный промокод
+model PromoCode {
+  id   String @id @default(uuid())
+  code String @unique
+
+  discountType  DiscountType
+  discountValue Int
+  maxDiscountRub Int?
+
+  applicableToCategories PlanCategory[]
+
+  isFirstPaymentOnly Boolean   @default(true)
+  validFrom          DateTime  @default(now())
+  validUntil         DateTime?
+
+  maxTotalRedemptions Int?
+  maxPerUser          Int @default(1)
+
+  redemptionsCount Int @default(0)
+
+  source          String?
+  createdByUserId String?
+  createdByUser   User?   @relation("PromoCodeCreator", fields: [createdByUserId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  applicableToPlans PromoCodeRule[]
+  redemptions       PromoCodeRedemption[]
+  payments          Payment[]
+
+  @@index([code])
+  @@map("promo_codes")
+}
+
+/// M:N связь промокода с конкретными планами
+model PromoCodeRule {
+  promoCodeId String
+  promoCode   PromoCode        @relation(fields: [promoCodeId], references: [id], onDelete: Cascade)
+  planId      String
+  plan        SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@id([promoCodeId, planId])
+  @@map("promo_code_rules")
+}
+
+/// Фиксация применения промокода
+model PromoCodeRedemption {
+  id          String    @id @default(uuid())
+  promoCodeId String
+  promoCode   PromoCode @relation(fields: [promoCodeId], references: [id])
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  userId      String
+  user        User      @relation("PromoCodeRedeemer", fields: [userId], references: [id])
+  paymentId   String?
+  payment     Payment?  @relation("PaymentPromoRedemption", fields: [paymentId], references: [id])
+
+  discountAppliedRub Int
+
+  createdAt DateTime @default(now())
+
+  @@unique([promoCodeId, workspaceId])
+  @@index([workspaceId])
+  @@map("promo_code_redemptions")
+}
+
+/// Попытки retry-списания при отказе карты (dunning)
+model DunningAttempt {
+  id             String       @id @default(uuid())
+  subscriptionId String
+  subscription   Subscription @relation("SubscriptionDunning", fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  attemptNumber Int
+  scheduledAt   DateTime
+  executedAt    DateTime?
+  paymentId     String?   @unique
+  payment       Payment?  @relation("DunningPayment", fields: [paymentId], references: [id])
+
+  result        DunningResult?
+  failureReason String?
+
+  emailSentAt        DateTime?
+  userResponseAction UserDunningAction?
+
+  createdAt DateTime @default(now())
+
+  @@index([subscriptionId, attemptNumber])
+  @@index([scheduledAt, result])
+  @@map("dunning_attempts")
 }

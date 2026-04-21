@@ -77,7 +77,7 @@ export function PlanCard({ plan, isActive, billingPeriod }: Props) {
       </CardHeader>
       <CardContent className="flex-1">
         <ul className="space-y-1.5">
-          {plan.features.map((f) => (
+          {(Array.isArray(plan.features) ? plan.features as string[] : []).map((f) => (
             <li key={f} className="flex items-center gap-2 text-sm">
               <Check className="h-3.5 w-3.5 text-green-500 flex-shrink-0" aria-hidden />
               {FEATURE_LABELS[f] ?? f}

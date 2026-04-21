@@ -8,7 +8,8 @@ export async function requireFeature(
 ): Promise<void> {
   const active = await getActivePlan(workspaceId);
   if (!active) throw new PaymentRequiredError(feature, workspaceId);
-  if (!active.plan.features.includes(feature)) {
+  const features = Array.isArray(active.plan.features) ? active.plan.features as string[] : [];
+  if (!features.includes(feature)) {
     throw new PaymentRequiredError(feature, workspaceId);
   }
   // isInGracePeriod — даём доступ, UI покажет предупреждение
