@@ -1,23 +1,25 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import type { BillingPeriod, Prisma } from '@prisma/client';
+import { isYookassaIp } from '@/lib/payments/yookassa/webhooks';
 import { processReferralReward } from '@/lib/referrals/process-referral-payment';
-export const dynamic = 'force-dynamic';
+import type { BillingPeriod, Prisma } from '@prisma/client';
 
+const HANDLED_EVENTS = [
+  'payment.succeeded',
+  'payment.canceled',
+  'payment.waiting_for_capture',
+  'refund.succeeded',
+] as const;
 
-// IP-allowlist ЮKassa (https://yookassa.ru/developers/using-api/webhooks)
-const YOOKASSA_IPS = [
-  '185.71.76.', '185.71.77.',   // /27 — первые 3 октета
-  '77.75.153.', '77.75.154.',   // /25
-  '77.75.156.11', '77.75.156.35',
-];
-
-function isYookassaIp(ip: string): boolean {
-  if (ip.startsWith('2a02:5180:')) return true; // IPv6 /32
-  return YOOKASSA_IPS.some((allowed) =>
-    allowed.endsWith('.') ? ip.startsWith(allowed) : ip === allowed
-  );
+function getClientIp(req: NextRequest): string {
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  const realIp = req.headers.get('x-real-ip');
+  if (realIp) return realIp;
+  return '';
 }
 
 function addPeriod(date: Date, period: BillingPeriod): Date {
@@ -28,14 +30,14 @@ function addPeriod(date: Date, period: BillingPeriod): Date {
 }
 
 export async function POST(req: NextRequest) {
-  // Проверка IP отправителя
-  const forwarded = req.headers.get('x-forwarded-for');
-  const ip = forwarded ? forwarded.split(',')[0].trim() : '';
-  if (ip && !isYookassaIp(ip)) {
-    logger.warn({ ip }, 'Webhook: отклонён запрос с неизвестного IP');
+  // 1. Проверка IP — пустая строка (локальная разработка без прокси) пропускается
+  const clientIp = getClientIp(req);
+  if (clientIp && !isYookassaIp(clientIp)) {
+    logger.warn({ clientIp }, 'Webhook: отклонён запрос с неизвестного IP');
     return new NextResponse(null, { status: 403 });
   }
 
+  // 2. Парсинг тела
   let body: Record<string, unknown>;
   try {
     body = (await req.json()) as Record<string, unknown>;
@@ -44,28 +46,35 @@ export async function POST(req: NextRequest) {
   }
 
   const event = body.event as string | undefined;
-  const yooPayment = body.object as Record<string, unknown> | undefined;
+  const yooObj = body.object as Record<string, unknown> | undefined;
 
-  if (!event || !yooPayment) {
+  if (!event || !yooObj) {
     return NextResponse.json({ ok: true });
   }
 
-  // Игнорируем неизвестные события
-  if (!['payment.succeeded', 'payment.canceled', 'refund.succeeded'].includes(event)) {
+  // 3. Игнорируем неизвестные события
+  if (!(HANDLED_EVENTS as ReadonlyArray<string>).includes(event)) {
     return NextResponse.json({ ok: true });
   }
 
-  const yooId = yooPayment.id as string | undefined;
+  const yooId = yooObj.id as string | undefined;
   if (!yooId) return NextResponse.json({ ok: true });
 
-  const payment = await db.payment.findUnique({
-    where: { yookassaPaymentId: yooId },
+  // 4. Поиск платежа: поддерживаем оба поля для обратной совместимости.
+  //    Старые платежи имеют yookassaPaymentId, новые — providerPaymentId.
+  const payment = await db.payment.findFirst({
+    where: {
+      OR: [{ providerPaymentId: yooId }, { yookassaPaymentId: yooId }],
+    },
   });
 
   if (!payment) {
     logger.warn({ yooId }, 'Webhook: платёж не найден в БД');
+    // Возвращаем 200 — иначе ЮKassa будет бесконечно ретраить
     return NextResponse.json({ ok: true });
   }
+
+  // ─── payment.succeeded ───────────────────────────────────────────────────
 
   if (event === 'payment.succeeded') {
     // Идемпотентность
@@ -73,16 +82,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    const meta = yooPayment.metadata as Record<string, string> | undefined;
+    const meta = yooObj.metadata as Record<string, string> | undefined;
     const planId = meta?.planId ?? '';
     const billingPeriod = (meta?.billingPeriod ?? 'MONTHLY') as BillingPeriod;
 
     try {
       await db.$transaction(async (tx) => {
-        // Обновить платёж
+        // Обновить платёж: пишем paidAt и capturedAt — оба поля присутствуют в схеме
         await tx.payment.update({
           where: { id: payment.id },
-          data: { status: 'SUCCEEDED', paidAt: new Date() },
+          data: {
+            status: 'SUCCEEDED',
+            paidAt: new Date(),
+            capturedAt: new Date(),
+          },
         });
 
         const now = new Date();
@@ -117,7 +130,7 @@ export async function POST(req: NextRequest) {
             } as Prisma.SubscriptionUncheckedCreateInput,
           });
           subId = created.id;
-          // Привязать платёж к подписке
+          // Привязать платёж к созданной подписке
           await tx.payment.update({
             where: { id: payment.id },
             data: { subscriptionId: subId },
@@ -130,12 +143,15 @@ export async function POST(req: NextRequest) {
           data: { activeSubscriptionId: subId },
         });
 
-        // Реферальные бонусы (Фаза 5)
+        // Реферальные бонусы
         if (payment.referralId) {
-          // Передаём свежую копию payment с обновлённым статусом
           const freshPayment = { ...payment, status: 'SUCCEEDED' as const, paidAt: new Date() };
           await processReferralReward(tx, freshPayment);
         }
+
+        // TODO: создать SubscriptionEvent(RENEWED/CREATED) — после добавления subscription-service.ts
+        // TODO: upsert PaymentMethod если yooObj.payment_method?.saved === true
+        // TODO: создать Receipt запись для ФЗ-54 аудита
       });
 
       logger.info({ paymentId: payment.id }, 'Webhook: подписка активирована');
@@ -145,12 +161,24 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // ─── payment.canceled ────────────────────────────────────────────────────
+
   if (event === 'payment.canceled') {
+    // Исправление: CANCELLED (пользователь отменил / таймаут), а не FAILED (ошибка карты)
     await db.payment.update({
       where: { id: payment.id },
-      data: { status: 'FAILED', failedAt: new Date() },
+      data: { status: 'CANCELLED', failedAt: new Date() },
     });
   }
+
+  // ─── payment.waiting_for_capture ─────────────────────────────────────────
+
+  if (event === 'payment.waiting_for_capture') {
+    // Не должно возникать — мы используем capture=true при создании платежа
+    logger.warn({ paymentId: payment.id }, 'Webhook: payment.waiting_for_capture — неожиданно, используем capture=true');
+  }
+
+  // ─── refund.succeeded ────────────────────────────────────────────────────
 
   if (event === 'refund.succeeded') {
     await db.payment.update({
