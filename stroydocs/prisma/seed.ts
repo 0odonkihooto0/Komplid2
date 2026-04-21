@@ -11,6 +11,7 @@ import { seedReportTemplates } from './seeds/report-templates';
 import { seedDefectTemplates } from './seeds/defect-templates';
 import { seedReferenceBooks } from './seeds/reference-books';
 import { seedSubscriptionPlans } from './seeds/subscription-plans';
+import { seedAosrTemplates } from './seeds/aosr-templates';
 
 const prisma = new PrismaClient();
 
@@ -256,6 +257,10 @@ async function main() {
   console.log('Создание .docx шаблонов...');
   await createMissingDocxTemplates();
   await seedTemplates(prisma);
+
+  // === Шаблоны АОСР (Фаза 6 ИД-Мастер) ===
+  console.log('Загрузка шаблонов АОСР...');
+  await seedAosrTemplates(prisma);
 
   // === Конфигурации тематических отчётов (Шаг 6) ===
   await seedThematicReports(prisma);

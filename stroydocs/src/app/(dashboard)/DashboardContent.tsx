@@ -15,6 +15,7 @@ import { formatDate } from '@/utils/format';
 import { DashboardWidgetsGrid } from '@/components/modules/dashboard/DashboardWidgetsGrid';
 import { ActivityFeed } from '@/components/modules/dashboard/ActivityFeed';
 import { DashboardFilterPanel, type DashboardFilters, type ProjectForFilter } from '@/components/dashboard/DashboardFilterPanel';
+import { AosrStatsWidget } from '@/components/dashboard/widgets/AosrStatsWidget';
 import type { ContractStatus } from '@prisma/client';
 
 interface RecentContract {
@@ -152,6 +153,9 @@ export function DashboardContent() {
                 </Link>
               ))}
         </div>
+
+        {/* Виджет АОСР (ИД-Мастер, для PTO-пользователей) */}
+        <AosrStatsWidget />
 
         {/* Виджеты аналитики */}
         <DashboardWidgetsGrid objectIds={activeObjectIds} onStatusFilter={setSelectedStatus} />

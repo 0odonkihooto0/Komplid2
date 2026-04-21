@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
         id: true,
         name: true,
         category: true,
+        workType: true,
         description: true,
         version: true,
         format: true,
