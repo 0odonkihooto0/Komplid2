@@ -9,6 +9,22 @@
 
 ---
 
+### Добавлено (2026-04-21) — MODULE15 Фаза 3: ЮKassa + Биллинг ✅
+
+- ✅ `package.json` — добавлен `@a2seven/yoo-checkout`
+- ✅ `.env.example` — `YOOKASSA_SHOP_ID`, `YOOKASSA_SECRET_KEY`, `YOOKASSA_WEBHOOK_SECRET`
+- ✅ `src/lib/payments/yookassa-client.ts` — ленивая инициализация клиента ЮKassa
+- ✅ `src/lib/payments/create-payment.ts` — фабрика платежей с записью в БД
+- ✅ `src/app/api/webhooks/yookassa/route.ts` — webhook с IP-allowlist, идемпотентностью, транзакционной активацией подписки
+- ✅ `src/app/api/workspaces/active/subscription/checkout/route.ts` — POST создаёт платёж ЮKassa, возвращает confirmationToken
+- ✅ `src/components/subscriptions/PlanCard.tsx` — карточка тарифного плана
+- ✅ `src/components/subscriptions/CheckoutForm.tsx` — встраивает виджет ЮKassa, тумблер Месяц/Год
+- ✅ `src/app/(dashboard)/settings/subscription/page.tsx` — страница выбора тарифа
+- ✅ `src/app/(dashboard)/settings/subscription/SubscriptionStatus.tsx` — текущий статус подписки
+- ✅ `src/app/(dashboard)/settings/subscription/checkout/[planId]/page.tsx` — страница оплаты
+
+---
+
 ### Добавлено (2026-04-21) — MODULE15 Фаза 2: Подписки и Feature-gate ✅
 
 - ✅ `prisma/schema.prisma` — модели `SubscriptionPlan`, `Subscription`, `Payment`; 6 новых enum (`PlanType`, `ProfessionalRole`, `SubscriptionStatus`, `BillingPeriod`, `PaymentSource`, `PaymentStatus`); расширен `Workspace` (activeSubscriptionId, subscriptions, payments) и `User` (professionalRole, paymentsInitiated)
