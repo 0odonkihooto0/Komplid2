@@ -9,6 +9,28 @@
 
 ---
 
+### Добавлено (2026-04-21) — MODULE15 Фаза 2: Подписки и Feature-gate ✅
+
+- ✅ `prisma/schema.prisma` — модели `SubscriptionPlan`, `Subscription`, `Payment`; 6 новых enum (`PlanType`, `ProfessionalRole`, `SubscriptionStatus`, `BillingPeriod`, `PaymentSource`, `PaymentStatus`); расширен `Workspace` (activeSubscriptionId, subscriptions, payments) и `User` (professionalRole, paymentsInitiated)
+- ✅ `prisma/migrations/20260421010000_add_subscriptions_payments/` — SQL-миграция
+- ✅ `prisma/seeds/subscription-plans.ts` — 7 тарифных планов (FREE, 2×Сметчик-Студио, 2×ИД-Мастер, 2×Прораб-Журнал)
+- ✅ `src/lib/subscriptions/errors.ts` — `PaymentRequiredError`, `LimitExceededError`
+- ✅ `src/lib/subscriptions/features.ts` — константы `FEATURES` и `LIMIT_KEYS`
+- ✅ `src/lib/subscriptions/get-active-plan.ts` — `getActivePlan(workspaceId)` с fallback на FREE
+- ✅ `src/lib/subscriptions/require-feature.ts` — `requireFeature`, `hasFeature`
+- ✅ `src/lib/subscriptions/require-limit.ts` — `requireLimit`
+- ✅ `src/utils/api.ts` — `handleApiError` с 402/403 для PaymentRequiredError/LimitExceededError
+- ✅ `src/hooks/use-active-plan.ts` — TanStack Query хук активной подписки
+- ✅ `src/hooks/use-feature.ts` — `useFeature(feature)` → `{hasAccess, isLoading, planCode}`
+- ✅ `src/components/subscriptions/PaywallBanner.tsx` — баннер «Обнови тариф»
+- ✅ `src/components/subscriptions/FeatureGate.tsx` — обёртка условного рендера по фиче
+- ✅ `src/app/api/subscription-plans/route.ts` — GET публичный список планов
+- ✅ `src/app/api/workspaces/active/subscription/route.ts` — GET активная подписка + usage
+- ✅ `src/app/api/workspaces/active/subscription/cancel/route.ts` — POST отмена автопродления
+- ✅ `src/app/api/workspaces/[wsId]/subscription/route.ts` — GET подписка по wsId
+
+---
+
 ### Добавлено (2026-04-20) — MODULE16 Фаза 6: Mobile-first Shell & Polish ✅
 
 - ✅ `src/components/mobile/MobileShell.tsx` — bottom tab navigation (Журнал / Фото / Дефект / Профиль), safe-area-inset для iPhone X+
