@@ -3,7 +3,7 @@ import { PutBucketCorsCommand } from '@aws-sdk/client-s3';
 import { s3 } from '@/lib/s3';
 import { errorResponse, successResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
-import { getSessionOrThrow } from '@/lib/auth-utils';
+import { getSessionOrThrow, secureCompare } from '@/lib/auth-utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   const token = authHeader.replace('Bearer ', '').trim();
   const secret = process.env.ADMIN_SECRET;
 
-  if (!secret || token !== secret) {
+  if (!secret || !secureCompare(token, secret)) {
     // Если секрет не подошёл — проверяем сессию с ролью ADMIN
     try {
       const session = await getSessionOrThrow();
