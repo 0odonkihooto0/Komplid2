@@ -13,6 +13,7 @@ import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { enqueueNotification } from '@/lib/queue';
 import { successResponse, errorResponse } from '@/utils/api';
+import { secureCompare } from '@/lib/auth-utils';
 import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
     const token = authHeader.replace('Bearer ', '').trim();
     const secret = process.env.CRON_SECRET;
 
-    if (!secret || token !== secret) {
+    if (!secret || !secureCompare(token, secret)) {
       return errorResponse('Unauthorized', 401);
     }
 
