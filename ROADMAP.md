@@ -9,6 +9,22 @@
 
 ---
 
+### Добавлено (2026-04-21) — MODULE15 Фаза 6: ИД-Мастер ✅
+
+- ✅ `prisma/schema.prisma` — `ExecutionDoc`: поля `publicShareToken`, `publicShareExpiresAt`, `publicShareViewCount`; `DocumentTemplate`: поле `workType`
+- ✅ `prisma/migrations/20260421040000_add_module15_phase6/` — SQL-миграция
+- ✅ `prisma/seeds/aosr-templates.ts` — 50 шаблонов АОСР в 5 категориях (земляные/бетонные/монтажные/кровельные/отделочные)
+- ✅ `src/app/api/estimate-items/[id]/generate-aosr/route.ts` — `POST` генерация АОСР из позиции сметы (feature-gate: `aosr_generation`)
+- ✅ `src/app/api/projects/[projectId]/contracts/[contractId]/execution-docs/[docId]/share/route.ts` — `POST`/`DELETE` шаринг документа по публичной ссылке
+- ✅ `src/app/shared/execution-doc/[token]/page.tsx` — публичная страница АОСР (просмотр + CTA подписания и регистрации)
+- ✅ `src/components/id/CreateAosrWizard.tsx` + `useCreateAosrWizard.ts` — 3-шаговый wizard: выбор шаблона / участники / данные работ (PERSONAL workspace: автоскрытие автонадзора)
+- ✅ `src/app/api/dashboard/aosr-stats/route.ts` — статистика АОСР: создано за месяц, % согласовано, в работе
+- ✅ `src/components/dashboard/widgets/AosrStatsWidget.tsx` — KPI-виджет для PTO-пользователей (показывается при наличии `execution_docs` feature)
+- ✅ `src/app/api/templates/route.ts` — добавлено поле `workType` в select
+- ✅ Онбординг PTO готов: роль PTO + планы id_master_basic/pro уже в системе; виджет АОСР появляется автоматически после активации подписки
+
+---
+
 ### Добавлено (2026-04-21) — MODULE15 Фаза 5: Реферальная программа 2.0 ✅
 
 - ✅ `prisma/schema.prisma` — 3 новых enum (`RewardType`, `RewardStatus`, `LedgerEntryType`) + 4 модели (`ReferralCode`, `Referral`, `WorkspaceCredit`, `CreditLedgerEntry`); связи в `User`, `Workspace`, `Payment`

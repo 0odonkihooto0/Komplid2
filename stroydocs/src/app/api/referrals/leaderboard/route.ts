@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { successResponse, errorResponse } from '@/utils/api';
 export const dynamic = 'force-dynamic';

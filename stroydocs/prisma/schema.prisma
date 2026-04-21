@@ -1439,12 +1439,18 @@ model ExecutionDoc {
   // Структурированная форма КС-11 / КС-14
   ksActFormData KsActFormData?
 
+  // Публичный шаринг (Фаза 6 ИД-Мастер)
+  publicShareToken     String?   @unique
+  publicShareExpiresAt DateTime?
+  publicShareViewCount Int       @default(0)
+
   @@index([contractId])
   @@index([workRecordId])
   @@index([createdById])
   @@index([lastEditedById])
   @@index([status]) // Фильтрация по статусу — частый запрос
   @@index([categoryId])
+  @@index([publicShareToken])
   @@map("execution_docs")
 }
 
@@ -1949,6 +1955,7 @@ model DocumentTemplate {
   s3Key       String? // Ключ в Timeweb S3 (если загружен в облако)
   description String? // Описание и требования к заполнению
   version     String              @default("1.0")
+  workType    String? // Категория работ для АОСР: "земляные"|"бетонные"|"монтажные"|"кровельные"|"отделочные"
   isActive    Boolean             @default(true) // Актуальная версия
   isPublic    Boolean             @default(false) // Опубликован на Tilda-лендинге (SEO)
 
