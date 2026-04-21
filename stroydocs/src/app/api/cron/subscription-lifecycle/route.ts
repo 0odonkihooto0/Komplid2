@@ -7,6 +7,8 @@ import {
   processExpiredSubscriptions,
   processExpiredGracePeriods,
   processCanceledExpired,
+  processDunningAttempts,
+  applyPendingPlanChanges,
 } from '@/lib/subscriptions/lifecycle';
 
 export const dynamic = 'force-dynamic';
@@ -21,16 +23,18 @@ export async function GET(req: NextRequest) {
       return errorResponse('Unauthorized', 401);
     }
 
-    const [trials, pastDue, grace, canceled] = await Promise.all([
+    const [trials, pastDue, grace, canceled, dunning, planChanges] = await Promise.all([
       processExpiredTrials(),
       processExpiredSubscriptions(),
       processExpiredGracePeriods(),
       processCanceledExpired(),
+      processDunningAttempts(),
+      applyPendingPlanChanges(),
     ]);
 
-    logger.info({ trials, pastDue, grace, canceled }, 'subscription-lifecycle cron выполнен');
+    logger.info({ trials, pastDue, grace, canceled, dunning, planChanges }, 'subscription-lifecycle cron выполнен');
 
-    return successResponse({ trials, pastDue, grace, canceled });
+    return successResponse({ trials, pastDue, grace, canceled, dunning, planChanges });
   } catch (err) {
     logger.error({ err }, 'subscription-lifecycle cron: ошибка');
     return errorResponse('Внутренняя ошибка сервера', 500);

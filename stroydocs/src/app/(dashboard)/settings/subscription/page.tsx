@@ -1,10 +1,12 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { db } from '@/lib/db';
 import { getActivePlan } from '@/lib/subscriptions/get-active-plan';
 import { PlanCard } from '@/components/subscriptions/PlanCard';
 import { SubscriptionStatus } from './SubscriptionStatus';
+import { Button } from '@/components/ui/button';
 
 export default async function SubscriptionPage() {
   const session = await getServerSession(authOptions);
@@ -27,11 +29,18 @@ export default async function SubscriptionPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold">Тарифы и подписка</h1>
-        <p className="text-muted-foreground mt-1">
-          Выберите подходящий тариф для вашей работы
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Тарифы и подписка</h1>
+          <p className="text-muted-foreground mt-1">
+            Выберите подходящий тариф для вашей работы
+          </p>
+        </div>
+        {activePlanResult?.subscription?.status === 'ACTIVE' && (
+          <Button asChild variant="outline" size="sm" className="flex-shrink-0 mt-1">
+            <Link href="/settings/billing/change-plan">Изменить тариф</Link>
+          </Button>
+        )}
       </div>
 
       {activePlanResult && (
