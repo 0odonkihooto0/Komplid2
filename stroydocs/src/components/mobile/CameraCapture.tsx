@@ -69,8 +69,7 @@ export function CameraCapture({
   const handleSave = async () => {
     if (!blob) return;
 
-    const { v4: uuidv4 } = await import('uuid');
-    const clientId = uuidv4();
+    const clientId = crypto.randomUUID();
 
     await photosRepo.create({
       clientId,

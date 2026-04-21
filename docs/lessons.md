@@ -721,6 +721,16 @@ logger.info(`[socket] running on port ${PORT}`);
 
 ---
 
+**`uuid` без `@types/uuid` — TS7016 при динамическом импорте транзитивной зависимости.**
+`uuid` не был добавлен в `dependencies`/`devDependencies` (`package.json`), но использовался через `await import('uuid')` в `CameraCapture.tsx`. Пакет доступен в `node_modules` как транзитивная зависимость, поэтому локально всё работало, однако TypeScript не находит декларации типов и выдаёт `TS7016: Could not find a declaration file for module 'uuid'` при `next build` (type-check фаза).
+Варианты исправления (в порядке предпочтения):
+1. Заменить `uuid` на `crypto.randomUUID()` — встроенный WebCrypto API, доступен в Node.js 14.17+ и всех современных браузерах. Не требует импорта и типов. **Используемый подход.**
+2. Добавить явную зависимость: `uuid` в `dependencies` + `@types/uuid` в `devDependencies`.
+Исправлено в `src/components/mobile/CameraCapture.tsx`: `const { v4: uuidv4 } = await import('uuid'); const clientId = uuidv4()` → `const clientId = crypto.randomUUID()`.
+**Правило**: при генерации UUID **всегда** использовать `crypto.randomUUID()`. Не импортировать пакет `uuid` без явной записи в `package.json`. Поиск нарушений: `grep -rn "from 'uuid'\|import('uuid')" src/`.
+
+---
+
 **`label` в `screenshots` манифеста PWA — поле не входит в тип `MetadataRoute.Manifest` Next.js.**
 Свойство `label` на объектах в массиве `screenshots` предусмотрено более новой версией спецификации Web App Manifest, но тип `MetadataRoute.Manifest` в установленной версии Next.js его не содержит: `{ src: string; type?: string; sizes?: string }`.
 Результат: `Type error: Object literal may only specify known properties, and 'label' does not exist in type ...` на `next build` (type-check фаза).
