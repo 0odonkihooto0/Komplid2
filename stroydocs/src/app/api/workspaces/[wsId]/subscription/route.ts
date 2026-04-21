@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { getActivePlan } from '@/lib/subscriptions/get-active-plan';
 import { successResponse, errorResponse } from '@/utils/api';
+export const dynamic = 'force-dynamic';
+
 
 // GET /api/workspaces/[wsId]/subscription — подписка workspace по ID (только для участника)
 export async function GET(

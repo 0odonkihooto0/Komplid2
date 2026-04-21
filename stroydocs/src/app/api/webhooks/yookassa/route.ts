@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import type { BillingPeriod, Prisma } from '@prisma/client';
 import { processReferralReward } from '@/lib/referrals/process-referral-payment';
+export const dynamic = 'force-dynamic';
+
 
 // IP-allowlist ЮKassa (https://yookassa.ru/developers/using-api/webhooks)
 const YOOKASSA_IPS = [

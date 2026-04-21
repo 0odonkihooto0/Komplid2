@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { getActiveWorkspaceOrThrow } from '@/lib/auth-utils';
 import { getActivePlan } from '@/lib/subscriptions/get-active-plan';
 import { successResponse, errorResponse } from '@/utils/api';
+export const dynamic = 'force-dynamic';
+
 
 // GET /api/workspaces/active/subscription — текущая подписка + потребление лимитов
 export async function GET() {

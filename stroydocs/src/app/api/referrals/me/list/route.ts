@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
+export const dynamic = 'force-dynamic';
+
 
 // GET — список моих рефералов
 export async function GET() {

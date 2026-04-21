@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { ensureReferralCode } from '@/lib/referrals/generate-code';
+export const dynamic = 'force-dynamic';
+
 
 // GET — мой реферальный код + статистика
 export async function GET() {

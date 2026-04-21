@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getActiveWorkspaceOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
+export const dynamic = 'force-dynamic';
+
 
 // POST /api/workspaces/active/subscription/cancel — отменить автопродление
 export async function POST() {
