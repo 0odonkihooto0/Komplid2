@@ -782,6 +782,23 @@ export default function Page() {
 `fallback` для Suspense необязателен — без него Next.js использует ближайший родительский Suspense или пустой фолбэк.
 Поиск нарушений: `grep -rn "useSearchParams" src/app/ | grep -v "Suspense"` — не гарантирован (Suspense может быть в другом файле), но выявляет кандидатов для ревью.
 
+**API-роут без `export const dynamic = 'force-dynamic'` — `PrismaClientInitializationError` при `next build`.**
+Next.js App Router пытается статически пре-рендерить каждый API-роут без явного `dynamic`-директивы.
+В CI/CD-окружении нет БД → Prisma падает с `Can't reach database server at localhost:5432` прямо в фазе `Generating static pages`.
+Ошибка видна **только на `next build`** — в dev-режиме (`next dev`) всё работает.
+Симптом в логах: `PrismaClientInitializationError` + `Error occurred prerendering page "/api/some-route"`.
+Затронуло 14 роутов сразу: `/api/subscription-plans`, `/api/workspaces/*`, `/api/referrals/*`, `/api/admin/referrals`, `/api/cron/*`, `/api/webhooks/yookassa`, `/api/push/*`, `/api/auth/socket-token`.
+**Правило**: **каждый** новый API-роут (`src/app/api/**/route.ts`) ОБЯЗАН содержать первой строкой после imports:
+```typescript
+export const dynamic = 'force-dynamic';
+```
+Исключения — только роуты, которые явно должны быть статическими (нет обращений к БД, сессии, внешним API).
+Поиск нарушений перед деплоем:
+```bash
+grep -rL "force-dynamic\|force-static\|revalidate" src/app/api/ --include="route.ts"
+```
+Все найденные файлы с обращениями к `db.*`, `getServerSession`, `headers()`, `cookies()` — добавить `force-dynamic`.
+
 ---
 
 > Правило: после каждой исправленной ошибки добавить урок сюда.
