@@ -110,31 +110,31 @@ export async function POST(req: NextRequest, { params }: Params) {
       where: { id: { in: notifyIds } },
       select: { id: true, email: true },
     });
-    for (const user of users) {
-      await db.notification
-        .create({
-          data: {
-            type: 'task_report_added',
-            title: 'Новый отчёт по задаче',
-            body: `«${task.title}»: ${progress.slice(0, 100)}${progress.length > 100 ? '...' : ''}`,
-            userId: user.id,
-            entityType: 'Task',
-            entityId: id,
-            entityName: task.title,
-          },
-        })
-        .catch(() => {});
-      await enqueueNotification({
-        userId: user.id,
-        email: user.email,
-        type: 'task_report_added',
-        title: 'Новый отчёт по задаче',
-        body: `«${task.title}»: ${progress.slice(0, 100)}`,
-        entityType: 'Task',
-        entityId: id,
-        entityName: task.title,
-      });
-    }
+
+    // Собираем данные для пакетного создания уведомлений
+    const notificationBody = `«${task.title}»: ${progress.slice(0, 100)}${progress.length > 100 ? '...' : ''}`;
+    const notifications = users.map((user) => ({
+      type: 'task_report_added',
+      title: 'Новый отчёт по задаче',
+      body: notificationBody,
+      userId: user.id,
+      entityType: 'Task',
+      entityId: id,
+      entityName: task.title,
+    }));
+    const queueItems = users.map((user) => ({
+      userId: user.id,
+      email: user.email,
+      type: 'task_report_added',
+      title: 'Новый отчёт по задаче',
+      body: notificationBody,
+      entityType: 'Task',
+      entityId: id,
+      entityName: task.title,
+    }));
+
+    await db.notification.createMany({ data: notifications });
+    for (const item of queueItems) await enqueueNotification(item);
 
     return successResponse(report);
   } catch (err) {

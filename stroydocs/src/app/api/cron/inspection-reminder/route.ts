@@ -55,7 +55,27 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    let sentCount = 0;
+    // Собираем данные для пакетного создания уведомлений
+    const toCreate: {
+      userId: string;
+      type: string;
+      title: string;
+      body: string;
+      entityType: string;
+      entityId: string;
+      entityName: string;
+    }[] = [];
+    const toEnqueue: {
+      userId: string;
+      email: string;
+      type: string;
+      title: string;
+      body: string;
+      entityType: string;
+      entityId: string;
+      entityName: string;
+    }[] = [];
+    const notifiedIds: string[] = [];
 
     for (const entry of entries) {
       const daysUntil = workingDaysBetween(today, entry.inspectionDate!);
@@ -72,47 +92,45 @@ export async function GET(req: NextRequest) {
         `Объект: ${objectName}. Журнал: «${journal.title}» (${journal.number}). ` +
         `Дата: ${dateStr}. ${entry.description}`;
 
-      try {
-        // Уведомление в БД для ответственного за журнал
-        await db.notification.create({
-          data: {
-            userId: journal.responsible.id,
-            type: 'inspection_reminder',
-            title,
-            body,
-            entityType: 'SpecialJournalEntry',
-            entityId: entry.id,
-            entityName: `Запись №${entry.entryNumber}`,
-          },
-        });
+      toCreate.push({
+        userId: journal.responsible.id,
+        type: 'inspection_reminder',
+        title,
+        body,
+        entityType: 'SpecialJournalEntry',
+        entityId: entry.id,
+        entityName: `Запись №${entry.entryNumber}`,
+      });
 
-        // Email через BullMQ-очередь
-        await enqueueNotification({
-          userId: journal.responsible.id,
-          email: journal.responsible.email,
-          type: 'inspection_reminder',
-          title,
-          body,
-          entityType: 'SpecialJournalEntry',
-          entityId: entry.id,
-          entityName: `Запись №${entry.entryNumber}`,
-        });
+      toEnqueue.push({
+        userId: journal.responsible.id,
+        email: journal.responsible.email,
+        type: 'inspection_reminder',
+        title,
+        body,
+        entityType: 'SpecialJournalEntry',
+        entityId: entry.id,
+        entityName: `Запись №${entry.entryNumber}`,
+      });
 
-        // Помечаем запись как уведомлённую (идемпотентность при повторном запуске)
-        await db.specialJournalEntry.update({
-          where: { id: entry.id },
-          data: { inspectionNotificationSent: true },
-        });
-
-        sentCount++;
-      } catch (entryErr) {
-        // Ошибка одной записи не прерывает batch
-        logger.error(
-          { err: entryErr, entryId: entry.id },
-          'Ошибка отправки уведомления об освидетельствовании'
-        );
-      }
+      notifiedIds.push(entry.id);
     }
+
+    // Пакетное создание уведомлений, постановка в очередь и обновление статуса записей
+    try {
+      await db.notification.createMany({ data: toCreate });
+      for (const item of toEnqueue) await enqueueNotification(item);
+      // Помечаем все записи как уведомлённые (идемпотентность при повторном запуске)
+      await db.specialJournalEntry.updateMany({
+        where: { id: { in: notifiedIds } },
+        data: { inspectionNotificationSent: true },
+      });
+    } catch (batchErr) {
+      logger.error({ err: batchErr }, 'Ошибка пакетной отправки уведомлений об освидетельствовании');
+      return errorResponse('Internal server error', 500);
+    }
+
+    const sentCount = toCreate.length;
 
     logger.info(
       { total: entries.length, sent: sentCount },

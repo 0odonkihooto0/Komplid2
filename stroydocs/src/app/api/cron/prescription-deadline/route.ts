@@ -57,8 +57,6 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    let sentCount = 0;
-
     // Идемпотентность: один запрос вместо N для проверки уже отправленных уведомлений
     const prescriptionIds = prescriptions.map((p) => p.id);
     const alreadySentNotifications = await db.notification.findMany({
@@ -70,6 +68,27 @@ export async function GET(req: NextRequest) {
       select: { entityId: true },
     });
     const sentIds = new Set(alreadySentNotifications.map((n) => n.entityId).filter(Boolean) as string[]);
+
+    // Собираем данные для пакетного создания уведомлений
+    const toCreate: {
+      userId: string;
+      type: string;
+      title: string;
+      body: string;
+      entityType: string;
+      entityId: string;
+      entityName: string;
+    }[] = [];
+    const toEnqueue: {
+      userId: string;
+      email: string;
+      type: string;
+      title: string;
+      body: string;
+      entityType: string;
+      entityId: string;
+      entityName: string;
+    }[] = [];
 
     for (const prescription of prescriptions) {
       if (!prescription.responsible || !prescription.deadline) continue;
@@ -93,41 +112,38 @@ export async function GET(req: NextRequest) {
         `Срок исполнения предписания № ${prescription.number}: ${deadlineStr}. ` +
         `Осталось: ${daysLeft} календ. дн.`;
 
-      try {
-        // Уведомление в БД
-        await db.notification.create({
-          data: {
-            userId: prescription.responsible.id,
-            type: 'prescription_deadline',
-            title,
-            body,
-            entityType: 'Prescription',
-            entityId: prescription.id,
-            entityName: `Предписание № ${prescription.number}`,
-          },
-        });
+      toCreate.push({
+        userId: prescription.responsible.id,
+        type: 'prescription_deadline',
+        title,
+        body,
+        entityType: 'Prescription',
+        entityId: prescription.id,
+        entityName: `Предписание № ${prescription.number}`,
+      });
 
-        // Email через BullMQ-очередь
-        await enqueueNotification({
-          userId: prescription.responsible.id,
-          email: prescription.responsible.email,
-          type: 'prescription_deadline',
-          title,
-          body,
-          entityType: 'Prescription',
-          entityId: prescription.id,
-          entityName: `Предписание № ${prescription.number}`,
-        });
-
-        sentCount++;
-      } catch (prescriptionErr) {
-        // Ошибка одного предписания не прерывает batch
-        logger.error(
-          { err: prescriptionErr, prescriptionId: prescription.id },
-          'Ошибка отправки уведомления о сроке предписания'
-        );
-      }
+      toEnqueue.push({
+        userId: prescription.responsible.id,
+        email: prescription.responsible.email,
+        type: 'prescription_deadline',
+        title,
+        body,
+        entityType: 'Prescription',
+        entityId: prescription.id,
+        entityName: `Предписание № ${prescription.number}`,
+      });
     }
+
+    // Пакетное создание уведомлений в БД и постановка в очередь
+    try {
+      await db.notification.createMany({ data: toCreate });
+      for (const item of toEnqueue) await enqueueNotification(item);
+    } catch (batchErr) {
+      logger.error({ err: batchErr }, 'Ошибка пакетной отправки уведомлений о сроках предписаний');
+      return errorResponse('Internal server error', 500);
+    }
+
+    const sentCount = toCreate.length;
 
     logger.info(
       { total: prescriptions.length, sent: sentCount },

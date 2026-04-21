@@ -37,10 +37,13 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS — сервис работает во внутренней сети docker, но оставляем гибко
+# CORS — разрешённые источники задаются через CORS_ALLOWED_ORIGINS (через запятую)
+# По умолчанию: localhost:3000 и localhost:3001 для локальной разработки
+_raw = os.environ.get("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3001")
+_origins = [o.strip() for o in _raw.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_origins,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
