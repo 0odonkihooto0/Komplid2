@@ -77,6 +77,12 @@ Prisma требует явный `orderBy` для детерминированн
 Правило: любой `groupBy` с `take` **обязан** иметь `orderBy`.
 Для top-N запросов использовать `orderBy: { _count: { id: 'desc' } }`.
 
+**`db push` без миграции = P2022 `column X does not exist` в проде (Workspace workspaceId).**
+Модель `Workspace` и поле `BuildingObject.workspaceId` были добавлены в `prisma/schema.prisma` через `db push` в dev-окружении без создания файла миграции. В prod таблица `workspaces` не существовала, `building_objects.workspaceId` не существовал. Следствие: `PrismaClientKnownRequestError P2022: column building_objects.workspaceId does not exist` при каждом запросе к `GET /api/projects`. Ошибка возникла несмотря на то, что последующие миграции (`20260421010000_add_subscriptions_payments`) ссылались на `workspaces` через FK — они либо работали на db-push версии БД, либо были помечены `--applied` без выполнения.
+**Исправление:** создана идемпотентная миграция `20260421060000_add_workspace_missing_columns` которая через `CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS` и `DO $$ BEGIN...EXCEPTION WHEN duplicate_object` добавляет все пропущенные элементы: enums `WorkspaceType`/`WorkspaceRole`, таблицы `workspaces`/`workspace_members`, колонки `users.activeWorkspaceId`, `building_objects.workspaceId` + индекс + FK.
+**Правило**: каждое изменение `prisma/schema.prisma` (новая модель, новое поле, новый enum) **обязано** сопровождаться созданием migration файла: `npx prisma migrate dev --name <description>`. `db push` допустим только для быстрых экспериментов — **никогда** как финальный способ применения схемы. Проверка перед деплоем: `npx prisma migrate status` должен показывать "Database schema is up to date", а не "have not yet been applied".
+Дополнительно: при добавлении FK к таблице, которая могла быть создана через `db push` — использовать `DO $$ BEGIN...EXCEPTION WHEN duplicate_object THEN NULL; END $$` для самого FK. `ALTER TABLE "t" ADD CONSTRAINT ... FOREIGN KEY` без DO $$ упадёт если constraint уже существует. Поиск нарушений: `grep -rn "ADD CONSTRAINT" prisma/migrations/ | grep -v "DO \$\$"`.
+
 **Prisma crash loop на деплое.**
 `migrate deploy` пытается применить уже существующие таблицы → "already exists" →
 `set -e` в start.sh → перезапуск контейнера → loop.
