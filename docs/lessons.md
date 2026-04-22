@@ -3,6 +3,11 @@
 > Обновлять после каждой исправленной ошибки. Этот файл — живой.
 > Формат: **Что случилось** → **Почему** → **Правило на будущее**
 
+**`receipt` в `db.payment.create({ data: {...} })` — путаница между JSON-полем для API и relation в Prisma.**
+`dunning-service.ts` передавал `receipt: buildSubscriptionReceipt(...)` в `data` при `db.payment.create()`. Ошибка: в модели `Payment` поле `receipt` — это **relation** к модели `Receipt` (не JSON-поле), поэтому Prisma при разрешении union-типа (`PaymentCreateInput | PaymentUncheckedCreateInput`) требовал `receipt?: undefined` в unchecked-форме. TypeScript TS2322 при деплое: `'InputJsonValue | undefined' is not assignable to type 'undefined'`.
+`buildSubscriptionReceipt()` возвращает объект `YookassaReceiptData` — это данные для API ЮKassa при создании платежа (54-ФЗ чек), а не запись в БД.
+**Правило**: `buildSubscriptionReceipt()` передаётся **только** в параметры функций ЮKassa API (`createYooPayment`, `chargeRecurring`), никогда не в `db.payment.create({ data: ... })`. Relation `receipt` в `data` может только указывать на существующую запись через `{ connect: { id: receiptId } }` или не устанавливаться вовсе. Быстрая проверка: `grep -rn "receipt.*buildSubscription\|buildSubscription.*receipt" src/ | grep "db\."` — не должно быть совпадений.
+
 ---
 
 ## Prisma / База данных
