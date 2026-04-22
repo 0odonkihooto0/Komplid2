@@ -86,6 +86,15 @@ export async function attemptDunningCharge(subscriptionId: string, attemptNumber
     select: { email: true, phone: true },
   });
 
+  const receipt = owner
+    ? buildSubscriptionReceipt({
+        email: owner.email,
+        phone: owner.phone ?? undefined,
+        plan: { name: sub.plan.name, priceRub: amountRub },
+        billingPeriod: sub.billingPeriod as 'MONTHLY' | 'YEARLY',
+      })
+    : undefined;
+
   const dunningAttempt = await db.dunningAttempt.create({
     data: {
       subscriptionId,
@@ -110,12 +119,6 @@ export async function attemptDunningCharge(subscriptionId: string, attemptNumber
       provider: 'YOOKASSA',
       providerIdempotenceKey: idempotenceKey,
       paymentMethodId: activeMethod.id,
-      ...(owner ? { receipt: buildSubscriptionReceipt({
-        email: owner.email,
-        phone: owner.phone ?? undefined,
-        plan: { name: sub.plan.name, priceRub: amountRub },
-        billingPeriod: sub.billingPeriod as 'MONTHLY' | 'YEARLY',
-      }) as unknown as Prisma.InputJsonValue } : {}),
       metadata: {
         paymentType: 'PLAN_RENEWAL',
         dunningAttempt: attemptNumber,
@@ -129,6 +132,7 @@ export async function attemptDunningCharge(subscriptionId: string, attemptNumber
       paymentMethodId: activeMethod.providerMethodId,
       amount: { value: (amountRub / 100).toFixed(2), currency: 'RUB' },
       description,
+      receipt,
       metadata: {
         paymentDbId: payment.id,
         subscriptionId,
