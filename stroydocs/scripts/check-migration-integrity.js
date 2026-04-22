@@ -25,6 +25,7 @@ const KEY_TABLES = [
   'inspection_acts',     // module11_sk (#31)
   'reports',             // module12_reports (#33)
   'bim_models',          // module13_tim (#32)
+  'estimate_import_items', // add_normative_refs (#37)
   'workspaces',          // add_workspace_missing_columns (#93) — критично!
   'subscription_plans',  // add_subscriptions_payments (#88)
 ];
