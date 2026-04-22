@@ -18,7 +18,7 @@ export async function GET(
       ? { id: params.projectId, OR: [{ workspaceId: session.user.activeWorkspaceId }, { organizationId: session.user.organizationId }] }
       : { id: params.projectId, organizationId: session.user.organizationId };
 
-    const [project, currentStage, totalStages, gprProgressResult] = await Promise.all([
+    const [project, currentStage, totalStages, gprProgressResult, budgetAggregate] = await Promise.all([
       db.buildingObject.findFirst({
         where: objectWhere,
         include: { _count: { select: { contracts: true } } },
@@ -32,6 +32,10 @@ export async function GET(
         where: { isMilestone: false, version: { projectId: params.projectId, isActive: true } },
         _avg: { progress: true },
       }),
+      db.fundingRecord.aggregate({
+        where: { projectId: params.projectId, recordType: 'ALLOCATED' },
+        _sum: { totalAmount: true },
+      }),
     ]);
 
     if (!project) {
@@ -44,6 +48,7 @@ export async function GET(
       ...project,
       stage: currentStage ? { ...currentStage, total: totalStages } : null,
       gprProgress: gprProgress != null ? Math.round(gprProgress * 10) / 10 : null,
+      budget: budgetAggregate._sum.totalAmount ?? null,
     });
   } catch (error) {
     if (error instanceof NextResponse) return error;

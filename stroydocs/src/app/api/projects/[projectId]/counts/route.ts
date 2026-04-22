@@ -30,7 +30,7 @@ interface CountsResult {
     correspondence: number;
     rfi: number;
     tasks: number;
-    photos: null;
+    photos: number;
     videos: null;
     files: number;
   };
@@ -69,6 +69,7 @@ export async function GET(_req: NextRequest, { params }: { params: Params }) {
         rfiCount,
         taskCount,
         filesCount,
+        photoCountRows,
       ] = await Promise.all([
         db.sEDDocument.count({ where: { projectId } }),
         db.contract.count({ where: { projectId } }),
@@ -87,7 +88,20 @@ export async function GET(_req: NextRequest, { params }: { params: Params }) {
         db.rFI.count({ where: { projectId } }),
         db.task.count({ where: { projectId } }),
         db.projectDocument.count({ where: { folder: { projectId } } }),
+        db.$queryRaw<[{ count: bigint }]>`
+          SELECT (
+            (SELECT COUNT(*) FROM "photos" WHERE "entityType" = 'CONTRACT'    AND "entityId" IN (SELECT id FROM "contracts"    WHERE "projectId" = ${projectId}))
+            + (SELECT COUNT(*) FROM "photos" WHERE "entityType" = 'DEFECT'      AND "entityId" IN (SELECT id FROM "defects"      WHERE "projectId" = ${projectId}))
+            + (SELECT COUNT(*) FROM "photos" WHERE "entityType" = 'WORK_RECORD' AND "entityId" IN (SELECT id FROM "work_records"  WHERE "contractId" IN (SELECT id FROM "contracts" WHERE "projectId" = ${projectId})))
+            + (SELECT COUNT(*) FROM "photos" WHERE "entityType" = 'WORK_ITEM'   AND "entityId" IN (SELECT id FROM "work_items"    WHERE "contractId" IN (SELECT id FROM "contracts" WHERE "projectId" = ${projectId})))
+            + (SELECT COUNT(*) FROM "photos" WHERE "entityType" = 'MATERIAL'    AND "entityId" IN (SELECT id FROM "materials"     WHERE "contractId" IN (SELECT id FROM "contracts" WHERE "projectId" = ${projectId})))
+            + (SELECT COUNT(*) FROM "photos" WHERE "entityType" = 'REMARK'      AND "entityId" IN (SELECT id FROM "journal_entry_remarks" WHERE "journalId" IN (SELECT id FROM "special_journals" WHERE "projectId" = ${projectId})))
+            + (SELECT COUNT(*) FROM "photos" WHERE "entityType" = 'DAILY_LOG'   AND "entityId" IN (SELECT id FROM "daily_logs"    WHERE "contractId" IN (SELECT id FROM "contracts" WHERE "projectId" = ${projectId})))
+          )::int AS count
+        `,
       ]);
+
+      const photoCount = Number(photoCountRows[0]?.count ?? 0);
 
       return {
         sidebar: {
@@ -108,7 +122,7 @@ export async function GET(_req: NextRequest, { params }: { params: Params }) {
           correspondence: correspondenceCount,
           rfi: rfiCount,
           tasks: taskCount,
-          photos: null,   // TODO: полиморфный Photo.entityType требует сложного JOIN
+          photos: photoCount,
           videos: null,   // TODO: нет модели Video (VideoCamera — камеры, не записи)
           files: filesCount,
         },

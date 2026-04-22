@@ -91,7 +91,7 @@ def _make_markup_xml(issue: BcfIssue) -> str:
         ET.SubElement(topic, "CreationAuthor").text = issue.author
 
     tree = ET.ElementTree(root)
-    buf = io.BytesIO()
+    buf = io.StringIO()
     tree.write(buf, encoding="unicode", xml_declaration=True)
     return buf.getvalue()
 
@@ -105,7 +105,7 @@ def _make_viewpoint_xml(ifc_guids: list[str]) -> str:
     for guid in ifc_guids:
         ET.SubElement(selection, "Component", IfcGuid=guid)
 
-    buf = io.BytesIO()
+    buf = io.StringIO()
     ET.ElementTree(root).write(buf, encoding="unicode", xml_declaration=True)
     return buf.getvalue()
 

@@ -175,7 +175,12 @@ export function PassportView({ projectId }: PassportViewProps) {
             </div>
           </div>
         </div>
-        <ObjectMetrics stage={project.stage} gprProgress={project.gprProgress} />
+        <ObjectMetrics
+          stage={project.stage}
+          gprProgress={project.gprProgress}
+          budget={project.budget}
+          plannedEndDate={project.plannedEndDate}
+        />
       </Card>
 
       {/* Название объекта + кнопки (под hero) */}

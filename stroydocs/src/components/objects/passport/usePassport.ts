@@ -39,6 +39,8 @@ export interface PassportProject {
   // Метрики ГПР — добавлены в Phase F
   stage: { id: string; name: string; order: number; total: number } | null;
   gprProgress: number | null;
+  // Финансовые метрики — сумма FundingRecord (ALLOCATED)
+  budget: number | null;
 }
 
 export interface PassportUpdateData {
