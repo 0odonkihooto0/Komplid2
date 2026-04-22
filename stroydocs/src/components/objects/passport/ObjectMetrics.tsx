@@ -23,9 +23,26 @@ function MetricCard({ label, primary, secondary }: MetricCardProps) {
 interface ObjectMetricsProps {
   stage: { name: string; order: number; total: number } | null;
   gprProgress: number | null;
+  budget: number | null;
+  plannedEndDate: string | null;
 }
 
-export function ObjectMetrics({ stage, gprProgress }: ObjectMetricsProps) {
+function formatBudget(value: number): string {
+  if (value >= 1_000_000_000) {
+    return `${(value / 1_000_000_000).toFixed(1)} млрд ₽`;
+  }
+  if (value >= 1_000_000) {
+    return `${(value / 1_000_000).toFixed(1)} млн ₽`;
+  }
+  return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(value);
+}
+
+export function ObjectMetrics({ stage, gprProgress, budget, plannedEndDate }: ObjectMetricsProps) {
+  const budgetLabel = budget != null ? formatBudget(budget) : '—';
+  const endDateLabel = plannedEndDate
+    ? new Date(plannedEndDate).toLocaleDateString('ru-RU', { year: 'numeric', month: 'short' })
+    : '—';
+
   return (
     <div
       className="grid grid-cols-2 sm:grid-cols-4"
@@ -41,15 +58,13 @@ export function ObjectMetrics({ stage, gprProgress }: ObjectMetricsProps) {
       </div>
 
       {/* БЮДЖЕТ */}
-      {/* TODO: подключить FundingRecord или поле модели — уточнить в отдельной задаче */}
       <div style={{ borderRight: '1px solid var(--border)' }}>
-        <MetricCard label="БЮДЖЕТ" primary="—" />
+        <MetricCard label="БЮДЖЕТ" primary={budgetLabel} />
       </div>
 
       {/* СДАЧА */}
-      {/* TODO: подключить Contract.plannedEndDate или поле BuildingObject — уточнить в отдельной задаче */}
       <div style={{ borderRight: '1px solid var(--border)' }}>
-        <MetricCard label="СДАЧА" primary="—" />
+        <MetricCard label="СДАЧА" primary={endDateLabel} />
       </div>
 
       {/* ГОТОВНОСТЬ */}

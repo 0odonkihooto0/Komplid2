@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAddDefectToInspection } from './useInspections';
 import { DefectTemplatePickerDialog } from './DefectTemplatePickerDialog';
+import { CreateDefectTemplateDialog } from './CreateDefectTemplateDialog';
 import type { DefectTemplateItem } from '@/hooks/useDefectTemplates';
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -60,6 +61,7 @@ interface Props {
 
 export function AddDefectDialog({ objectId, inspectionId, open, onOpenChange }: Props) {
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+  const [createTemplateOpen, setCreateTemplateOpen] = useState(false);
 
   const addDefect = useAddDefectToInspection(objectId, inspectionId);
 
@@ -276,7 +278,16 @@ export function AddDefectDialog({ objectId, inspectionId, open, onOpenChange }: 
       onSelect={onSelectTemplate}
       onCreateNew={() => {
         setTemplatePickerOpen(false);
-        // TODO: открыть форму создания нового шаблона
+        setCreateTemplateOpen(true);
+      }}
+    />
+
+    <CreateDefectTemplateDialog
+      open={createTemplateOpen}
+      onClose={() => setCreateTemplateOpen(false)}
+      onCreated={(template) => {
+        setCreateTemplateOpen(false);
+        onSelectTemplate(template);
       }}
     />
     </>

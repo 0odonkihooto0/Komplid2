@@ -165,5 +165,65 @@ class TestOpenIfcSafe(unittest.TestCase):
         self.assertIs(result, fake_ifc)
 
 
+# ===========================================================================
+# Тесты get_level
+# ===========================================================================
+
+from utils.ifc_helpers import get_level  # noqa: E402  (импорт после conftest-заглушек)
+
+
+class TestGetLevel(unittest.TestCase):
+
+    def _make_rel(self, element: MagicMock, storey: MagicMock) -> MagicMock:
+        """Создаёт мок IfcRelContainedInSpatialStructure."""
+        rel = MagicMock()
+        rel.RelatedElements = [element]
+        rel.RelatingStructure = storey
+        return rel
+
+    def test_returns_storey_name_when_element_in_storey(self):
+        """get_level возвращает Name этажа, к которому привязан элемент."""
+        element = MagicMock()
+
+        storey = MagicMock()
+        storey.Name = "Этаж 1"
+        storey.is_a.side_effect = lambda t: t == "IfcBuildingStorey"
+
+        rel = self._make_rel(element, storey)
+
+        ifc_file = MagicMock()
+        ifc_file.by_type.return_value = [rel]
+
+        result = get_level(ifc_file, element)
+        self.assertEqual(result, "Этаж 1")
+
+    def test_returns_none_when_element_not_in_any_rel(self):
+        """get_level возвращает None если элемент не содержится ни в одном rel."""
+        element = MagicMock()
+        other_element = MagicMock()
+
+        storey = MagicMock()
+        storey.Name = "Этаж 2"
+        storey.is_a.return_value = True
+
+        rel = self._make_rel(other_element, storey)
+
+        ifc_file = MagicMock()
+        ifc_file.by_type.return_value = [rel]
+
+        result = get_level(ifc_file, element)
+        self.assertIsNone(result)
+
+    def test_swallows_exception_and_returns_none(self):
+        """get_level перехватывает Exception из by_type и возвращает None."""
+        element = MagicMock()
+
+        ifc_file = MagicMock()
+        ifc_file.by_type.side_effect = RuntimeError("IFC corrupt")
+
+        result = get_level(ifc_file, element)
+        self.assertIsNone(result)
+
+
 if __name__ == "__main__":
     unittest.main()
