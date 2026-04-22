@@ -6,7 +6,21 @@ import { validateAndApplyPromoCode } from './promo-service';
 import { calculateProration } from './proration';
 import { applySuccessfulDunningPayment } from './dunning-service';
 import { processReferralReward } from '@/lib/referrals/process-referral-payment';
+import { enqueueBillingEmail } from '@/lib/queue';
 import type { CancellationReasonCode, BillingPeriod, Prisma } from '@prisma/client';
+
+function formatRub(kopecks: number): string {
+  return `${(kopecks / 100).toLocaleString('ru-RU')} ₽`;
+}
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function buildUserName(firstName: string | null, lastName: string | null, email: string): string {
+  const name = [firstName, lastName].filter(Boolean).join(' ');
+  return name || email.split('@')[0];
+}
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -408,6 +422,27 @@ export async function scheduleDowngrade(params: {
       } as unknown as Prisma.InputJsonValue,
     },
   });
+
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { email: true, firstName: true, lastName: true },
+  });
+  if (user) {
+    await enqueueBillingEmail({
+      userId,
+      email: user.email,
+      type: 'PLAN_CHANGE_SCHEDULED',
+      subject: 'Смена тарифа запланирована',
+      templateName: 'plan-change-scheduled',
+      data: {
+        userName: buildUserName(user.firstName, user.lastName, user.email),
+        planName: sub.plan.name,
+        newPlanName: newPlan.name,
+        appUrl: process.env.APP_URL ?? 'https://app.stroydocs.ru',
+        changeDate: formatDate(sub.currentPeriodEnd),
+      },
+    });
+  }
 }
 
 // ─── cancelSubscription ──────────────────────────────────────────────────────
@@ -451,6 +486,26 @@ export async function cancelSubscription(params: {
       } as unknown as Prisma.InputJsonValue,
     },
   });
+
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { email: true, firstName: true, lastName: true },
+  });
+  if (user) {
+    await enqueueBillingEmail({
+      userId,
+      email: user.email,
+      type: 'SUBSCRIPTION_CANCELLED',
+      subject: 'Автопродление подписки отменено',
+      templateName: 'subscription-cancelled',
+      data: {
+        userName: buildUserName(user.firstName, user.lastName, user.email),
+        planName: sub.plan.name,
+        appUrl: process.env.APP_URL ?? 'https://app.stroydocs.ru',
+        effectiveEndDate: formatDate(sub.currentPeriodEnd),
+      },
+    });
+  }
 }
 
 // ─── reactivateSubscription ──────────────────────────────────────────────────
@@ -608,6 +663,60 @@ export async function handleSuccessfulPayment(params: SuccessfulPaymentParams): 
   });
 
   logger.info({ paymentId: paymentDbId }, 'Subscription activated via payment.succeeded');
+
+  // Отправить биллинговый email после успешного webhook (вне транзакции)
+  try {
+    const [payment, user] = await Promise.all([
+      db.payment.findUnique({ where: { id: paymentDbId }, select: { userId: true, workspaceId: true, subscriptionId: true, amountRub: true, type: true } }),
+      db.payment.findUnique({ where: { id: paymentDbId }, select: { userId: true } }).then((p) =>
+        p ? db.user.findUnique({ where: { id: p.userId }, select: { email: true, firstName: true, lastName: true } }) : null
+      ),
+    ]);
+
+    if (payment && user) {
+      const sub = await db.subscription.findFirst({
+        where: { workspaceId: payment.workspaceId },
+        include: { plan: true },
+        orderBy: { createdAt: 'desc' },
+      });
+      const planName = sub?.plan.name ?? '';
+      const periodEnd = sub ? formatDate(sub.currentPeriodEnd) : '';
+      const amountRub = formatRub(payment.amountRub);
+      const appUrl = process.env.APP_URL ?? 'https://app.stroydocs.ru';
+      const userName = buildUserName(user.firstName, user.lastName, user.email);
+
+      let emailType: string;
+      if (!payment.subscriptionId || payment.type === 'PLAN_PAYMENT') {
+        emailType = 'BILLING_WELCOME';
+      } else if (payment.type === 'PLAN_UPGRADE') {
+        emailType = 'PLAN_UPGRADED';
+      } else {
+        emailType = 'RENEWAL_SUCCEEDED';
+      }
+
+      await enqueueBillingEmail({
+        userId: payment.userId,
+        email: user.email,
+        type: emailType,
+        subject: emailType === 'BILLING_WELCOME' ? 'Добро пожаловать в StroyDocs — подписка активирована'
+          : emailType === 'PLAN_UPGRADED' ? 'Тариф успешно повышен'
+          : 'Подписка продлена',
+        templateName: emailType === 'BILLING_WELCOME' ? 'subscription-welcome'
+          : emailType === 'PLAN_UPGRADED' ? 'plan-upgraded'
+          : 'renewal-succeeded',
+        data: {
+          userName,
+          planName,
+          appUrl,
+          amountRub,
+          periodEnd,
+          newPlanName: emailType === 'PLAN_UPGRADED' ? planName : undefined,
+        },
+      });
+    }
+  } catch (err) {
+    logger.error({ err, paymentId: paymentDbId }, '[subscription-service] Ошибка отправки billing email');
+  }
 }
 
 // ─── handleCancelledPayment ──────────────────────────────────────────────────

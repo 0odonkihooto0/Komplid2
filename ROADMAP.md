@@ -9,6 +9,20 @@
 
 ---
 
+### Добавлено (2026-04-22) — Billing email templates (SUBSCRIPTION_SYSTEM.md §4.8) ✅
+
+- ✅ 14 Handlebars шаблонов в `templates/emails/billing/` (welcome, trial-started/ending/expired, renewal, payment-failed 1/3/final, grace, expired, cancelled, retention, plan-upgraded/change-scheduled)
+- ✅ `src/lib/billing-email.ts` — Promise-кэш шаблонов + SMTP-отправка
+- ✅ `src/lib/workers/email.worker.ts` — BullMQ воркер очереди `billing-emails`
+- ✅ `src/lib/queue.ts` — `BillingEmailJob`, `enqueueBillingEmail()`
+- ✅ `dunning-service.ts` — исправлен `email: ''`, добавлены триггеры PAYMENT_FAILED_1/3/FINAL, GRACE_STARTED, SUBSCRIPTION_EXPIRED
+- ✅ `subscription-service.ts` — триггеры BILLING_WELCOME, RENEWAL_SUCCEEDED, PLAN_UPGRADED, PLAN_CHANGE_SCHEDULED, SUBSCRIPTION_CANCELLED
+- ✅ `lifecycle.ts` — TRIAL_EXPIRED + новые крон-функции `processTrialEndingReminders`, `processRetentionOffers`
+- ✅ `subscription-lifecycle.worker.ts` — подключены новые lifecycle функции
+- ✅ Trial route — триггер TRIAL_STARTED
+
+---
+
 ### Добавлено (2026-04-22) — Админ-панель биллинга ✅
 
 - ✅ `/admin/billing` — список подписок с фильтрами (статус, период, поиск), MRR/ARR/Churn статистика

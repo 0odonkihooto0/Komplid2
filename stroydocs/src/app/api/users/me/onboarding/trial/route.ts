@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { successResponse, errorResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
+import { enqueueBillingEmail } from '@/lib/queue';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,6 +65,28 @@ export async function POST() {
 
       return subscription;
     });
+
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { email: true, firstName: true, lastName: true },
+    });
+    if (user) {
+      const userName = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email.split('@')[0];
+      await enqueueBillingEmail({
+        userId: session.user.id,
+        email: user.email,
+        type: 'TRIAL_STARTED',
+        subject: 'Пробный период StroyDocs начался',
+        templateName: 'trial-started',
+        data: {
+          userName,
+          planName: plan.name,
+          appUrl: process.env.APP_URL ?? 'https://app.stroydocs.ru',
+          trialDays: 14,
+          trialEndDate: trialEnd.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
+        },
+      });
+    }
 
     return successResponse({
       subscriptionId: sub.id,

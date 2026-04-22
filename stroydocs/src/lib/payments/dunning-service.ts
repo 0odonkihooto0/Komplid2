@@ -2,8 +2,17 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { chargeRecurring } from './yookassa/payments';
 import { buildSubscriptionReceipt } from './yookassa/receipts';
-import { enqueueNotification } from '@/lib/queue';
+import { enqueueNotification, enqueueBillingEmail } from '@/lib/queue';
 import type { Prisma, BillingPeriod } from '@prisma/client';
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function buildUserName(firstName: string | null, lastName: string | null, email: string): string {
+  const name = [firstName, lastName].filter(Boolean).join(' ');
+  return name || email.split('@')[0];
+}
 
 // Расписание: дни от окончания периода до каждой попытки списания
 const DUNNING_SCHEDULE_DAYS = [0, 1, 3, 5, 7] as const;
@@ -167,13 +176,39 @@ export async function attemptDunningCharge(subscriptionId: string, attemptNumber
 export async function scheduleNextDunningAttempt(subscriptionId: string, currentAttempt: number): Promise<void> {
   const sub = await db.subscription.findUnique({
     where: { id: subscriptionId },
-    include: { workspace: { select: { ownerId: true } } },
+    include: {
+      plan: { select: { name: true } },
+      workspace: { select: { ownerId: true } },
+    },
   });
   if (!sub) return;
+
+  const owner = await db.user.findUnique({
+    where: { id: sub.workspace.ownerId },
+    select: { email: true, firstName: true, lastName: true },
+  });
 
   const nextAttemptIndex = currentAttempt; // attempt 1 → index 1 → 1 день
   if (nextAttemptIndex >= DUNNING_SCHEDULE_DAYS.length) {
     logger.info({ subscriptionId, currentAttempt }, 'Dunning: попытки исчерпаны → grace');
+
+    // Финальная неудача — отправить email перед переходом в grace
+    if (owner) {
+      await enqueueBillingEmail({
+        userId: sub.workspace.ownerId,
+        email: owner.email,
+        type: 'PAYMENT_FAILED_FINAL',
+        subject: 'Последний шанс восстановить доступ',
+        templateName: 'payment-failed-final',
+        data: {
+          userName: buildUserName(owner.firstName, owner.lastName, owner.email),
+          planName: sub.plan.name,
+          appUrl: process.env.APP_URL ?? 'https://app.stroydocs.ru',
+          attemptNumber: currentAttempt,
+        },
+      });
+    }
+
     await transitionToGrace(subscriptionId);
     return;
   }
@@ -186,13 +221,39 @@ export async function scheduleNextDunningAttempt(subscriptionId: string, current
     data: { dunningAttempts: currentAttempt, nextDunningAt },
   });
 
+  // In-app уведомление
   await enqueueNotification({
     userId: sub.workspace.ownerId,
-    email: '',
+    email: owner?.email ?? '',
     type: 'subscription_payment_failed',
     title: 'Не удалось списать оплату',
     body: `Попытка ${currentAttempt} из 5 не удалась. Следующая попытка — ${nextDunningAt.toLocaleDateString('ru-RU')}. Проверьте данные карты.`,
   });
+
+  // Email по шаблону
+  if (owner) {
+    const appUrl = process.env.APP_URL ?? 'https://app.stroydocs.ru';
+    const userName = buildUserName(owner.firstName, owner.lastName, owner.email);
+    const emailType = currentAttempt === 1 ? 'PAYMENT_FAILED_1'
+      : currentAttempt === 3 ? 'PAYMENT_FAILED_3'
+      : null;
+    if (emailType) {
+      await enqueueBillingEmail({
+        userId: sub.workspace.ownerId,
+        email: owner.email,
+        type: emailType,
+        subject: currentAttempt === 1 ? 'Не удалось списать оплату' : 'Проблема с оплатой — обновите карту',
+        templateName: currentAttempt === 1 ? 'payment-failed-1' : 'payment-failed-3',
+        data: {
+          userName,
+          planName: sub.plan.name,
+          appUrl,
+          attemptNumber: currentAttempt,
+          nextAttemptDate: formatDate(nextDunningAt),
+        },
+      });
+    }
+  }
 }
 
 /**
@@ -201,7 +262,10 @@ export async function scheduleNextDunningAttempt(subscriptionId: string, current
 export async function transitionToGrace(subscriptionId: string): Promise<void> {
   const sub = await db.subscription.findUnique({
     where: { id: subscriptionId },
-    include: { workspace: { select: { ownerId: true } } },
+    include: {
+      plan: { select: { name: true } },
+      workspace: { select: { ownerId: true } },
+    },
   });
   if (!sub) return;
 
@@ -222,13 +286,37 @@ export async function transitionToGrace(subscriptionId: string): Promise<void> {
     });
   });
 
+  const owner = await db.user.findUnique({
+    where: { id: sub.workspace.ownerId },
+    select: { email: true, firstName: true, lastName: true },
+  });
+
+  const graceUntilStr = formatDate(graceUntil);
+  const appUrl = process.env.APP_URL ?? 'https://app.stroydocs.ru';
+
   await enqueueNotification({
     userId: sub.workspace.ownerId,
-    email: '',
+    email: owner?.email ?? '',
     type: 'subscription_grace_started',
     title: 'Подписка — льготный период',
-    body: `Доступ сохранён до ${graceUntil.toLocaleDateString('ru-RU')}. После этой даты функции будут ограничены.`,
+    body: `Доступ сохранён до ${graceUntilStr}. После этой даты функции будут ограничены.`,
   });
+
+  if (owner) {
+    await enqueueBillingEmail({
+      userId: sub.workspace.ownerId,
+      email: owner.email,
+      type: 'GRACE_STARTED',
+      subject: 'Льготный период — доступ временно сохранён',
+      templateName: 'grace-started',
+      data: {
+        userName: buildUserName(owner.firstName, owner.lastName, owner.email),
+        planName: sub.plan.name,
+        appUrl,
+        graceUntil: graceUntilStr,
+      },
+    });
+  }
 
   logger.info({ subscriptionId, graceUntil }, 'Dunning: переход в GRACE');
 }
@@ -239,7 +327,10 @@ export async function transitionToGrace(subscriptionId: string): Promise<void> {
 export async function transitionToExpired(subscriptionId: string): Promise<void> {
   const sub = await db.subscription.findUnique({
     where: { id: subscriptionId },
-    include: { workspace: { select: { ownerId: true, activeSubscriptionId: true, id: true } } },
+    include: {
+      plan: { select: { name: true } },
+      workspace: { select: { ownerId: true, activeSubscriptionId: true, id: true } },
+    },
   });
   if (!sub) return;
 
@@ -264,13 +355,33 @@ export async function transitionToExpired(subscriptionId: string): Promise<void>
     });
   });
 
+  const owner = await db.user.findUnique({
+    where: { id: sub.workspace.ownerId },
+    select: { email: true, firstName: true, lastName: true },
+  });
+
   await enqueueNotification({
     userId: sub.workspace.ownerId,
-    email: '',
+    email: owner?.email ?? '',
     type: 'subscription_expired',
     title: 'Подписка отключена',
     body: 'Льготный период истёк. Доступ к Pro-функциям приостановлен. Оформите новую подписку для восстановления.',
   });
+
+  if (owner) {
+    await enqueueBillingEmail({
+      userId: sub.workspace.ownerId,
+      email: owner.email,
+      type: 'SUBSCRIPTION_EXPIRED',
+      subject: 'Подписка отключена',
+      templateName: 'subscription-expired',
+      data: {
+        userName: buildUserName(owner.firstName, owner.lastName, owner.email),
+        planName: sub.plan.name,
+        appUrl: process.env.APP_URL ?? 'https://app.stroydocs.ru',
+      },
+    });
+  }
 
   logger.info({ subscriptionId }, 'Dunning: переход в EXPIRED');
 }
