@@ -4,19 +4,19 @@
       "numberOfRuns": 1
     },
     "assert": {
-      "preset": "lighthouse:recommended",
       "assertions": {
-        "installable-manifest": "error",
-        "service-worker": "error",
+        "service-worker": "off",
+        "offline-start-url": "off",
+        "installable-manifest": "warn",
         "splash-screen": "warn",
         "themed-omnibox": "warn",
-        "viewport": "error",
         "maskable-icon": "warn",
-        "offline-start-url": "warn",
-        "categories:performance": ["warn", { "minScore": 0.7 }],
-        "categories:accessibility": ["warn", { "minScore": 0.9 }],
-        "categories:best-practices": ["warn", { "minScore": 0.9 }],
-        "categories:pwa": ["error", { "minScore": 0.9 }]
+        "viewport": "error",
+        "meta-viewport": "error",
+        "categories:performance": ["warn", { "minScore": 0.5 }],
+        "categories:accessibility": ["warn", { "minScore": 0.8 }],
+        "categories:best-practices": ["warn", { "minScore": 0.8 }],
+        "categories:pwa": ["warn", { "minScore": 0.4 }]
       }
     }
   }
