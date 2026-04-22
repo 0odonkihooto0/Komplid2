@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Suspense } from 'react';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
@@ -7,6 +8,7 @@ import { db } from '@/lib/db';
 import { Sidebar } from '@/components/shared/Sidebar';
 import { Header } from '@/components/shared/Header';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
+import { BillingStatusBanner } from '@/components/billing/BillingStatusBanner';
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const session = await getServerSession(authOptions);
@@ -32,6 +34,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
+        <Suspense fallback={null}>
+          <BillingStatusBanner />
+        </Suspense>
         <main className="flex-1 overflow-y-auto p-6">
           <ErrorBoundary>{children}</ErrorBoundary>
         </main>

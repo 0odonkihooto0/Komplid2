@@ -9,6 +9,16 @@
 
 ---
 
+### Добавлено (2026-04-22) — Страницы биллинга (SUBSCRIPTION_SYSTEM.md §4) ✅
+
+- ✅ `src/app/(dashboard)/settings/billing/page.tsx` — главная биллинга (CurrentSubscriptionCard + UsageMetricsCard + RecentPaymentsCard)
+- ✅ `src/app/(dashboard)/settings/billing/payment-methods/page.tsx` — управление способами оплаты
+- ✅ `src/app/(dashboard)/settings/billing/invoices/page.tsx` — история платежей с фильтрами и пагинацией
+- ✅ `src/components/billing/BillingStatusBanner.tsx` — глобальный баннер PAST_DUE/GRACE в layout
+- ✅ API: `GET /api/payments`, `GET /api/payment-methods`, `DELETE /api/payment-methods/[id]`, `PATCH /api/payment-methods/[id]/default`
+
+---
+
 ### Добавлено (2026-04-22) — SUBSCRIPTION_SYSTEM.md Раздел 3: Cancellation Flow + Retention ✅
 
 - ✅ `src/app/api/subscriptions/[id]/cancel/route.ts` — POST отмена с reason+feedback, email подтверждения + win-back письмо через 3 дня при TOO_EXPENSIVE
