@@ -161,6 +161,18 @@
 
 ---
 
+### Добавлено (2026-04-22) — Unit и Integration тесты для lib/payments/ ✅
+
+- ✅ `src/lib/payments/__tests__/proration.test.ts` — 14 тестов: MONTHLY/YEARLY, граничные случаи, floor/ceil
+- ✅ `src/lib/payments/__tests__/promo-service.test.ts` — 16 тестов: PERCENT/FIXED_AMOUNT/TRIAL_DAYS/FREE_MONTHS, лимиты, первый платёж, applicableTo*
+- ✅ `src/lib/payments/yookassa/__tests__/client.test.ts` — 13 тестов: retry-логика, 4xx/5xx, singleton, auth headers
+- ✅ `src/lib/payments/yookassa/__tests__/receipts.test.ts` — 12 тестов: MONTHLY/YEARLY, НДС, опциональные поля, YOOKASSA_RECEIPTS_ENABLED
+- ✅ `src/lib/payments/__tests__/subscription-service.test.ts` — 16 тестов: startSubscription (promo/credits), upgrade/cancel/reactivate/scheduleDowngrade
+- ✅ `src/lib/payments/__tests__/subscription-flow.integration.test.ts` — 5 integration сценариев: полный цикл, dunning 5 попыток→GRACE→EXPIRED, upgrade с proration, downgrade, cancel→reactivate
+- Coverage src/lib/payments: Lines 78.72% / Stmts 76.72% / Funcs 70.49% — все > 70%
+
+---
+
 ### Добавлено (2026-04-21) — Subscription Service + ФЗ-54 чеки (SUBSCRIPTION_SYSTEM.md §3) ✅
 
 - ✅ `src/lib/payments/proration.ts` — calculateProration (пропорциональная доплата при апгрейде)
