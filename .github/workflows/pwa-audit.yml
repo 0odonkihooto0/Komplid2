@@ -38,9 +38,19 @@ jobs:
           REDIS_URL: 'redis://localhost:6379'
 
       - name: Start server
-        run: npm start &
+        run: npx next start &
         env:
           PORT: 3000
+          DATABASE_URL: 'postgresql://user:pass@localhost/test'
+          NEXTAUTH_SECRET: 'test-secret-for-ci'
+          NEXTAUTH_URL: 'http://localhost:3000'
+          APP_URL: 'http://localhost:3000'
+          S3_ENDPOINT: 'http://localhost:9000'
+          S3_REGION: 'ru-1'
+          S3_ACCESS_KEY: 'test'
+          S3_SECRET_KEY: 'test'
+          S3_BUCKET: 'test'
+          REDIS_URL: 'redis://localhost:6379'
 
       - name: Wait for server
         run: npx wait-on http://localhost:3000 --timeout 30000
