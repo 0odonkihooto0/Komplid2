@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import { Providers } from '@/components/shared/Providers';
 import { Toaster } from '@/components/shared/Toaster';
@@ -11,14 +11,24 @@ import { OfflineBanner } from '@/components/pwa/OfflineBanner';
 import { BackOnlineToast } from '@/components/pwa/BackOnlineToast';
 import { SyncTrigger } from '@/components/pwa/SyncTrigger';
 
-const inter = Inter({
-  subsets: ['latin', 'cyrillic'],
+// Локальные шрифты из public/fonts/ — скопированы из @fontsource через prebuild.
+// Не требуют доступа к Google Fonts: работает в Docker без интернета (ФЗ-152).
+const inter = localFont({
+  src: [
+    { path: '../../public/fonts/inter-latin-wght-normal.woff2',    weight: '100 900', style: 'normal' },
+    { path: '../../public/fonts/inter-cyrillic-wght-normal.woff2', weight: '100 900', style: 'normal' },
+  ],
   variable: '--font-inter',
   display: 'swap',
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin', 'cyrillic'],
+const jetbrainsMono = localFont({
+  src: [
+    { path: '../../public/fonts/jetbrains-mono-latin-400-normal.woff2',    weight: '400', style: 'normal' },
+    { path: '../../public/fonts/jetbrains-mono-cyrillic-400-normal.woff2', weight: '400', style: 'normal' },
+    { path: '../../public/fonts/jetbrains-mono-latin-700-normal.woff2',    weight: '700', style: 'normal' },
+    { path: '../../public/fonts/jetbrains-mono-cyrillic-700-normal.woff2', weight: '700', style: 'normal' },
+  ],
   variable: '--font-jetbrains',
   display: 'swap',
 });

@@ -838,5 +838,21 @@ await db.specialJournalEntry.updateMany({ where: { id: { in: notifiedIds } }, da
 
 ---
 
+**`next/font/google` падает в Docker build с `Failed to fetch Inter/JetBrains Mono from Google Fonts` — сетевой запрос в фазе webpack-компиляции.**
+`next/font/google` (Inter, JetBrains Mono) скачивает шрифты с `fonts.googleapis.com` во время `npm run build` (webpack-компиляция), а не при `npm install`. В Docker BuildKit (Docker Desktop, CI) исходящий трафик к Google заблокирован — сборка падает с `webpack errors`.
+Это нарушает и ФЗ-152: каждый browser hit к Google Fonts может считаться передачей IP-адреса (ПДн) зарубежному сервису.
+**Правило**: `next/font/google` запрещён в проекте. Всегда использовать `next/font/local`.
+Стратегия получения файлов без коммита бинарников в git:
+1. Установить `@fontsource-variable/inter` и `@fontsource/jetbrains-mono` как npm-зависимости.
+2. Создать скрипт `scripts/copy-fonts.mjs` — копирует woff2 из `node_modules/@fontsource*/files/` в `public/fonts/`.
+3. Добавить `"prebuild": "node scripts/copy-fonts.mjs"` в `package.json` — запускается автоматически перед `next build`.
+4. Добавить `public/fonts/` в `.gitignore`.
+5. В `layout.tsx` использовать `localFont({ src: [...], variable: '--font-*' })`.
+Это гарантирует: шрифты доступны при любом `npm run build` (CI, Docker, локально), нет запросов к Google во время сборки и рантайма, соответствие ФЗ-152.
+Поиск нарушений: `grep -rn "from 'next/font/google'" src/` — должно быть пустым.
+Зафиксировано в `src/app/layout.tsx`, `package.json`, `scripts/copy-fonts.mjs`.
+
+---
+
 > Правило: после каждой исправленной ошибки добавить урок сюда.
 > Команда: "Добавь урок в docs/lessons.md: [описание ошибки]"

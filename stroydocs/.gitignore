@@ -39,3 +39,6 @@ next-env.d.ts
 # КСИ — локальные файлы справочника (не коммитить большие XLSX)
 prisma/seeds/ksi/*.xlsx
 prisma/seeds/ksi/*.xls
+
+# Шрифты — генерируются из @fontsource через npm run prebuild, не коммитить
+/public/fonts/

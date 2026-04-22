@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/copy-fonts.mjs",
     "build": "prisma generate && next build",
     "postinstall": "prisma generate",
     "start": "node -e \"if(process.env.DATABASE_URL){require('child_process').execSync('npx prisma migrate deploy',{stdio:'inherit'})}\" && node server.js",
@@ -23,6 +24,8 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@fontsource-variable/inter": "^5.2.8",
+    "@fontsource/jetbrains-mono": "^5.2.8",
     "@hookform/resolvers": "^5.2.2",
     "@pdf-lib/fontkit": "^1.1.1",
     "@prisma/client": "^5.22.0",

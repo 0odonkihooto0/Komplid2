@@ -25,3 +25,9 @@
 * **Предупреждения docker-compose** `variable is not set` для `YANDEX_*` переменных — некритичны, деплой продолжается. YandexGPT недоступен, но приложение запустится (смета-парсинг работает в деградированном режиме через Gemini fallback).
 
 * **Предупреждение webpack** `require.extensions is not supported` из handlebars — некритично, сборка завершается успешно. Это известное ограничение webpack 5 при бандлинге Handlebars в Next.js API Routes. Не исправлять — производительности не влияет.
+
+* **`next/font` error: Failed to fetch Inter/JetBrains Mono from Google Fonts** — Docker build завершается с `webpack errors` потому что `npm run build` пытается скачать шрифты из Google Fonts, но Docker-окружение не имеет доступа в интернет во время сборки.
+  * **Причина**: `next/font/google` скачивает шрифты в фазе webpack-компиляции (`npm run build`), а не при `npm install`. В Docker BuildKit исходящие соединения обрезаны или Google заблокирован.
+  * **Решение** (реализовано): шрифты переведены на `next/font/local`. Файлы woff2 берутся из npm-пакетов `@fontsource-variable/inter` и `@fontsource/jetbrains-mono`, установленных в `npm install`. Скрипт `scripts/copy-fonts.mjs` копирует их в `public/fonts/` и запускается автоматически через `"prebuild"` в `package.json` — до `npm run build`.
+  * **Изменённые файлы**: `src/app/layout.tsx` (import → `next/font/local`), `package.json` (добавлен `prebuild`), `scripts/copy-fonts.mjs` (новый).
+  * ⚠️ **НЕ делать**: не возвращаться на `next/font/google` — это нарушает требования ФЗ-152 (запросы к зарубежным CDN) и ломает Docker-сборку в изолированных окружениях. Не добавлять шрифты в git-репозиторий напрямую — они генерируются из npm-пакетов автоматически.
