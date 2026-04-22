@@ -13,6 +13,35 @@ export interface NotificationJob {
   entityName?: string;
 }
 
+// Данные для биллинговых email-шаблонов
+export interface BillingEmailData {
+  userName: string;
+  planName: string;
+  appUrl: string;
+  trialEndDate?: string;
+  trialDays?: number;
+  graceUntil?: string;
+  attemptNumber?: number;
+  nextAttemptDate?: string;
+  discountPercent?: number;
+  promoCode?: string;
+  newPlanName?: string;
+  changeDate?: string;
+  amountRub?: string;
+  periodEnd?: string;
+  effectiveEndDate?: string;
+}
+
+// Тип задачи биллингового email
+export interface BillingEmailJob {
+  userId: string;
+  email: string;
+  type: string;
+  subject: string;
+  templateName: string;
+  data: BillingEmailData;
+}
+
 // Парсим REDIS_URL в объект опций для BullMQ.
 // BullMQ v5 бандлит свою версию ioredis, поэтому нельзя передавать
 // externally-created IORedis-инстанс — возникает TypeScript-конфликт типов.
@@ -54,5 +83,33 @@ export async function enqueueNotification(job: NotificationJob): Promise<void> {
   } catch (err) {
     // Очередь недоступна — логируем, не ломаем основной поток
     logger.error({ err }, '[queue] Не удалось добавить задачу уведомления');
+  }
+}
+
+let billingEmailQueue: Queue<BillingEmailJob> | null = null;
+
+// Синглтон очереди биллинговых email
+export function getBillingEmailQueue(): Queue<BillingEmailJob> {
+  if (!billingEmailQueue) {
+    billingEmailQueue = new Queue<BillingEmailJob>('billing-emails', {
+      connection: getRedisOptions(),
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+        removeOnComplete: 100,
+        removeOnFail: 50,
+      },
+    }) as unknown as Queue<BillingEmailJob>;
+  }
+  return billingEmailQueue;
+}
+
+// Добавить биллинговый email в очередь
+export async function enqueueBillingEmail(job: BillingEmailJob): Promise<void> {
+  try {
+    const queue = getBillingEmailQueue();
+    await queue.add('send-billing-email', job);
+  } catch (err) {
+    logger.error({ err }, '[queue] Не удалось добавить биллинговый email');
   }
 }

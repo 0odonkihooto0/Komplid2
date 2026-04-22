@@ -19,6 +19,8 @@ import {
   processCanceledExpired,
   processDunningAttempts,
   applyPendingPlanChanges,
+  processTrialEndingReminders,
+  processRetentionOffers,
 } from '../subscriptions/lifecycle';
 
 const QUEUE_NAME = 'subscription-lifecycle';
@@ -37,17 +39,19 @@ function getRedisOptions() {
 }
 
 async function runLifecycle() {
-  const [trials, pastDue, grace, canceled, dunning, planChanges] = await Promise.all([
+  const [trials, pastDue, grace, canceled, dunning, planChanges, trialReminders, retentionOffers] = await Promise.all([
     processExpiredTrials(),
     processExpiredSubscriptions(),
     processExpiredGracePeriods(),
     processCanceledExpired(),
     processDunningAttempts(),
     applyPendingPlanChanges(),
+    processTrialEndingReminders(),
+    processRetentionOffers(),
   ]);
 
   console.log('[subscription-lifecycle]', {
-    trials, pastDue, grace, canceled, dunning, planChanges,
+    trials, pastDue, grace, canceled, dunning, planChanges, trialReminders, retentionOffers,
     at: new Date().toISOString(),
   });
 }

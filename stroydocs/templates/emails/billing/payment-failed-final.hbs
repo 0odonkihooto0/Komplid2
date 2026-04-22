@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="utf-8"><title>Последний шанс восстановить доступ</title></head>
+<body style="font-family:sans-serif;background:#f1f5f9;padding:32px;margin:0;">
+  <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:8px;padding:32px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+    <div style="margin-bottom:24px;border-bottom:2px solid #2563EB;padding-bottom:16px;">
+      <span style="font-size:22px;font-weight:700;color:#1e2d4f;">StroyDocs</span>
+    </div>
+    <h2 style="color:#dc2626;font-size:18px;margin:0 0 16px;">Все попытки списания исчерпаны</h2>
+    <p style="color:#475569;font-size:15px;line-height:1.6;margin:0 0 12px;">
+      Здравствуйте, {{userName}}!
+    </p>
+    <p style="color:#475569;font-size:15px;line-height:1.6;margin:0 0 12px;">
+      Нам не удалось списать оплату за тариф <strong>{{planName}}</strong> после нескольких попыток.
+    </p>
+    <div style="background:#fef2f2;border-left:4px solid #ef4444;border-radius:0 6px 6px 0;padding:16px;margin:16px 0;">
+      <p style="color:#991b1b;font-size:14px;margin:0;">
+        {{#if graceUntil}}
+        Доступ к Pro-функциям сохранён до <strong>{{graceUntil}}</strong>. После этой даты функции будут ограничены.
+        {{else}}
+        Доступ к Pro-функциям будет ограничен в ближайшее время.
+        {{/if}}
+      </p>
+    </div>
+    <p style="color:#475569;font-size:15px;line-height:1.6;margin:12px 0 24px;">
+      Добавьте новую карту и оформите подписку вручную, чтобы возобновить полный доступ.
+    </p>
+    <a href="{{appUrl}}/settings/billing" style="display:inline-block;background:#dc2626;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">
+      Восстановить доступ →
+    </a>
+    <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+    <p style="color:#94a3b8;font-size:12px;margin:0;">Автоматическое уведомление StroyDocs. Не отвечайте на это письмо.</p>
+  </div>
+</body>
+</html>

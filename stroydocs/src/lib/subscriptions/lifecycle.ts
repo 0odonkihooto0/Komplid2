@@ -1,7 +1,17 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { startDunning, attemptDunningCharge, transitionToExpired } from '@/lib/payments/dunning-service';
+import { enqueueBillingEmail } from '@/lib/queue';
 import type { Prisma } from '@prisma/client';
+
+function buildUserName(firstName: string | null, lastName: string | null, email: string): string {
+  const name = [firstName, lastName].filter(Boolean).join(' ');
+  return name || email.split('@')[0];
+}
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+}
 
 // Переводит истёкшие триалы в EXPIRED и снимает активную подписку с воркспейса
 export async function processExpiredTrials(): Promise<number> {
@@ -11,11 +21,14 @@ export async function processExpiredTrials(): Promise<number> {
     select: {
       id: true,
       workspaceId: true,
+      plan: { select: { name: true } },
       workspace: { select: { ownerId: true, activeSubscriptionId: true } },
     },
   });
 
   if (expired.length === 0) return 0;
+
+  const appUrl = process.env.APP_URL ?? 'https://app.stroydocs.ru';
 
   await db.$transaction(async (tx) => {
     for (const sub of expired) {
@@ -39,6 +52,28 @@ export async function processExpiredTrials(): Promise<number> {
       });
     }
   });
+
+  // Email отправляем вне транзакции
+  for (const sub of expired) {
+    const owner = await db.user.findUnique({
+      where: { id: sub.workspace.ownerId },
+      select: { email: true, firstName: true, lastName: true },
+    });
+    if (owner) {
+      await enqueueBillingEmail({
+        userId: sub.workspace.ownerId,
+        email: owner.email,
+        type: 'TRIAL_EXPIRED',
+        subject: 'Пробный период завершён',
+        templateName: 'trial-expired',
+        data: {
+          userName: buildUserName(owner.firstName, owner.lastName, owner.email),
+          planName: sub.plan.name,
+          appUrl,
+        },
+      });
+    }
+  }
 
   logger.info({ count: expired.length }, 'processExpiredTrials: завершено');
   return expired.length;
@@ -232,4 +267,139 @@ export async function applyPendingPlanChanges(): Promise<number> {
 
   logger.info({ count: toApply.length }, 'applyPendingPlanChanges: завершено');
   return toApply.length;
+}
+
+// Отправляет email за 3 дня до конца триала (идемпотентно через notification-маркер)
+export async function processTrialEndingReminders(): Promise<number> {
+  const now = new Date();
+  const in3days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+  const in4days = new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000);
+
+  const trials = await db.subscription.findMany({
+    where: {
+      status: 'TRIAL',
+      trialEnd: { gte: in3days, lte: in4days },
+    },
+    select: {
+      id: true,
+      trialEnd: true,
+      plan: { select: { name: true } },
+      workspace: { select: { ownerId: true } },
+    },
+  });
+
+  if (trials.length === 0) return 0;
+
+  const appUrl = process.env.APP_URL ?? 'https://app.stroydocs.ru';
+  let sent = 0;
+
+  for (const sub of trials) {
+    // Проверяем что напоминание ещё не было отправлено (маркер в таблице notification)
+    const existing = await db.notification.findFirst({
+      where: { userId: sub.workspace.ownerId, type: 'trial_ending_reminder' },
+    });
+    if (existing) continue;
+
+    const owner = await db.user.findUnique({
+      where: { id: sub.workspace.ownerId },
+      select: { email: true, firstName: true, lastName: true },
+    });
+    if (!owner) continue;
+
+    await db.notification.create({
+      data: {
+        type: 'trial_ending_reminder',
+        title: 'Пробный период заканчивается',
+        body: `Ваш пробный период завершится ${formatDate(sub.trialEnd!)}. Оформите подписку.`,
+        userId: sub.workspace.ownerId,
+      },
+    });
+
+    await enqueueBillingEmail({
+      userId: sub.workspace.ownerId,
+      email: owner.email,
+      type: 'TRIAL_ENDING_SOON',
+      subject: 'Ваш пробный период заканчивается',
+      templateName: 'trial-ending-soon',
+      data: {
+        userName: buildUserName(owner.firstName, owner.lastName, owner.email),
+        planName: sub.plan.name,
+        appUrl,
+        trialEndDate: formatDate(sub.trialEnd!),
+      },
+    });
+
+    sent++;
+  }
+
+  if (sent > 0) logger.info({ sent }, 'processTrialEndingReminders: завершено');
+  return sent;
+}
+
+// Отправляет retention-оффер через 3 дня после отмены при причине TOO_EXPENSIVE
+export async function processRetentionOffers(): Promise<number> {
+  const now = new Date();
+  const cutoff3days = new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000);
+  const cutoff4days = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+
+  const cancelled = await db.subscription.findMany({
+    where: {
+      status: 'CANCELLED',
+      cancelReason: 'TOO_EXPENSIVE',
+      canceledAt: { gte: cutoff3days, lte: cutoff4days },
+    },
+    select: {
+      id: true,
+      workspaceId: true,
+      plan: { select: { name: true } },
+      workspace: { select: { ownerId: true } },
+    },
+  });
+
+  if (cancelled.length === 0) return 0;
+
+  const appUrl = process.env.APP_URL ?? 'https://app.stroydocs.ru';
+  let sent = 0;
+
+  for (const sub of cancelled) {
+    const existing = await db.notification.findFirst({
+      where: { userId: sub.workspace.ownerId, type: 'retention_offer_sent' },
+    });
+    if (existing) continue;
+
+    const owner = await db.user.findUnique({
+      where: { id: sub.workspace.ownerId },
+      select: { email: true, firstName: true, lastName: true },
+    });
+    if (!owner) continue;
+
+    await db.notification.create({
+      data: {
+        type: 'retention_offer_sent',
+        title: 'Специальное предложение',
+        body: 'Вам доступна скидка 30% — промокод SKIDKA30-3M.',
+        userId: sub.workspace.ownerId,
+      },
+    });
+
+    await enqueueBillingEmail({
+      userId: sub.workspace.ownerId,
+      email: owner.email,
+      type: 'RETENTION_DISCOUNT',
+      subject: 'Специальное предложение — скидка 30%',
+      templateName: 'retention-discount',
+      data: {
+        userName: buildUserName(owner.firstName, owner.lastName, owner.email),
+        planName: sub.plan.name,
+        appUrl,
+        discountPercent: 30,
+        promoCode: 'SKIDKA30-3M',
+      },
+    });
+
+    sent++;
+  }
+
+  if (sent > 0) logger.info({ sent }, 'processRetentionOffers: завершено');
+  return sent;
 }
