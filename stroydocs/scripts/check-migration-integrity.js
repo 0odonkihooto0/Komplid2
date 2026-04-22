@@ -10,18 +10,23 @@
  */
 const { PrismaClient } = require('@prisma/client');
 
-// Ключевые таблицы из разных модульных миграций
+// Ключевые таблицы из разных модульных миграций.
+// ВАЖНО: список должен охватывать таблицы из поздних миграций (>= #88),
+// чтобы обнаружить случай когда max_attempts в start.sh был меньше
+// общего числа миграций и поздние миграции не были применены.
 const KEY_TABLES = [
-  'users',               // init
-  'approval_steps',      // phase3_remaining
-  'correspondences',     // module3
-  'design_tasks',        // module5_pir
-  'estimate_versions',   // module6_estimates
-  'material_requests',   // module8_resources
-  'special_journals',    // module9_journals
-  'inspection_acts',     // module11_sk
-  'reports',             // module12_reports
-  'bim_models',          // module13_tim
+  'users',               // init (#1)
+  'approval_steps',      // phase3_remaining (#3)
+  'correspondences',     // module3 (#20)
+  'design_tasks',        // module5_pir (#23)
+  'estimate_versions',   // module6_estimates (#24)
+  'material_requests',   // module8_resources (#27)
+  'special_journals',    // module9_journals (#29)
+  'inspection_acts',     // module11_sk (#31)
+  'reports',             // module12_reports (#33)
+  'bim_models',          // module13_tim (#32)
+  'workspaces',          // add_workspace_missing_columns (#93) — критично!
+  'subscription_plans',  // add_subscriptions_payments (#88)
 ];
 
 async function main() {
