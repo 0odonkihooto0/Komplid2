@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
       db.subscription.count({ where }),
     ]);
 
-    return successResponse(items, { total, page: Math.floor(skip / take) + 1, limit: take });
+    return successResponse(items, { total, page: Math.floor(skip / take) + 1, pageSize: take, totalPages: Math.ceil(total / take) });
   } catch (err) {
     if (err instanceof NextResponse) return err;
     return errorResponse('Ошибка сервера', 500);
