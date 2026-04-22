@@ -9,6 +9,16 @@
 
 ---
 
+### Добавлено (2026-04-22) — Админ-панель биллинга ✅
+
+- ✅ `/admin/billing` — список подписок с фильтрами (статус, период, поиск), MRR/ARR/Churn статистика
+- ✅ `/admin/billing/[id]` — карточка подписки: ручное продление, отмена, возврат платежа, история событий
+- ✅ `/admin/billing/promo-codes` — CRUD промокодов (создание, деактивация)
+- ✅ `/admin/billing/dunning` — список PAST_DUE подписок с действиями (retry, grace, expire)
+- ✅ API: `GET/POST /api/admin/billing/subscriptions`, `/stats`, `/promo-codes`, `/dunning` и мутации
+
+---
+
 ### Добавлено (2026-04-22) — Страницы биллинга (SUBSCRIPTION_SYSTEM.md §4) ✅
 
 - ✅ `src/app/(dashboard)/settings/billing/page.tsx` — главная биллинга (CurrentSubscriptionCard + UsageMetricsCard + RecentPaymentsCard)
