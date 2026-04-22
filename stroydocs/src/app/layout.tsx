@@ -55,8 +55,6 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 // Инлайн-скрипт работает синхронно до первой отрисовки — защищает от FOUC
