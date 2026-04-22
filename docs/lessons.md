@@ -12,6 +12,12 @@
 
 ## Prisma / База данных
 
+**`max_attempts=55` в start.sh меньше общего числа миграций → P2022 на поздних миграциях.**
+Симптом: `PrismaClientKnownRequestError P2022: The column 'building_objects.workspaceId' does not exist` при каждом запросе, хотя миграция `20260421060000_add_workspace_missing_columns` существует в репозитории. Причина: при наличии >55 «already exists» ошибок (БД частично создана через `db push`) цикл в `start.sh` вычерпывал `max_attempts=55` на первых 55 миграциях и завершался — не добравшись до миграции #93. `find-failed-migration.js` успевал пометить миграцию #93 как `--applied` через `migrate resolve` без фактического выполнения SQL (`ADD COLUMN`). На следующем деплое `migrate deploy` видел #93 как applied и пропускал его.
+**Исправление**: (1) `max_attempts` увеличен до 120 (должен быть > общего числа миграций в проекте); (2) создана аварийная миграция `20260422000000_fix_missing_workspace_column` с идемпотентным `ADD COLUMN IF NOT EXISTS` — она гарантированно выполнится как новая (#95), даже если #93 помечена applied без выполнения; (3) в `check-migration-integrity.js` добавлены `workspaces` и `subscription_plans` в `KEY_TABLES` — при их отсутствии очищается `_prisma_migrations` для полного повтора.
+**Правило**: `max_attempts` в `start.sh` **ОБЯЗАН** быть больше общего числа миграций в `prisma/migrations/`. При добавлении крупного блока миграций (>5 за один PR) — проверить: `ls prisma/migrations/ | grep -v lock | wc -l` и сравнить с `max_attempts`. Если разрыв < 20 — увеличить `max_attempts`. Быстрая проверка: `grep max_attempts scripts/start.sh && ls prisma/migrations/ | grep -v lock | wc -l`.
+Дополнительно: `check-migration-integrity.js` должен включать таблицы из ПОЗДНИХ миграций (не только из начальных) — иначе проверка всегда проходит даже при полностью пропущенных поздних миграциях.
+
 **P2037 `Too many database connections` / `remaining connection slots are reserved for roles with the SUPERUSER attribute` — две независимые причины в одном баге.**
 
 Продакшн-логи показывали массовый P2037 на всех роутах (`/api/task-labels`, `/api/objects`, `/api/task-groups`, `/api/task-types`, `/api/tasks`, `/api/objects/[id]/summary`, `passport/widgets`, `dashboard-indicators`). PostgreSQL отдавал `FATAL: sorry, too many clients already` и `FATAL: remaining connection slots are reserved for roles with the SUPERUSER attribute` — слоты БД выгреблены самим приложением.
