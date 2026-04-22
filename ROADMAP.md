@@ -9,6 +9,20 @@
 
 ---
 
+### Добавлено (2026-04-22) — SUBSCRIPTION_SYSTEM.md Раздел 3: Cancellation Flow + Retention ✅
+
+- ✅ `src/app/api/subscriptions/[id]/cancel/route.ts` — POST отмена с reason+feedback, email подтверждения + win-back письмо через 3 дня при TOO_EXPENSIVE
+- ✅ `src/app/api/subscriptions/[id]/reactivate/route.ts` — POST восстановление отменённой подписки
+- ✅ `src/app/api/subscriptions/[id]/apply-retention/route.ts` — POST retention-предложения: PROMO_CODE (SKIDKA30-3M 30%), PAUSE (stub), FEEDBACK
+- ✅ `src/app/(dashboard)/settings/billing/cancel/page.tsx` — 3-шаговая страница отмены
+- ✅ `src/components/subscriptions/cancel/CancelFlow.tsx` — оркестратор 3 шагов с прогресс-индикатором
+- ✅ `src/components/subscriptions/cancel/ReasonForm.tsx` — шаг 1: выбор причины (7 вариантов) + textarea для MISSING_FEATURES
+- ✅ `src/components/subscriptions/cancel/RetentionOffer.tsx` — шаг 2: TOO_EXPENSIVE→скидка SKIDKA30-3M, NOT_USING→пауза, MISSING_FEATURES→feedback+roadmap
+- ✅ `src/components/subscriptions/cancel/ConfirmCancellation.tsx` — шаг 3: подтверждение с датой окончания + success-state + ссылка восстановления
+- ✅ `SubscriptionStatus.tsx` — обновлён: кнопка «Отменить» → /settings/billing/cancel, кнопка «Восстановить» при cancelAtPeriodEnd
+
+---
+
 ### Добавлено (2026-04-21) — Plan Change Flow + Dunning Service ✅
 
 - ✅ `src/lib/payments/proration.ts` — расширен: `unusedCreditRub` + `newPlanCostRub` для превью апгрейда

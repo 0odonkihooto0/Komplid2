@@ -1,5 +1,8 @@
 'use client';
 
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { SubscriptionPlan, Subscription } from '@prisma/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,11 +15,26 @@ interface Props {
 }
 
 export function SubscriptionStatus({ plan, subscription, isInGracePeriod }: Props) {
+  const router = useRouter();
+  const [reactivating, setReactivating] = useState(false);
+
   if (!subscription || plan.planType === 'FREE') return null;
 
   const periodEnd = subscription.currentPeriodEnd
     ? new Date(subscription.currentPeriodEnd).toLocaleDateString('ru-RU')
     : null;
+
+  const handleReactivate = async () => {
+    setReactivating(true);
+    try {
+      const res = await fetch(`/api/subscriptions/${subscription.id}/reactivate`, {
+        method: 'POST',
+      });
+      if (res.ok) router.refresh();
+    } finally {
+      setReactivating(false);
+    }
+  };
 
   return (
     <Card className={isInGracePeriod ? 'border-yellow-400' : ''}>
@@ -36,12 +54,19 @@ export function SubscriptionStatus({ plan, subscription, isInGracePeriod }: Prop
           <Badge variant={subscription.status === 'ACTIVE' ? 'default' : 'secondary'}>
             {subscription.status}
           </Badge>
-          {!subscription.cancelAtPeriodEnd && (
-            <form action="/api/workspaces/active/subscription/cancel" method="POST">
-              <Button variant="ghost" size="sm" type="submit">
-                Отменить автопродление
-              </Button>
-            </form>
+          {subscription.cancelAtPeriodEnd ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleReactivate}
+              disabled={reactivating}
+            >
+              {reactivating ? 'Восстанавливаем…' : 'Восстановить подписку'}
+            </Button>
+          ) : (
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/settings/billing/cancel">Отменить подписку</Link>
+            </Button>
           )}
         </div>
       </CardContent>
