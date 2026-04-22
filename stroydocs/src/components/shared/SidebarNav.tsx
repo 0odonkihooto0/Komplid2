@@ -13,6 +13,7 @@ import {
   ClipboardList,
   Library,
   Users,
+  CreditCard,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -23,6 +24,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useQuery } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
 import { useInboxCount } from '@/hooks/useInboxCount';
 import { NotificationDropdown } from './NotificationDropdown';
 
@@ -80,6 +82,8 @@ interface Props {
 export function SidebarNav({ isCollapsed }: Props) {
   const pathname = usePathname();
   const inboxCount = useInboxCount();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === 'ADMIN';
 
   const { data: stats } = useQuery<StatsData>({
     queryKey: ['dashboard-stats'],
@@ -175,6 +179,21 @@ export function SidebarNav({ isCollapsed }: Props) {
 
         {/* Уведомления — Popover вместо обычной ссылки */}
         <NotificationDropdown isCollapsed={isCollapsed} />
+
+        {/* Секция администрирования — только для роли ADMIN */}
+        {isAdmin && (
+          <div>
+            {!isCollapsed && (
+              <p className="mb-1.5 px-1 font-mono text-[10px] uppercase tracking-[0.08em] text-white/40">
+                АДМИНИСТРИРОВАНИЕ
+              </p>
+            )}
+            <nav className="space-y-0.5">
+              {renderItem({ href: '/admin/billing', label: 'Биллинг', icon: CreditCard })}
+              {renderItem({ href: '/admin/referrals', label: 'Рефералы', icon: Users })}
+            </nav>
+          </div>
+        )}
       </div>
     </TooltipProvider>
   );
