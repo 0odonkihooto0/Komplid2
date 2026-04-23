@@ -43,7 +43,7 @@ node scripts/bulk-mark-stale-migrations.js || true
 echo '[migrate] Запуск миграций...'
 
 attempt=0
-max_attempts=120  # должен быть больше общего числа миграций (сейчас ~97)
+max_attempts=120  # должен быть больше общего числа миграций (сейчас ~98)
 while [ $attempt -lt $max_attempts ]; do
   if node node_modules/prisma/build/index.js migrate deploy 2>&1; then
     echo '[migrate] Done.'

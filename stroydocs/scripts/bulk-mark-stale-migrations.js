@@ -29,6 +29,7 @@ const ALWAYS_RUN = new Set([
   '20260422000000_fix_missing_workspace_column',
   '20260422010000_fix_normative_refs_idempotent',
   '20260422020000_fix_subscriptions_idempotent',
+  '20260423000000_ensure_workspace_columns_final',
 ]);
 
 /**
