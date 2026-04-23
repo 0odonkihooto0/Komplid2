@@ -192,8 +192,10 @@ CREATE TABLE IF NOT EXISTS "subscription_plans" (
     CONSTRAINT "subscription_plans_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "subscription_plans_code_key"
-    ON "subscription_plans"("code");
+DO $$ BEGIN
+  CREATE UNIQUE INDEX IF NOT EXISTS "subscription_plans_code_key"
+      ON "subscription_plans"("code");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 -- Если таблица уже существовала с features TEXT[], конвертируем в JSONB
 DO $$
@@ -232,8 +234,10 @@ ALTER TABLE "subscription_plans" ADD COLUMN IF NOT EXISTS "isVisible"           
 ALTER TABLE "subscription_plans" ADD COLUMN IF NOT EXISTS "isLegacy"                   BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE "subscription_plans" ADD COLUMN IF NOT EXISTS "metadata"                   JSONB;
 
-CREATE INDEX IF NOT EXISTS "subscription_plans_category_profiRole_idx"
-    ON "subscription_plans"("category", "profiRole");
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "subscription_plans_category_profiRole_idx"
+      ON "subscription_plans"("category", "profiRole");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 3. ТАБЛИЦА subscriptions
@@ -256,16 +260,18 @@ CREATE TABLE IF NOT EXISTS "subscriptions" (
     CONSTRAINT "subscriptions_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "subscriptions_yookassaSubscriptionId_key"
-    ON "subscriptions"("yookassaSubscriptionId");
-CREATE INDEX IF NOT EXISTS "subscriptions_workspaceId_status_idx"
-    ON "subscriptions"("workspaceId", "status");
-CREATE INDEX IF NOT EXISTS "subscriptions_status_currentPeriodEnd_idx"
-    ON "subscriptions"("status", "currentPeriodEnd");
-CREATE INDEX IF NOT EXISTS "subscriptions_status_graceUntil_idx"
-    ON "subscriptions"("status", "graceUntil");
-CREATE INDEX IF NOT EXISTS "subscriptions_status_nextDunningAt_idx"
-    ON "subscriptions"("status", "nextDunningAt");
+DO $$ BEGIN
+  CREATE UNIQUE INDEX IF NOT EXISTS "subscriptions_yookassaSubscriptionId_key"
+      ON "subscriptions"("yookassaSubscriptionId");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "subscriptions_workspaceId_status_idx"
+      ON "subscriptions"("workspaceId", "status");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "subscriptions_status_currentPeriodEnd_idx"
+      ON "subscriptions"("status", "currentPeriodEnd");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 -- Extended columns из 070000
 ALTER TABLE "subscriptions" ADD COLUMN IF NOT EXISTS "startedAt"              TIMESTAMP(3);
@@ -280,6 +286,14 @@ ALTER TABLE "subscriptions" ADD COLUMN IF NOT EXISTS "defaultPaymentMethodId" TE
 ALTER TABLE "subscriptions" ADD COLUMN IF NOT EXISTS "graceUntil"             TIMESTAMP(3);
 ALTER TABLE "subscriptions" ADD COLUMN IF NOT EXISTS "dunningAttempts"        INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE "subscriptions" ADD COLUMN IF NOT EXISTS "nextDunningAt"          TIMESTAMP(3);
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "subscriptions_status_graceUntil_idx"
+      ON "subscriptions"("status", "graceUntil");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "subscriptions_status_nextDunningAt_idx"
+      ON "subscriptions"("status", "nextDunningAt");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 4. ТАБЛИЦА payments
@@ -307,14 +321,22 @@ CREATE TABLE IF NOT EXISTS "payments" (
     CONSTRAINT "payments_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "payments_yookassaPaymentId_key"
-    ON "payments"("yookassaPaymentId");
-CREATE INDEX IF NOT EXISTS "payments_workspaceId_createdAt_idx"
-    ON "payments"("workspaceId", "createdAt" DESC);
-CREATE INDEX IF NOT EXISTS "payments_subscriptionId_idx"
-    ON "payments"("subscriptionId");
-CREATE INDEX IF NOT EXISTS "payments_status_createdAt_idx"
-    ON "payments"("status", "createdAt");
+DO $$ BEGIN
+  CREATE UNIQUE INDEX IF NOT EXISTS "payments_yookassaPaymentId_key"
+      ON "payments"("yookassaPaymentId");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "payments_workspaceId_createdAt_idx"
+      ON "payments"("workspaceId", "createdAt" DESC);
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "payments_subscriptionId_idx"
+      ON "payments"("subscriptionId");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "payments_status_createdAt_idx"
+      ON "payments"("status", "createdAt");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 -- Extended columns из 070000
 ALTER TABLE "payments" ADD COLUMN IF NOT EXISTS "type"                   "PaymentType";
@@ -342,16 +364,20 @@ ALTER TABLE "payments" ADD COLUMN IF NOT EXISTS "ipAddress"              TEXT;
 ALTER TABLE "payments" ADD COLUMN IF NOT EXISTS "userAgent"              TEXT;
 ALTER TABLE "payments" ADD COLUMN IF NOT EXISTS "updatedAt"              TIMESTAMP(3);
 
-CREATE UNIQUE INDEX IF NOT EXISTS "payments_providerPaymentId_key"
-    ON "payments"("providerPaymentId") WHERE "providerPaymentId" IS NOT NULL;
+DO $$ BEGIN
+  CREATE UNIQUE INDEX IF NOT EXISTS "payments_providerPaymentId_key"
+      ON "payments"("providerPaymentId") WHERE "providerPaymentId" IS NOT NULL;
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 5. КОЛОНКИ В workspaces И users
 -- ═══════════════════════════════════════════════════════════════════════════
 
 ALTER TABLE "workspaces" ADD COLUMN IF NOT EXISTS "activeSubscriptionId" TEXT;
-CREATE UNIQUE INDEX IF NOT EXISTS "workspaces_activeSubscriptionId_key"
-    ON "workspaces"("activeSubscriptionId");
+DO $$ BEGIN
+  CREATE UNIQUE INDEX IF NOT EXISTS "workspaces_activeSubscriptionId_key"
+      ON "workspaces"("activeSubscriptionId");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "professionalRole" "ProfessionalRole";
 
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -381,10 +407,14 @@ CREATE TABLE IF NOT EXISTS "payment_methods" (
     CONSTRAINT "payment_methods_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "payment_methods_workspaceId_providerMethodId_key"
-    ON "payment_methods"("workspaceId", "providerMethodId");
-CREATE INDEX IF NOT EXISTS "payment_methods_workspaceId_isActive_idx"
-    ON "payment_methods"("workspaceId", "isActive");
+DO $$ BEGIN
+  CREATE UNIQUE INDEX IF NOT EXISTS "payment_methods_workspaceId_providerMethodId_key"
+      ON "payment_methods"("workspaceId", "providerMethodId");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "payment_methods_workspaceId_isActive_idx"
+      ON "payment_methods"("workspaceId", "isActive");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 CREATE TABLE IF NOT EXISTS "subscription_events" (
     "id"             TEXT                   NOT NULL,
@@ -397,10 +427,14 @@ CREATE TABLE IF NOT EXISTS "subscription_events" (
     CONSTRAINT "subscription_events_pkey" PRIMARY KEY ("id")
 );
 
-CREATE INDEX IF NOT EXISTS "subscription_events_subscriptionId_createdAt_idx"
-    ON "subscription_events"("subscriptionId", "createdAt" DESC);
-CREATE INDEX IF NOT EXISTS "subscription_events_type_createdAt_idx"
-    ON "subscription_events"("type", "createdAt");
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "subscription_events_subscriptionId_createdAt_idx"
+      ON "subscription_events"("subscriptionId", "createdAt" DESC);
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "subscription_events_type_createdAt_idx"
+      ON "subscription_events"("type", "createdAt");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 CREATE TABLE IF NOT EXISTS "receipts" (
     "id"                      TEXT             NOT NULL,
@@ -429,14 +463,22 @@ CREATE TABLE IF NOT EXISTS "receipts" (
     CONSTRAINT "receipts_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "receipts_providerReceiptId_key"
-    ON "receipts"("providerReceiptId") WHERE "providerReceiptId" IS NOT NULL;
-CREATE INDEX IF NOT EXISTS "receipts_workspaceId_createdAt_idx"
-    ON "receipts"("workspaceId", "createdAt" DESC);
-CREATE INDEX IF NOT EXISTS "receipts_subscriptionId_idx"
-    ON "receipts"("subscriptionId");
-CREATE INDEX IF NOT EXISTS "receipts_status_idx"
-    ON "receipts"("status");
+DO $$ BEGIN
+  CREATE UNIQUE INDEX IF NOT EXISTS "receipts_providerReceiptId_key"
+      ON "receipts"("providerReceiptId") WHERE "providerReceiptId" IS NOT NULL;
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "receipts_workspaceId_createdAt_idx"
+      ON "receipts"("workspaceId", "createdAt" DESC);
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "receipts_subscriptionId_idx"
+      ON "receipts"("subscriptionId");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "receipts_status_idx"
+      ON "receipts"("status");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 CREATE TABLE IF NOT EXISTS "invoices" (
     "id"             TEXT           NOT NULL,
@@ -467,11 +509,17 @@ CREATE TABLE IF NOT EXISTS "invoices" (
     CONSTRAINT "invoices_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "invoices_number_key" ON "invoices"("number");
-CREATE INDEX IF NOT EXISTS "invoices_workspaceId_issuedAt_idx"
-    ON "invoices"("workspaceId", "issuedAt" DESC);
-CREATE INDEX IF NOT EXISTS "invoices_status_dueAt_idx"
-    ON "invoices"("status", "dueAt");
+DO $$ BEGIN
+  CREATE UNIQUE INDEX IF NOT EXISTS "invoices_number_key" ON "invoices"("number");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "invoices_workspaceId_issuedAt_idx"
+      ON "invoices"("workspaceId", "issuedAt" DESC);
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "invoices_status_dueAt_idx"
+      ON "invoices"("status", "dueAt");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 CREATE TABLE IF NOT EXISTS "promo_codes" (
     "id"                     TEXT           NOT NULL,
@@ -493,7 +541,9 @@ CREATE TABLE IF NOT EXISTS "promo_codes" (
     CONSTRAINT "promo_codes_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "promo_codes_code_key" ON "promo_codes"("code");
+DO $$ BEGIN
+  CREATE UNIQUE INDEX IF NOT EXISTS "promo_codes_code_key" ON "promo_codes"("code");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 CREATE TABLE IF NOT EXISTS "promo_code_rules" (
     "promoCodeId" TEXT NOT NULL,
@@ -512,10 +562,14 @@ CREATE TABLE IF NOT EXISTS "promo_code_redemptions" (
     CONSTRAINT "promo_code_redemptions_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "promo_code_redemptions_promoCodeId_workspaceId_key"
-    ON "promo_code_redemptions"("promoCodeId", "workspaceId");
-CREATE INDEX IF NOT EXISTS "promo_code_redemptions_workspaceId_idx"
-    ON "promo_code_redemptions"("workspaceId");
+DO $$ BEGIN
+  CREATE UNIQUE INDEX IF NOT EXISTS "promo_code_redemptions_promoCodeId_workspaceId_key"
+      ON "promo_code_redemptions"("promoCodeId", "workspaceId");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "promo_code_redemptions_workspaceId_idx"
+      ON "promo_code_redemptions"("workspaceId");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 CREATE TABLE IF NOT EXISTS "dunning_attempts" (
     "id"                 TEXT             NOT NULL,
@@ -532,12 +586,18 @@ CREATE TABLE IF NOT EXISTS "dunning_attempts" (
     CONSTRAINT "dunning_attempts_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "dunning_attempts_paymentId_key"
-    ON "dunning_attempts"("paymentId") WHERE "paymentId" IS NOT NULL;
-CREATE INDEX IF NOT EXISTS "dunning_attempts_subscriptionId_attemptNumber_idx"
-    ON "dunning_attempts"("subscriptionId", "attemptNumber");
-CREATE INDEX IF NOT EXISTS "dunning_attempts_scheduledAt_result_idx"
-    ON "dunning_attempts"("scheduledAt", "result");
+DO $$ BEGIN
+  CREATE UNIQUE INDEX IF NOT EXISTS "dunning_attempts_paymentId_key"
+      ON "dunning_attempts"("paymentId") WHERE "paymentId" IS NOT NULL;
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "dunning_attempts_subscriptionId_attemptNumber_idx"
+      ON "dunning_attempts"("subscriptionId", "attemptNumber");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "dunning_attempts_scheduledAt_result_idx"
+      ON "dunning_attempts"("scheduledAt", "result");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 7. ТАБЛИЦЫ РЕФЕРАЛЬНОЙ ПРОГРАММЫ (из 030000)
@@ -555,10 +615,14 @@ CREATE TABLE IF NOT EXISTS "referral_codes" (
     CONSTRAINT "referral_codes_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "referral_codes_code_key"
-    ON "referral_codes"("code");
-CREATE UNIQUE INDEX IF NOT EXISTS "referral_codes_userId_key"
-    ON "referral_codes"("userId");
+DO $$ BEGIN
+  CREATE UNIQUE INDEX IF NOT EXISTS "referral_codes_code_key"
+      ON "referral_codes"("code");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE UNIQUE INDEX IF NOT EXISTS "referral_codes_userId_key"
+      ON "referral_codes"("userId");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 CREATE TABLE IF NOT EXISTS "referrals" (
     "id"                    TEXT               NOT NULL,
@@ -588,9 +652,15 @@ CREATE TABLE IF NOT EXISTS "referrals" (
     CONSTRAINT "referrals_pkey" PRIMARY KEY ("id")
 );
 
-CREATE INDEX IF NOT EXISTS "referrals_referrerId_idx"     ON "referrals"("referrerId");
-CREATE INDEX IF NOT EXISTS "referrals_referredUserId_idx" ON "referrals"("referredUserId");
-CREATE INDEX IF NOT EXISTS "referrals_rewardStatus_idx"   ON "referrals"("rewardStatus");
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "referrals_referrerId_idx"     ON "referrals"("referrerId");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "referrals_referredUserId_idx" ON "referrals"("referredUserId");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "referrals_rewardStatus_idx"   ON "referrals"("rewardStatus");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 CREATE TABLE IF NOT EXISTS "workspace_credits" (
     "id"          TEXT         NOT NULL,
@@ -600,8 +670,10 @@ CREATE TABLE IF NOT EXISTS "workspace_credits" (
     CONSTRAINT "workspace_credits_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "workspace_credits_workspaceId_key"
-    ON "workspace_credits"("workspaceId");
+DO $$ BEGIN
+  CREATE UNIQUE INDEX IF NOT EXISTS "workspace_credits_workspaceId_key"
+      ON "workspace_credits"("workspaceId");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 CREATE TABLE IF NOT EXISTS "credit_ledger_entries" (
     "id"          TEXT             NOT NULL,
@@ -615,8 +687,10 @@ CREATE TABLE IF NOT EXISTS "credit_ledger_entries" (
     CONSTRAINT "credit_ledger_entries_pkey" PRIMARY KEY ("id")
 );
 
-CREATE INDEX IF NOT EXISTS "credit_ledger_entries_creditId_idx"
-    ON "credit_ledger_entries"("creditId");
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "credit_ledger_entries_creditId_idx"
+      ON "credit_ledger_entries"("creditId");
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 8. FOREIGN KEY CONSTRAINTS
