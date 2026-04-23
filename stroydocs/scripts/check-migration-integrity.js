@@ -30,6 +30,14 @@ const KEY_TABLES = [
   'subscription_plans',  // add_subscriptions_payments (#88)
 ];
 
+// Ключевые КОЛОНКИ: таблицы могут существовать, но колонки отсутствовать
+// (если миграция была помечена --applied без выполнения SQL).
+// Проверяем через information_schema чтобы не зависеть от Prisma-клиента.
+const KEY_COLUMNS = [
+  { table: 'users', column: 'activeWorkspaceId' },       // workspace migrations (#93, #95, #98)
+  { table: 'building_objects', column: 'workspaceId' },  // workspace migrations (#93, #95, #98)
+];
+
 async function main() {
   const db = new PrismaClient();
   try {
@@ -62,7 +70,33 @@ async function main() {
     }
 
     if (missing.length === 0) {
-      console.log('[integrity] Все ключевые таблицы присутствуют — OK');
+      // Таблицы есть — проверяем наличие ключевых колонок
+      const missingCols = [];
+      for (const { table, column } of KEY_COLUMNS) {
+        try {
+          const rows = await db.$queryRawUnsafe(
+            `SELECT 1 FROM information_schema.columns
+             WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2 LIMIT 1`,
+            table, column
+          );
+          if (rows.length === 0) missingCols.push(`${table}.${column}`);
+        } catch {
+          missingCols.push(`${table}.${column}`);
+        }
+      }
+
+      if (missingCols.length === 0) {
+        console.log('[integrity] Все ключевые таблицы и колонки присутствуют — OK');
+        return;
+      }
+
+      console.log(`[integrity] Отсутствуют колонки: ${missingCols.join(', ')}`);
+      console.log(
+        `[integrity] _prisma_migrations содержит ${migrationCount} записей — ошибочные`
+      );
+      console.log('[integrity] Очистка _prisma_migrations...');
+      await db.$executeRawUnsafe('TRUNCATE "_prisma_migrations"');
+      console.log('[integrity] Done — migrate deploy применит миграции заново');
       return;
     }
 
