@@ -125,6 +125,22 @@ async function main() {
     let marked = 0;
     let willRun = 0;
 
+    // Считаем БД "не пустой" если уже есть applied-миграции либо
+    // если в БД есть базовые таблицы (users, organizations).
+    // Используется для миграций без первичного CREATE-объекта
+    // (RENAME/ALTER/DROP) — на не-пустой БД они должны быть помечены
+    // applied, иначе запустятся заново и упадут с 42P01/42710.
+    let dbHasContent = applied.size > 0;
+    if (!dbHasContent) {
+      try {
+        const rows = await db.$queryRawUnsafe(
+          `SELECT 1 FROM information_schema.tables
+           WHERE table_schema = 'public' AND table_name = 'users' LIMIT 1`
+        );
+        dbHasContent = rows.length > 0;
+      } catch { /* ignore */ }
+    }
+
     for (const dir of dirs) {
       if (applied.has(dir)) continue;
 
@@ -136,6 +152,29 @@ async function main() {
       const sqlPath = path.join(migrationsDir, dir, 'migration.sql');
       const sql = fs.readFileSync(sqlPath, 'utf8');
       const primaryObj = extractPrimaryObject(sql);
+
+      // Миграции без первичного CREATE-объекта (только RENAME/ALTER/DROP)
+      // на не-пустой БД помечаем applied — повторный запуск таких миграций
+      // обычно падает (RENAME несуществующего, ADD VALUE дубликата и т.д.).
+      if (!primaryObj && dbHasContent) {
+        const checksum = crypto.createHash('sha256').update(sql).digest('hex');
+        const id = crypto.randomUUID();
+        try {
+          await db.$executeRawUnsafe(
+            `INSERT INTO _prisma_migrations
+               (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count)
+             SELECT $1, $2, NOW(), $3, '', NULL, NOW(), 1
+             WHERE NOT EXISTS (SELECT 1 FROM _prisma_migrations WHERE migration_name = $3)`,
+            id, checksum, dir
+          );
+          console.log('[bulk-mark] ' + dir + ': applied (no primary object, db not empty)');
+          marked++;
+        } catch (err) {
+          console.log('[bulk-mark] ' + dir + ': ошибка вставки — ' + err.message);
+        }
+        continue;
+      }
+
       const exists = await primaryObjectExists(db, primaryObj);
 
       if (!exists) {
