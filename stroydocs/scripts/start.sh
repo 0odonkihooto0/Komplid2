@@ -35,20 +35,23 @@ node scripts/bulk-mark-stale-migrations.js || true
 
 # ── Применение миграций ──────────────────────────────────────────────────────
 # Стратегия:
-#   1. Запускаем migrate deploy, захватываем stdout+stderr в переменную.
+#   1. Запускаем migrate deploy, захватываем stdout+stderr в файл.
 #   2. Если успех — break.
-#   3. Иначе извлекаем код ошибки Postgres:
-#      • 42P07 (table already exists), 42701 (column already exists),
-#        42710 (object/enum already exists), 42723 (function already exists)
-#        — db push конфликт, безопасно пометить applied и продолжить.
-#      • 42704 (type not found), 42P01 (relation not found), и другие
-#        — РЕАЛЬНАЯ ошибка: миграция не выполнена, halt с явной диагностикой.
-#        Не маскировать — это прямой путь к P2022 в рантайме.
+#   3. Иначе классифицируем ошибку:
+#      a) Транзиентные сетевые ошибки Prisma (P1001, P1008, P1017) —
+#         БД недоступна/таймаут/соединение оборвано. Это НЕ сбой миграции.
+#         Ретрай с экспоненциальным backoff (2s, 4s, 8s, 16s, cap 30s).
+#      b) Benign SQL (42P07/42701/42710/42723 — already exists) —
+#         db push конфликт, помечаем applied и продолжаем.
+#      c) Блокирующие SQL (42704 type not found, 42P01 relation not found,
+#         прочие) — РЕАЛЬНАЯ ошибка миграции. Halt с явной диагностикой.
 #   4. На свежей БД все миграции применяются нормально.
 echo '[migrate] Запуск миграций...'
 
 attempt=0
+transient_attempts=0
 max_attempts=120  # должен быть больше общего числа миграций (сейчас ~99)
+max_transient=6   # ретраев на транзиентную ошибку БД (суммарно ~62s с backoff)
 MIGRATE_LOG=/tmp/migrate-deploy.log
 
 while [ $attempt -lt $max_attempts ]; do
@@ -58,34 +61,65 @@ while [ $attempt -lt $max_attempts ]; do
     break
   fi
 
-  attempt=$((attempt + 1))
-
   # Показываем вывод migrate deploy всегда — чтобы в логах контейнера была
   # видна реальная ошибка Postgres (а не только обобщение start.sh).
   cat "$MIGRATE_LOG"
 
-  # Извлекаем код ошибки из вывода Prisma: "Database error code: XXXXX"
-  CODE=$(grep -oE 'Database error code: [0-9A-Z]+' "$MIGRATE_LOG" | head -1 | awk '{print $NF}')
+  # Извлекаем коды ошибок
+  PG_CODE=$(grep -oE 'Database error code: [0-9A-Z]+' "$MIGRATE_LOG" | head -1 | awk '{print $NF}')
+  PRISMA_CODE=$(grep -oE 'P1[0-9]{3}' "$MIGRATE_LOG" | head -1)
 
-  # Находим failed миграцию
+  # (a) Транзиентные сетевые ошибки БД — ретрай без изменения _prisma_migrations
+  case "$PRISMA_CODE" in
+    P1001|P1008|P1017)
+      transient_attempts=$((transient_attempts + 1))
+      if [ $transient_attempts -gt $max_transient ]; then
+        echo '=================================================================='
+        echo "[migrate] БД недоступна после $max_transient попыток (код $PRISMA_CODE)"
+        echo '[migrate] Возможна долгая недоступность Timeweb Managed PostgreSQL.'
+        echo '=================================================================='
+        exit 1
+      fi
+      WAIT=$((transient_attempts * 2))
+      [ $WAIT -gt 30 ] && WAIT=30
+      echo "[migrate] Транзиентная ошибка БД ($PRISMA_CODE), попытка $transient_attempts/$max_transient — ретрай через ${WAIT}s..."
+      sleep $WAIT
+      continue
+      ;;
+  esac
+
+  # С этого момента считаем попытку настоящей (не транзиентной)
+  attempt=$((attempt + 1))
+
+  # Находим failed миграцию. Если find-failed-migration.js упал — это тоже
+  # обычно транзиент БД (запрос к _prisma_migrations). Не halt — ретрай.
   FAILED=$(node scripts/find-failed-migration.js 2>/dev/null) || {
-    echo '[migrate] Критическая ошибка миграции (не удалось определить failed миграцию)'
-    exit 1
+    transient_attempts=$((transient_attempts + 1))
+    if [ $transient_attempts -gt $max_transient ]; then
+      echo '[migrate] Не удаётся определить failed миграцию — БД недоступна.'
+      exit 1
+    fi
+    WAIT=$((transient_attempts * 2))
+    [ $WAIT -gt 30 ] && WAIT=30
+    echo "[migrate] find-failed-migration.js не смог подключиться к БД — ретрай через ${WAIT}s..."
+    sleep $WAIT
+    continue
   }
 
-  case "$CODE" in
+  case "$PG_CODE" in
     42P07|42701|42710|42723)
-      # Benign: объект уже существует (типичный случай для БД, частично
+      # (b) Benign: объект уже существует (типичный случай для БД, частично
       # созданной через db push). Помечаем applied и продолжаем.
-      echo "[migrate] Миграция $FAILED: объект уже существует (код $CODE, db push), помечаем applied..."
+      echo "[migrate] Миграция $FAILED: объект уже существует (код $PG_CODE, db push), помечаем applied..."
       node node_modules/prisma/build/index.js migrate resolve --applied "$FAILED" 2>/dev/null || true
       ;;
     *)
-      # РЕАЛЬНАЯ ошибка (type/relation не существует, constraint violation и т.д.)
+      # (c) РЕАЛЬНАЯ ошибка (type/relation не существует, constraint violation и т.д.)
       # НЕ маскировать — это корёжит цепочку миграций и ведёт к P2022 в рантайме.
       echo '=================================================================='
       echo "[migrate] КРИТИЧЕСКАЯ ОШИБКА в миграции: $FAILED"
-      echo "[migrate] Postgres error code: ${CODE:-unknown}"
+      echo "[migrate] Postgres error code: ${PG_CODE:-unknown}"
+      echo "[migrate] Prisma error code:   ${PRISMA_CODE:-unknown}"
       echo '[migrate] Это НЕ «таблица уже существует» — миграция НЕ выполнена.'
       echo '[migrate] Помечать --applied запрещено (маскирует сбой).'
       echo '[migrate] Диагностика: проверить SQL миграции и предшествующие'
