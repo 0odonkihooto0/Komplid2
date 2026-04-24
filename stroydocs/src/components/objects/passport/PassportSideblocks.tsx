@@ -25,9 +25,9 @@ interface PassportSideblocksProps {
 
 function InfoKV({ label, value }: { label: string; value?: string | number | null }) {
   return (
-    <div className="flex gap-2 py-1.5 border-b last:border-0">
-      <span className="w-1/2 text-xs text-muted-foreground shrink-0">{label}</span>
-      <span className="text-xs font-medium text-right flex-1">
+    <div className="flex gap-2 py-2 border-b last:border-0">
+      <span className="w-1/2 text-sm text-muted-foreground shrink-0">{label}</span>
+      <span className="text-sm font-medium text-right flex-1">
         {value != null && value !== '' ? value : <span className="text-muted-foreground">—</span>}
       </span>
     </div>
@@ -54,8 +54,8 @@ export function PassportSideblocks({ projectId, objectId, area, floors, construc
       <Card className="rounded-panel">
         <CardHeader className="pb-3">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">УЧАСТНИКИ</p>
-            <CardTitle className="text-base">Ключевые люди</CardTitle>
+            <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">УЧАСТНИКИ</p>
+            <CardTitle>Ключевые люди</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="pt-0 space-y-3">
@@ -76,7 +76,7 @@ export function PassportSideblocks({ projectId, objectId, area, floors, construc
               return (
                 <div key={p.id} className="flex flex-col gap-0.5">
                   {role && (
-                    <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
+                    <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
                       {role}
                     </p>
                   )}
@@ -95,8 +95,8 @@ export function PassportSideblocks({ projectId, objectId, area, floors, construc
       <Card className="rounded-panel">
         <CardHeader className="pb-3">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">ПОКАЗАТЕЛИ</p>
-            <CardTitle className="text-base">Технико-экономические</CardTitle>
+            <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">ПОКАЗАТЕЛИ</p>
+            <CardTitle>Технико-экономические</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="pt-0">

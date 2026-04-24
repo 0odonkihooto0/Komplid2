@@ -9,12 +9,12 @@ interface MetricCardProps {
 function MetricCard({ label, primary, secondary }: MetricCardProps) {
   return (
     <div className="flex flex-col gap-1 p-5">
-      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+      <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
         {label}
       </p>
       <p className="text-2xl font-semibold leading-none">{primary}</p>
       {secondary && (
-        <p className="text-[12px] text-muted-foreground">{secondary}</p>
+        <p className="text-sm text-muted-foreground">{secondary}</p>
       )}
     </div>
   );

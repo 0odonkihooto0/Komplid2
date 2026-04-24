@@ -24,11 +24,11 @@ import type { PassportUpdateData } from './usePassport';
 
 function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
   return (
-    <div>
-      <p className="font-mono text-xs2 uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+    <div className="py-2">
+      <p className="text-xs uppercase tracking-[0.08em] text-[var(--ink-muted)]">
         {label}
       </p>
-      <p className="mt-0.5 text-sm font-medium">
+      <p className="mt-0.5 text-md font-medium">
         {value != null && value !== '' ? value : <span className="text-[var(--ink-muted)]">—</span>}
       </p>
     </div>
@@ -213,8 +213,8 @@ export function PassportView({ projectId }: PassportViewProps) {
           <Card className="rounded-panel">
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ink-muted)]">ДОКУМЕНТАЦИЯ</p>
-                <CardTitle className="text-base">Паспорт объекта</CardTitle>
+                <p className="text-xs uppercase tracking-[0.08em] text-[var(--ink-muted)]">ДОКУМЕНТАЦИЯ</p>
+                <CardTitle>Паспорт объекта</CardTitle>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setEditOpen(true)}>
                 <Pencil className="mr-1.5 h-4 w-4" />
@@ -234,7 +234,7 @@ export function PassportView({ projectId }: PassportViewProps) {
               </div>
 
               <div className="mt-4 border-t pt-4">
-                <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ink-muted)]">РАЗРЕШЕНИЕ НА СТРОИТЕЛЬСТВО</p>
+                <p className="mb-3 text-xs uppercase tracking-[0.08em] text-[var(--ink-muted)]">РАЗРЕШЕНИЕ НА СТРОИТЕЛЬСТВО</p>
                 <div className="grid grid-cols-2 gap-x-6">
                   <InfoRow label="Номер разрешения" value={project.permitNumber} />
                   <InfoRow label="Орган выдачи" value={project.permitAuthority} />
@@ -243,7 +243,7 @@ export function PassportView({ projectId }: PassportViewProps) {
               </div>
 
               <div className="mt-4 border-t pt-4">
-                <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ink-muted)]">СРОКИ</p>
+                <p className="mb-3 text-xs uppercase tracking-[0.08em] text-[var(--ink-muted)]">СРОКИ</p>
                 <div className="grid grid-cols-2 gap-x-6">
                   <InfoRow label="Начало (план)" value={project.plannedStartDate ? formatDate(project.plannedStartDate) : null} />
                   <InfoRow label="Окончание (план)" value={project.plannedEndDate ? formatDate(project.plannedEndDate) : null} />
