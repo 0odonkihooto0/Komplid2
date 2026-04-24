@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useQuery } from '@tanstack/react-query';
 import { Eye, Download, FileText, Upload } from 'lucide-react';
 import {
@@ -11,10 +12,16 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PdfViewer } from '@/components/shared/PdfViewer';
 import { UploadDocumentDialog } from './UploadDocumentDialog';
 import { MATERIAL_DOC_TYPE_LABELS } from '@/utils/constants';
 import type { MaterialDocumentType } from '@prisma/client';
+
+// react-pdf (pdfjs-dist) использует DOMMatrix — браузерный API, недоступный в Node.js.
+// dynamic + ssr:false гарантирует, что модуль не попадёт в серверный бандл.
+const PdfViewer = dynamic(
+  () => import('@/components/shared/PdfViewer').then((m) => ({ default: m.PdfViewer })),
+  { ssr: false },
+);
 
 interface DocumentItem {
   id: string;
