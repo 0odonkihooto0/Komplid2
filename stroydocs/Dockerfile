@@ -87,6 +87,8 @@ COPY --from=builder /app/server.js ./
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/templates ./templates
+# Шрифты для PDF-штампов (LiberationSans, кириллица) — читаются через fs.readFile в runtime
+COPY --from=builder /app/src/lib/pdf/fonts ./src/lib/pdf/fonts
 # Скомпилированные BullMQ-воркеры (parse-ifc и зависимости)
 COPY --from=builder /app/dist/workers ./dist/workers
 COPY scripts/start.sh ./start.sh
