@@ -157,6 +157,8 @@
     font-feature-settings: 'cv11', 'ss01', 'ss02';
     font-size: 13px;
     line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   html {
     color-scheme: light;
