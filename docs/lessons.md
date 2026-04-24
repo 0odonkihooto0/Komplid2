@@ -865,5 +865,84 @@ await db.specialJournalEntry.updateMany({ where: { id: { in: notifiedIds } }, da
 
 ---
 
+**`start.sh` помечает ЛЮБУЮ ошибку `migrate deploy` как applied — маскирует реальные сбои зависимостей.**
+
+Симптом продакшна: в логах `P3018: A migration failed to apply ... ERROR: type "SubscriptionStatus" does not exist` (код 42704), `ERROR: type "ProfessionalRole" does not exist` (42704), `ERROR: relation "workspaces" does not exist` (42P01) — пять миграций подряд падают, но `start.sh` каждую помечает как `--applied` с сообщением «таблица уже существует (db push)». `migrate deploy` финиширует «успешно», контейнер стартует. При первом же запросе NextAuth падает с `P2022: column users.activeWorkspaceId does not exist` — колонка не создана, потому что SQL миграции не выполнился.
+
+**Причина каскада**:
+1. `20260421010000_add_subscriptions_payments` содержит `ALTER TABLE "workspaces"` на строке 99, но таблица `workspaces` создаётся позже в `#060000`. PostgreSQL откатывает **всю транзакцию** миграции → enums `PlanType`/`ProfessionalRole`/`SubscriptionStatus` и таблицы subscription/payments не создаются.
+2. Все последующие рескью-миграции (`#060000`, `#22000000`, `#23000000`) содержат одинаковый битый DO-блок:
+   ```sql
+   DO $$ BEGIN
+     ALTER TABLE "users" ADD COLUMN "professionalRole" "ProfessionalRole";
+   EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+   ```
+   `EXCEPTION` ловит только `duplicate_column` (42701), но бросается `undefined_object` (42704 — enum не существует) → вся миграция откатывается.
+3. `#22020000` имеет `ALTER TABLE "workspaces" ADD COLUMN IF NOT EXISTS` — `IF NOT EXISTS` относится к **колонке**, не к **таблице**. Если таблицы нет → 42P01.
+4. `start.sh` на каждый error без разбора делал `migrate resolve --applied` — получалось «миграция учтена», но SQL не выполнен.
+
+**Корневой баг в `scripts/start.sh`** (было):
+```sh
+if ! node prisma migrate deploy; then
+  FAILED=$(node scripts/find-failed-migration.js)
+  echo "[migrate] Миграция $FAILED: таблица уже существует (db push), помечаем as applied..."
+  node prisma migrate resolve --applied "$FAILED"
+fi
+```
+Скрипт **не различает коды ошибок Postgres**: benign (объект уже есть) vs. блокирующие (зависимость отсутствует).
+
+**Правило 1 — фильтровать коды ошибок в `start.sh`**:
+```sh
+CODE=$(grep -oE 'Database error code: [0-9A-Z]+' "$MIGRATE_LOG" | head -1 | awk '{print $NF}')
+case "$CODE" in
+  42P07|42701|42710|42723)
+    # benign: table/column/object/function already exists (типичный db push)
+    node prisma migrate resolve --applied "$FAILED"
+    ;;
+  *)
+    # 42704 (type not found), 42P01 (relation not found), FK violations и т.д.
+    # НЕ маскировать. Halt с явной диагностикой.
+    echo "КРИТИЧЕСКАЯ ОШИБКА $CODE в $FAILED — halt."
+    exit 1
+    ;;
+esac
+```
+
+**Правило 2 — в DO-блоке `ALTER TABLE ADD COLUMN "enum_type"` ловить ДВА исключения**:
+```sql
+DO $$ BEGIN
+  ALTER TABLE "users" ADD COLUMN "professionalRole" "ProfessionalRole";
+EXCEPTION
+  WHEN duplicate_column THEN NULL;   -- колонка уже есть
+  WHEN undefined_object THEN NULL;   -- enum ещё не создан (цепочка битая)
+END $$;
+```
+Только `duplicate_column` — гарантированная бомба замедленного действия: однажды upstream-миграция откатится, и вся rescue-цепочка пойдёт под нож.
+
+**Правило 3 — проверять и ENUM-типы в `check-migration-integrity.js`**:
+Таблицы могут существовать (из более ранних успешных миграций или `db push`), а enums — отсутствовать (если откатилась миграция, создававшая их). Проверять через `pg_type WHERE typname = $1 AND typtype = 'e'`. Минимум: `ProfessionalRole`, `SubscriptionStatus`, `PlanType`, `WorkspaceType`, `WorkspaceRole`.
+
+**Правило 4 — никогда не использовать `IF NOT EXISTS` как защиту от отсутствия таблицы**:
+`ALTER TABLE "T" ADD COLUMN IF NOT EXISTS "c"` — `IF NOT EXISTS` проверяет только колонку. Если таблицы `T` нет, получаем 42P01. Защита от отсутствия таблицы — только через `DO $$ ... EXCEPTION WHEN undefined_table`.
+
+**Правило 5 — `ALTER TABLE` на таблицу из ПОЗДНЕЙ миграции оборачивать в undefined_table**:
+Если миграция A ссылается на таблицу, которая создаётся в миграции B, и лексикографически A < B — на свежей БД порядок применения такой, что B ещё не было, A упадёт. Правильно: все `ALTER TABLE "T"` где `T` — из поздней миграции, защищать `DO $$ BEGIN ... EXCEPTION WHEN undefined_table THEN NULL; END $$;`.
+
+Быстрая проверка нарушений:
+```bash
+# DO-блоки с enum-типом без undefined_object:
+grep -rA3 "ADD COLUMN .*\"[A-Z]" stroydocs/prisma/migrations/ | \
+  grep -B3 "EXCEPTION WHEN duplicate_column THEN NULL" | grep -v undefined_object
+
+# start.sh, который помечает applied без разбора кода ошибки:
+grep -n "migrate resolve --applied" stroydocs/scripts/start.sh
+```
+
+**Post-mortem**: единая строка catch-all в `start.sh` создаёт иллюзию надёжности — деплой всегда «зелёный», но проверка целостности (`check-migration-integrity.js`) могла быть неполной (не проверять все нужные колонки/enums). Когда оба безопасника дают ложный «OK», баг проходит в прод. Защита: три независимых уровня (правильный `EXCEPTION` в DO-блоках, правильная фильтрация в `start.sh`, полная проверка ключевых объектов в `check-migration-integrity.js`). Ни один слой не должен доверять, что остальные сработали.
+
+Зафиксировано в: `stroydocs/scripts/start.sh`, `stroydocs/scripts/check-migration-integrity.js`, миграции `20260421010000`, `20260421060000`, `20260422000000`, `20260422020000`, `20260423000000`, + финальная рескью `20260424000000_global_subscription_workspace_recovery`.
+
+---
+
 > Правило: после каждой исправленной ошибки добавить урок сюда.
 > Команда: "Добавь урок в docs/lessons.md: [описание ошибки]"

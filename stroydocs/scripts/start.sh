@@ -35,22 +35,37 @@ node scripts/bulk-mark-stale-migrations.js || true
 
 # ── Применение миграций ──────────────────────────────────────────────────────
 # Стратегия:
-#   1. Запускаем migrate deploy
-#   2. Если миграция падает (таблица уже существует из db push) —
-#      помечаем как applied и повторяем
-#   3. На свежей БД все миграции применяются
-#   4. На существующей БД уже созданные таблицы пропускаются
+#   1. Запускаем migrate deploy, захватываем stdout+stderr в переменную.
+#   2. Если успех — break.
+#   3. Иначе извлекаем код ошибки Postgres:
+#      • 42P07 (table already exists), 42701 (column already exists),
+#        42710 (object/enum already exists), 42723 (function already exists)
+#        — db push конфликт, безопасно пометить applied и продолжить.
+#      • 42704 (type not found), 42P01 (relation not found), и другие
+#        — РЕАЛЬНАЯ ошибка: миграция не выполнена, halt с явной диагностикой.
+#        Не маскировать — это прямой путь к P2022 в рантайме.
+#   4. На свежей БД все миграции применяются нормально.
 echo '[migrate] Запуск миграций...'
 
 attempt=0
-max_attempts=120  # должен быть больше общего числа миграций (сейчас ~98)
+max_attempts=120  # должен быть больше общего числа миграций (сейчас ~99)
+MIGRATE_LOG=/tmp/migrate-deploy.log
+
 while [ $attempt -lt $max_attempts ]; do
-  if node node_modules/prisma/build/index.js migrate deploy 2>&1; then
+  if node node_modules/prisma/build/index.js migrate deploy >"$MIGRATE_LOG" 2>&1; then
+    cat "$MIGRATE_LOG"
     echo '[migrate] Done.'
     break
   fi
 
   attempt=$((attempt + 1))
+
+  # Показываем вывод migrate deploy всегда — чтобы в логах контейнера была
+  # видна реальная ошибка Postgres (а не только обобщение start.sh).
+  cat "$MIGRATE_LOG"
+
+  # Извлекаем код ошибки из вывода Prisma: "Database error code: XXXXX"
+  CODE=$(grep -oE 'Database error code: [0-9A-Z]+' "$MIGRATE_LOG" | head -1 | awk '{print $NF}')
 
   # Находим failed миграцию
   FAILED=$(node scripts/find-failed-migration.js 2>/dev/null) || {
@@ -58,14 +73,35 @@ while [ $attempt -lt $max_attempts ]; do
     exit 1
   }
 
-  echo "[migrate] Миграция $FAILED: таблица уже существует (db push), помечаем as applied..."
-  node node_modules/prisma/build/index.js migrate resolve --applied "$FAILED" 2>/dev/null || true
+  case "$CODE" in
+    42P07|42701|42710|42723)
+      # Benign: объект уже существует (типичный случай для БД, частично
+      # созданной через db push). Помечаем applied и продолжаем.
+      echo "[migrate] Миграция $FAILED: объект уже существует (код $CODE, db push), помечаем applied..."
+      node node_modules/prisma/build/index.js migrate resolve --applied "$FAILED" 2>/dev/null || true
+      ;;
+    *)
+      # РЕАЛЬНАЯ ошибка (type/relation не существует, constraint violation и т.д.)
+      # НЕ маскировать — это корёжит цепочку миграций и ведёт к P2022 в рантайме.
+      echo '=================================================================='
+      echo "[migrate] КРИТИЧЕСКАЯ ОШИБКА в миграции: $FAILED"
+      echo "[migrate] Postgres error code: ${CODE:-unknown}"
+      echo '[migrate] Это НЕ «таблица уже существует» — миграция НЕ выполнена.'
+      echo '[migrate] Помечать --applied запрещено (маскирует сбой).'
+      echo '[migrate] Диагностика: проверить SQL миграции и предшествующие'
+      echo '[migrate]   миграции на предмет зависимостей (типы/таблицы).'
+      echo '=================================================================='
+      exit 1
+      ;;
+  esac
 done
 
 if [ $attempt -ge $max_attempts ]; then
   echo '[migrate] Превышено количество попыток миграции'
   exit 1
 fi
+
+rm -f "$MIGRATE_LOG"
 
 # ── Запуск BIM-воркера (только если Redis доступен) ──────────────────────────
 REDIS_OK=$(node -e "

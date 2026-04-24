@@ -71,9 +71,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS "workspace_credits_workspaceId_key"
 -- КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: activeWorkspaceId отсутствовал → P2022 при регистрации
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "activeWorkspaceId" TEXT;
 
+-- Если #010000 откатился, enum ProfessionalRole отсутствует → ловим undefined_object.
+-- Финальная рескью-миграция #20260424000000 гарантированно создаст тип и колонку.
 DO $$ BEGIN
   ALTER TABLE "users" ADD COLUMN "professionalRole" "ProfessionalRole";
-EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+EXCEPTION
+  WHEN duplicate_column THEN NULL;
+  WHEN undefined_object THEN NULL;
+END $$;
 
 -- ── 6. Колонка building_objects.workspaceId ───────────────────────────────────
 ALTER TABLE "building_objects" ADD COLUMN IF NOT EXISTS "workspaceId" TEXT;

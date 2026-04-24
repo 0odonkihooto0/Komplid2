@@ -373,12 +373,23 @@ EXCEPTION WHEN OTHERS THEN NULL; END $$;
 -- 5. КОЛОНКИ В workspaces И users
 -- ═══════════════════════════════════════════════════════════════════════════
 
-ALTER TABLE "workspaces" ADD COLUMN IF NOT EXISTS "activeSubscriptionId" TEXT;
+-- workspaces может отсутствовать если #060000 откатился — защищаем undefined_table
 DO $$ BEGIN
+  ALTER TABLE "workspaces" ADD COLUMN IF NOT EXISTS "activeSubscriptionId" TEXT;
   CREATE UNIQUE INDEX IF NOT EXISTS "workspaces_activeSubscriptionId_key"
       ON "workspaces"("activeSubscriptionId");
-EXCEPTION WHEN OTHERS THEN NULL; END $$;
-ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "professionalRole" "ProfessionalRole";
+EXCEPTION
+  WHEN undefined_table THEN NULL;
+  WHEN OTHERS THEN NULL;
+END $$;
+-- ProfessionalRole точно создан выше (в блоке 1 этой же миграции),
+-- но на всякий случай защищаем undefined_object
+DO $$ BEGIN
+  ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "professionalRole" "ProfessionalRole";
+EXCEPTION
+  WHEN undefined_object THEN NULL;
+  WHEN duplicate_column THEN NULL;
+END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 6. НОВЫЕ ТАБЛИЦЫ РАСШИРЕННОГО БИЛЛИНГА (из 070000)

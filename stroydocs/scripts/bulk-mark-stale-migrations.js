@@ -30,6 +30,7 @@ const ALWAYS_RUN = new Set([
   '20260422010000_fix_normative_refs_idempotent',
   '20260422020000_fix_subscriptions_idempotent',
   '20260423000000_ensure_workspace_columns_final',
+  '20260424000000_global_subscription_workspace_recovery',
 ]);
 
 /**

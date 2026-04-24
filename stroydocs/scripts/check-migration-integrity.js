@@ -34,8 +34,21 @@ const KEY_TABLES = [
 // (если миграция была помечена --applied без выполнения SQL).
 // Проверяем через information_schema чтобы не зависеть от Prisma-клиента.
 const KEY_COLUMNS = [
-  { table: 'users', column: 'activeWorkspaceId' },       // workspace migrations (#93, #95, #98)
-  { table: 'building_objects', column: 'workspaceId' },  // workspace migrations (#93, #95, #98)
+  { table: 'users', column: 'activeWorkspaceId' },         // workspace migrations (#93, #95, #98)
+  { table: 'users', column: 'professionalRole' },          // subscription migration (#88) — enum ProfessionalRole
+  { table: 'building_objects', column: 'workspaceId' },    // workspace migrations (#93, #95, #98)
+  { table: 'workspaces', column: 'activeSubscriptionId' }, // subscription migration (#88)
+];
+
+// Ключевые ENUM-типы: если таблица subscription_plans есть,
+// но ProfessionalRole нет — значит #010000 откатился и цепочка битая.
+// Проверяем через pg_type (как в bulk-mark-stale-migrations.js).
+const KEY_ENUMS = [
+  'WorkspaceType',
+  'WorkspaceRole',
+  'PlanType',
+  'ProfessionalRole',
+  'SubscriptionStatus',
 ];
 
 async function main() {
@@ -85,12 +98,32 @@ async function main() {
         }
       }
 
-      if (missingCols.length === 0) {
-        console.log('[integrity] Все ключевые таблицы и колонки присутствуют — OK');
+      // И enum-типы: если #010000 откатился, enums не созданы,
+      // а таблицы могли уже существовать (например, через db push ранее).
+      const missingEnums = [];
+      for (const enumName of KEY_ENUMS) {
+        try {
+          const rows = await db.$queryRawUnsafe(
+            `SELECT 1 FROM pg_type WHERE typname = $1 AND typtype = 'e' LIMIT 1`,
+            enumName
+          );
+          if (rows.length === 0) missingEnums.push(enumName);
+        } catch {
+          missingEnums.push(enumName);
+        }
+      }
+
+      if (missingCols.length === 0 && missingEnums.length === 0) {
+        console.log('[integrity] Все ключевые таблицы, колонки и enums присутствуют — OK');
         return;
       }
 
-      console.log(`[integrity] Отсутствуют колонки: ${missingCols.join(', ')}`);
+      if (missingCols.length > 0) {
+        console.log(`[integrity] Отсутствуют колонки: ${missingCols.join(', ')}`);
+      }
+      if (missingEnums.length > 0) {
+        console.log(`[integrity] Отсутствуют enum-типы: ${missingEnums.join(', ')}`);
+      }
       console.log(
         `[integrity] _prisma_migrations содержит ${migrationCount} записей — ошибочные`
       );
