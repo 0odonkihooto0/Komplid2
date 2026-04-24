@@ -71,9 +71,14 @@ CREATE INDEX IF NOT EXISTS "building_objects_workspaceId_idx"
 -- ── 6. Колонки users ─────────────────────────────────────────────────────
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "activeWorkspaceId" TEXT;
 
+-- Если #010000 откатился, enum ProfessionalRole отсутствует → ловим undefined_object.
+-- Финальная рескью-миграция #20260424000000 добавит и тип, и колонку.
 DO $$ BEGIN
   ALTER TABLE "users" ADD COLUMN "professionalRole" "ProfessionalRole";
-EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+EXCEPTION
+  WHEN duplicate_column THEN NULL;
+  WHEN undefined_object THEN NULL;
+END $$;
 
 -- ── 7. FK constraints (все идемпотентны) ─────────────────────────────────
 DO $$ BEGIN

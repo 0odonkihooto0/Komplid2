@@ -49,9 +49,15 @@ CREATE INDEX IF NOT EXISTS "workspace_members_userId_idx" ON "workspace_members"
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "activeWorkspaceId" TEXT;
 
 -- 5. users.professionalRole (добавлен тем же модулем 15, enum ProfessionalRole создан в 010000)
+-- ВАЖНО: если #010000 откатился (каскад из-за ALTER workspaces), тип ProfessionalRole
+-- может отсутствовать — ловим и undefined_object, финальная рескью-миграция
+-- #20260424000000 гарантированно его создаст и добавит колонку.
 DO $$ BEGIN
   ALTER TABLE "users" ADD COLUMN "professionalRole" "ProfessionalRole";
-EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+EXCEPTION
+  WHEN duplicate_column THEN NULL;
+  WHEN undefined_object THEN NULL;
+END $$;
 
 -- 6. building_objects.workspaceId — ОСНОВНОЕ ИСПРАВЛЕНИЕ
 ALTER TABLE "building_objects" ADD COLUMN IF NOT EXISTS "workspaceId" TEXT;

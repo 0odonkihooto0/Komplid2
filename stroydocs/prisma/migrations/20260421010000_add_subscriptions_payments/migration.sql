@@ -96,32 +96,51 @@ CREATE INDEX "payments_status_idx" ON "payments"("status");
 CREATE INDEX "payments_yookassaPaymentId_idx" ON "payments"("yookassaPaymentId");
 
 -- AlterTable: расширить workspaces
-ALTER TABLE "workspaces" ADD COLUMN IF NOT EXISTS "activeSubscriptionId" TEXT;
-CREATE UNIQUE INDEX IF NOT EXISTS "workspaces_activeSubscriptionId_key" ON "workspaces"("activeSubscriptionId");
+-- ВАЖНО: workspaces создаётся в #060000 (позже этой миграции по времени
+-- лексикографического порядка). На свежей БД таблицы ещё нет, поэтому
+-- оборачиваем в DO $$ EXCEPTION WHEN undefined_table. Колонка и FK будут
+-- добавлены позже в #060000 / #20260424000000.
+DO $$ BEGIN
+  ALTER TABLE "workspaces" ADD COLUMN IF NOT EXISTS "activeSubscriptionId" TEXT;
+  CREATE UNIQUE INDEX IF NOT EXISTS "workspaces_activeSubscriptionId_key" ON "workspaces"("activeSubscriptionId");
+EXCEPTION WHEN undefined_table THEN NULL; END $$;
 
--- AlterTable: расширить users
+-- AlterTable: расширить users (таблица users точно есть с init-миграции)
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "professionalRole" "ProfessionalRole";
 
 -- AddForeignKey: subscriptions -> workspaces
-ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_workspaceId_fkey"
+-- workspaces может отсутствовать на свежей БД — защищаем undefined_table
+DO $$ BEGIN
+  ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_workspaceId_fkey"
     FOREIGN KEY ("workspaceId") REFERENCES "workspaces"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN undefined_table THEN NULL; WHEN duplicate_object THEN NULL; END $$;
 
 -- AddForeignKey: subscriptions -> subscription_plans
-ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_planId_fkey"
+DO $$ BEGIN
+  ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_planId_fkey"
     FOREIGN KEY ("planId") REFERENCES "subscription_plans"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- AddForeignKey: workspaces -> subscriptions (activeSubscription)
-ALTER TABLE "workspaces" ADD CONSTRAINT "workspaces_activeSubscriptionId_fkey"
+DO $$ BEGIN
+  ALTER TABLE "workspaces" ADD CONSTRAINT "workspaces_activeSubscriptionId_fkey"
     FOREIGN KEY ("activeSubscriptionId") REFERENCES "subscriptions"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN undefined_table THEN NULL; WHEN undefined_column THEN NULL; WHEN duplicate_object THEN NULL; END $$;
 
 -- AddForeignKey: payments -> workspaces
-ALTER TABLE "payments" ADD CONSTRAINT "payments_workspaceId_fkey"
+DO $$ BEGIN
+  ALTER TABLE "payments" ADD CONSTRAINT "payments_workspaceId_fkey"
     FOREIGN KEY ("workspaceId") REFERENCES "workspaces"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN undefined_table THEN NULL; WHEN duplicate_object THEN NULL; END $$;
 
 -- AddForeignKey: payments -> users
-ALTER TABLE "payments" ADD CONSTRAINT "payments_userId_fkey"
+DO $$ BEGIN
+  ALTER TABLE "payments" ADD CONSTRAINT "payments_userId_fkey"
     FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- AddForeignKey: payments -> subscriptions
-ALTER TABLE "payments" ADD CONSTRAINT "payments_subscriptionId_fkey"
+DO $$ BEGIN
+  ALTER TABLE "payments" ADD CONSTRAINT "payments_subscriptionId_fkey"
     FOREIGN KEY ("subscriptionId") REFERENCES "subscriptions"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
