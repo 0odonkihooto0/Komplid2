@@ -944,6 +944,11 @@ esac
 ```
 Ретраев на транзиент — 6 штук (суммарно ~62 сек с backoff 2/4/8/16/30/30), после — halt.
 
+**Правило 7 — миграции без первичного CREATE-объекта (RENAME/ALTER/DROP) на не-пустой БД помечать applied**:
+После TRUNCATE `_prisma_migrations` все миграции запускаются заново. Не-идемпотентные операции типа `ALTER TABLE "projects" RENAME TO "building_objects"` падают с 42P01, если таблица уже переименована на этой БД (через `db push` или прошлый старый start.sh). Без `bulk-mark-stale-migrations.js` поддержки таких миграций каждый TRUNCATE-цикл будет ронять деплой.
+Логика `bulk-mark`: если `extractPrimaryObject(sql)` вернул `null` (миграция целиком из RENAME/ALTER/DROP, без CREATE TABLE/CREATE TYPE/ADD COLUMN), И в БД уже есть applied-миграции либо ключевая таблица `users` — пометить её applied. Это безопасно: на пустой БД `dbHasContent === false` → миграция запустится нормально; на не-пустой БД она по факту уже применена (и/или таблица была создана через db push сразу под целевым именем).
+Параллельно: каждая такая миграция должна быть и сама по себе идемпотентной — `RENAME TO` оборачивать в `DO $$ BEGIN ... EXCEPTION WHEN undefined_table THEN NULL; WHEN duplicate_table THEN NULL; END $$`. Двойная защита: сама миграция терпима к повторному запуску + `bulk-mark` пропускает её на не-пустой БД.
+
 Быстрая проверка нарушений:
 ```bash
 # DO-блоки с enum-типом без undefined_object:
