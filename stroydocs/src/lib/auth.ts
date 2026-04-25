@@ -46,6 +46,7 @@ export const authOptions: NextAuthOptions = {
           organizationId: user.organizationId,
           activeWorkspaceId: user.activeWorkspaceId ?? null,
           professionalRole: user.professionalRole ?? null,
+          onboardingCompleted: user.onboardingCompleted,
         };
       },
     }),
@@ -60,6 +61,7 @@ export const authOptions: NextAuthOptions = {
         token.lastName = user.lastName;
         token.activeWorkspaceId = user.activeWorkspaceId;
         token.professionalRole = user.professionalRole;
+        token.onboardingCompleted = user.onboardingCompleted;
       }
       return token;
     },
@@ -73,6 +75,7 @@ export const authOptions: NextAuthOptions = {
         organizationId: token.organizationId,
         activeWorkspaceId: token.activeWorkspaceId ?? null,
         professionalRole: token.professionalRole ?? null,
+        onboardingCompleted: token.onboardingCompleted ?? false,
       };
       return session;
     },
