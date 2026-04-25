@@ -12,6 +12,8 @@ import { seedDefectTemplates } from './seeds/defect-templates';
 import { seedReferenceBooks } from './seeds/reference-books';
 import { seedSubscriptionPlans } from './seeds/subscription-plans';
 import { seedAosrTemplates } from './seeds/aosr-templates';
+import { seedSubscriptionFeatures } from './seeds/features';
+import { seedPlanFeatures } from './seeds/plan-features';
 
 const prisma = new PrismaClient();
 
@@ -293,6 +295,10 @@ async function main() {
 
   // === Тарифные планы (Модуль 15 Фаза 2) ===
   await seedSubscriptionPlans(prisma);
+
+  // === Фичи и связки план↔фича (AUTH_ONBOARDING A2.3) ===
+  await seedSubscriptionFeatures(prisma);
+  await seedPlanFeatures(prisma);
 
   console.log('Seed завершён:', { org: org.name, admin: admin.email });
 }
