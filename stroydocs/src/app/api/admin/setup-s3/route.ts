@@ -4,6 +4,7 @@ import { s3 } from '@/lib/s3';
 import { errorResponse, successResponse } from '@/utils/api';
 import { logger } from '@/lib/logger';
 import { getSessionOrThrow, secureCompare } from '@/lib/auth-utils';
+import { requireSystemAdmin } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,9 +26,7 @@ export async function POST(req: NextRequest) {
     // Если секрет не подошёл — проверяем сессию с ролью ADMIN
     try {
       const session = await getSessionOrThrow();
-      if (session.user.role !== 'ADMIN') {
-        return errorResponse('Недостаточно прав', 403);
-      }
+      requireSystemAdmin(session);
     } catch (e) {
       if (e instanceof NextResponse) return e;
       return errorResponse('Unauthorized', 401);

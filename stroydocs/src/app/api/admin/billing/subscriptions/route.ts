@@ -3,13 +3,14 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import type { Prisma, SubscriptionStatus, BillingPeriod } from '@prisma/client';
+import { requireSystemAdmin } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
     const session = await getSessionOrThrow();
-    if (session.user.role !== 'ADMIN') return errorResponse('Недостаточно прав', 403);
+    requireSystemAdmin(session);
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status');

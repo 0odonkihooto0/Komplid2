@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { updateOrganizationSchema } from '@/lib/validations/organization';
 import { successResponse, errorResponse } from '@/utils/api';
+import { requireSystemAdmin } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,9 +32,7 @@ export async function PUT(req: NextRequest) {
     const session = await getSessionOrThrow();
 
     // Только админ может редактировать организацию
-    if (session.user.role !== 'ADMIN') {
-      return errorResponse('Недостаточно прав', 403);
-    }
+    requireSystemAdmin(session);
 
     const body = await req.json();
     const parsed = updateOrganizationSchema.safeParse(body);

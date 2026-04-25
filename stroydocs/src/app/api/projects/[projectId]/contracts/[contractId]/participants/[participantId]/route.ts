@@ -2,6 +2,7 @@ import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
+import { requireSystemAdmin } from '@/lib/permissions';
 import { successResponse, errorResponse } from '@/utils/api';
 
 export const dynamic = 'force-dynamic';
@@ -20,9 +21,7 @@ export async function DELETE(
     if (!project) return errorResponse('Проект не найден', 404);
 
     // Только ADMIN может удалять участников договора
-    if (session.user.role !== 'ADMIN') {
-      return errorResponse('Только администратор может удалять участников', 403);
-    }
+    requireSystemAdmin(session);
 
     const participant = await db.contractParticipant.findFirst({
       where: { id: params.participantId, contractId: params.contractId },

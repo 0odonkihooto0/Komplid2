@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
+import { requireSystemAdmin } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,9 +52,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
     if (session.user.organizationId !== params.orgId) {
       return errorResponse('Недостаточно прав', 403);
     }
-    if (session.user.role !== 'ADMIN') {
-      return errorResponse('Только администратор может редактировать регламенты', 403);
-    }
+    requireSystemAdmin(session);
 
     const regulation = await db.workflowRegulation.findFirst({
       where: { id: params.regId, organizationId: params.orgId },
@@ -89,9 +88,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     if (session.user.organizationId !== params.orgId) {
       return errorResponse('Недостаточно прав', 403);
     }
-    if (session.user.role !== 'ADMIN') {
-      return errorResponse('Только администратор может удалять регламенты', 403);
-    }
+    requireSystemAdmin(session);
 
     const regulation = await db.workflowRegulation.findFirst({
       where: { id: params.regId, organizationId: params.orgId },

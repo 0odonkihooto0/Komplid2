@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { getSessionOrThrow } from '@/lib/auth-utils';
+import { isSystemAdmin } from '@/lib/permissions';
 import { successResponse, errorResponse } from '@/utils/api';
 import { createDesignDocSchema } from '@/lib/validations/design-doc';
 import { getNextDesignDocNumber } from '@/lib/numbering';
@@ -27,7 +28,7 @@ export async function GET(
     const category = sp.get('category');
     // Только ADMIN может запросить включение удалённых документов
     const includeDeleted = sp.get('includeDeleted') === 'true';
-    const canSeeDeleted = includeDeleted && session.user.role === 'ADMIN';
+    const canSeeDeleted = includeDeleted && isSystemAdmin(session);
     // Фильтр для двусторонней привязки: вернуть только документы, связанные с конкретным АОСР
     const linkedTo = sp.get('linkedTo');
     const page = Math.max(1, parseInt(sp.get('page') ?? '1'));

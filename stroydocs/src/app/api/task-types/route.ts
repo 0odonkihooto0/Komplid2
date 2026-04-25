@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { createTaskTypeSchema } from '@/lib/validations/task';
+import { requireSystemAdmin } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 export async function GET(_req: NextRequest) {
@@ -31,9 +32,7 @@ export async function POST(req: NextRequest) {
     const session = await getSessionOrThrow();
     const orgId = session.user.organizationId;
 
-    if (session.user.role !== 'ADMIN') {
-      return errorResponse('Создание типов задач доступно только администраторам', 403);
-    }
+    requireSystemAdmin(session);
 
     const body: unknown = await req.json();
     const parsed = createTaskTypeSchema.safeParse(body);

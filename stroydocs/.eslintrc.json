@@ -7,5 +7,24 @@
       "destructuredArrayIgnorePattern": "^_",
       "ignoreRestSiblings": true
     }]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/app/api/**/*.ts", "src/lib/**/*.ts", "src/components/**/*.ts", "src/components/**/*.tsx"],
+      "excludedFiles": ["src/lib/permissions/**/*.ts"],
+      "rules": {
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "MemberExpression[object.property.name='role'][parent.right.value='OWNER']",
+            "message": "Используйте hasPermission() или requirePermission() вместо прямых сравнений WorkspaceRole. Прямые сравнения разрешены только в src/lib/permissions/"
+          },
+          {
+            "selector": "MemberExpression[object.property.name='role'][parent.right.value='ADMIN'][parent.parent.type='IfStatement']",
+            "message": "Используйте requireSystemAdmin() или isSystemAdmin() вместо session.user.role === 'ADMIN'. Прямые сравнения разрешены только в src/lib/permissions/"
+          }
+        ]
+      }
+    }
+  ]
 }

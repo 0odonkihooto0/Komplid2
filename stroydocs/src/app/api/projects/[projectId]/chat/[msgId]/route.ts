@@ -2,6 +2,7 @@ import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
+import { isSystemAdmin } from '@/lib/permissions';
 import { successResponse, errorResponse } from '@/utils/api';
 
 export const dynamic = 'force-dynamic';
@@ -29,7 +30,7 @@ export async function DELETE(
     }
 
     // Удалить может только автор сообщения или администратор
-    const isAdmin = session.user.role === 'ADMIN';
+    const isAdmin = isSystemAdmin(session);
     const isAuthor = message.authorId === session.user.id;
     if (!isAdmin && !isAuthor) {
       return errorResponse('Удалить сообщение может только его автор или администратор', 403);

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
+import { requireSystemAdmin } from '@/lib/permissions';
 import { successResponse, errorResponse } from '@/utils/api';
 
 export const dynamic = 'force-dynamic';
@@ -72,9 +73,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     // DEACTIVATE — только для ADMIN
     if (action === 'DEACTIVATE') {
-      if (session.user.role !== 'ADMIN') {
-        return errorResponse('Снятие режима хранения доступно только администратору', 403);
-      }
+      requireSystemAdmin(session);
 
       if (!doc.storageMode) {
         return errorResponse('Документ не находится в режиме хранения', 409);

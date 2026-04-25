@@ -8,6 +8,7 @@ import { writeAudit } from '@/lib/references/audit';
 import type { ReferenceFieldSchema } from '@/lib/references/types';
 import { ReferenceAuditAction } from '@prisma/client';
 import { z } from 'zod';
+import { requireSystemAdmin } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,7 +83,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (!schema) return errorResponse('Справочник не найден', 404);
 
     if (schema.adminOnly || schema.scope === 'system') {
-      if (session.user.role !== 'ADMIN') return errorResponse('Недостаточно прав', 403);
+      requireSystemAdmin(session);
     }
 
     const modelClient = getModelClient(schema.model);
@@ -130,7 +131,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     if (!schema) return errorResponse('Справочник не найден', 404);
 
     if (schema.adminOnly || schema.scope === 'system') {
-      if (session.user.role !== 'ADMIN') return errorResponse('Недостаточно прав', 403);
+      requireSystemAdmin(session);
     }
 
     const modelClient = getModelClient(schema.model);

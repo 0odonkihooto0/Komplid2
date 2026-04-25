@@ -7,6 +7,7 @@ import { getReferenceSchema } from '@/lib/references/registry';
 import { writeAudit } from '@/lib/references/audit';
 import { ReferenceAuditAction } from '@prisma/client';
 import { z } from 'zod';
+import { requireSystemAdmin } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     if (!schema) return errorResponse('Справочник не найден', 404);
 
     if (schema.adminOnly || schema.scope === 'system') {
-      if (session.user.role !== 'ADMIN') return errorResponse('Недостаточно прав', 403);
+      requireSystemAdmin(session);
     }
 
     const body = await req.json();
