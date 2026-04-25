@@ -3,6 +3,7 @@ import type { Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
+import { requireSystemAdmin } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,7 @@ export async function POST(
 ) {
   try {
     const session = await getSessionOrThrow();
-    if (session.user.role !== 'ADMIN') return errorResponse('Недостаточно прав', 403);
+    requireSystemAdmin(session);
 
     const sub = await db.subscription.findUnique({
       where: { id: params.id },

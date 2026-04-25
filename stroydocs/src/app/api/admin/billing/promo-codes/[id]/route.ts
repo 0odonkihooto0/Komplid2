@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
+import { requireSystemAdmin } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,7 @@ export async function DELETE(
 ) {
   try {
     const session = await getSessionOrThrow();
-    if (session.user.role !== 'ADMIN') return errorResponse('Недостаточно прав', 403);
+    requireSystemAdmin(session);
 
     const promo = await db.promoCode.findUnique({ where: { id: params.id } });
     if (!promo) return errorResponse('Промокод не найден', 404);

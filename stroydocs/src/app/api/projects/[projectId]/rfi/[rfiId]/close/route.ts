@@ -2,6 +2,7 @@ import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
+import { isSystemAdmin } from '@/lib/permissions';
 import { successResponse, errorResponse } from '@/utils/api';
 
 export const dynamic = 'force-dynamic';
@@ -24,7 +25,7 @@ export async function POST(
     if (!rfi) return errorResponse('RFI не найден', 404);
 
     // Закрыть может только автор или администратор
-    const isAdmin = session.user.role === 'ADMIN';
+    const isAdmin = isSystemAdmin(session);
     const isAuthor = rfi.authorId === session.user.id;
     if (!isAdmin && !isAuthor) {
       return errorResponse('Закрыть RFI может только его автор или администратор', 403);

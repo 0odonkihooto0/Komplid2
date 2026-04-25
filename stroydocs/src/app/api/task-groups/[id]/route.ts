@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import { updateTaskGroupSchema } from '@/lib/validations/task';
+import { isSystemAdmin } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 type Params = { params: Promise<{ id: string }> };
@@ -42,7 +43,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const group = await db.taskGroup.findFirst({ where: { id, organizationId: orgId } });
     if (!group) return errorResponse('Группа не найдена', 404);
 
-    const isAdmin = session.user.role === 'ADMIN';
+    const isAdmin = isSystemAdmin(session);
     if (!isAdmin && group.authorId !== userId) {
       return errorResponse('Нет прав для редактирования группы', 403);
     }
@@ -100,7 +101,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     });
     if (!group) return errorResponse('Группа не найдена', 404);
 
-    const isAdmin = session.user.role === 'ADMIN';
+    const isAdmin = isSystemAdmin(session);
     if (!isAdmin && group.authorId !== userId) {
       return errorResponse('Нет прав для удаления группы', 403);
     }

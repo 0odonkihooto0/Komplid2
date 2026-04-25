@@ -2,6 +2,7 @@ import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
+import { isSystemAdmin } from '@/lib/permissions';
 import { successResponse, errorResponse } from '@/utils/api';
 import { updateQuestionSchema } from '@/lib/validations/question';
 
@@ -97,7 +98,7 @@ export async function DELETE(req: NextRequest, { params }: RouteContext) {
     if (!issue) return errorResponse('Вопрос не найден', 404);
 
     // Удалять может только автор или ADMIN
-    if (issue.authorId !== session.user.id && session.user.role !== 'ADMIN') {
+    if (issue.authorId !== session.user.id && !isSystemAdmin(session)) {
       return errorResponse('Недостаточно прав', 403);
     }
 

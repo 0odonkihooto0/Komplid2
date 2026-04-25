@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
 import type { DiscountType, PlanCategory } from '@prisma/client';
+import { requireSystemAdmin } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +24,7 @@ const createSchema = z.object({
 export async function GET() {
   try {
     const session = await getSessionOrThrow();
-    if (session.user.role !== 'ADMIN') return errorResponse('Недостаточно прав', 403);
+    requireSystemAdmin(session);
 
     const codes = await db.promoCode.findMany({
       orderBy: { createdAt: 'desc' },
@@ -52,7 +53,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSessionOrThrow();
-    if (session.user.role !== 'ADMIN') return errorResponse('Недостаточно прав', 403);
+    requireSystemAdmin(session);
 
     const body = await req.json();
     const parsed = createSchema.safeParse(body);

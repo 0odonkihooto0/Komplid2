@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
+import { requireSystemAdmin } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
     const session = await getSessionOrThrow();
-    if (session.user.role !== 'ADMIN') return errorResponse('Недостаточно прав', 403);
+    requireSystemAdmin(session);
 
     const subs = await db.subscription.findMany({
       where: { status: { in: ['PAST_DUE', 'GRACE'] } },

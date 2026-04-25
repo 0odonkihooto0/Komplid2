@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
+import { requireSystemAdmin } from '@/lib/permissions';
 export const dynamic = 'force-dynamic';
 
 
@@ -9,9 +10,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const session = await getSessionOrThrow();
-    if (session.user.role !== 'ADMIN') {
-      return errorResponse('Недостаточно прав', 403);
-    }
+    requireSystemAdmin(session);
 
     const suspicious = await db.referral.findMany({
       where: { suspicious: true, rewardStatus: { not: 'CANCELED' } },
@@ -42,9 +41,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSessionOrThrow();
-    if (session.user.role !== 'ADMIN') {
-      return errorResponse('Недостаточно прав', 403);
-    }
+    requireSystemAdmin(session);
 
     const body = await req.json() as { referralId: string; action: 'confirm' | 'cancel' };
     const { referralId, action } = body;

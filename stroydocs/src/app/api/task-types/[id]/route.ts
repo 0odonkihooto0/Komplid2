@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
 import { successResponse, errorResponse } from '@/utils/api';
+import { requireSystemAdmin } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 type Params = { params: Promise<{ id: string }> };
@@ -12,9 +13,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     const orgId = session.user.organizationId;
     const { id } = await params;
 
-    if (session.user.role !== 'ADMIN') {
-      return errorResponse('Удаление типов задач доступно только администраторам', 403);
-    }
+    requireSystemAdmin(session);
 
     const type = await db.taskType.findFirst({
       where: { id, organizationId: orgId },

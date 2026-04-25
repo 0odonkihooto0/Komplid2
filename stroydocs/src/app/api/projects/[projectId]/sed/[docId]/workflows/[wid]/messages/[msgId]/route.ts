@@ -2,6 +2,7 @@ import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionOrThrow } from '@/lib/auth-utils';
+import { isSystemAdmin } from '@/lib/permissions';
 import { successResponse, errorResponse } from '@/utils/api';
 
 export const dynamic = 'force-dynamic';
@@ -24,7 +25,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     if (!message) return errorResponse('Сообщение не найдено', 404);
 
     // Удаление разрешено только автору или администратору
-    if (message.authorId !== session.user.id && session.user.role !== 'ADMIN') {
+    if (message.authorId !== session.user.id && !isSystemAdmin(session)) {
       return errorResponse('Недостаточно прав для удаления сообщения', 403);
     }
 
