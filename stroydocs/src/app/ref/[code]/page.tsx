@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { db } from '@/lib/db';
 import type { ProfessionalRole } from '@prisma/client';
+import { setSignupContext } from '@/lib/tracking/signupContext';
 
 const ROLE_LABELS: Record<ProfessionalRole, string> = {
   SMETCHIK: 'сметчик',
@@ -49,6 +50,35 @@ export default async function RefLandingPage({ params }: Props) {
   const cookieStore = await cookies();
   cookieStore.set('ref_code', params.code, { maxAge: 30 * 24 * 60 * 60, path: '/' });
   cookieStore.set('ref_referral_id', referral.id, { maxAge: 30 * 24 * 60 * 60, path: '/' });
+
+  // Определить план/intent по роли реферера и сохранить signupContext
+  const intentByRole: Record<ProfessionalRole, string> = {
+    SMETCHIK: 'ESTIMATOR',
+    PTO: 'PTO_ENGINEER',
+    FOREMAN: 'CONTRACTOR_INDIVIDUAL',
+    SK_INSPECTOR: 'CONSTRUCTION_SUPERVISOR',
+    SUPPLIER: 'CONTRACTOR_GENERAL',
+    PROJECT_MANAGER: 'CONTRACTOR_GENERAL',
+    ACCOUNTANT: 'CONTRACTOR_GENERAL',
+  };
+
+  const planByRole: Record<ProfessionalRole, string> = {
+    SMETCHIK: 'smetchik_studio',
+    PTO: 'id_master',
+    FOREMAN: 'prorab_journal',
+    SK_INSPECTOR: 'id_master',
+    SUPPLIER: 'team',
+    PROJECT_MANAGER: 'team',
+    ACCOUNTANT: 'team',
+  };
+
+  const role = refCode.user.professionalRole;
+  await setSignupContext(cookieStore, {
+    referredByCode: params.code,
+    intent: role ? intentByRole[role] : undefined,
+    plan: role ? planByRole[role] : undefined,
+    signupSource: `/ref/${params.code}`,
+  });
 
   const referrerName = `${refCode.user.firstName} ${refCode.user.lastName}`;
   const referrerRoleLabel = refCode.user.professionalRole
