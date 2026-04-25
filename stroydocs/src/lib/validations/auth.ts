@@ -34,3 +34,15 @@ export const soloRegisterSchema = z.object({
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type SoloRegisterInput = z.infer<typeof soloRegisterSchema>;
+
+// Схема для контекстной регистрации (с UTM и preset)
+export const signupSchema = z.object({
+  email: z.email('Введите корректный email'),
+  password: passwordSchema,
+  firstName: z.string().min(1, 'Введите имя'),
+  lastName: z.string().min(1, 'Введите фамилию'),
+  phone: z.string().optional(),
+  agreedToTerms: z.boolean().refine((v) => v === true, { message: 'Необходимо принять условия' }),
+});
+
+export type SignupInput = z.infer<typeof signupSchema>;

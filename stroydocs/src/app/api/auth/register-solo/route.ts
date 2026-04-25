@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 import { hash } from 'bcryptjs';
 import { randomUUID } from 'crypto';
 import { db } from '@/lib/db';
+import { UserIntent } from '@prisma/client';
 import { soloRegisterSchema } from '@/lib/validations/auth';
 import { successResponse, errorResponse } from '@/utils/api';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
@@ -17,6 +18,33 @@ export async function POST(req: NextRequest) {
     if (!checkRateLimit(`register-solo:${ip}`, 5, 60 * 1000)) {
       return errorResponse('Слишком много запросов, попробуйте позже', 429);
     }
+
+    // Читать signupContext cookie (устанавливается при переходе с лендингов)
+    const signupContextRaw = req.cookies.get('signup_context')?.value;
+    let signupCtx: {
+      plan?: string;
+      intent?: string;
+      referredByCode?: string;
+      signupSource?: string;
+      utmSource?: string;
+      utmMedium?: string;
+      utmCampaign?: string;
+      utmContent?: string;
+      utmTerm?: string;
+    } = {};
+    if (signupContextRaw) {
+      try {
+        signupCtx = JSON.parse(signupContextRaw) as typeof signupCtx;
+      } catch {
+        // невалидный JSON игнорируем
+      }
+    }
+
+    // Проверяем intent на соответствие enum UserIntent
+    const validIntent =
+      signupCtx.intent && Object.values(UserIntent).includes(signupCtx.intent as UserIntent)
+        ? (signupCtx.intent as UserIntent)
+        : undefined;
 
     const body = await req.json();
     const parsed = soloRegisterSchema.safeParse(body);
@@ -50,6 +78,18 @@ export async function POST(req: NextRequest) {
           lastName,
           role: 'WORKER',
           organizationId: personalOrg.id,
+          // Поля из signupContext (UTM, источник, intent)
+          ...(validIntent && { intent: validIntent }),
+          ...(signupCtx.signupSource && { signupSource: signupCtx.signupSource }),
+          ...(signupCtx.referredByCode && { referredByCode: signupCtx.referredByCode }),
+          ...(signupCtx.utmSource && { utmSource: signupCtx.utmSource }),
+          ...(signupCtx.utmMedium && { utmMedium: signupCtx.utmMedium }),
+          ...(signupCtx.utmCampaign && { utmCampaign: signupCtx.utmCampaign }),
+          ...(signupCtx.utmContent && { utmContent: signupCtx.utmContent }),
+          ...(signupCtx.utmTerm && { utmTerm: signupCtx.utmTerm }),
+          // Хэш IP (не хранить сырой IP — ФЗ-152)
+          ...(ip && { signupIpHash: Buffer.from(ip).toString('base64') }),
+          firstTouchAt: new Date(),
         },
       });
 
