@@ -13,6 +13,7 @@ declare module 'next-auth' {
       organizationId: string;
       activeWorkspaceId: string | null;
       professionalRole: ProfessionalRole | null;
+      onboardingCompleted: boolean;
     };
   }
 
@@ -25,6 +26,7 @@ declare module 'next-auth' {
     organizationId: string;
     activeWorkspaceId: string | null;
     professionalRole: ProfessionalRole | null;
+    onboardingCompleted: boolean;
   }
 }
 
@@ -37,5 +39,6 @@ declare module 'next-auth/jwt' {
     lastName: string;
     activeWorkspaceId: string | null | undefined;
     professionalRole: ProfessionalRole | null | undefined;
+    onboardingCompleted: boolean;
   }
 }
