@@ -148,8 +148,40 @@ enum WorkspaceType {
 enum WorkspaceRole {
   OWNER
   ADMIN
-  MEMBER
+  MANAGER      // руководитель проекта
+  FOREMAN      // прораб (отделяем от WORKER)
+  ENGINEER     // ПТО / сметчик
+  WORKER       // рабочий, исполнитель
+  MEMBER       // устаревшее — сохранено для обратной совместимости
   GUEST
+  CUSTOMER     // B2C заказчик (будет использоваться в MODULE17 Фаза 3)
+}
+
+enum UserAccountType {
+  INDIVIDUAL       // физлицо
+  SELF_EMPLOYED    // самозанятый
+  ENTREPRENEUR     // ИП
+  LEGAL_ENTITY     // юрлицо
+  UNKNOWN          // не указал
+}
+
+enum UserIntent {
+  CONTRACTOR_GENERAL       // генподрядчик
+  CONTRACTOR_SUB           // субподрядчик
+  CONTRACTOR_INDIVIDUAL    // бригадир / прораб-одиночка
+  ESTIMATOR                // сметчик
+  PTO_ENGINEER             // ПТО-инженер
+  CUSTOMER_PRIVATE         // частный заказчик (ИЖС/ремонт)
+  CUSTOMER_B2B             // корпоративный заказчик
+  CONSTRUCTION_SUPERVISOR  // технадзор
+  UNKNOWN
+}
+
+enum MemberStatus {
+  ACTIVE
+  SUSPENDED     // временно отключён (например, за неуплату)
+  DEACTIVATED   // выгнан
+  LEFT          // сам ушёл
 }
 
 // === Модуль 15 Фаза 2 — Подписки (базовые) ===
@@ -401,9 +433,53 @@ model SubscriptionPlan {
   subscriptions  Subscription[]
   promoCodeRules PromoCodeRule[]
   invoices       Invoice[]        @relation("InvoicePlan")
+  planFeatures   PlanFeature[]
 
   @@index([category, profiRole])
   @@map("subscription_plans")
+}
+
+enum FeatureCategory {
+  CORE
+  B2C_SMETCHIK
+  B2C_PTO
+  B2C_PRORAB
+  B2C_CUSTOMER
+  B2B
+  AI
+  INTEGRATIONS
+  MARKETPLACE
+}
+
+/// Реестр фича-кодов системы — единый источник истины
+model SubscriptionFeature {
+  id           String          @id @default(cuid())
+  code         String          @unique   // FEATURE_CODES.XXX — UPPER_SNAKE_CASE
+  displayName  String
+  description  String?
+  category     FeatureCategory
+  isLimited    Boolean         @default(false)  // true — фича имеет числовой лимит
+  defaultLimit Int?                              // дефолтный лимит (для Free-плана)
+
+  planFeatures PlanFeature[]
+
+  @@map("subscription_features")
+}
+
+/// Связь план ↔ фича с персональным лимитом
+model PlanFeature {
+  id        String @id @default(cuid())
+  planId    String
+  featureId String
+  included  Boolean @default(true)
+  limit     Int?    // null = unlimited; имеет смысл только если SubscriptionFeature.isLimited
+
+  plan    SubscriptionPlan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  feature SubscriptionFeature @relation(fields: [featureId], references: [id])
+
+  @@unique([planId, featureId])
+  @@index([featureId])
+  @@map("plan_features")
 }
 
 /// Подписка — экземпляр плана, привязанный к workspace
@@ -670,11 +746,24 @@ model WorkspaceMember {
   role        WorkspaceRole
   joinedAt    DateTime      @default(now())
 
+  // Дополнительные поля
+  specialization     String?       // специализация: "сметчик", "прораб" и т.п.
+  title              String?       // должность как её напишет владелец
+  guestScope         Json?         // только для GUEST/CUSTOMER — ограничения видимости
+  invitedBy          String?       // userId того, кто пригласил
+  invitedAt          DateTime?     // когда было отправлено приглашение
+  acceptedAt         DateTime?     // когда принял приглашение
+  lastActiveAt       DateTime?     // последняя активность
+  status             MemberStatus  @default(ACTIVE)
+  deactivatedAt      DateTime?
+  deactivationReason String?
+
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([workspaceId, userId])
-  @@index([userId])
+  @@index([userId, status])
+  @@index([workspaceId, role])
   @@map("workspace_members")
 }
 
@@ -700,6 +789,26 @@ model User {
   ownedWorkspaces      Workspace[]       @relation("WorkspaceOwner")
   workspaceMemberships WorkspaceMember[]
   paymentsInitiated    Payment[]         @relation("PaymentInitiator")
+
+  // AUTH_ONBOARDING — тип аккаунта и намерение
+  accountType         UserAccountType @default(UNKNOWN)
+  intent              UserIntent      @default(UNKNOWN)
+  fullName            String?         // полное ФИО (альтернатива firstName+lastName)
+  inn                 String?         // ИНН для верификации (опционально)
+  onboardingCompleted Boolean         @default(false)
+  onboardingStep      String?         // текущий шаг: "workspace_created", "plan_chosen", ...
+
+  // Маркетинг-трекинг
+  signupSource        String?         // откуда пришёл: "/smetchik", "/pto", "/ref/ABC"
+  referredByCode      String?         // реферальный код, по которому зарегистрировался
+  utmSource           String?
+  utmMedium           String?
+  utmCampaign         String?
+  utmContent          String?
+  utmTerm             String?
+  firstTouchAt        DateTime?
+  signupIpHash        String?         // хэш IP при регистрации (не хранить сырой IP)
+  signupUserAgent     String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -861,6 +970,7 @@ model User {
   promoCodeRedemptions  PromoCodeRedemption[] @relation("PromoCodeRedeemer")
 
   @@index([organizationId])
+  @@index([referredByCode])
   @@map("users")
 }
 
