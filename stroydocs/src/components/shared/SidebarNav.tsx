@@ -13,6 +13,7 @@ import {
   ClipboardList,
   Library,
   Users,
+  Users2,
   CreditCard,
   type LucideIcon,
 } from 'lucide-react';
@@ -57,6 +58,7 @@ const NAV_GROUPS: NavGroup[] = [
     title: 'ОРГАНИЗАЦИЯ',
     items: [
       { href: '/organizations', label: 'Участники', icon: Users },
+      { href: '/workspace/members', label: 'Команда WS', icon: Users2 },
     ],
   },
   {
