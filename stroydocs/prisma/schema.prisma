@@ -184,6 +184,22 @@ enum MemberStatus {
   LEFT          // сам ушёл
 }
 
+// === Фаза C2 — Роли на уровне проекта ===
+
+enum ProjectRole {
+  PROJECT_OWNER   // руководитель проекта (не путать с OWNER workspace)
+  PROJECT_MANAGER // РП (руководитель проекта)
+  SITE_FOREMAN    // прораб на объекте
+  SPECIALIST      // сметчик/ПТО, закреплённый за проектом
+  WORKER          // исполнитель работ
+  OBSERVER        // только чтение
+}
+
+enum ProjectMemberPolicy {
+  WORKSPACE_WIDE  // видят все члены workspace
+  ASSIGNED_ONLY   // только те, кто явно назначен в ProjectMember
+}
+
 // === Модуль 15 Фаза 2 — Подписки (базовые) ===
 
 enum PlanType {
@@ -759,13 +775,33 @@ model WorkspaceMember {
   deactivatedAt      DateTime?
   deactivationReason String?
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace          Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectMemberships ProjectMember[]
 
   @@unique([workspaceId, userId])
   @@index([userId, status])
   @@index([workspaceId, role])
   @@map("workspace_members")
+}
+
+/// Членство пользователя в конкретном объекте строительства
+/// Уточняет, но не расширяет права WorkspaceMember — роль workspace ограничивает роль проекта
+model ProjectMember {
+  id                String          @id @default(cuid())
+  projectId         String
+  project           BuildingObject  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  workspaceMemberId String
+  workspaceMember   WorkspaceMember @relation(fields: [workspaceMemberId], references: [id], onDelete: Cascade)
+  projectRole       ProjectRole
+  assignedAt        DateTime        @default(now())
+  assignedBy        String          // userId кто назначил
+  notes             String?
+
+  @@unique([projectId, workspaceMemberId])
+  @@index([projectId])
+  @@index([workspaceMemberId])
+  @@map("project_members")
 }
 
 /// Пользователь системы
@@ -1068,8 +1104,11 @@ model BuildingObject {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   // Модуль 15 — Воркспейс
-  workspaceId String?
-  workspace   Workspace? @relation(fields: [workspaceId], references: [id])
+  workspaceId  String?
+  workspace    Workspace?            @relation(fields: [workspaceId], references: [id])
+
+  // Фаза C2 — политика доступа к проекту
+  memberPolicy ProjectMemberPolicy   @default(WORKSPACE_WIDE)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1139,6 +1178,9 @@ model BuildingObject {
   videoCameras        VideoCamera[]
   projectCoordinates  ProjectCoordinate[]
   projectIndicators   ProjectIndicator[]
+
+  // Фаза C2 — назначенные члены проекта
+  projectMembers      ProjectMember[]
 
   // Участники объекта (прямая привязка, не через договоры)
   objectOrganizations ObjectOrganization[]
