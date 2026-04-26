@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { SidebarProfile } from './SidebarProfile';
+import { WorkspaceSwitcher } from '@/components/layout/WorkspaceSwitcher';
 import { SidebarNav } from './SidebarNav';
 import { SidebarProjectsList } from './SidebarProjectsList';
 import { cn } from '@/lib/utils';
@@ -91,16 +91,11 @@ export function Sidebar() {
         )}
       </div>
 
-      {/* Профиль пользователя внизу */}
+      {/* Workspace switcher + профиль внизу */}
       {session?.user && (
         <>
           <div className="border-t border-white/10" />
-          <SidebarProfile
-            firstName={session.user.firstName}
-            lastName={session.user.lastName}
-            role={session.user.role}
-            isCollapsed={isCollapsed}
-          />
+          <WorkspaceSwitcher isCollapsed={isCollapsed} />
         </>
       )}
     </aside>
