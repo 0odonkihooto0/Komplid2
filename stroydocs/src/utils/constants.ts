@@ -16,6 +16,8 @@ import type {
   InputControlActStatus,
   PhotoCategory,
   IdCategory,
+  WorkspaceRole,
+  MemberStatus,
 } from '@prisma/client';
 
 /** Русские названия ролей пользователей */
@@ -274,3 +276,51 @@ export const RF_SUBJECTS = [
   'Запорожская область',
   'Херсонская область',
 ] as const;
+
+/** Русские названия ролей в workspace */
+export const WORKSPACE_ROLE_LABELS: Record<WorkspaceRole, string> = {
+  OWNER: 'Владелец',
+  ADMIN: 'Администратор',
+  MANAGER: 'Менеджер',
+  FOREMAN: 'Прораб',
+  ENGINEER: 'Инженер',
+  WORKER: 'Рабочий',
+  MEMBER: 'Участник',
+  GUEST: 'Гость',
+  CUSTOMER: 'Заказчик',
+};
+
+/** Бейдж-вариант для каждой роли workspace */
+export const WORKSPACE_ROLE_VARIANT: Record<
+  WorkspaceRole,
+  'default' | 'secondary' | 'outline' | 'destructive'
+> = {
+  OWNER: 'default',
+  ADMIN: 'default',
+  MANAGER: 'secondary',
+  FOREMAN: 'secondary',
+  ENGINEER: 'secondary',
+  WORKER: 'outline',
+  MEMBER: 'outline',
+  GUEST: 'outline',
+  CUSTOMER: 'outline',
+};
+
+/** Русские названия статусов члена workspace */
+export const MEMBER_STATUS_LABELS: Record<MemberStatus, string> = {
+  ACTIVE: 'Активен',
+  SUSPENDED: 'Приостановлен',
+  DEACTIVATED: 'Деактивирован',
+  LEFT: 'Покинул',
+};
+
+/** Бейдж-вариант для каждого статуса члена */
+export const MEMBER_STATUS_VARIANT: Record<
+  MemberStatus,
+  'default' | 'secondary' | 'outline' | 'destructive'
+> = {
+  ACTIVE: 'default',
+  SUSPENDED: 'secondary',
+  DEACTIVATED: 'destructive',
+  LEFT: 'outline',
+};

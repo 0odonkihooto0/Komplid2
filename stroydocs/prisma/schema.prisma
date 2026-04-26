@@ -734,6 +734,7 @@ model Workspace {
   invoices             Invoice[]
   receipts             Receipt[]
   promoCodeRedemptions PromoCodeRedemption[]
+  workspaceInvitations WorkspaceInvitation[]
 
   @@map("workspaces")
 }
@@ -969,6 +970,9 @@ model User {
   promoCodesCreated     PromoCode[]           @relation("PromoCodeCreator")
   promoCodeRedemptions  PromoCodeRedemption[] @relation("PromoCodeRedeemer")
 
+  // Фаза C1 — приглашения в workspace
+  sentWorkspaceInvitations WorkspaceInvitation[] @relation("SentWorkspaceInvitations")
+
   @@index([organizationId])
   @@index([referredByCode])
   @@map("users")
@@ -994,6 +998,35 @@ model Invitation {
   @@index([organizationId])
   @@index([invitedById])
   @@map("invitations")
+}
+
+/// Приглашение пользователя в workspace
+enum WorkspaceInvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
+}
+
+model WorkspaceInvitation {
+  id             String                    @id @default(cuid())
+  email          String
+  token          String                    @unique @default(cuid())
+  workspaceId    String
+  workspace      Workspace                 @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  role           WorkspaceRole
+  specialization String?
+  title          String?
+  invitedById    String
+  invitedBy      User                      @relation("SentWorkspaceInvitations", fields: [invitedById], references: [id])
+  status         WorkspaceInvitationStatus @default(PENDING)
+  expiresAt      DateTime
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+
+  @@index([workspaceId, status])
+  @@index([email])
+  @@map("workspace_invitations")
 }
 
 /// Объект строительства (центр модульной навигации, URL /objects/[id])
