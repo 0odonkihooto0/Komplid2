@@ -4,11 +4,11 @@ import type { ProfessionalRole } from '@prisma/client';
 export const ROLE_VISIBLE_MODULES: Record<ProfessionalRole, string[]> = {
   SMETCHIK:        ['info', 'project-management', 'estimates', 'reports'],
   PTO:             ['info', 'project-management', 'journals', 'id', 'sk', 'reports'],
-  FOREMAN:         ['info', 'journals', 'sk', 'resources', 'reports'],
+  FOREMAN:         ['info', 'journals', 'sk', 'resources', 'reports', 'team'],
   SK_INSPECTOR:    ['info', 'sk', 'journals', 'reports'],
   SUPPLIER:        ['info', 'resources', 'project-management', 'reports'],
   PROJECT_MANAGER: ['info', 'project-management', 'pir', 'estimates', 'gpr',
-                    'resources', 'reports', 'sk', 'id', 'tim'],
+                    'resources', 'reports', 'sk', 'id', 'tim', 'team'],
   ACCOUNTANT:      ['info', 'project-management', 'id', 'reports'],
 };
 

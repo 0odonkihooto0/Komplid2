@@ -22,6 +22,7 @@ import {
   Layers,
   Box,
   LayoutGrid,
+  UsersRound,
 } from 'lucide-react';
 import { CountBadge } from '@/components/shared/CountBadge';
 import { StatusBadge } from '@/components/shared/StatusBadge';
@@ -61,6 +62,7 @@ const MODULES: ModuleItem[] = [
   { label: 'Стройконтроль',       href: 'sk/inspections',              icon: Shield,   countKey: 'stroykontrol' },
   { label: 'Сметы',               href: 'estimates',                   icon: Scale },
   { label: 'Отчёты',              href: 'reports',                     icon: BarChart2 },
+  { label: 'Команда',             href: 'team',                        icon: UsersRound },
 ];
 
 interface Props {

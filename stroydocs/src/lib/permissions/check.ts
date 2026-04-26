@@ -1,9 +1,10 @@
-import { WorkspaceRole } from '@prisma/client';
+import { WorkspaceRole, ProjectMemberPolicy } from '@prisma/client';
 import { errorResponse } from '@/utils/api';
 import { PERMISSION_MATRIX } from './matrix';
 import { ACTIONS } from './actions';
 import type { Action } from './actions';
 import type { GuestScope, PermissionContext } from './types';
+import type { WorkspaceMember, ProjectMember } from '@prisma/client';
 
 /**
  * Проверяет, разрешено ли действие для данной роли.
@@ -70,6 +71,69 @@ export async function requirePermission(
   }
 
   return member;
+}
+
+/**
+ * Проверяет доступ пользователя к конкретному объекту строительства.
+ *
+ * Логика двухуровневая:
+ * 1. Обязательно — member workspace с требуемым действием
+ * 2. Если memberPolicy === ASSIGNED_ONLY — обязательно наличие в ProjectMember
+ *    (OWNER/ADMIN workspace всегда имеют доступ независимо от политики)
+ *
+ * @returns { workspaceMember, projectMember } — если доступ разрешён
+ */
+export async function requireProjectAccess(
+  userId: string,
+  projectId: string,
+  action: Action
+): Promise<{ workspaceMember: WorkspaceMember; projectMember: ProjectMember | null }> {
+  const { db } = await import('@/lib/db');
+
+  const project = await db.buildingObject.findUnique({
+    where: { id: projectId },
+    select: { workspaceId: true, memberPolicy: true },
+  });
+  if (!project) {
+    throw errorResponse('Объект не найден', 404);
+  }
+  if (!project.workspaceId) {
+    throw errorResponse('Объект не привязан к рабочему пространству', 400);
+  }
+
+  // Проверка 1: пользователь — активный член workspace с нужным действием
+  const workspaceMember = await requirePermission(userId, project.workspaceId, action);
+
+  // OWNER и ADMIN имеют доступ к любому проекту независимо от политики
+  const isPrivilegedRole =
+    workspaceMember.role === WorkspaceRole.OWNER ||
+    workspaceMember.role === WorkspaceRole.ADMIN;
+
+  if (project.memberPolicy === ProjectMemberPolicy.ASSIGNED_ONLY && !isPrivilegedRole) {
+    const projectMember = await db.projectMember.findUnique({
+      where: {
+        projectId_workspaceMemberId: {
+          projectId,
+          workspaceMemberId: workspaceMember.id,
+        },
+      },
+    });
+    if (!projectMember) {
+      throw errorResponse('Вы не назначены на этот объект', 403);
+    }
+    return { workspaceMember, projectMember };
+  }
+
+  const projectMember = await db.projectMember.findUnique({
+    where: {
+      projectId_workspaceMemberId: {
+        projectId,
+        workspaceMemberId: workspaceMember.id,
+      },
+    },
+  });
+
+  return { workspaceMember, projectMember: projectMember ?? null };
 }
 
 /**
