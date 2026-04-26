@@ -3,10 +3,10 @@
 import type { ReactNode } from 'react';
 import { useFeature } from '@/hooks/use-feature';
 import { PaywallBanner } from './PaywallBanner';
-import type { FeatureKey } from '@/lib/subscriptions/features';
+import type { FeatureCode } from '@/lib/features/codes';
 
 interface Props {
-  feature: FeatureKey;
+  feature: FeatureCode;
   fallback?: ReactNode;
   children: ReactNode;
 }

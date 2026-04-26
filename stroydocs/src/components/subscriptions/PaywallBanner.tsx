@@ -4,33 +4,15 @@ import Link from 'next/link';
 import { Lock } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import type { FeatureKey } from '@/lib/subscriptions/features';
-
-const FEATURE_LABELS: Partial<Record<FeatureKey, string>> = {
-  estimates: 'Сметы',
-  estimates_import: 'Импорт смет',
-  estimates_compare_advanced: 'Сравнение смет',
-  estimates_export_grand_smeta: 'Экспорт в Гранд-Смета',
-  estimates_public_link: 'Публичная ссылка на смету',
-  execution_docs: 'Исполнительная документация',
-  aosr_generation: 'Генерация АОСР',
-  ks2_ks3_generation: 'Генерация КС-2/КС-3',
-  journals_basic: 'Журналы',
-  journals_full: 'Расширенные журналы',
-  mobile_pwa: 'Мобильное приложение',
-  mobile_offline: 'Офлайн-режим',
-  defects_lite: 'Учёт дефектов',
-  defects_full: 'Полный модуль СК',
-  photos_gps: 'Фотофиксация с GPS',
-  approval_routes: 'Маршруты согласования',
-};
+import { FEATURE_LABELS } from '@/utils/feature-labels';
+import type { FeatureCode } from '@/lib/features/codes';
 
 interface Props {
-  feature: FeatureKey;
+  feature: FeatureCode;
 }
 
 export function PaywallBanner({ feature }: Props) {
-  const label = FEATURE_LABELS[feature] ?? feature;
+  const label = FEATURE_LABELS[feature] ?? String(feature);
 
   return (
     <Card className="border-dashed border-2 border-muted-foreground/30 bg-muted/30">
@@ -48,7 +30,7 @@ export function PaywallBanner({ feature }: Props) {
       </CardContent>
       <CardFooter>
         <Button asChild size="sm">
-          <Link href="/settings/subscription">Посмотреть тарифы</Link>
+          <Link href="/pricing">Посмотреть тарифы</Link>
         </Button>
       </CardFooter>
     </Card>
