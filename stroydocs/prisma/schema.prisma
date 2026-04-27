@@ -7121,3 +7121,21 @@ model DunningAttempt {
   @@index([scheduledAt, result])
   @@map("dunning_attempts")
 }
+
+/// Runtime feature-flags для A/B-тестов, постепенного rollout и kill-switch
+/// Отдельная система от PaywallGate (подписочные gates — в SubscriptionFeature)
+model FeatureFlag {
+  id             String   @id @default(cuid())
+  key            String   @unique
+  description    String?
+  enabled        Boolean  @default(false)
+  rolloutPercent Int      @default(0)
+  /// { workspaceIds?: string[], userIds?: string[], intents?: string[] }
+  audiences      Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([key])
+  @@index([enabled])
+  @@map("feature_flags")
+}
