@@ -64,8 +64,11 @@ export async function POST(req: Request) {
 
     return successResponse({ projectId: project.id });
   } catch (error) {
-    logger.error({ err: error }, 'Ошибка создания первого проекта при онбординге');
-    return errorResponse('Не удалось создать проект', 500);
+    const msg = error instanceof Error ? error.message : String(error);
+    logger.error({ err: error, organizationId, workspaceId: workspaceId ?? null }, 'Ошибка создания первого проекта при онбординге');
+    // В dev-режиме раскрываем детали чтобы легче диагностировать
+    const detail = process.env.NODE_ENV === 'development' ? msg : undefined;
+    return errorResponse('Не удалось создать проект', 500, detail ? [{ message: detail }] : undefined);
   }
 }
 

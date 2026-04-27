@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { CheckCircle2, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,10 @@ function getCompletedSteps(): CheckItem[] {
 
 export default function OnboardingDonePage() {
   const completed = useRef(false);
+  const sessionUpdated = useRef(false);
   const { update } = useSession();
+  const router = useRouter();
+  const [navigating, setNavigating] = useState(false);
 
   useEffect(() => {
     if (completed.current) return;
@@ -34,8 +38,18 @@ export default function OnboardingDonePage() {
     fetch('/api/onboarding/complete', { method: 'POST' })
       .then((r) => r.json())
       .then(() => update({ onboardingCompleted: true }))
-      .catch(() => null);
+      .then(() => { sessionUpdated.current = true; })
+      .catch(() => { sessionUpdated.current = true; }); // навигация всё равно разрешена
   }, [update]);
+
+  const handleNavigate = async () => {
+    setNavigating(true);
+    // Ждём обновления JWT чтобы middleware не перенаправил обратно
+    if (!sessionUpdated.current) {
+      await update({ onboardingCompleted: true }).catch(() => null);
+    }
+    router.push('/objects');
+  };
 
   const steps = getCompletedSteps();
 
@@ -90,8 +104,13 @@ export default function OnboardingDonePage() {
         </div>
       </div>
 
-      <Button asChild size="lg" className="min-w-52">
-        <Link href="/objects">Перейти в Komplid →</Link>
+      <Button
+        size="lg"
+        className="min-w-52"
+        onClick={handleNavigate}
+        disabled={navigating}
+      >
+        {navigating ? 'Загрузка...' : 'Перейти в Komplid →'}
       </Button>
     </div>
   );

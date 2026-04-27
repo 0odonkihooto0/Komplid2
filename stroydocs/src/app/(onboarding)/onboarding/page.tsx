@@ -21,10 +21,16 @@ export default async function OnboardingIndexPage() {
   // Читаем актуальный шаг из БД (токен мог устареть)
   const user = await db.user.findUnique({
     where: { id: session.user.id },
-    select: { onboardingStep: true, intent: true },
+    select: { onboardingStep: true, intent: true, onboardingCompleted: true },
   });
 
+  // JWT мог устареть — проверяем флаг в БД
+  if (user?.onboardingCompleted) redirect('/objects');
+
   const step = user?.onboardingStep;
+
+  // Явный шаг COMPLETED — редирект в приложение
+  if (step === 'COMPLETED') redirect('/objects');
 
   if (step && STEP_ROUTES[step]) {
     // Если intent === CUSTOMER_PRIVATE — пропускаем workspace

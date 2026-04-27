@@ -52,7 +52,13 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      // При вызове update() с клиента — обновляем нужные поля токена
+      if (trigger === 'update' && session) {
+        const upd = session as { onboardingCompleted?: boolean; activeWorkspaceId?: string | null };
+        if (upd.onboardingCompleted !== undefined) token.onboardingCompleted = upd.onboardingCompleted;
+        if (upd.activeWorkspaceId !== undefined) token.activeWorkspaceId = upd.activeWorkspaceId;
+      }
       if (user) {
         token.id = user.id;
         token.role = user.role;
