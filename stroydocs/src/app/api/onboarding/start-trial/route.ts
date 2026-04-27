@@ -61,8 +61,15 @@ export async function POST(req: Request) {
     INTENT_PLAN_MAP[user?.intent ?? ''] ??
     'smetchik_studio_pro';
 
-  const plan = await db.subscriptionPlan.findUnique({ where: { code: planCode } });
-  if (!plan) return errorResponse('Тарифный план не найден', 404);
+  // Ищем план по коду; если не найден — берём первый доступный активный не-бесплатный
+  let plan = await db.subscriptionPlan.findUnique({ where: { code: planCode } });
+  if (!plan) {
+    plan = await db.subscriptionPlan.findFirst({
+      where: { isActive: true, planType: { not: 'FREE' } },
+      orderBy: { displayOrder: 'asc' },
+    });
+  }
+  if (!plan) return errorResponse('Тарифные планы не настроены. Выполните npx prisma db seed.', 404);
 
   const now = new Date();
   // Базовый триал 7 дней; реферальный бонус +30 дней
