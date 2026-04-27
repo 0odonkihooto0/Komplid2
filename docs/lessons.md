@@ -3,6 +3,14 @@
 > Обновлять после каждой исправленной ошибки. Этот файл — живой.
 > Формат: **Что случилось** → **Почему** → **Правило на будущее**
 
+**`as const` на массиве объектов с опциональным свойством — `Property 'exact' does not exist` при доступе через union-тип.**
+`ProfileTabs.tsx` объявлял `const TABS = [...] as const` где первый объект имел `exact: true`, а остальные — нет. TypeScript выводил тип массива как union литерального типа: `{ href: '/profile'; label: 'Общее'; exact: true } | { href: '/profile/security'; label: 'Безопасность' } | ...`. При обращении `tab.exact` TypeScript ругался: `Property 'exact' does not exist on type '{ href: "/profile/security"; ... }'` — потому что у остальных объектов в union свойства `exact` нет.
+Ошибка проявляется только на `next build` (type-check фаза) — локально без `node_modules` молчит.
+**Исправление**: заменить `as const` на явную типизацию массива: `const TABS: { href: string; label: string; exact?: boolean }[] = [...]`. Это:
+1. Делает `exact` опциональным полем (тип `boolean | undefined`) на каждом элементе
+2. Ломает мономорфизм литеральных типов (больше нельзя использовать `tab.href` как `RouteType`), но для навигационных массивов это не нужно
+**Правило**: `as const` на массивах объектов безопасен только если все объекты имеют **одинаковый набор ключей**. Если хотя бы один объект имеет уникальное свойство (например, `exact: true`, `badge: 'New'`, `icon: SomeIcon`), которого нет у других — использовать явную типизацию `Array<{ field?: T }>` вместо `as const`. Поиск потенциальных нарушений: найти `as const` на массивах объектов и проверить что набор ключей одинаков у всех элементов.
+
 **`receipt` в `db.payment.create({ data: {...} })` — путаница между JSON-полем для API и relation в Prisma.**
 `dunning-service.ts` передавал `receipt: buildSubscriptionReceipt(...)` в `data` при `db.payment.create()`. Ошибка: в модели `Payment` поле `receipt` — это **relation** к модели `Receipt` (не JSON-поле), поэтому Prisma при разрешении union-типа (`PaymentCreateInput | PaymentUncheckedCreateInput`) требовал `receipt?: undefined` в unchecked-форме. TypeScript TS2322 при деплое: `'InputJsonValue | undefined' is not assignable to type 'undefined'`.
 `buildSubscriptionReceipt()` возвращает объект `YookassaReceiptData` — это данные для API ЮKassa при создании платежа (54-ФЗ чек), а не запись в БД.

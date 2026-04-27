@@ -4,14 +4,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
-const TABS = [
+const TABS: { href: string; label: string; exact?: boolean }[] = [
   { href: '/profile', label: 'Общее', exact: true },
   { href: '/profile/security', label: 'Безопасность' },
   { href: '/profile/notifications', label: 'Уведомления' },
   { href: '/profile/integrations', label: 'Интеграции' },
   { href: '/profile/referrals', label: 'Рефералы' },
   { href: '/profile/delete', label: 'Удаление аккаунта' },
-] as const;
+];
 
 export function ProfileTabs() {
   const pathname = usePathname();
