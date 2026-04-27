@@ -69,7 +69,32 @@ export async function POST(req: Request) {
       orderBy: { displayOrder: 'asc' },
     });
   }
-  if (!plan) return errorResponse('Тарифные планы не настроены. Выполните npx prisma db seed.', 404);
+  if (!plan) {
+    // На чистой dev-БД без seed — автоматически создаём минимальный триальный план
+    plan = await db.subscriptionPlan.upsert({
+      where: { code: 'smetchik_studio_pro' },
+      create: {
+        code: 'smetchik_studio_pro',
+        name: 'StroyDocs Pro (Trial)',
+        planType: 'SOLO_PRO',
+        requiresPersonalWorkspace: false,
+        priceMonthlyRub: 0,
+        priceYearlyRub: 0,
+        priceRub: 0,
+        currency: 'RUB',
+        limits: {},
+        features: {},
+        trialDays: 7,
+        displayOrder: 1,
+        isActive: true,
+        isFeatured: false,
+        isPopular: false,
+        isVisible: true,
+        isLegacy: false,
+      },
+      update: {},
+    });
+  }
 
   const now = new Date();
   // Базовый триал 7 дней; реферальный бонус +30 дней

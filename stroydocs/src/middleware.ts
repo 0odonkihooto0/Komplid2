@@ -10,6 +10,9 @@ const PUBLIC_PATHS = [
   '/api/auth',
   '/ref/',
   '/api/health',
+  '/sw.js',                // Service Worker — браузер запрашивает без авторизации
+  '/manifest.webmanifest', // PWA манифест
+  '/~offline',             // Serwist offline fallback
 ];
 
 // Пути, которые не требуют завершённого онбординга (кроме /onboarding)
@@ -55,6 +58,6 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     // Все маршруты кроме статических ресурсов и _next
-    '/((?!_next/static|_next/image|fonts|favicon\\.ico|icons|images|.*\\.png|.*\\.svg|.*\\.jpg|.*\\.webp).*)',
+    '/((?!_next/static|_next/image|fonts|favicon\\.ico|icons|images|sw\\.js|workbox-.*\\.js|.*\\.png|.*\\.svg|.*\\.jpg|.*\\.webp).*)',
   ],
 };
