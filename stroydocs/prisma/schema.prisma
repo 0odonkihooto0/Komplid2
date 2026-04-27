@@ -751,6 +751,7 @@ model Workspace {
   receipts             Receipt[]
   promoCodeRedemptions PromoCodeRedemption[]
   workspaceInvitations WorkspaceInvitation[]
+  auditLogs            AuditLog[]
 
   @@map("workspaces")
 }
@@ -1008,6 +1009,9 @@ model User {
 
   // Фаза C1 — приглашения в workspace
   sentWorkspaceInvitations WorkspaceInvitation[] @relation("SentWorkspaceInvitations")
+
+  // D2 — аудит-лог
+  auditLogs                AuditLog[]            @relation("AuditLogActor")
 
   @@index([organizationId])
   @@index([referredByCode])
@@ -7138,4 +7142,26 @@ model FeatureFlag {
   @@index([key])
   @@index([enabled])
   @@map("feature_flags")
+}
+
+/// Журнал аудита: все значимые события в системе (D2)
+model AuditLog {
+  id           String     @id @default(cuid())
+  workspaceId  String?
+  workspace    Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  actorUserId  String?
+  actor        User?      @relation("AuditLogActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  action       String     // "member.invited", "member.role_changed", "auth.signin", ...
+  resourceType String?    // "User", "Workspace", "Project", "Subscription"
+  resourceId   String?
+  before       Json?
+  after        Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime   @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_logs")
 }

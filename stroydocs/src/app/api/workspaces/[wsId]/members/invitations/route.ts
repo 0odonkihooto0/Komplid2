@@ -8,6 +8,7 @@ import { requireLimit } from '@/lib/subscriptions/require-limit';
 import { LimitExceededError } from '@/lib/subscriptions/errors';
 import { inviteMemberSchema, inviteGuestSchema } from '@/lib/validations/workspace-member';
 import { successResponse, errorResponse } from '@/utils/api';
+import { logAudit } from '@/lib/audit/log';
 
 export const dynamic = 'force-dynamic';
 
@@ -125,6 +126,16 @@ export async function POST(
       { invitationId: invitation.id, wsId: params.wsId, email },
       'Приглашение в workspace создано'
     );
+
+    void logAudit({
+      action: 'member.invited',
+      actorUserId: session.user.id,
+      workspaceId: params.wsId,
+      resourceType: 'WorkspaceInvitation',
+      resourceId: invitation.id,
+      after: { email, role },
+      request: req,
+    });
 
     return successResponse({ invitation, inviteUrl });
   } catch (error) {

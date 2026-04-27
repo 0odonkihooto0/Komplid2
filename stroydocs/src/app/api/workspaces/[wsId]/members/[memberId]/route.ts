@@ -6,6 +6,7 @@ import { requirePermission } from '@/lib/permissions/check';
 import { ACTIONS } from '@/lib/permissions/actions';
 import { updateMemberSchema } from '@/lib/validations/workspace-member';
 import { successResponse, errorResponse } from '@/utils/api';
+import { logAudit } from '@/lib/audit/log';
 
 export const dynamic = 'force-dynamic';
 
@@ -78,8 +79,32 @@ export async function PATCH(
           data: { role: 'OWNER' },
         }),
       ]);
+
+      void logAudit({
+        action: 'workspace.transferred_ownership',
+        actorUserId: session.user.id,
+        workspaceId: params.wsId,
+        resourceType: 'WorkspaceMember',
+        resourceId: newOwnerMember.id,
+        before: { role: target.role },
+        after: { role: 'OWNER', transferredFrom: params.memberId },
+        request: req,
+      });
+
       return successResponse(updated);
     }
+
+    // Определяем тип события для аудит-лога
+    const auditAction =
+      role !== undefined
+        ? 'member.role_changed'
+        : status === 'DEACTIVATED'
+          ? 'member.removed'
+          : status === 'SUSPENDED'
+            ? 'member.suspended'
+            : status === 'ACTIVE'
+              ? 'member.reactivated'
+              : 'member.updated';
 
     // Обычное обновление
     const updated = await db.workspaceMember.update({
@@ -97,6 +122,17 @@ export async function PATCH(
             }
           : {}),
       },
+    });
+
+    void logAudit({
+      action: auditAction,
+      actorUserId: session.user.id,
+      workspaceId: params.wsId,
+      resourceType: 'WorkspaceMember',
+      resourceId: params.memberId,
+      before: { role: target.role, status: target.status },
+      after: { role: role ?? target.role, status: status ?? target.status },
+      request: req,
     });
 
     logger.info(

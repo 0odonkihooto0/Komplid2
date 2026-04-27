@@ -12,6 +12,7 @@ export const ACTIONS = {
   WORKSPACE_DELETE: 'workspace.delete',
   WORKSPACE_EDIT_PROFILE: 'workspace.edit_profile',
   WORKSPACE_INVITE_GUEST: 'workspace.invite_guest',
+  WORKSPACE_VIEW_AUDIT_LOG: 'workspace.view_audit_log',
 
   // Projects
   PROJECT_CREATE: 'project.create',
