@@ -28,6 +28,7 @@ const KEY_TABLES = [
   'estimate_import_items', // add_normative_refs (#37)
   'workspaces',          // add_workspace_missing_columns (#93) — критично!
   'subscription_plans',  // add_subscriptions_payments (#88)
+  'project_members',     // project_members migration (#103)
 ];
 
 // Ключевые КОЛОНКИ: таблицы могут существовать, но колонки отсутствовать
@@ -37,6 +38,7 @@ const KEY_COLUMNS = [
   { table: 'users', column: 'activeWorkspaceId' },         // workspace migrations (#93, #95, #98)
   { table: 'users', column: 'professionalRole' },          // subscription migration (#88) — enum ProfessionalRole
   { table: 'building_objects', column: 'workspaceId' },    // workspace migrations (#93, #95, #98)
+  { table: 'building_objects', column: 'memberPolicy' },   // project_members migration — P2022 если отсутствует
   { table: 'workspaces', column: 'activeSubscriptionId' }, // subscription migration (#88)
 ];
 
@@ -49,6 +51,8 @@ const KEY_ENUMS = [
   'PlanType',
   'ProfessionalRole',
   'SubscriptionStatus',
+  'ProjectMemberPolicy', // project_members migration — P2022 если enum отсутствует
+  'ProjectRole',         // project_members migration
 ];
 
 async function main() {
