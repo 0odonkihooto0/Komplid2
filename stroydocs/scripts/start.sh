@@ -26,31 +26,12 @@ tryConnect();
 echo '[migrate] Проверка целостности...'
 node scripts/check-migration-integrity.js || true
 
-# ── Быстрая разметка уже-существующих миграций ───────────────────────────────
-# Помечает в _prisma_migrations все миграции, чьи объекты уже существуют в БД
-# (созданы через db push). Сокращает число итераций цикла с ~80 до ~15-20,
-# что позволяет уложиться в лимит health check контейнера.
-echo '[migrate] Быстрая разметка устаревших миграций...'
-node scripts/bulk-mark-stale-migrations.js || true
-
 # ── Применение миграций ──────────────────────────────────────────────────────
-# Стратегия:
-#   1. Запускаем migrate deploy, захватываем stdout+stderr в файл.
-#   2. Если успех — break.
-#   3. Иначе классифицируем ошибку:
-#      a) Транзиентные сетевые ошибки Prisma (P1001, P1008, P1017) —
-#         БД недоступна/таймаут/соединение оборвано. Это НЕ сбой миграции.
-#         Ретрай с экспоненциальным backoff (2s, 4s, 8s, 16s, cap 30s).
-#      b) Benign SQL (42P07/42701/42710/42723 — already exists) —
-#         db push конфликт, помечаем applied и продолжаем.
-#      c) Блокирующие SQL (42704 type not found, 42P01 relation not found,
-#         прочие) — РЕАЛЬНАЯ ошибка миграции. Halt с явной диагностикой.
-#   4. На свежей БД все миграции применяются нормально.
 echo '[migrate] Запуск миграций...'
 
 attempt=0
 transient_attempts=0
-max_attempts=120  # должен быть больше общего числа миграций (сейчас ~99)
+max_attempts=10
 max_transient=6   # ретраев на транзиентную ошибку БД (суммарно ~62s с backoff)
 MIGRATE_LOG=/tmp/migrate-deploy.log
 
@@ -61,11 +42,8 @@ while [ $attempt -lt $max_attempts ]; do
     break
   fi
 
-  # Показываем вывод migrate deploy всегда — чтобы в логах контейнера была
-  # видна реальная ошибка Postgres (а не только обобщение start.sh).
   cat "$MIGRATE_LOG"
 
-  # Извлекаем коды ошибок
   PG_CODE=$(grep -oE 'Database error code: [0-9A-Z]+' "$MIGRATE_LOG" | head -1 | awk '{print $NF}')
   PRISMA_CODE=$(grep -oE 'P1[0-9]{3}' "$MIGRATE_LOG" | head -1)
 
@@ -88,7 +66,6 @@ while [ $attempt -lt $max_attempts ]; do
       ;;
   esac
 
-  # С этого момента считаем попытку настоящей (не транзиентной)
   attempt=$((attempt + 1))
 
   # Находим failed миграцию. Если find-failed-migration.js упал — это тоже
@@ -108,22 +85,17 @@ while [ $attempt -lt $max_attempts ]; do
 
   case "$PG_CODE" in
     42P07|42701|42710|42723)
-      # (b) Benign: объект уже существует (типичный случай для БД, частично
-      # созданной через db push). Помечаем applied и продолжаем.
-      echo "[migrate] Миграция $FAILED: объект уже существует (код $PG_CODE, db push), помечаем applied..."
+      # Benign: объект уже существует. На чистой БД не должно возникать.
+      echo "[migrate] Миграция $FAILED: объект уже существует (код $PG_CODE), помечаем applied..."
       node node_modules/prisma/build/index.js migrate resolve --applied "$FAILED" 2>/dev/null || true
       ;;
     *)
-      # (c) РЕАЛЬНАЯ ошибка (type/relation не существует, constraint violation и т.д.)
-      # НЕ маскировать — это корёжит цепочку миграций и ведёт к P2022 в рантайме.
       echo '=================================================================='
       echo "[migrate] КРИТИЧЕСКАЯ ОШИБКА в миграции: $FAILED"
       echo "[migrate] Postgres error code: ${PG_CODE:-unknown}"
       echo "[migrate] Prisma error code:   ${PRISMA_CODE:-unknown}"
       echo '[migrate] Это НЕ «таблица уже существует» — миграция НЕ выполнена.'
       echo '[migrate] Помечать --applied запрещено (маскирует сбой).'
-      echo '[migrate] Диагностика: проверить SQL миграции и предшествующие'
-      echo '[migrate]   миграции на предмет зависимостей (типы/таблицы).'
       echo '=================================================================='
       exit 1
       ;;
@@ -153,8 +125,6 @@ if [ "$REDIS_OK" = "ok" ]; then
   WORKER_PID=$!
   echo '[worker] parse-ifc worker запущен (PID: '"$WORKER_PID"')'
 
-  # convert-ifc воркер: слушает очередь "convert-ifc", дергает ifc-service /convert
-  # и сохраняет glbS3Key в BimModel.metadata. Без него модели висят в CONVERTING.
   if [ -f /app/dist/workers/lib/workers/convert-ifc.worker.js ]; then
     echo '[worker] Запуск convert-ifc worker...'
     node /app/dist/workers/lib/workers/convert-ifc.worker.js &
