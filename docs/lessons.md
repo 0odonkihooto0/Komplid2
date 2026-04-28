@@ -973,5 +973,39 @@ grep -n "migrate resolve --applied" stroydocs/scripts/start.sh
 
 ---
 
+**`features: {}` вместо `features: []` в Prisma JSON поле — `TypeError: .includes is not a function` в клиентских компонентах.**
+`start-trial/route.ts` автоматически создавал резервный план с `features: {}` (JSON-объект). Клиентские хуки `useFeatureAccess` и `use-feature` читали это поле через `(data?.plan?.features as string[]) ?? []`. Оператор `??` срабатывает только на `null` и `undefined`, но не на `{}` (пустой объект — truthy). В итоге `features` получал значение `{}`, и вызов `{}.includes(feature)` бросал `TypeError: .includes is not a function`, пойманный ErrorBoundary.
+**Исправление**:
+1. В месте создания — `features: []` (массив, не объект).
+2. В хуках — `Array.isArray(data?.plan?.features) ? data.plan.features as string[] : []` вместо `?? []`.
+**Правило**: Prisma JSON-поле (`Json`) может вернуть любой тип — объект, массив, null, примитив. Оператор `?? []` защищает только от `null`/`undefined`. Для полей, которые должны быть массивами, **всегда** использовать `Array.isArray()`:
+```typescript
+// Неправильно — {}  не null, ?? [] не срабатывает:
+const features = (data?.plan?.features as string[]) ?? [];
+
+// Правильно:
+const features = Array.isArray(data?.plan?.features) ? data.plan.features as string[] : [];
+```
+Поиск нарушений: `grep -rn "as string\[\]) ??" src/` — все совпадения на Prisma Json-полях переписать на `Array.isArray`.
+Дополнительно: при `upsert`/`create` Prisma Json-полей хранящих массивы — явно указывать `[]`, не `{}`.
+
+**Service Worker `SecurityError: script resource is behind a redirect` — middleware перехватывает `/sw.js` и `/swe-worker-*.js`.**
+Serwist (форк Workbox) генерирует два файла у корня домена: `sw.js` (основной SW) и `swe-worker-<hash>.js` (entry-воркер с динамическим именем). Если эти файлы попадают в auth middleware — браузер получает HTML redirect вместо JavaScript и бросает `SecurityError` / `SyntaxError: Unexpected token '<'`.
+**Правило**: в `PUBLIC_PATHS` middleware добавить `/sw.js`, `/swe-worker-` (префикс — динамический hash) и `/manifest.webmanifest`. В `config.matcher` добавить `sw\\.js` и `swe-worker-.*\\.js` в negative lookahead — двойная защита:
+```typescript
+const PUBLIC_PATHS = [
+  '/sw.js',
+  '/swe-worker-',          // Serwist worker entry (swe-worker-<hash>.js)
+  '/manifest.webmanifest',
+  '/~offline',
+];
+export const config = {
+  matcher: ['/((?!_next/static|...|sw\\.js|swe-worker-.*\\.js|workbox-.*\\.js).*)',],
+};
+```
+Поиск нарушений: `grep -n "PUBLIC_PATHS" src/middleware.ts` — убедиться что `/swe-worker-` есть в списке.
+
+---
+
 > Правило: после каждой исправленной ошибки добавить урок сюда.
 > Команда: "Добавь урок в docs/lessons.md: [описание ошибки]"

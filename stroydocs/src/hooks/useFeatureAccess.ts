@@ -19,7 +19,7 @@ export function useFeatureAccess(feature: FeatureCode): FeatureAccessState {
     return { hasAccess: false, isLoading: true, planName: null, planCode: null, remainingQuota: null };
   }
 
-  const features = (data?.plan?.features as string[]) ?? [];
+  const features = Array.isArray(data?.plan?.features) ? (data.plan.features as string[]) : [];
   const hasAccess = features.includes(feature);
 
   // Квота: из поля limits плана, если задана для конкретной фичи

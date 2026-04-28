@@ -10,7 +10,7 @@ export function useFeature(feature: FeatureKey): {
 } {
   const { data, isLoading } = useActivePlan();
   if (isLoading) return { hasAccess: false, isLoading: true, planCode: null };
-  const features = (data?.plan?.features as string[]) ?? [];
+  const features = Array.isArray(data?.plan?.features) ? (data.plan.features as string[]) : [];
   return {
     hasAccess: features.includes(feature),
     isLoading: false,

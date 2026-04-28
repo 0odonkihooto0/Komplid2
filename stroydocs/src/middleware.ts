@@ -11,6 +11,7 @@ const PUBLIC_PATHS = [
   '/ref/',
   '/api/health',
   '/sw.js',                // Service Worker — браузер запрашивает без авторизации
+  '/swe-worker-',          // Serwist worker entry (динамическое имя swe-worker-<hash>.js)
   '/manifest.webmanifest', // PWA манифест
   '/~offline',             // Serwist offline fallback
 ];
@@ -58,6 +59,6 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     // Все маршруты кроме статических ресурсов и _next
-    '/((?!_next/static|_next/image|fonts|favicon\\.ico|icons|images|sw\\.js|workbox-.*\\.js|.*\\.png|.*\\.svg|.*\\.jpg|.*\\.webp).*)',
+    '/((?!_next/static|_next/image|fonts|favicon\\.ico|icons|images|sw\\.js|swe-worker-.*\\.js|workbox-.*\\.js|.*\\.png|.*\\.svg|.*\\.jpg|.*\\.webp).*)',
   ],
 };
