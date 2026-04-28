@@ -83,7 +83,7 @@ export async function POST(req: Request) {
         priceRub: 0,
         currency: 'RUB',
         limits: {},
-        features: {},
+        features: [],
         trialDays: 7,
         displayOrder: 1,
         isActive: true,
