@@ -11,6 +11,7 @@ const TABS = [
   { label: 'Управление проектом',  href: 'planner'    },
   { label: 'Версии УП',            href: 'versions'   },
   { label: 'Аналитика (контракты)',href: 'analytics'  },
+  { label: 'Публичность',          href: 'publicity'  },
 ];
 
 export default function ProjectManagementLayout({

@@ -1,7 +1,14 @@
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 import { CheckCircle, AlertTriangle, FileText, MapPin, Building2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PromoBlock } from '@/components/portal/PromoBlock';
+import { ViewTracker } from '@/components/portal/ViewTracker';
+import { ProgressOverview } from '@/components/portal/ProgressOverview';
+import { PhotoGallery } from '@/components/portal/PhotoGallery';
+import { EventsTimeline } from '@/components/portal/EventsTimeline';
+import { VerifiedDocumentsBadge } from '@/components/portal/VerifiedDocumentsBadge';
 
 // Публичная страница — без авторизации
 // Заказчик видит прогресс объекта по уникальной ссылке
@@ -38,6 +45,24 @@ async function getPortalData(token: string): Promise<PortalData | null> {
   }
 }
 
+// SEO-метаданные для страницы портала заказчика.
+// Next.js кэширует одинаковые fetch-запросы в рамках одного рендера,
+// поэтому двойного HTTP-запроса к API не происходит.
+export async function generateMetadata({ params }: { params: { token: string } }) {
+  const data = await getPortalData(params.token);
+  if (!data) return { title: 'Портал заказчика | Komplid' };
+
+  return {
+    title: `${data.projectName} — прогресс строительства | Komplid`,
+    description: `Строительный объект: ${data.projectName}. Статус: ${data.progress}% выполнено.`,
+    openGraph: {
+      title: `${data.projectName} | Komplid`,
+      images: [`/portal/${params.token}/opengraph-image`],
+    },
+    robots: (data as { allowIndexing?: boolean }).allowIndexing ? 'index,follow' : 'noindex,nofollow',
+  };
+}
+
 export default async function PortalPage({ params }: { params: { token: string } }) {
   const data = await getPortalData(params.token);
 
@@ -45,142 +70,179 @@ export default async function PortalPage({ params }: { params: { token: string }
     notFound();
   }
 
+  // Читаем referer для PromoBlock — не показываем промо пользователям приложения
+  const headersList = await headers();
+  const referer = headersList.get('referer') ?? undefined;
+
   const circumference = 2 * Math.PI * 40;
   const dashOffset = circumference - (data.progress / 100) * circumference;
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      {/* Заголовок */}
-      <header className="border-b bg-white px-6 py-4">
-        <div className="mx-auto flex max-w-4xl items-center justify-between">
-          <span className="text-xl font-bold text-primary">StroyDocs</span>
-          <span className="text-sm text-muted-foreground">Портал заказчика</span>
-        </div>
-      </header>
+    <>
+      {/* Трекер просмотров — client-компонент, не блокирует рендер */}
+      <ViewTracker token={params.token} />
 
-      <main className="mx-auto max-w-4xl space-y-6 px-6 py-8">
-        {/* Карточка проекта */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-6">
-              {/* Круговой прогресс */}
-              <div className="relative shrink-0">
-                <svg width="100" height="100" viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" strokeWidth="10" />
-                  <circle
-                    cx="50" cy="50" r="40"
-                    fill="none"
-                    stroke="#2563eb"
-                    strokeWidth="10"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={dashOffset}
-                    strokeLinecap="round"
-                    transform="rotate(-90 50 50)"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-xl font-bold">{data.progress}%</span>
-                  <span className="text-xs text-muted-foreground">ИД</span>
+      {/* Schema.org разметка для поисковых роботов */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'ConstructionProject',
+            name: data.projectName,
+            address: data.address,
+          }),
+        }}
+      />
+
+      <div className="min-h-screen bg-muted/30">
+        {/* Заголовок */}
+        <header className="border-b bg-white px-6 py-4">
+          <div className="mx-auto flex max-w-4xl items-center justify-between">
+            <span className="text-xl font-bold text-primary">StroyDocs</span>
+            <span className="text-sm text-muted-foreground">Портал заказчика</span>
+          </div>
+        </header>
+
+        <main className="mx-auto max-w-4xl space-y-6 px-6 py-8">
+          {/* Карточка проекта */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-6">
+                {/* Круговой прогресс */}
+                <div className="relative shrink-0">
+                  <svg width="100" height="100" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" strokeWidth="10" />
+                    <circle
+                      cx="50" cy="50" r="40"
+                      fill="none"
+                      stroke="#2563eb"
+                      strokeWidth="10"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={dashOffset}
+                      strokeLinecap="round"
+                      transform="rotate(-90 50 50)"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-xl font-bold">{data.progress}%</span>
+                    <span className="text-xs text-muted-foreground">ИД</span>
+                  </div>
+                </div>
+
+                {/* Информация об объекте */}
+                <div className="flex-1">
+                  <h1 className="text-2xl font-bold">{data.projectName}</h1>
+                  {data.address && (
+                    <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <MapPin className="h-4 w-4" />
+                      {data.address}
+                    </p>
+                  )}
+                  {data.generalContractor && (
+                    <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <Building2 className="h-4 w-4" />
+                      Генподрядчик: {data.generalContractor}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              {/* Информация об объекте */}
-              <div className="flex-1">
-                <h1 className="text-2xl font-bold">{data.projectName}</h1>
-                {data.address && (
-                  <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    {data.address}
-                  </p>
-                )}
-                {data.generalContractor && (
-                  <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <Building2 className="h-4 w-4" />
-                    Генподрядчик: {data.generalContractor}
-                  </p>
-                )}
+              {/* Метрики */}
+              <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+                <div className="rounded-lg bg-muted/50 p-3 text-center">
+                  <p className="text-2xl font-bold text-primary">{data.docStats.signed}</p>
+                  <p className="text-xs text-muted-foreground">Подписано актов</p>
+                </div>
+                <div className="rounded-lg bg-muted/50 p-3 text-center">
+                  <p className="text-2xl font-bold">{data.docStats.total}</p>
+                  <p className="text-xs text-muted-foreground">Всего актов</p>
+                </div>
+                <div className="rounded-lg bg-muted/50 p-3 text-center">
+                  <p className="text-2xl font-bold text-amber-600">{data.criticalDefects.length}</p>
+                  <p className="text-xs text-muted-foreground">Открытых дефектов</p>
+                </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Метрики */}
-            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
-              <div className="rounded-lg bg-muted/50 p-3 text-center">
-                <p className="text-2xl font-bold text-primary">{data.docStats.signed}</p>
-                <p className="text-xs text-muted-foreground">Подписано актов</p>
-              </div>
-              <div className="rounded-lg bg-muted/50 p-3 text-center">
-                <p className="text-2xl font-bold">{data.docStats.total}</p>
-                <p className="text-xs text-muted-foreground">Всего актов</p>
-              </div>
-              <div className="rounded-lg bg-muted/50 p-3 text-center">
-                <p className="text-2xl font-bold text-amber-600">{data.criticalDefects.length}</p>
-                <p className="text-xs text-muted-foreground">Открытых дефектов</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Открытые дефекты */}
+          {data.criticalDefects.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <AlertTriangle className="h-5 w-5 text-amber-500" />
+                  Открытые замечания
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {data.criticalDefects.map((d) => (
+                    <div key={d.id} className="flex items-center justify-between rounded-md border p-3">
+                      <p className="text-sm font-medium">{d.title}</p>
+                      <Badge variant={d.status === 'OPEN' ? 'destructive' : 'secondary'}>
+                        {DEFECT_STATUS_LABELS[d.status] ?? d.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-        {/* Открытые дефекты */}
-        {data.criticalDefects.length > 0 && (
+          {/* Договоры */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                <AlertTriangle className="h-5 w-5 text-amber-500" />
-                Открытые замечания
+                <FileText className="h-5 w-5 text-primary" />
+                Договоры
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {data.criticalDefects.map((d) => (
-                  <div key={d.id} className="flex items-center justify-between rounded-md border p-3">
-                    <p className="text-sm font-medium">{d.title}</p>
-                    <Badge variant={d.status === 'OPEN' ? 'destructive' : 'secondary'}>
-                      {DEFECT_STATUS_LABELS[d.status] ?? d.status}
-                    </Badge>
+                {data.contracts.map((c) => (
+                  <div key={c.id} className="flex items-center justify-between rounded-md border p-3">
+                    <div>
+                      <p className="text-sm font-medium">{c.number} — {c.name}</p>
+                      <p className="text-xs text-muted-foreground">{c.workItemsCount} видов работ</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-sm">
+                      <CheckCircle className="h-4 w-4 text-emerald-500" />
+                      <span>{c.docsCount} актов</span>
+                    </div>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
-        )}
 
-        {/* Договоры */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <FileText className="h-5 w-5 text-primary" />
-              Договоры
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {data.contracts.map((c) => (
-                <div key={c.id} className="flex items-center justify-between rounded-md border p-3">
-                  <div>
-                    <p className="text-sm font-medium">{c.number} — {c.name}</p>
-                    <p className="text-xs text-muted-foreground">{c.workItemsCount} видов работ</p>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-sm">
-                    <CheckCircle className="h-4 w-4 text-emerald-500" />
-                    <span>{c.docsCount} актов</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </main>
+          {/* График прогресса выполнения ИД по неделям */}
+          <ProgressOverview token={params.token} />
 
-      {/* Футер */}
-      <footer className="border-t bg-white px-6 py-4 text-center">
-        <p className="text-xs text-muted-foreground">
-          Powered by{' '}
-          <a href={process.env.APP_URL ?? '#'} className="text-primary hover:underline font-medium">
-            StroyDocs
-          </a>{' '}
-          — платформа исполнительной документации
-        </p>
-      </footer>
-    </div>
+          {/* Фотогалерея объекта */}
+          <PhotoGallery token={params.token} />
+
+          {/* Хроника ключевых событий */}
+          <EventsTimeline token={params.token} />
+
+          {/* Блок верификации подписанных актов */}
+          <VerifiedDocumentsBadge signedDocCount={data.docStats.signed} />
+
+          {/* Промо-блок для незарегистрированных пользователей */}
+          <PromoBlock referer={referer} />
+        </main>
+
+        {/* Футер */}
+        <footer className="border-t bg-white px-6 py-4 text-center">
+          <p className="text-xs text-muted-foreground">
+            Powered by{' '}
+            <a href={process.env.APP_URL ?? '#'} className="text-primary hover:underline font-medium">
+              StroyDocs
+            </a>{' '}
+            — платформа исполнительной документации
+          </p>
+        </footer>
+      </div>
+    </>
   );
 }

@@ -873,6 +873,7 @@ model User {
   dailyLogs               DailyLog[]
   changeOrders            ChangeOrder[]
   portalTokensCreated     ProjectPortalToken[]
+  revokedPortalTokens     ProjectPortalToken[]     @relation("PortalTokenRevoker")
   notifications           Notification[]
   tasksAssigned           Task[]                   @relation("TaskAssignee")
   tasksCreated            Task[]                   @relation("TaskCreator")
@@ -1113,6 +1114,10 @@ model BuildingObject {
 
   // Фаза C2 — политика доступа к проекту
   memberPolicy ProjectMemberPolicy   @default(WORKSPACE_WIDE)
+
+  // Модуль 17 — Публичный дашборд
+  publicDashboardEnabled  Boolean  @default(false)
+  publicDashboardSettings Json?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2954,9 +2959,22 @@ model ProjectPortalToken {
   createdById String
   createdBy   User   @relation(fields: [createdById], references: [id])
 
+  // Модуль 17 — расширение для полноценного дашборда
+  scopeType      PortalTokenScope @default(PROJECT_DASHBOARD)
+  allowIndexing  Boolean          @default(false)
+  viewCount      Int              @default(0)
+  lastViewedAt   DateTime?
+  customSettings Json?            // { hideCosts, hidePhotoIds, hideAddress, hideDefects }
+  revokedAt      DateTime?
+  revokedReason  String?
+  revokedById    String?
+  revokedBy      User?            @relation("PortalTokenRevoker", fields: [revokedById], references: [id])
+
+  views     PortalView[]
   createdAt DateTime @default(now())
 
   @@index([projectId])
+  @@index([scopeType, projectId])
   @@map("project_portal_tokens")
 }
 
@@ -7164,4 +7182,30 @@ model AuditLog {
   @@index([actorUserId, createdAt])
   @@index([action, createdAt])
   @@map("audit_logs")
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Модуль 17 — Публичный дашборд
+// ─────────────────────────────────────────────────────────────────
+
+/// Тип scope токена портала
+enum PortalTokenScope {
+  PROJECT_DASHBOARD    // Дашборд объекта (текущая семантика)
+  CONTRACTOR_PORTFOLIO // KF-2 — портфолио подрядчика
+  CUSTOMER_GUEST       // Фаза 2 — гостевой кабинет
+}
+
+/// Просмотр публичного дашборда (аналитика)
+model PortalView {
+  id          String   @id @default(uuid())
+  tokenId     String
+  token       ProjectPortalToken @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+  viewedAt    DateTime @default(now())
+  ipHash      String   // sha256(ip + daily_salt) — для совместимости с ФЗ-152
+  userAgent   String?
+  referer     String?
+  countryCode String?  @db.VarChar(2)
+
+  @@index([tokenId, viewedAt])
+  @@map("portal_views")
 }
