@@ -57,7 +57,19 @@ export const authOptions: NextAuthOptions = {
       if (trigger === 'update' && session) {
         const upd = session as { onboardingCompleted?: boolean; activeWorkspaceId?: string | null };
         if (upd.onboardingCompleted !== undefined) token.onboardingCompleted = upd.onboardingCompleted;
-        if (upd.activeWorkspaceId !== undefined) token.activeWorkspaceId = upd.activeWorkspaceId;
+        if (upd.activeWorkspaceId !== undefined) {
+          token.activeWorkspaceId = upd.activeWorkspaceId;
+          // Обновляем роль в workspace при смене активного workspace
+          if (upd.activeWorkspaceId) {
+            const member = await db.workspaceMember.findFirst({
+              where: { workspaceId: upd.activeWorkspaceId, userId: token.id as string },
+              select: { role: true },
+            });
+            token.activeRole = member?.role ?? null;
+          } else {
+            token.activeRole = null;
+          }
+        }
       }
       if (user) {
         token.id = user.id;
@@ -68,6 +80,16 @@ export const authOptions: NextAuthOptions = {
         token.activeWorkspaceId = user.activeWorkspaceId;
         token.professionalRole = user.professionalRole;
         token.onboardingCompleted = user.onboardingCompleted;
+        // Загружаем роль в активном workspace при входе
+        if (user.activeWorkspaceId) {
+          const member = await db.workspaceMember.findFirst({
+            where: { workspaceId: user.activeWorkspaceId, userId: user.id },
+            select: { role: true },
+          });
+          token.activeRole = member?.role ?? null;
+        } else {
+          token.activeRole = null;
+        }
       }
       return token;
     },
@@ -82,6 +104,7 @@ export const authOptions: NextAuthOptions = {
         activeWorkspaceId: token.activeWorkspaceId ?? null,
         professionalRole: token.professionalRole ?? null,
         onboardingCompleted: token.onboardingCompleted ?? false,
+        activeRole: (token.activeRole ?? null) as string | null,
       };
       return session;
     },

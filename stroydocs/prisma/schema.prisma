@@ -752,6 +752,9 @@ model Workspace {
   promoCodeRedemptions PromoCodeRedemption[]
   workspaceInvitations WorkspaceInvitation[]
   auditLogs            AuditLog[]
+  guestInvitations     GuestInvitation[]
+  guestComments        GuestComment[]
+  guestSignatures      GuestSignature[]
 
   @@map("workspaces")
 }
@@ -1014,6 +1017,12 @@ model User {
   // D2 — аудит-лог
   auditLogs                AuditLog[]            @relation("AuditLogActor")
 
+  // Модуль 17 Фаза 2 — Гостевой кабинет
+  guestInvitationsSent     GuestInvitation[]     @relation("GuestInvitationCreator")
+  guestComments            GuestComment[]        @relation("GuestCommentAuthor")
+  guestCommentsResolved    GuestComment[]        @relation("GuestCommentResolver")
+  guestSignatures          GuestSignature[]      @relation("GuestSignatureSigner")
+
   @@index([organizationId])
   @@index([referredByCode])
   @@map("users")
@@ -1212,6 +1221,10 @@ model BuildingObject {
   // Модуль 10 — Категории ИД
   idDocCategories IdDocCategory[]
 
+  // Модуль 17 Фаза 2 — Гостевой кабинет
+  guestInvitations GuestInvitation[] @relation("GuestInvitationProject")
+  guestComments    GuestComment[]    @relation("GuestCommentProject")
+
   @@index([organizationId])
   @@index([parentId])
   @@index([region])
@@ -1295,6 +1308,9 @@ model Contract {
   detailInfos      ContractDetailInfo[]
   financialTables  ContractFinancialTable[]
   contractDocLinks ContractDocLink[]
+
+  // Модуль 17 Фаза 2 — Гостевой кабинет
+  guestInvitations GuestInvitation[] @relation("GuestInvitationContract")
 
   @@index([projectId])
   @@index([parentId])
@@ -1896,6 +1912,9 @@ model ExecutionDoc {
   publicShareToken     String?   @unique
   publicShareExpiresAt DateTime?
   publicShareViewCount Int       @default(0)
+
+  // Модуль 17 Фаза 2 — подписи гостей
+  guestSignatures GuestSignature[] @relation("GuestDocSignatures")
 
   @@index([contractId])
   @@index([workRecordId])
@@ -7208,4 +7227,128 @@ model PortalView {
 
   @@index([tokenId, viewedAt])
   @@map("portal_views")
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Модуль 17 Фаза 2 — Гостевой кабинет
+// ─────────────────────────────────────────────────────────────────
+
+enum GuestInvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+enum GuestCommentTarget {
+  PHOTO
+  EXECUTION_DOC
+  DEFECT
+  ESTIMATE
+  STAGE
+  GENERAL
+}
+
+enum GuestCommentStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  DISMISSED
+}
+
+enum GuestSignatureMethod {
+  SMS
+  EMAIL_CONFIRM
+  SIMPLE_ECP
+}
+
+enum GuestSignatureStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  EXPIRED
+}
+
+/// Приглашение заказчика/наблюдателя в качестве гостя проекта
+model GuestInvitation {
+  id          String @id @default(uuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  projectId      String?
+  buildingObject BuildingObject? @relation("GuestInvitationProject", fields: [projectId], references: [id], onDelete: SetNull)
+  contractId     String?
+  contract       Contract?       @relation("GuestInvitationContract", fields: [contractId], references: [id], onDelete: SetNull)
+
+  email       String?
+  phone       String?
+  fullName    String
+
+  scope          Json   // GuestScope (типизирован через guestScopeSchema)
+  token          String @unique @default(uuid())
+  status         GuestInvitationStatus @default(PENDING)
+  sentAt         DateTime @default(now())
+  acceptedAt     DateTime?
+  expiresAt      DateTime
+  createdById    String
+  creator        User   @relation("GuestInvitationCreator", fields: [createdById], references: [id])
+
+  @@index([workspaceId, status])
+  @@index([token])
+  @@index([projectId])
+  @@map("guest_invitations")
+}
+
+/// Комментарий гостя к элементу проекта
+model GuestComment {
+  id           String @id @default(uuid())
+  workspaceId  String
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  projectId    String
+  buildingObject BuildingObject @relation("GuestCommentProject", fields: [projectId], references: [id], onDelete: Cascade)
+  authorUserId String
+  author       User   @relation("GuestCommentAuthor", fields: [authorUserId], references: [id])
+  targetType   GuestCommentTarget
+  targetId     String
+  content      String
+  status       GuestCommentStatus @default(OPEN)
+  resolvedById String?
+  resolvedBy   User?  @relation("GuestCommentResolver", fields: [resolvedById], references: [id])
+  resolvedAt   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([projectId, status])
+  @@index([targetType, targetId])
+  @@map("guest_comments")
+}
+
+/// Подпись документа гостем (с аудит-трейлом)
+model GuestSignature {
+  id             String @id @default(uuid())
+  workspaceId    String
+  workspace      Workspace @relation(fields: [workspaceId], references: [id])
+
+  executionDocId String
+  executionDoc   ExecutionDoc @relation("GuestDocSignatures", fields: [executionDocId], references: [id], onDelete: Cascade)
+
+  signerUserId   String
+  signer         User   @relation("GuestSignatureSigner", fields: [signerUserId], references: [id])
+
+  method                  GuestSignatureMethod
+  confirmationCode        String?   // plain code (только в памяти, не хранится после confirm)
+  confirmationCodeHash    String?   // bcrypt-хэш кода
+  confirmationExpiresAt  DateTime?
+  confirmedAt             DateTime?
+  ipAddress               String
+  userAgent               String
+  gpsLat                  Float?
+  gpsLng                  Float?
+  auditTrail              Json      // [{ts, action, method?, ipAddress?, userAgent?}]
+  status                  GuestSignatureStatus @default(PENDING)
+  createdAt               DateTime @default(now())
+
+  @@index([executionDocId])
+  @@index([signerUserId])
+  @@map("guest_signatures")
 }
