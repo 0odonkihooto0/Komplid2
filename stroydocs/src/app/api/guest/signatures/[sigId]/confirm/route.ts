@@ -121,7 +121,6 @@ export async function POST(
           type: 'GUEST_DOCUMENT_SIGNED',
           title: 'Документ подписан гостем',
           body: 'Гость подписал документ',
-          isRead: false,
         },
       });
     }
