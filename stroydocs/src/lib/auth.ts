@@ -66,8 +66,15 @@ export const authOptions: NextAuthOptions = {
               select: { role: true },
             });
             token.activeRole = member?.role ?? null;
+            // Обновляем profiRole плана при смене активного workspace
+            const activeWs = await db.workspace.findUnique({
+              where: { id: upd.activeWorkspaceId },
+              include: { activeSubscription: { include: { plan: { select: { profiRole: true } } } } },
+            });
+            token.planProfiRole = activeWs?.activeSubscription?.plan?.profiRole ?? null;
           } else {
             token.activeRole = null;
+            token.planProfiRole = null;
           }
         }
       }
@@ -87,8 +94,15 @@ export const authOptions: NextAuthOptions = {
             select: { role: true },
           });
           token.activeRole = member?.role ?? null;
+          // Загружаем profiRole плана подписки для routing
+          const activeWs = await db.workspace.findUnique({
+            where: { id: user.activeWorkspaceId },
+            include: { activeSubscription: { include: { plan: { select: { profiRole: true } } } } },
+          });
+          token.planProfiRole = activeWs?.activeSubscription?.plan?.profiRole ?? null;
         } else {
           token.activeRole = null;
+          token.planProfiRole = null;
         }
       }
       return token;
@@ -105,6 +119,7 @@ export const authOptions: NextAuthOptions = {
         professionalRole: token.professionalRole ?? null,
         onboardingCompleted: token.onboardingCompleted ?? false,
         activeRole: (token.activeRole ?? null) as string | null,
+        planProfiRole: (token.planProfiRole ?? null) as string | null,
       };
       return session;
     },

@@ -15,6 +15,7 @@ declare module 'next-auth' {
       professionalRole: ProfessionalRole | null;
       onboardingCompleted: boolean;
       activeRole: string | null;
+      planProfiRole: string | null;
     };
   }
 
@@ -42,5 +43,6 @@ declare module 'next-auth/jwt' {
     professionalRole: ProfessionalRole | null | undefined;
     onboardingCompleted: boolean;
     activeRole: string | null | undefined;
+    planProfiRole: string | null | undefined;
   }
 }
