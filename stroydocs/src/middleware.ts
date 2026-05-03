@@ -14,6 +14,8 @@ const PUBLIC_PATHS = [
   '/swe-worker-',          // Serwist worker entry (динамическое имя swe-worker-<hash>.js)
   '/manifest.webmanifest', // PWA манифест
   '/~offline',             // Serwist offline fallback
+  '/accept-guest/',        // Страница принятия гостевого приглашения
+  '/api/public/guest-accept/', // API принятия гостевого приглашения
 ];
 
 // Пути, которые не требуют завершённого онбординга (кроме /onboarding)
@@ -51,6 +53,22 @@ export async function middleware(req: NextRequest) {
   // Завершил онбординг, но пытается вернуться на /onboarding → в приложение
   if (onboardingCompleted && pathname === '/onboarding') {
     return NextResponse.redirect(new URL('/objects', req.url));
+  }
+
+  // Маршрутизация по роли в workspace (Модуль 17 Фаза 2 — Гостевой кабинет)
+  const activeRole = token.activeRole as string | null | undefined;
+  const isGuestPath = pathname.startsWith('/guest') || pathname.startsWith('/api/guest');
+  const isAcceptGuestPath = pathname.startsWith('/accept-guest');
+
+  if (!isAcceptGuestPath) {
+    // GUEST → только /guest/* и /api/guest/*
+    if (activeRole === 'GUEST' && !isGuestPath) {
+      return NextResponse.redirect(new URL('/guest', req.url));
+    }
+    // Не GUEST → не пускаем в /guest/*
+    if (activeRole !== 'GUEST' && isGuestPath) {
+      return NextResponse.redirect(new URL('/objects', req.url));
+    }
   }
 
   return NextResponse.next();
