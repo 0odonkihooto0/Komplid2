@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12pt;
+      line-height: 1.5;
+      padding: 20mm 20mm 20mm 30mm;
+      color: #000;
+    }
+    .recipient-block { margin-bottom: 30px; }
+    .recipient-block p { margin-bottom: 4px; }
+    .date-city { margin-bottom: 20px; }
+    .title {
+      font-size: 13pt;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+    .subject {
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+    p { margin-bottom: 10px; text-align: justify; }
+    .section { margin-bottom: 15px; }
+    .indent { text-indent: 1.5em; }
+    .legal-ref { font-style: italic; }
+    .signature-block { margin-top: 40px; }
+    .signature-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 30px;
+    }
+    .signature-line {
+      border-bottom: 1px solid #000;
+      width: 180px;
+      display: inline-block;
+      margin-left: 10px;
+    }
+    .req-line { margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+
+  <div class="recipient-block">
+    <p><strong>{{recipientName}}</strong></p>
+    {{#if recipientAddress}}
+    <p>{{recipientAddress}}</p>
+    {{/if}}
+  </div>
+
+  <div class="date-city">
+    <p>{{today}}</p>
+  </div>
+
+  <div class="title">ДОСУДЕБНАЯ ПРЕТЕНЗИЯ</div>
+  <div class="subject">
+    об урегулировании спора в досудебном порядке
+    {{#if contractNumber}}(по договору № {{contractNumber}}{{#if contractDate}} от {{contractDate}}{{/if}}){{/if}}
+  </div>
+
+  <div class="section">
+    <p class="indent">
+      {{senderName}} (далее — Сторона 1) настоящей претензией в соответствии
+      с требованиями действующего законодательства Российской Федерации предлагает
+      урегулировать возникший спор в досудебном порядке.
+    </p>
+    {{#if contractNumber}}
+    <p class="indent">
+      Между Стороной 1 и {{recipientName}} (далее — Сторона 2) заключён договор
+      № {{contractNumber}}{{#if contractDate}} от {{contractDate}}{{/if}}
+      (далее — Договор).
+    </p>
+    {{/if}}
+    <p class="indent">
+      Между Сторонами возник следующий спор (конфликтная ситуация):
+    </p>
+    <p class="indent">{{issueDescription}}</p>
+  </div>
+
+  <div class="section">
+    <p class="indent">
+      В соответствии с пунктом 2 статьи 452 Гражданского кодекса Российской Федерации
+      требование об изменении или расторжении договора может быть заявлено стороной
+      в суд только после получения отказа другой стороны на предложение изменить
+      или расторгнуть договор либо неполучения ответа в срок, указанный в предложении
+      или установленный законом либо договором, а при его отсутствии — в тридцатидневный срок.
+    </p>
+    <p class="indent">
+      Согласно части 5 статьи 4 Арбитражного процессуального кодекса Российской Федерации
+      для отдельных категорий споров соблюдение претензионного (досудебного) порядка
+      урегулирования спора является обязательным условием обращения в арбитражный суд.
+    </p>
+  </div>
+
+  <div class="section">
+    <p class="indent">
+      На основании изложенного Сторона 1 предлагает:
+    </p>
+    <p class="indent">{{requestedAction}}</p>
+    {{#if deadline}}
+    <p class="indent">
+      Ответ на настоящую претензию должен быть направлен в срок не позднее
+      <strong>{{deadline}}</strong>.
+    </p>
+    {{/if}}
+  </div>
+
+  <div class="section">
+    <p class="indent">
+      В случае неполучения ответа в указанный срок либо получения отказа от урегулирования
+      спора в досудебном порядке Сторона 1 оставляет за собой право обратиться за защитой
+      своих прав и законных интересов в судебном порядке с взысканием всех понесённых
+      расходов, в том числе судебных издержек, с виновной стороны.
+    </p>
+  </div>
+
+  <div class="signature-block">
+    <p class="req-line"><strong>{{senderName}}</strong></p>
+    {{#if senderAddress}}
+    <p class="req-line">Адрес: {{senderAddress}}</p>
+    {{/if}}
+    <div class="signature-row">
+      <span>Подпись:</span>
+      <span class="signature-line"></span>
+      <span>/ {{senderName}} /</span>
+    </div>
+  </div>
+
+</body>
+</html>

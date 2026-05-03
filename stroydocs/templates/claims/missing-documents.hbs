@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12pt;
+      line-height: 1.5;
+      padding: 20mm 20mm 20mm 30mm;
+      color: #000;
+    }
+    .recipient-block { margin-bottom: 30px; }
+    .recipient-block p { margin-bottom: 4px; }
+    .date-city { margin-bottom: 20px; }
+    .title {
+      font-size: 13pt;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+    .subject {
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+    p { margin-bottom: 10px; text-align: justify; }
+    .section { margin-bottom: 15px; }
+    .indent { text-indent: 1.5em; }
+    .signature-block { margin-top: 40px; }
+    .signature-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 30px;
+    }
+    .signature-line {
+      border-bottom: 1px solid #000;
+      width: 180px;
+      display: inline-block;
+      margin-left: 10px;
+    }
+    .req-line { margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+
+  <div class="recipient-block">
+    <p><strong>{{recipientName}}</strong></p>
+    {{#if recipientAddress}}
+    <p>{{recipientAddress}}</p>
+    {{/if}}
+  </div>
+
+  <div class="date-city">
+    <p>{{today}}</p>
+  </div>
+
+  <div class="title">ПРЕТЕНЗИЯ</div>
+  <div class="subject">
+    об обязании передать документацию по выполненным работам
+    {{#if contractNumber}}(по договору № {{contractNumber}}{{#if contractDate}} от {{contractDate}}{{/if}}){{/if}}
+  </div>
+
+  <div class="section">
+    <p class="indent">
+      {{senderName}} (далее — Заказчик) настоящим сообщает о неисполнении обязательства
+      по передаче технической документации, связанной с результатом выполненных работ.
+    </p>
+    {{#if contractNumber}}
+    <p class="indent">
+      Между Заказчиком и {{recipientName}} (далее — Подрядчик) заключён договор
+      № {{contractNumber}}{{#if contractDate}} от {{contractDate}}{{/if}}
+      (далее — Договор).
+    </p>
+    {{/if}}
+    <p class="indent">
+      По результатам выполнения работ Подрядчик до настоящего времени не передал
+      следующие документы:
+    </p>
+    <p class="indent">{{issueDescription}}</p>
+  </div>
+
+  <div class="section">
+    <p class="indent">
+      В соответствии со статьёй 726 Гражданского кодекса Российской Федерации
+      подрядчик обязан передать заказчику вместе с результатом работы информацию,
+      касающуюся эксплуатации или иного использования предмета договора подряда,
+      если это предусмотрено договором либо характер информации таков, что без неё
+      невозможно использование результата работы для целей, указанных в договоре.
+    </p>
+    <p class="indent">
+      Кроме того, в соответствии с требованиями градостроительного законодательства
+      Российской Федерации и нормами строительного контроля подрядчик обязан оформлять
+      и передавать заказчику исполнительную документацию по мере завершения
+      соответствующих видов работ.
+    </p>
+  </div>
+
+  <div class="section">
+    <p class="indent">
+      На основании изложенного Заказчик требует:
+    </p>
+    <p class="indent">{{requestedAction}}</p>
+    {{#if deadline}}
+    <p class="indent">
+      Указанные документы должны быть переданы Заказчику не позднее <strong>{{deadline}}</strong>.
+    </p>
+    {{/if}}
+  </div>
+
+  <div class="section">
+    <p class="indent">
+      В случае непередачи документации в установленный срок Заказчик вправе
+      задержать оплату выполненных работ (либо потребовать возврата выплаченных сумм)
+      до исполнения Подрядчиком обязательства по предоставлению документации,
+      а также обратиться в суд за защитой нарушенных прав.
+    </p>
+  </div>
+
+  <div class="signature-block">
+    <p class="req-line"><strong>{{senderName}}</strong></p>
+    {{#if senderAddress}}
+    <p class="req-line">Адрес: {{senderAddress}}</p>
+    {{/if}}
+    <div class="signature-row">
+      <span>Подпись:</span>
+      <span class="signature-line"></span>
+      <span>/ {{senderName}} /</span>
+    </div>
+  </div>
+
+</body>
+</html>

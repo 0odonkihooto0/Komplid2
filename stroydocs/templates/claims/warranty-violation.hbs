@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12pt;
+      line-height: 1.5;
+      padding: 20mm 20mm 20mm 30mm;
+      color: #000;
+    }
+    .recipient-block { margin-bottom: 30px; }
+    .recipient-block p { margin-bottom: 4px; }
+    .date-city { margin-bottom: 20px; }
+    .title {
+      font-size: 13pt;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+    .subject {
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+    p { margin-bottom: 10px; text-align: justify; }
+    .section { margin-bottom: 15px; }
+    .indent { text-indent: 1.5em; }
+    .signature-block { margin-top: 40px; }
+    .signature-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 30px;
+    }
+    .signature-line {
+      border-bottom: 1px solid #000;
+      width: 180px;
+      display: inline-block;
+      margin-left: 10px;
+    }
+    .req-line { margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+
+  <div class="recipient-block">
+    <p><strong>{{recipientName}}</strong></p>
+    {{#if recipientAddress}}
+    <p>{{recipientAddress}}</p>
+    {{/if}}
+  </div>
+
+  <div class="date-city">
+    <p>{{today}}</p>
+  </div>
+
+  <div class="title">ПРЕТЕНЗИЯ</div>
+  <div class="subject">
+    о неисполнении гарантийных обязательств
+    {{#if contractNumber}}(по договору № {{contractNumber}}{{#if contractDate}} от {{contractDate}}{{/if}}){{/if}}
+  </div>
+
+  <div class="section">
+    <p class="indent">
+      {{senderName}} (далее — Заказчик) настоящей претензией требует исполнения
+      гарантийных обязательств, принятых {{recipientName}} (далее — Подрядчик).
+    </p>
+    {{#if contractNumber}}
+    <p class="indent">
+      Между Заказчиком и Подрядчиком заключён договор № {{contractNumber}}
+      {{#if contractDate}}от {{contractDate}}{{/if}} (далее — Договор),
+      которым предусмотрен гарантийный срок на результат выполненных работ.
+    </p>
+    {{/if}}
+    <p class="indent">
+      В течение гарантийного срока были выявлены следующие дефекты (недостатки),
+      возникшие по причинам, зависящим от Подрядчика:
+    </p>
+    <p class="indent">{{issueDescription}}</p>
+  </div>
+
+  <div class="section">
+    <p class="indent">
+      В соответствии с пунктом 1 статьи 724 Гражданского кодекса Российской Федерации
+      заказчик вправе предъявить требования, связанные с недостатками результата работы,
+      обнаруженными в течение гарантийного срока.
+    </p>
+    <p class="indent">
+      Согласно пункту 1 статьи 723 ГК РФ Заказчик вправе требовать от Подрядчика
+      безвозмездного устранения выявленных недостатков в разумный срок, поскольку
+      указанные дефекты возникли по причинам, связанным с ненадлежащим выполнением работ.
+    </p>
+    <p class="indent">
+      В соответствии с пунктом 2 статьи 755 ГК РФ подрядчик несёт ответственность
+      за недостатки (дефекты), обнаруженные в пределах гарантийного срока, если
+      не докажет, что они произошли вследствие нормального износа объекта или его
+      частей, неправильной его эксплуатации или неправильности инструкций по его
+      эксплуатации, ненадлежащего ремонта объекта, произведённого самим заказчиком
+      или привлечёнными им третьими лицами.
+    </p>
+  </div>
+
+  <div class="section">
+    <p class="indent">
+      На основании изложенного Заказчик требует:
+    </p>
+    <p class="indent">{{requestedAction}}</p>
+    {{#if deadline}}
+    <p class="indent">
+      Гарантийные работы должны быть выполнены не позднее <strong>{{deadline}}</strong>.
+    </p>
+    {{/if}}
+  </div>
+
+  <div class="section">
+    <p class="indent">
+      В случае отказа или уклонения от исполнения гарантийных обязательств Заказчик
+      вправе устранить дефекты собственными силами или с привлечением третьих лиц
+      с последующим отнесением всех расходов на счёт Подрядчика, а также обратиться
+      в суд за взысканием понесённых убытков.
+    </p>
+  </div>
+
+  <div class="signature-block">
+    <p class="req-line"><strong>{{senderName}}</strong></p>
+    {{#if senderAddress}}
+    <p class="req-line">Адрес: {{senderAddress}}</p>
+    {{/if}}
+    <div class="signature-row">
+      <span>Подпись:</span>
+      <span class="signature-line"></span>
+      <span>/ {{senderName}} /</span>
+    </div>
+  </div>
+
+</body>
+</html>
