@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import SignDocumentWizard from '@/components/guest/SignDocumentWizard';
+import { SignDocumentWizard } from '@/components/guest/SignDocumentWizard';
 
 interface GuestDocument {
   id: string;
@@ -42,7 +42,7 @@ interface Props {
 }
 
 export default function GuestDocumentsTable({ projectId, canSign }: Props) {
-  const [signingDocId, setSigningDocId] = useState<string | null>(null);
+  const [signingDoc, setSigningDoc] = useState<{ id: string; title: string } | null>(null);
 
   const { data, isLoading } = useQuery<DocumentsResponse>({
     queryKey: ['guest-documents', projectId],
@@ -97,7 +97,7 @@ export default function GuestDocumentsTable({ projectId, canSign }: Props) {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => setSigningDocId(doc.id)}
+                          onClick={() => setSigningDoc({ id: doc.id, title: doc.title })}
                         >
                           Подписать
                         </Button>
@@ -112,11 +112,12 @@ export default function GuestDocumentsTable({ projectId, canSign }: Props) {
       </div>
 
       {/* Диалог подписания документа */}
-      {signingDocId && (
+      {signingDoc && (
         <SignDocumentWizard
-          docId={signingDocId}
-          open={!!signingDocId}
-          onClose={() => setSigningDocId(null)}
+          docId={signingDoc.id}
+          docTitle={signingDoc.title}
+          onClose={() => setSigningDoc(null)}
+          onSuccess={() => setSigningDoc(null)}
         />
       )}
     </>
