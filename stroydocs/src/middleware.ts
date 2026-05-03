@@ -23,6 +23,7 @@ const ONBOARDING_EXEMPT = [
   '/onboarding',
   '/api/onboarding',
   '/api/users/me/onboarding',
+  '/moy-remont',
 ];
 
 export async function middleware(req: NextRequest) {
@@ -69,6 +70,17 @@ export async function middleware(req: NextRequest) {
     if (activeRole !== 'GUEST' && isGuestPath) {
       return NextResponse.redirect(new URL('/objects', req.url));
     }
+  }
+
+  // Маршрутизация CUSTOMER по profiRole плана (Модуль 17 Фаза 3 — B2C Мой Ремонт)
+  const planProfiRole = token.planProfiRole as string | null | undefined;
+  const isCustomerPath = pathname.startsWith('/moy-remont') || pathname.startsWith('/api/customer');
+
+  if (planProfiRole === 'CUSTOMER' && !isCustomerPath && !isGuestPath) {
+    return NextResponse.redirect(new URL('/moy-remont', req.url));
+  }
+  if (planProfiRole !== 'CUSTOMER' && isCustomerPath) {
+    return NextResponse.redirect(new URL('/objects', req.url));
   }
 
   return NextResponse.next();

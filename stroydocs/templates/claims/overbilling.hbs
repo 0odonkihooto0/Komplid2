@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12pt;
+      line-height: 1.5;
+      padding: 20mm 20mm 20mm 30mm;
+      color: #000;
+    }
+    .recipient-block { margin-bottom: 30px; }
+    .recipient-block p { margin-bottom: 4px; }
+    .date-city { margin-bottom: 20px; }
+    .title {
+      font-size: 13pt;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+    .subject {
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+    p { margin-bottom: 10px; text-align: justify; }
+    .section { margin-bottom: 15px; }
+    .indent { text-indent: 1.5em; }
+    .signature-block { margin-top: 40px; }
+    .signature-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 30px;
+    }
+    .signature-line {
+      border-bottom: 1px solid #000;
+      width: 180px;
+      display: inline-block;
+      margin-left: 10px;
+    }
+    .req-line { margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+
+  <div class="recipient-block">
+    <p><strong>{{recipientName}}</strong></p>
+    {{#if recipientAddress}}
+    <p>{{recipientAddress}}</p>
+    {{/if}}
+  </div>
+
+  <div class="date-city">
+    <p>{{today}}</p>
+  </div>
+
+  <div class="title">ПРЕТЕНЗИЯ</div>
+  <div class="subject">
+    о завышении стоимости выполненных работ
+    {{#if contractNumber}}(по договору № {{contractNumber}}{{#if contractDate}} от {{contractDate}}{{/if}}){{/if}}
+  </div>
+
+  <div class="section">
+    <p class="indent">
+      {{senderName}} (далее — Заказчик) настоящим уведомляет Вас о выявленных
+      нарушениях в части ценообразования выполненных работ.
+    </p>
+    {{#if contractNumber}}
+    <p class="indent">
+      Между Заказчиком и {{recipientName}} (далее — Подрядчик) заключён договор
+      № {{contractNumber}}{{#if contractDate}} от {{contractDate}}{{/if}}
+      (далее — Договор), определяющий стоимость и порядок оплаты работ.
+    </p>
+    {{/if}}
+    <p class="indent">
+      В ходе проверки актов выполненных работ и сметной документации установлено
+      следующее завышение стоимости:
+    </p>
+    <p class="indent">{{issueDescription}}</p>
+  </div>
+
+  <div class="section">
+    <p class="indent">
+      В соответствии с пунктом 5 статьи 709 Гражданского кодекса Российской Федерации
+      если возникла необходимость в проведении дополнительных работ и по этой причине
+      в существенном превышении определённой приблизительно цены работы, подрядчик
+      обязан своевременно предупредить об этом заказчика. Подрядчик, своевременно не
+      предупредивший заказчика о необходимости превышения указанной в договоре цены
+      работы, обязан выполнить договор, сохраняя право на оплату работы по цене,
+      определённой в договоре.
+    </p>
+    <p class="indent">
+      Согласно пункту 3 статьи 709 ГК РФ цена работы может быть определена путём
+      составления сметы. В случае, когда работа выполняется в соответствии со сметой,
+      составленной подрядчиком, смета приобретает силу и становится частью договора
+      подряда с момента подтверждения её заказчиком.
+    </p>
+  </div>
+
+  <div class="section">
+    <p class="indent">
+      На основании изложенного Заказчик требует:
+    </p>
+    <p class="indent">{{requestedAction}}</p>
+    {{#if deadline}}
+    <p class="indent">
+      Срок рассмотрения настоящей претензии и исполнения требований: <strong>{{deadline}}</strong>.
+    </p>
+    {{/if}}
+  </div>
+
+  <div class="section">
+    <p class="indent">
+      В случае отклонения претензии или игнорирования требований Заказчик вправе
+      обратиться в арбитражный суд (суд общей юрисдикции) с требованием о возврате
+      излишне уплаченных денежных средств, а также взыскании процентов за пользование
+      чужими денежными средствами в порядке статьи 395 ГК РФ.
+    </p>
+  </div>
+
+  <div class="signature-block">
+    <p class="req-line"><strong>{{senderName}}</strong></p>
+    {{#if senderAddress}}
+    <p class="req-line">Адрес: {{senderAddress}}</p>
+    {{/if}}
+    <div class="signature-row">
+      <span>Подпись:</span>
+      <span class="signature-line"></span>
+      <span>/ {{senderName}} /</span>
+    </div>
+  </div>
+
+</body>
+</html>

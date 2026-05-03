@@ -17,7 +17,8 @@ const INTENT_PLAN_MAP: Record<string, string> = {
   CONTRACTOR_GENERAL: 'id_master_pro',
   CONTRACTOR_SUB: 'foreman_journal_pro',
   CONSTRUCTION_SUPERVISOR: 'id_master_pro',
-  CUSTOMER_PRIVATE: 'smetchik_studio_pro',
+  CUSTOMER_PRIVATE: 'customer_free',
+  CUSTOMER_B2B: 'customer_free',
 };
 
 const schema = z.object({

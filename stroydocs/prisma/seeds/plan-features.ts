@@ -86,6 +86,18 @@ const PLAN_FEATURE_MAP: PlanFeatureDef[] = [
   { planCode: 'foreman_journal_pro', featureCode: 'mobile_offline',          included: true },
   { planCode: 'foreman_journal_pro', featureCode: 'voice_input',             included: true },
   { planCode: 'foreman_journal_pro', featureCode: 'GUEST_INVITATION',        included: true },
+
+  // ─── Мой Ремонт Бесплатный ──────────────────────────────────────────────
+  { planCode: 'customer_free', featureCode: 'CUSTOMER_HIDDEN_WORKS_CHECKLISTS', included: true },
+  { planCode: 'customer_free', featureCode: 'CUSTOMER_CLAIM_TEMPLATES',          included: true },
+
+  // ─── Мой Ремонт Pro ──────────────────────────────────────────────────────
+  { planCode: 'customer_pro', featureCode: 'CUSTOMER_HIDDEN_WORKS_CHECKLISTS', included: true },
+  { planCode: 'customer_pro', featureCode: 'CUSTOMER_AI_LAWYER',               included: true },
+  { planCode: 'customer_pro', featureCode: 'CUSTOMER_CLAIM_TEMPLATES',         included: true },
+  { planCode: 'customer_pro', featureCode: 'CUSTOMER_PAYMENT_TRACKER',         included: true },
+  { planCode: 'customer_pro', featureCode: 'CUSTOMER_MATERIALS_TRACKER',       included: true },
+  { planCode: 'customer_pro', featureCode: 'CUSTOMER_UNLIMITED_PROJECTS',      included: true },
 ];
 
 export async function seedPlanFeatures(prisma: PrismaClient) {

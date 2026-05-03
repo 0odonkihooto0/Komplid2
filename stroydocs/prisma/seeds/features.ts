@@ -58,8 +58,11 @@ const FEATURES: FeatureDef[] = [
 
   // === B2C_CUSTOMER (MODULE17, Фаза 3) ===
   { code: 'CUSTOMER_HIDDEN_WORKS_CHECKLISTS', displayName: 'Чек-листы скрытых работ (для заказчика)', category: 'B2C_CUSTOMER', description: 'Доступ заказчика к чек-листам скрытых работ' },
-  { code: 'CUSTOMER_AI_LAWYER',     displayName: 'AI-юрист для заказчика', category: 'B2C_CUSTOMER' },
-  { code: 'CUSTOMER_CLAIM_TEMPLATES', displayName: 'Шаблоны претензий (заказчик)', category: 'B2C_CUSTOMER' },
+  { code: 'CUSTOMER_AI_LAWYER',         displayName: 'AI-юрист для заказчика',        category: 'B2C_CUSTOMER', description: 'Консультации AI-юриста по строительному праву РФ' },
+  { code: 'CUSTOMER_CLAIM_TEMPLATES',   displayName: 'Шаблоны претензий (заказчик)',  category: 'B2C_CUSTOMER' },
+  { code: 'CUSTOMER_PAYMENT_TRACKER',   displayName: 'Трекер оплат ремонта',          category: 'B2C_CUSTOMER' },
+  { code: 'CUSTOMER_MATERIALS_TRACKER', displayName: 'Трекер материалов ремонта',     category: 'B2C_CUSTOMER' },
+  { code: 'CUSTOMER_UNLIMITED_PROJECTS', displayName: 'Неограниченное число проектов', category: 'B2C_CUSTOMER' },
 
   // === B2B ===
   { code: 'TEAM_MULTI_USER',          displayName: 'Мультипользовательский режим (Team)',     category: 'B2B', description: 'Несколько пользователей в одном workspace' },

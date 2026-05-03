@@ -271,6 +271,7 @@ enum ProfiRole {
   SMETCHIK   // Сметчик-Студио
   PTO        // ИД-Мастер
   PRORAB     // Прораб-Журнал
+  CUSTOMER   // B2C Мой Ремонт
 }
 
 enum CancellationReasonCode {
@@ -756,6 +757,13 @@ model Workspace {
   guestComments        GuestComment[]
   guestSignatures      GuestSignature[]
 
+  // Модуль 17 Фаза 3 — B2C Мой Ремонт
+  hiddenWorksChecklists HiddenWorksChecklist[]
+  customerPayments      CustomerPayment[]
+  customerMaterials     CustomerMaterial[]
+  customerClaims        CustomerClaim[]
+  lawyerConversations   LawyerConversation[]
+
   @@map("workspaces")
 }
 
@@ -1023,6 +1031,9 @@ model User {
   guestCommentsResolved    GuestComment[]        @relation("GuestCommentResolver")
   guestSignatures          GuestSignature[]      @relation("GuestSignatureSigner")
 
+  // Модуль 17 Фаза 3 — B2C Мой Ремонт
+  lawyerConversations      LawyerConversation[]
+
   @@index([organizationId])
   @@index([referredByCode])
   @@map("users")
@@ -1224,6 +1235,12 @@ model BuildingObject {
   // Модуль 17 Фаза 2 — Гостевой кабинет
   guestInvitations GuestInvitation[] @relation("GuestInvitationProject")
   guestComments    GuestComment[]    @relation("GuestCommentProject")
+
+  // Модуль 17 Фаза 3 — B2C Мой Ремонт
+  hiddenWorksChecklists HiddenWorksChecklist[]
+  customerPayments      CustomerPayment[]
+  customerMaterials     CustomerMaterial[]
+  customerClaims        CustomerClaim[]
 
   @@index([organizationId])
   @@index([parentId])
@@ -7351,4 +7368,178 @@ model GuestSignature {
   @@index([executionDocId])
   @@index([signerUserId])
   @@map("guest_signatures")
+}
+
+// ============================================================
+// Модуль 17 Фаза 3 — B2C «Мой Ремонт»
+// ============================================================
+
+enum HiddenWorkType {
+  FOUNDATION
+  WATERPROOFING
+  REINFORCEMENT
+  CONCRETE_WORKS
+  INSULATION
+  ELECTRICAL
+  PLUMBING
+  VENTILATION
+}
+
+enum ChecklistStatus {
+  PENDING
+  IN_PROGRESS
+  REQUIRES_PHOTO
+  COMPLETED
+  DISPUTED
+}
+
+enum CustomerPaymentCategory {
+  ADVANCE
+  STAGE_PAYMENT
+  FINAL_PAYMENT
+  MATERIALS
+  ADDITIONAL_WORKS
+  OTHER
+}
+
+enum ClaimStatus {
+  DRAFT
+  SENT
+  ACKNOWLEDGED
+  UNDER_REVIEW
+  RESOLVED
+  REJECTED
+}
+
+enum ClaimType {
+  QUALITY_ISSUE
+  DELAY
+  OVERBILLING
+  MISSING_DOCUMENTS
+  WARRANTY_VIOLATION
+  PRE_COURT
+  CONTRACT_TERMINATION
+}
+
+/// Чек-лист скрытых работ (для B2C заказчика)
+model HiddenWorksChecklist {
+  id          String          @id @default(uuid())
+  workspaceId String
+  workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  projectId   String
+  project     BuildingObject  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  workType    HiddenWorkType
+  title       String
+  status      ChecklistStatus @default(PENDING)
+  notes       String?
+  completedAt DateTime?
+  photoUrl    String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  items       ChecklistItem[]
+
+  @@index([workspaceId])
+  @@index([projectId])
+  @@map("hidden_works_checklists")
+}
+
+/// Пункт чек-листа скрытых работ
+model ChecklistItem {
+  id          String               @id @default(uuid())
+  checklistId String
+  checklist   HiddenWorksChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  isRequired  Boolean              @default(false)
+  isChecked   Boolean              @default(false)
+  checkedAt   DateTime?
+  sortOrder   Int                  @default(0)
+  createdAt   DateTime             @default(now())
+
+  @@index([checklistId])
+  @@map("checklist_items")
+}
+
+/// Платёж по ремонту (трекер оплат B2C)
+model CustomerPayment {
+  id           String                  @id @default(uuid())
+  workspaceId  String
+  workspace    Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  projectId    String
+  project      BuildingObject          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  category     CustomerPaymentCategory
+  amountRub    Int                     // в копейках
+  date         DateTime
+  description  String
+  contractRef  String?
+  receiptUrl   String?
+  isPaid       Boolean                 @default(false)
+  paidAt       DateTime?
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+
+  @@index([workspaceId])
+  @@index([projectId])
+  @@map("customer_payments")
+}
+
+/// Материал по ремонту (трекер материалов B2C)
+model CustomerMaterial {
+  id          String         @id @default(uuid())
+  workspaceId String
+  workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  projectId   String
+  project     BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String
+  unit        String
+  quantity    Float
+  priceRub    Int            // цена за единицу в копейках
+  totalRub    Int            // итого в копейках
+  supplier    String?
+  deliveredAt DateTime?
+  notes       String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([workspaceId])
+  @@index([projectId])
+  @@map("customer_materials")
+}
+
+/// Претензия по ремонту (B2C)
+model CustomerClaim {
+  id            String         @id @default(uuid())
+  workspaceId   String
+  workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  projectId     String
+  project       BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  type          ClaimType
+  status        ClaimStatus    @default(DRAFT)
+  title         String
+  content       String         @db.Text
+  recipientName String?
+  sentAt        DateTime?
+  resolvedAt    DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([workspaceId])
+  @@index([projectId])
+  @@map("customer_claims")
+}
+
+/// История диалога с AI-юристом
+model LawyerConversation {
+  id          String    @id @default(uuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        String    // "user" | "assistant"
+  content     String    @db.Text
+  createdAt   DateTime  @default(now())
+
+  @@index([workspaceId, userId, createdAt])
+  @@map("lawyer_conversations")
 }
