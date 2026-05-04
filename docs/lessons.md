@@ -1007,5 +1007,21 @@ export const config = {
 
 ---
 
+**Отсутствующая `}` в конце модели Prisma → P1012 "This line is not a valid field or attribute definition" на всех следующих конструкциях.**
+Модель `AiComplianceIssue` заканчивалась на `@@map("ai_compliance_issues")` без закрывающей `}`. Prisma-парсер воспринимал все значения следующего `enum HiddenWorkType { ... }` как поля незакрытой модели — отсюда 9 ошибок «This field declaration is invalid».
+Ошибка видна только при `prisma generate` (Docker build, CI, `npm run build`) — IDE может не подсвечивать при отсутствии Prisma language server.
+Причина: при написании конца блока моделей с `@@map()` легко пропустить `}`, особенно если следующая строка — комментарий нового модуля, а не следующая модель.
+**Правило**: после каждого `@@map(...)` в Prisma-схеме убедиться что **следующая непустая строка** — `}`. Быстрая проверка баланса скобок:
+```bash
+python3 -c "
+content = open('prisma/schema.prisma').read()
+opens = content.count('{'); closes = content.count('}')
+print(f'Opens: {opens}, Closes: {closes}, Delta: {opens - closes}')
+"
+# Delta должна быть 0
+```
+
+---
+
 > Правило: после каждой исправленной ошибки добавить урок сюда.
 > Команда: "Добавь урок в docs/lessons.md: [описание ошибки]"
