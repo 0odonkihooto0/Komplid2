@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12pt;
+      line-height: 1.5;
+      padding: 20mm 20mm 20mm 30mm;
+      color: #000;
+    }
+    .recipient-block { margin-bottom: 30px; }
+    .recipient-block p { margin-bottom: 4px; }
+    .date-city { margin-bottom: 20px; }
+    .title {
+      font-size: 13pt;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+    .subject {
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+    p { margin-bottom: 10px; text-align: justify; }
+    .section { margin-bottom: 15px; }
+    .indent { text-indent: 1.5em; }
+    .legal-ref { font-style: italic; }
+    .signature-block { margin-top: 40px; }
+    .signature-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 30px;
+    }
+    .signature-line {
+      border-bottom: 1px solid #000;
+      width: 180px;
+      display: inline-block;
+      margin-left: 10px;
+    }
+    .req-line { margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+
+  <div class="recipient-block">
+    <p><strong>{{recipientName}}</strong></p>
+    {{#if recipientAddress}}
+    <p>{{recipientAddress}}</p>
+    {{/if}}
+  </div>
+
+  <div class="date-city">
+    <p>{{today}}</p>
+  </div>
+
+  <div class="title">ПРЕТЕНЗИЯ</div>
+  <div class="subject">
+    о нарушении качества выполненных работ
+    {{#if contractNumber}}(по договору № {{contractNumber}}{{#if contractDate}} от {{contractDate}}{{/if}}){{/if}}
+  </div>
+
+  <div class="section">
+    <p class="indent">
+      {{senderName}} (далее — Заказчик) уведомляет Вас о следующем.
+    </p>
+    {{#if contractNumber}}
+    <p class="indent">
+      Между Заказчиком и {{recipientName}} (далее — Подрядчик) заключён договор
+      № {{contractNumber}}{{#if contractDate}} от {{contractDate}}{{/if}}
+      (далее — Договор), по условиям которого Подрядчик принял обязательство
+      выполнить работы надлежащего качества и в установленные сроки.
+    </p>
+    {{/if}}
+    <p class="indent">
+      В ходе приёмки (эксплуатации) результата работ были выявлены следующие
+      недостатки, свидетельствующие о ненадлежащем качестве выполненных работ:
+    </p>
+    <p class="indent">{{issueDescription}}</p>
+  </div>
+
+  <div class="section">
+    <p class="indent">
+      В соответствии с пунктом 1 статьи 723 Гражданского кодекса Российской Федерации
+      в случаях, когда работа выполнена подрядчиком с отступлениями от договора подряда,
+      ухудшившими результат работы, или с иными недостатками, которые делают его
+      непригодным для предусмотренного в договоре либо для обычного использования,
+      заказчик вправе потребовать от подрядчика безвозмездного устранения недостатков
+      в разумный срок, соразмерного уменьшения установленной за работу цены, либо
+      возмещения своих расходов на устранение недостатков.
+    </p>
+  </div>
+
+  <div class="section">
+    <p class="indent">
+      На основании изложенного Заказчик требует:
+    </p>
+    <p class="indent">{{requestedAction}}</p>
+    {{#if deadline}}
+    <p class="indent">
+      Срок исполнения настоящей претензии: <strong>{{deadline}}</strong>.
+    </p>
+    {{/if}}
+  </div>
+
+  <div class="section">
+    <p class="indent">
+      В случае неудовлетворения настоящей претензии в указанный срок Заказчик
+      оставляет за собой право обратиться в суд с требованиями о взыскании убытков,
+      неустойки, а также иных платежей, предусмотренных Договором и действующим
+      законодательством Российской Федерации.
+    </p>
+  </div>
+
+  <div class="signature-block">
+    <p class="req-line"><strong>{{senderName}}</strong></p>
+    {{#if senderAddress}}
+    <p class="req-line">Адрес: {{senderAddress}}</p>
+    {{/if}}
+    <div class="signature-row">
+      <span>Подпись:</span>
+      <span class="signature-line"></span>
+      <span>/ {{senderName}} /</span>
+    </div>
+  </div>
+
+</body>
+</html>
