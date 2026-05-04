@@ -1,12 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Package, Plus, Download, Trash2, FileArchive } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { Package, Plus, Download, Trash2, FileArchive, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useClosurePackages, useDeletePackage, useGeneratePackage } from './useIdClosure';
 import { ClosureWizard } from './ClosureWizard';
+import type { AiComplianceCheck } from '@prisma/client';
 
 interface Props {
   objectId: string;
@@ -22,10 +26,25 @@ const STATUS_MAP: Record<string, { label: string; variant: 'default' | 'secondar
 
 /** Закрывающий пакет ИД — финальная сборка документации для сдачи объекта */
 export function IdClosureView({ objectId }: Props) {
+  const router = useRouter();
   const [wizardOpen, setWizardOpen] = useState(false);
   const { packages, isLoading } = useClosurePackages(objectId);
   const deletePackage = useDeletePackage(objectId);
   const generatePackage = useGeneratePackage(objectId);
+
+  // Последняя AI-проверка — определяем, есть ли критичные нарушения
+  const { data: checksData } = useQuery<{ data: AiComplianceCheck[] }>({
+    queryKey: ['compliance-checks-list', objectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${objectId}/compliance-checks`);
+      return res.json();
+    },
+  });
+  const lastCheck = checksData?.data?.[0];
+  const hasCriticalIssues =
+    lastCheck?.status === 'COMPLETED' &&
+    lastCheck.issueCount > 0 &&
+    (lastCheck.summary?.includes('критичных') ?? false);
 
   if (wizardOpen) {
     return <ClosureWizard objectId={objectId} onClose={() => setWizardOpen(false)} />;
@@ -39,7 +58,14 @@ export function IdClosureView({ objectId }: Props) {
           title="Закрывающие пакеты"
           description="Сформируйте финальный пакет ИД для сдачи объекта. Включает все подписанные акты, реестры и архивные документы."
         />
-        <div className="flex justify-center">
+        <div className="flex justify-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => router.push(`/objects/${objectId}/id/compliance`)}
+          >
+            <ShieldCheck className="h-4 w-4 mr-1" />
+            AI-проверка
+          </Button>
           <Button onClick={() => setWizardOpen(true)}>
             <Plus className="h-4 w-4 mr-1" />
             Создать пакет
@@ -51,11 +77,34 @@ export function IdClosureView({ objectId }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button onClick={() => setWizardOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" />
-          Создать пакет
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          onClick={() => router.push(`/objects/${objectId}/id/compliance`)}
+        >
+          <ShieldCheck className="h-4 w-4 mr-1" />
+          AI-проверка
         </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Button
+                  onClick={() => setWizardOpen(true)}
+                  disabled={hasCriticalIssues}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Создать пакет
+                </Button>
+              </span>
+            </TooltipTrigger>
+            {hasCriticalIssues && (
+              <TooltipContent>
+                <p>Исправьте критичные ошибки перед созданием пакета</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {isLoading ? (

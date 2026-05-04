@@ -1023,6 +1023,10 @@ model User {
   guestCommentsResolved    GuestComment[]        @relation("GuestCommentResolver")
   guestSignatures          GuestSignature[]      @relation("GuestSignatureSigner")
 
+  // MODULE17 KF-1 — AI-проверка ИД
+  complianceChecksInitiated AiComplianceCheck[]  @relation("ComplianceCheckInitiator")
+  resolvedComplianceIssues  AiComplianceIssue[]  @relation("IssueResolver")
+
   @@index([organizationId])
   @@index([referredByCode])
   @@map("users")
@@ -1224,6 +1228,9 @@ model BuildingObject {
   // Модуль 17 Фаза 2 — Гостевой кабинет
   guestInvitations GuestInvitation[] @relation("GuestInvitationProject")
   guestComments    GuestComment[]    @relation("GuestCommentProject")
+
+  // MODULE17 KF-1 — AI-проверка ИД
+  aiComplianceChecks AiComplianceCheck[]
 
   @@index([organizationId])
   @@index([parentId])
@@ -5262,6 +5269,9 @@ model IdClosurePackage {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // MODULE17 KF-1 — AI-проверка ИД
+  aiComplianceChecks AiComplianceCheck[]
+
   @@index([projectId])
   @@map("id_closure_packages")
 }
@@ -7351,4 +7361,99 @@ model GuestSignature {
   @@index([executionDocId])
   @@index([signerUserId])
   @@map("guest_signatures")
+}
+
+// ─────────────────────────────────────────────────────────────────
+// MODULE17 KF-1 — AI-проверка комплектности ИД
+// ─────────────────────────────────────────────────────────────────
+
+enum AiCheckScope {
+  FULL_PROJECT    // весь проект
+  CONTRACT        // конкретный договор
+  STAGE           // этап
+  DATE_RANGE      // период
+  PRE_DELIVERY    // перед сдачей
+  CLOSURE_PACKAGE // пакет ИД
+}
+
+enum AiCheckStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum IssueSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  INFO
+}
+
+enum IssueCategory {
+  MISSING_DOCUMENT
+  MISSING_SIGNATURE
+  WRONG_DATE
+  INCONSISTENCY
+  MISSING_FIELD
+  FORMAT_ERROR
+  REGULATORY
+  MISSING_CERTIFICATE
+}
+
+model AiComplianceCheck {
+  id             String    @id @default(uuid())
+  projectId      String
+  buildingObject BuildingObject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  initiatedById  String
+  initiator      User      @relation("ComplianceCheckInitiator", fields: [initiatedById], references: [id])
+
+  closurePackageId String?
+  closurePackage   IdClosurePackage? @relation(fields: [closurePackageId], references: [id], onDelete: SetNull)
+
+  scope        AiCheckScope
+  scopeFilter  Json?        // { contractId?, stageId?, dateFrom?, dateTo? }
+  status       AiCheckStatus @default(QUEUED)
+  summary      String?
+  issueCount   Int           @default(0)
+  checkedDocs  Int           @default(0)
+  tokensUsed   Int           @default(0)
+  cost         Float         @default(0)
+  startedAt    DateTime?
+  finishedAt   DateTime?
+  errorMessage String?
+
+  issues    AiComplianceIssue[]
+  createdAt DateTime @default(now())
+
+  @@index([projectId, status])
+  @@map("ai_compliance_checks")
+}
+
+model AiComplianceIssue {
+  id      String            @id @default(uuid())
+  checkId String
+  check   AiComplianceCheck @relation(fields: [checkId], references: [id], onDelete: Cascade)
+
+  severity   IssueSeverity
+  category   IssueCategory
+  title      String
+  description String
+  affectedDocIds     String[] @default([])
+  affectedJournalIds String[] @default([])
+  suggestedFix String?
+  standard     String?
+  autoFixable  Boolean  @default(false)
+
+  resolvedAt     DateTime?
+  resolvedById   String?
+  resolvedBy     User?     @relation("IssueResolver", fields: [resolvedById], references: [id])
+  resolutionNote String?
+
+  createdAt DateTime @default(now())
+
+  @@index([checkId, severity])
+  @@map("ai_compliance_issues")
 }
