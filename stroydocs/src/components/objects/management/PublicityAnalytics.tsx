@@ -67,7 +67,7 @@ export function PublicityAnalytics({ objectId }: PublicityAnalyticsProps) {
                   <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(d: string) => d.slice(5)} />
                   <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
                   <Tooltip
-                    formatter={(val: number) => [val, 'Просмотров']}
+                    formatter={(val: number | undefined) => [val ?? 0, 'Просмотров']}
                     labelFormatter={(l: string) => `Дата: ${l}`}
                   />
                   <Bar dataKey="count" fill="#2563EB" radius={[3, 3, 0, 0]} />
