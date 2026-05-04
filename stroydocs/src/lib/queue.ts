@@ -113,3 +113,37 @@ export async function enqueueBillingEmail(job: BillingEmailJob): Promise<void> {
     logger.error({ err }, '[queue] Не удалось добавить биллинговый email');
   }
 }
+
+// ─────────────────────────────────────────────────────────────────
+// MODULE17 KF-1 — AI-проверка комплектности ИД
+// ─────────────────────────────────────────────────────────────────
+
+export interface AiComplianceJob {
+  checkId: string;
+}
+
+let complianceQueue: Queue<AiComplianceJob> | null = null;
+
+export function getComplianceQueue(): Queue<AiComplianceJob> {
+  if (!complianceQueue) {
+    complianceQueue = new Queue<AiComplianceJob>('ai-compliance', {
+      connection: getRedisOptions(),
+      defaultJobOptions: {
+        attempts: 2,
+        backoff: { type: 'fixed', delay: 10_000 },
+        removeOnComplete: 100,
+        removeOnFail: 50,
+      },
+    }) as unknown as Queue<AiComplianceJob>;
+  }
+  return complianceQueue;
+}
+
+export async function enqueueComplianceCheck(checkId: string): Promise<void> {
+  try {
+    const queue = getComplianceQueue();
+    await queue.add('run-compliance-check', { checkId });
+  } catch (err) {
+    logger.error({ err, checkId }, '[queue] Не удалось поставить AI-проверку в очередь');
+  }
+}
