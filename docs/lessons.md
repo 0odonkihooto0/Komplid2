@@ -1023,5 +1023,25 @@ print(f'Opens: {opens}, Closes: {closes}, Delta: {opens - closes}')
 
 ---
 
+**`opengraph-image.tsx` с `export async function GET(...)` — "Duplicate export 'GET'" при `next build`.**
+Next.js App Router обрабатывает `opengraph-image.tsx` через `next-metadata-route-loader`, который **автоматически генерирует** `GET` экспорт из файла. Если в файле явно объявлен `export async function GET(...)` — возникает конфликт дублирующихся экспортов → webpack ошибка `Module parse failed: Duplicate export 'GET'` → `Build failed because of webpack errors`.
+Ошибка специфична для имён файлов `opengraph-image.tsx` и `twitter-image.tsx` — обычные route.ts этим не затрагиваются.
+**Правило**: файлы `opengraph-image.tsx` / `twitter-image.tsx` в App Router **никогда** не экспортируют `GET` напрямую. Правильный паттерн — `export default async function Image({ params })`:
+```typescript
+// Правильно:
+export default async function Image({ params }: { params: { token: string } }) {
+  return new ImageResponse(...)
+}
+
+// Неправильно — дублирует GET который Next.js генерирует сам:
+export async function GET(request: NextRequest, { params }: ...) {
+  return new ImageResponse(...)
+}
+```
+Дополнительные экспорты для метаданных: `export const alt`, `export const size`, `export const contentType` — допустимы.
+Поиск нарушений: `grep -rn "export async function GET" src/app/ | grep "opengraph-image\|twitter-image"`.
+
+---
+
 > Правило: после каждой исправленной ошибки добавить урок сюда.
 > Команда: "Добавь урок в docs/lessons.md: [описание ошибки]"

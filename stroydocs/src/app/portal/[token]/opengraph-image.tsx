@@ -1,13 +1,9 @@
 import { ImageResponse } from 'next/og';
-import { NextRequest } from 'next/server';
 
 export const runtime = 'edge';
 
 // Динамическая OG-картинка для портала заказчика
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { token: string } },
-) {
+export default async function Image({ params }: { params: { token: string } }) {
   try {
     const baseUrl = process.env.APP_URL ?? process.env.NEXTAUTH_URL ?? 'http://localhost:3000';
     const res = await fetch(`${baseUrl}/api/portal/${params.token}`, { cache: 'no-store' });
